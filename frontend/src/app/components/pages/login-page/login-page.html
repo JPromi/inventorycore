@@ -1,0 +1,33 @@
+<section class="login-page">
+  <div class="login-card">
+    <p class="eyebrow">InventoryCore</p>
+    <h1>Anmeldung</h1>
+
+    <form class="login-form" (submit)="$event.preventDefault(); loginWithLocal()">
+      <label>
+        <span>Benutzername</span>
+        <input type="text" [(ngModel)]="username" name="username" placeholder="admin" />
+      </label>
+
+      <label>
+        <span>Passwort</span>
+        <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" />
+      </label>
+
+      <button type="submit" class="login-button primary">
+        Anmelden
+      </button>
+    </form>
+
+    @if (hasOidcProvider) {
+      <div class="divider"><span>oder</span></div>
+
+      <button type="button" class="login-button secondary" (click)="loginWithOidc()">
+        <span class="button-text">Mit OIDC anmelden</span>
+      </button>
+
+      <p class="provider-hint">Aktiver Provider: {{ oidcProvider }}</p>
+    }
+  </div>
+</section>
+
