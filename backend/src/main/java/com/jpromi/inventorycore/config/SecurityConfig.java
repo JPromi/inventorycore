@@ -45,6 +45,7 @@ public class SecurityConfig {
                     "/api/auth/me"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 .anyRequest().authenticated())
             .formLogin(Customizer.withDefaults());
 

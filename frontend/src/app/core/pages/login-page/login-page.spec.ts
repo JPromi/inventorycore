@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 
+import { AuthService } from '../../core/service/auth.service';
 import { LoginPage } from './login-page';
 
 describe('LoginPage', () => {
   let component: LoginPage;
   let fixture: ComponentFixture<LoginPage>;
   let router: Router;
+  let authService: AuthService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -16,6 +19,7 @@ describe('LoginPage', () => {
     fixture = TestBed.createComponent(LoginPage);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
+    authService = TestBed.inject(AuthService);
     localStorage.clear();
     await fixture.whenStable();
   });
@@ -24,38 +28,21 @@ describe('LoginPage', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should submit credentials to the backend and navigate to start after a successful login', async () => {
+  it('should delegate login to the auth service and navigate after a successful login', () => {
     const navigateSpy = spyOn(router, 'navigate');
-    spyOn(window, 'fetch').and.resolveTo(new Response(JSON.stringify({
-      authenticated: true,
+    const loginSpy = spyOn(authService, 'login').and.returnValue(of({
       username: 'admin',
-      roles: ['ROLE_ADMIN']
-    }), {
-      status: 200,
-      statusText: 'OK',
-      headers: { 'Content-Type': 'application/json' }
+      authProvider: 'LOCAL',
+      role: 'ADMIN',
+      isLoggedIn: true,
     }));
 
     component.username = 'admin';
     component.password = 'admin123';
 
-    await component.loginWithLocal();
+    component.loginWithLocal();
 
-    expect(window.fetch).toHaveBeenCalledWith(
-      'http://localhost:8080/api/auth',
-      jasmine.objectContaining({
-        method: 'POST',
-        credentials: 'include',
-        headers: jasmine.objectContaining({
-          'Content-Type': 'application/json',
-        }),
-        body: JSON.stringify({
-          username: 'admin',
-          password: 'admin123',
-        }),
-      })
-    );
-    expect(localStorage.getItem('inventorycore-user')).toContain('"username":"admin"');
+    expect(loginSpy).toHaveBeenCalledWith('admin', 'admin123');
     expect(navigateSpy).toHaveBeenCalledWith(['/start']);
   });
 });

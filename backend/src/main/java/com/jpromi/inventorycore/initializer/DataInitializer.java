@@ -32,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
             User admin = User.builder()
                     .username(defaultAdminUsername)
                     .password(passwordEncoder.encode(defaultAdminPassword))
+                    .displayName("Administrator")
                     .role("ADMIN")
                     .enabled(true)
                     .email(defaultAdminUsername + "@inventorycore.test")

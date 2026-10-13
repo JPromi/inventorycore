@@ -1,0 +1,52 @@
+:host {
+    height: 100%;
+    width: 100%;
+    display: flex;
+
+    nav {
+        background-color: #4b7eeb;
+        display: flex;
+        flex-direction: column;
+        width: 18rem;
+
+        header {
+            padding: 1rem;
+
+        }
+
+        div {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+
+            // no scrollbar
+            &::-webkit-scrollbar {
+                display: none;
+            }
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+
+            .user {
+                display: flex;
+                align-items: center;
+                gap: .5rem;
+                text-decoration: none;
+                color: #fff;
+            }
+        }
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
