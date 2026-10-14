@@ -20,6 +20,7 @@ import { forkJoin, of } from 'rxjs';
 import { ColorPicker } from '../../../components/color-picker/color-picker';
 import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
+import { AreaItem, AreaService } from '../../../service/area.service';
 import { AssetFieldType, InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import {
   CHECK_FIELD_TYPES,
@@ -80,6 +81,9 @@ export class InspectionTypeEditorPage implements OnInit {
   protected intervalUnit: IntervalUnit = 'WEEKS';
   /** Asset types the inspection is for; empty = all assets. */
   protected assetTypeUuids: string[] = [];
+  /** empty = all areas */
+  protected areaUuids: string[] = [];
+  protected areas: AreaItem[] = [];
   protected uuid: string | null = null;
   protected name = '';
   protected description = '';
@@ -96,6 +100,7 @@ export class InspectionTypeEditorPage implements OnInit {
     private readonly router: Router,
     private readonly api: InspectionService,
     private readonly inventory: InventoryApiService,
+    private readonly areaService: AreaService,
   ) {}
 
   ngOnInit(): void {
@@ -103,9 +108,11 @@ export class InspectionTypeEditorPage implements OnInit {
     this.loading = true;
     forkJoin({
       assetTypes: this.inventory.list<InventoryItem>('asset-types'),
+      areas: this.areaService.load(),
       type: this.uuid ? this.api.type(this.uuid) : of(null),
     }).subscribe({
-      next: ({ assetTypes, type }) => {
+      next: ({ assetTypes, areas, type }) => {
+        this.areas = [...areas].sort((a, b) => a.name.localeCompare(b.name));
         this.assetTypes = assetTypes.sort((a, b) => a.name.localeCompare(b.name));
         if (type) {
           this.name = type.name;
@@ -116,6 +123,7 @@ export class InspectionTypeEditorPage implements OnInit {
           this.intervalValue = type.intervalValue ?? 6;
           this.intervalUnit = type.intervalUnit ?? 'WEEKS';
           this.assetTypeUuids = [...(type.assetTypeUuids ?? [])];
+          this.areaUuids = [...(type.areaUuids ?? [])];
           this.groups = this.toGroups(type.fields);
         }
         this.loading = false;
@@ -129,6 +137,10 @@ export class InspectionTypeEditorPage implements OnInit {
 
   protected get title(): string {
     return this.uuid ? 'Prüfungsart bearbeiten' : 'Neue Prüfungsart';
+  }
+
+  protected get areaOptions(): SelectOption[] {
+    return this.areas.map((area) => ({ value: area.uuid, label: area.name, color: area.color }));
   }
 
   protected get allTypeOptions(): SelectOption[] {
@@ -216,6 +228,7 @@ export class InspectionTypeEditorPage implements OnInit {
       intervalValue: this.recurring ? Math.round(this.intervalValue) : null,
       intervalUnit: this.recurring ? this.intervalUnit : null,
       assetTypeUuids: this.assetTypeUuids,
+      areaUuids: this.areaUuids,
       fields,
     };
     this.saving = true;
@@ -223,9 +236,9 @@ export class InspectionTypeEditorPage implements OnInit {
     const save$ = this.uuid ? this.api.updateType(this.uuid, request) : this.api.createType(request);
     save$.subscribe({
       next: () => this.router.navigate(['/config/inspection-types']),
-      error: () => {
+      error: (error) => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen.';
+        this.error = error?.error?.message ?? 'Speichern fehlgeschlagen.';
       },
     });
   }

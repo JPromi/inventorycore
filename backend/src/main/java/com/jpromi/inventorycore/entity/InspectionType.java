@@ -81,6 +81,16 @@ public class InspectionType {
     @Builder.Default
     private Set<AssetType> assetTypes = new HashSet<>();
 
+    /** Areas this inspection is for; empty = all areas. Only users who may inspect there use it. */
+    @ManyToMany
+    @JoinTable(
+        name = "inspection_type_areas",
+        joinColumns = @JoinColumn(name = "inspection_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "area_id")
+    )
+    @Builder.Default
+    private Set<Area> areas = new HashSet<>();
+
     @OneToMany(mappedBy = "inspectionType", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC, id ASC")
     @Builder.Default
@@ -107,5 +117,15 @@ public class InspectionType {
     /** Whether assets of this type need this inspection. */
     public boolean appliesTo(AssetType assetType) {
         return assetTypes.isEmpty() || (assetType != null && assetTypes.stream().anyMatch(type -> type.getId().equals(assetType.getId())));
+    }
+
+    /** Whether the asset needs this inspection: matching type and in one of the areas. */
+    public boolean appliesTo(Asset asset) {
+        return appliesTo(asset.getAssetType()) && coversAreas(asset.getAreas());
+    }
+
+    /** No areas set = everywhere; otherwise at least one shared area. */
+    public boolean coversAreas(Set<Area> other) {
+        return areas.isEmpty() || other.stream().anyMatch(area -> areas.stream().anyMatch(own -> own.getId().equals(area.getId())));
     }
 }

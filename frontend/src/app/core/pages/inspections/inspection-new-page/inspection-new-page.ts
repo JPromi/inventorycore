@@ -77,14 +77,15 @@ export class InspectionNewPage implements OnInit, OnDestroy {
       areas: this.areaService.load(),
     }).subscribe({
       next: ({ types, locations, assetTypes, tags }) => {
-        this.types = types.sort((a, b) => a.name.localeCompare(b.name));
+        // editors also get types of other areas; only those the user may inspect can be started
+        this.types = types.filter((type) => type.usable).sort((a, b) => a.name.localeCompare(b.name));
         this.locations = locations;
         this.assetTypes = assetTypes;
         this.tags = tags;
         // "?type=...&due=1" (from the overview of due inspections) preselects
         const preset = this.route.snapshot.queryParamMap.get('type');
         this.onlyDue = this.route.snapshot.queryParamMap.get('due') === '1';
-        this.selectType(preset ?? (types.length === 1 ? types[0].uuid : null));
+        this.selectType(preset ?? (this.types.length === 1 ? this.types[0].uuid : null));
         this.loading = false;
         this.filterChanged();
       },

@@ -70,6 +70,15 @@ export class AreaService {
     }
   }
 
+  /**
+   * Whether something bound to these areas fits the sidebar selection. Nothing selected or no
+   * areas (= valid everywhere) always fits.
+   */
+  overlapsSelection(areaUuids: string[] | null | undefined): boolean {
+    const selected = this.selected;
+    return !selected.length || !areaUuids?.length || areaUuids.some((uuid) => selected.includes(uuid));
+  }
+
   name(uuid: string): string {
     return this.areas.find((area) => area.uuid === uuid)?.name ?? 'Unbekannter Bereich';
   }

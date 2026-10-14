@@ -61,6 +61,12 @@ public class AccessContext {
         return admin || permissions.stream().anyMatch(permission -> appliesTo(permission, type) && allows(permission, action));
     }
 
+    /** Allowed for all areas at once (a permission without area), e.g. for things that apply everywhere. */
+    public boolean canEverywhere(PermissionResourceType type, PermissionAction action) {
+        return admin || permissions.stream()
+            .anyMatch(permission -> permission.getArea() == null && appliesTo(permission, type) && allows(permission, action));
+    }
+
     /** True when the user has at least one permission (of any kind) for this area or for all areas. */
     public boolean hasAccessTo(Area area) {
         return admin || permissions.stream().anyMatch(permission -> permission.getArea() == null || sameArea(area, permission.getArea()));

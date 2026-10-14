@@ -85,6 +85,19 @@
                             </small>
                         </div>
                         <div class="field wide">
+                            <span class="field-label">Gilt für Bereiche</span>
+                            <app-multi-select
+                                [options]="areaOptions"
+                                [(ngModel)]="areaUuids"
+                                name="areaUuids"
+                                placeholder="Alle Bereiche – Bereich hinzufügen, um einzuschränken..."
+                            />
+                            <small class="hint">
+                                Leer = alle Bereiche. Mit Bereichen, z. B. „EDV“, sehen und starten nur Benutzer mit dem Recht
+                                „Prüfen“ in diesen Bereichen die Prüfung, und es werden nur Assets aus diesen Bereichen geprüft.
+                            </small>
+                        </div>
+                        <div class="field wide">
                             <label class="toggle">
                                 <input type="checkbox" [(ngModel)]="recurring" name="recurring" />
                                 <span>Wiederkehrende Prüfung</span>

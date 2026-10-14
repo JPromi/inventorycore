@@ -6,7 +6,10 @@ import java.util.UUID;
 import com.jpromi.inventorycore.enums.InspectionMode;
 import com.jpromi.inventorycore.enums.IntervalUnit;
 
-/** {@code intervalValue}/{@code intervalUnit} null = not recurring; {@code assetTypeUuids} empty = all assets. */
+/**
+ * {@code intervalValue}/{@code intervalUnit} null = not recurring; {@code assetTypeUuids} empty = all assets;
+ * {@code areaUuids} empty = all areas.
+ */
 public record InspectionTypeRequest(
     String name,
     String description,
@@ -15,5 +18,6 @@ public record InspectionTypeRequest(
     Integer intervalValue,
     IntervalUnit intervalUnit,
     List<UUID> assetTypeUuids,
+    List<UUID> areaUuids,
     List<InspectionFieldRequest> fields
 ) {}

@@ -1,7 +1,7 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ types.length }} Prüfungsarten</p>
+            <p class="eyebrow">{{ visibleTypes.length }} Prüfungsarten</p>
             <h1>
                 <svg lucideClipboardList size="20"></svg>
                 <span>Prüfungsarten</span>
@@ -28,22 +28,24 @@
 
     @if (loading) {
         <p class="empty">Lade Prüfungsarten...</p>
-    } @else if (!types.length) {
-        <div class="empty-state">Noch keine Prüfungsart angelegt.</div>
+    } @else if (!visibleTypes.length) {
+        <div class="empty-state">
+            {{ types.length ? 'Keine Prüfungsart für die links gewählten Bereiche.' : 'Noch keine Prüfungsart angelegt.' }}
+        </div>
     } @else {
         <div class="type-grid">
-            @for (type of types; track type.uuid) {
-                <article class="card type-card" [class.clickable]="canEdit" (click)="canEdit && edit(type)">
+            @for (type of visibleTypes; track type.uuid) {
+                <article class="card type-card" [class.clickable]="type.editable" (click)="type.editable && edit(type)">
                     <span class="stripe" [style.background]="type.color || 'var(--border-strong)'"></span>
                     <div class="type-head">
                         <h2>{{ type.name }}</h2>
                         <div class="actions">
-                            @if (canEdit) {
+                            @if (type.editable) {
                                 <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(type)">
                                     <svg lucidePencil size="15"></svg>
                                 </button>
                             }
-                            @if (canDelete) {
+                            @if (type.deletable) {
                                 <button type="button" class="icon-button danger" title="Löschen" (click)="remove(type, $event)">
                                     <svg lucideTrash2 size="15"></svg>
                                 </button>
@@ -56,6 +58,10 @@
                             <span class="badge accent">{{ intervalText(type.intervalValue, type.intervalUnit) }}</span>
                         }
                         <span class="badge">{{ type.assetTypeNames.length ? type.assetTypeNames.join(', ') : 'Alle Assets' }}</span>
+                        <span class="badge">{{ type.areaNames.length ? 'Bereich ' + type.areaNames.join(', ') : 'Alle Bereiche' }}</span>
+                        @if (!type.usable) {
+                            <span class="badge warn" title="Dir fehlt das Recht „Prüfen“ in diesem Bereich">Kein Prüfrecht</span>
+                        }
                     </div>
                     @if (type.description) {
                         <p class="description">{{ type.description }}</p>

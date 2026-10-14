@@ -15,9 +15,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.jpromi.inventorycore.dto.InspectionDueResponse;
+import com.jpromi.inventorycore.entity.Area;
 import com.jpromi.inventorycore.entity.Asset;
 import com.jpromi.inventorycore.entity.AssetInspectionSchedule;
 import com.jpromi.inventorycore.entity.AssetType;
+import com.jpromi.inventorycore.entity.GroupPermission;
 import com.jpromi.inventorycore.entity.InspectionType;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 import com.jpromi.inventorycore.enums.IntervalUnit;
@@ -111,6 +113,55 @@ class InspectionScheduleServiceTest {
         check(InspectionItemStatus.PASSED, 40);
         assertTrue(service.dueAssetUuids(List.of(car), brakes, 7).contains(car.getUuid()), "due in 2 days");
         assertTrue(service.dueAssetUuids(List.of(car), brakes, 0).isEmpty(), "not yet overdue");
+    }
+
+    @Test
+    void typeWithAreasOnlyAppliesToAssetsInThem() {
+        Area it = Area.builder().id(30L).name("EDV").build();
+        Area workshop = Area.builder().id(31L).name("Werkstatt").build();
+        brakes.getAreas().add(it);
+
+        car.getAreas().add(workshop);
+        assertTrue(service.all(admin).isEmpty(), "the car is not in the area of the inspection");
+
+        car.getAreas().add(it);
+        assertEquals(1, service.all(admin).size());
+    }
+
+    @Test
+    void dueListOnlyShowsTypesTheUserMayInspect() {
+        Area it = Area.builder().id(30L).name("EDV").build();
+        Area workshop = Area.builder().id(31L).name("Werkstatt").build();
+        brakes.getAreas().add(it);
+        car.getAreas().add(it);
+        car.getAreas().add(workshop);
+
+        // may see and inspect everything in the workshop, but nothing in EDV
+        AccessContext workshopInspector = new AccessContext(false, List.of(
+            GroupPermission.builder().area(workshop).canView(true).canInspect(true).build()));
+        assertTrue(service.all(workshopInspector).isEmpty());
+        assertTrue(!InspectionService.canUse(workshopInspector, brakes));
+
+        AccessContext itInspector = new AccessContext(false, List.of(
+            GroupPermission.builder().area(it).canView(true).canInspect(true).build()));
+        assertEquals(1, service.all(itInspector).size());
+        assertTrue(InspectionService.canUse(itInspector, brakes));
+    }
+
+    @Test
+    void typeForAllAreasNeedsARightForAllAreas() {
+        Area it = Area.builder().id(30L).name("EDV").build();
+        car.getAreas().add(it);
+
+        AccessContext itInspector = new AccessContext(false, List.of(
+            GroupPermission.builder().area(it).canView(true).canInspect(true).build()));
+        assertTrue(!InspectionService.canUse(itInspector, brakes), "brakes has no areas, so it is for all areas");
+        assertTrue(service.all(itInspector).isEmpty());
+
+        AccessContext inspectorEverywhere = new AccessContext(false, List.of(
+            GroupPermission.builder().canView(true).canInspect(true).build()));
+        assertTrue(InspectionService.canUse(inspectorEverywhere, brakes));
+        assertEquals(1, service.all(inspectorEverywhere).size());
     }
 
     private void check(InspectionItemStatus status, int daysAgo) {

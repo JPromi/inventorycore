@@ -125,15 +125,18 @@ public class InspectionService {
     public List<InspectionTypeResponse> types(AccessContext access) {
         requireTypesVisible(access);
         return typeRepository.findAll().stream()
+            .filter(type -> canSee(access, type))
             .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-            .map(this::toResponse)
+            .map(type -> toResponse(type, access))
             .toList();
     }
 
     @Transactional(readOnly = true)
     public InspectionTypeResponse type(AccessContext access, UUID uuid) {
         requireTypesVisible(access);
-        return toResponse(typeOr404(uuid));
+        InspectionType type = typeOr404(uuid);
+        require(canSee(access, type));
+        return toResponse(type, access);
     }
 
     @Transactional
@@ -142,21 +145,25 @@ public class InspectionService {
             || access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE));
         InspectionType type = InspectionType.builder().name(requireName(request.name())).build();
         applyType(type, request);
-        return toResponse(typeRepository.save(type));
+        // only for areas the user manages; without areas (= all) only with a right for all areas
+        requireAreas(canManage(access, type, PermissionAction.CREATE) || canManage(access, type, PermissionAction.EDIT));
+        return toResponse(typeRepository.save(type), access);
     }
 
     @Transactional
     public InspectionTypeResponse updateType(AccessContext access, UUID uuid, InspectionTypeRequest request) {
-        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
         InspectionType type = typeOr404(uuid);
+        require(canManage(access, type, PermissionAction.EDIT));
         applyType(type, request);
-        return toResponse(typeRepository.save(type));
+        // also for the new areas (rolls back the changes otherwise)
+        requireAreas(canManage(access, type, PermissionAction.EDIT));
+        return toResponse(typeRepository.save(type), access);
     }
 
     @Transactional
     public void deleteType(AccessContext access, UUID uuid) {
-        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
         InspectionType type = typeOr404(uuid);
+        require(canManage(access, type, PermissionAction.DELETE));
         inspectionRepository.detachType(type);
         scheduleRepository.deleteByInspectionType(type);
         typeRepository.delete(type);
@@ -175,6 +182,13 @@ public class InspectionService {
             for (UUID assetTypeUuid : request.assetTypeUuids()) {
                 type.getAssetTypes().add(assetTypeRepository.findByUuid(assetTypeUuid)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Typ " + assetTypeUuid)));
+            }
+        }
+        type.getAreas().clear();
+        if (request.areaUuids() != null) {
+            for (UUID areaUuid : request.areaUuids()) {
+                type.getAreas().add(areaRepository.findByUuid(areaUuid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Bereich " + areaUuid)));
             }
         }
 
@@ -210,27 +224,30 @@ public class InspectionService {
     @Transactional(readOnly = true)
     public List<InspectionSummaryResponse> inspections(AccessContext access) {
         requireInspect(access);
-        return inspectionRepository.findAllByOrderByCreatedAtDesc().stream().map(this::toSummary).toList();
+        return inspectionRepository.findAllByOrderByCreatedAtDesc().stream()
+            .filter(inspection -> canUse(access, inspection.getInspectionType()))
+            .map(this::toSummary)
+            .toList();
     }
 
     @Transactional(readOnly = true)
     public InspectionDetailResponse inspection(AccessContext access, UUID uuid) {
         requireInspect(access);
-        return toDetail(inspectionOr404(uuid));
+        return toDetail(usableInspection(access, uuid));
     }
 
     /** Assets the filters would select, without creating anything (for the preview when starting). */
     @Transactional(readOnly = true)
     public int preview(AccessContext access, InspectionCreateRequest request) {
         requireInspect(access);
-        InspectionType type = request.inspectionTypeUuid() == null ? null : typeOr404(request.inspectionTypeUuid());
+        InspectionType type = request.inspectionTypeUuid() == null ? null : usableType(access, request.inspectionTypeUuid());
         return selectAssets(access, type, filterOf(request), onlyDue(request, type), request.dueWithinDays()).size();
     }
 
     /** Assets an inspection starts with: the filters, the types of the inspection and optionally only due ones. */
     private List<Asset> selectAssets(AccessContext access, InspectionType type, InspectionFilter filter, boolean onlyDue, Integer dueWithinDays) {
         List<Asset> assets = expectedAssets(access, filter).stream()
-            .filter(asset -> type == null || type.appliesTo(asset.getAssetType()))
+            .filter(asset -> type == null || type.appliesTo(asset))
             .toList();
         if (onlyDue && type != null) {
             Set<UUID> due = scheduleService.dueAssetUuids(assets, type,
@@ -251,7 +268,7 @@ public class InspectionService {
     @Transactional
     public InspectionDetailResponse create(AccessContext access, User user, InspectionCreateRequest request) {
         requireInspect(access);
-        InspectionType type = request.inspectionTypeUuid() == null ? null : typeOr404(request.inspectionTypeUuid());
+        InspectionType type = request.inspectionTypeUuid() == null ? null : usableType(access, request.inspectionTypeUuid());
         if (type == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine Prüfungsart wählen.");
         }
@@ -262,6 +279,9 @@ public class InspectionService {
         String summary = describe(filter, locations);
         if (!type.getAssetTypes().isEmpty()) {
             summary = summary + " · nur " + type.getAssetTypes().stream().map(AssetType::getName).sorted().collect(Collectors.joining(", "));
+        }
+        if (!type.getAreas().isEmpty()) {
+            summary = summary + " · Bereich " + type.getAreas().stream().map(Area::getName).sorted().collect(Collectors.joining(", "));
         }
         if (onlyDue) {
             summary = summary + " · nur fällige";
@@ -289,7 +309,7 @@ public class InspectionService {
     @Transactional
     public InspectionScanResponse scan(AccessContext access, User user, UUID uuid, String code) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         ScanResolver.Resolution resolution = scanResolver.resolve(access, code);
         Map<Long, Location> locations = locationsById();
 
@@ -333,9 +353,13 @@ public class InspectionService {
             added.setScannedCode(resolution.code());
             inspection.getItems().add(added);
             inspectionRepository.save(inspection);
-            boolean applies = inspection.getInspectionType() == null || inspection.getInspectionType().appliesTo(asset.getAssetType());
-            return new InspectionScanResponse(applies ? "ADDED" : "ADDED_OTHER_TYPE",
-                applies ? asset.getName() + " hinzugefügt." : asset.getName() + " hinzugefügt – der Typ ist für diese Prüfung eigentlich nicht vorgesehen.",
+            InspectionType type = inspection.getInspectionType();
+            boolean typeFits = type == null || type.appliesTo(asset.getAssetType());
+            boolean areaFits = type == null || type.coversAreas(asset.getAreas());
+            String warning = !typeFits ? " – der Typ ist für diese Prüfung eigentlich nicht vorgesehen."
+                : !areaFits ? " – das Gerät liegt nicht im Bereich dieser Prüfung." : null;
+            return new InspectionScanResponse(warning == null ? "ADDED" : "ADDED_OTHER_TYPE",
+                asset.getName() + " hinzugefügt" + (warning == null ? "." : warning),
                 toResponse(added, locations));
         }
 
@@ -364,7 +388,7 @@ public class InspectionService {
     @Transactional
     public InspectionItemResponse updateItem(AccessContext access, User user, UUID uuid, UUID itemUuid, InspectionItemUpdateRequest request) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
 
         if (request.status() != null && !allowedStatus(inspection.getMode()).contains(request.status())) {
@@ -403,7 +427,7 @@ public class InspectionService {
     @Transactional
     public InspectionItemResponse addItem(AccessContext access, UUID uuid, UUID assetUuid) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         Asset asset = assetRepository.findByUuid(assetUuid)
             .filter(entry -> !entry.isDeleted() && access.canViewAsset(entry))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden"));
@@ -428,7 +452,7 @@ public class InspectionService {
     @Transactional
     public InspectionItemResponse addPhoto(AccessContext access, User user, UUID uuid, UUID itemUuid, InspectionPhotoRequest request) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
         if (request.fileUuid() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kein Bild angegeben.");
@@ -470,7 +494,7 @@ public class InspectionService {
     @Transactional
     public InspectionItemResponse removePhoto(AccessContext access, UUID uuid, UUID itemUuid, UUID photoUuid) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
         if (!item.getPhotos().removeIf(photo -> photo.getUuid().equals(photoUuid))) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden");
@@ -489,7 +513,7 @@ public class InspectionService {
     @Transactional
     public void removeItem(AccessContext access, UUID uuid, UUID itemUuid) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
         if (item.isExpected() && inspection.getMode() == InspectionMode.INVENTORY) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erwartete Assets können nicht entfernt werden.");
@@ -505,7 +529,7 @@ public class InspectionService {
     @Transactional
     public InspectionDetailResponse complete(AccessContext access, User user, UUID uuid, String comment) {
         requireInspect(access);
-        Inspection inspection = openInspection(uuid);
+        Inspection inspection = openInspection(access, uuid);
         inspection.setComment(blankToNull(comment));
         inspection.setStatus(InspectionStatus.COMPLETED);
         inspection.setCompletedAt(OffsetDateTime.now());
@@ -516,7 +540,7 @@ public class InspectionService {
 
     @Transactional
     public void delete(AccessContext access, UUID uuid) {
-        Inspection inspection = inspectionOr404(uuid);
+        Inspection inspection = usableInspection(access, uuid);
         // a completed protocol is a record; only admins may remove it
         require(inspection.isCompleted() ? access.isAdmin() : access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.INSPECT));
         inspectionRepository.delete(inspection);
@@ -673,7 +697,7 @@ public class InspectionService {
 
     // ---- mapping ----
 
-    private InspectionTypeResponse toResponse(InspectionType type) {
+    private InspectionTypeResponse toResponse(InspectionType type, AccessContext access) {
         return new InspectionTypeResponse(
             type.getUuid(),
             type.getName(),
@@ -684,6 +708,11 @@ public class InspectionService {
             type.getIntervalUnit(),
             type.getAssetTypes().stream().map(AssetType::getUuid).toList(),
             type.getAssetTypes().stream().map(AssetType::getName).sorted().toList(),
+            type.getAreas().stream().map(Area::getUuid).toList(),
+            type.getAreas().stream().map(Area::getName).sorted().toList(),
+            canUse(access, type),
+            canManage(access, type, PermissionAction.EDIT),
+            canManage(access, type, PermissionAction.DELETE),
             type.getFields().stream().map(InspectionService::toResponse).toList(),
             inspectionRepository.countByInspectionType(type)
         );
@@ -730,6 +759,8 @@ public class InspectionService {
             inspection.getTitle(),
             inspection.getInspectionType() == null ? null : inspection.getInspectionType().getUuid(),
             inspection.getTypeName(),
+            inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getUuid).toList(),
+            inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getName).sorted().toList(),
             inspection.getStatus(),
             inspection.getMode(),
             inspection.getFilterSummary(),
@@ -818,16 +849,68 @@ public class InspectionService {
         return String.join(" / ", names);
     }
 
-    private Inspection openInspection(UUID uuid) {
-        Inspection inspection = inspectionOr404(uuid);
+    private Inspection openInspection(AccessContext access, UUID uuid) {
+        Inspection inspection = usableInspection(access, uuid);
         if (inspection.isCompleted()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Die Prüfung ist abgeschlossen und kann nicht mehr geändert werden.");
         }
         return inspection;
     }
 
+    /** The inspection, if its type may be used by the user (404 otherwise, like for others' areas). */
+    private Inspection usableInspection(AccessContext access, UUID uuid) {
+        Inspection inspection = inspectionOr404(uuid);
+        if (!canUse(access, inspection.getInspectionType())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfung nicht gefunden");
+        }
+        return inspection;
+    }
+
+    /**
+     * Whether the user may see, start and do inspections of this type: the right to inspect in one
+     * of its areas. A type without areas is for all areas and needs that right for all areas (a
+     * permission without area), like inspections whose type was deleted. So someone who may only
+     * inspect in "EDV" sees nothing but the EDV inspections.
+     */
+    public static boolean canUse(AccessContext access, InspectionType type) {
+        return allows(access, type, PermissionResourceType.ASSET, PermissionAction.INSPECT);
+    }
+
+    /** Configuring a type (ASSET_TYPE rights) follows the same rule: in its areas, or for all areas. */
+    private static boolean canManage(AccessContext access, InspectionType type, PermissionAction action) {
+        return allows(access, type, PermissionResourceType.ASSET_TYPE, action);
+    }
+
+    /** Visible for whoever may use it or view it in the configuration. */
+    private static boolean canSee(AccessContext access, InspectionType type) {
+        return canUse(access, type) || canManage(access, type, PermissionAction.VIEW);
+    }
+
+    private static void requireAreas(boolean allowed) {
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Wähle Bereiche, in denen du Prüfungsarten bearbeiten darfst. Ohne Bereich gilt die Prüfungsart für alle Bereiche, "
+                    + "dafür ist ein Recht für alle Bereiche nötig.");
+        }
+    }
+
+    private static boolean allows(AccessContext access, InspectionType type, PermissionResourceType resource, PermissionAction action) {
+        if (type == null || type.getAreas().isEmpty()) {
+            return access.canEverywhere(resource, action);
+        }
+        return access.can(resource, action, type.getAreas());
+    }
+
     private Inspection inspectionOr404(UUID uuid) {
         return inspectionRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfung nicht gefunden"));
+    }
+
+    private InspectionType usableType(AccessContext access, UUID uuid) {
+        InspectionType type = typeOr404(uuid);
+        if (!canUse(access, type)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Für diese Prüfungsart fehlt das Recht zum Prüfen in ihrem Bereich.");
+        }
+        return type;
     }
 
     private InspectionType typeOr404(UUID uuid) {

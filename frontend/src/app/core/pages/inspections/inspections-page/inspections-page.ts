@@ -23,6 +23,7 @@ import {
   dueText,
   intervalText,
 } from '../../../service/inspection.service';
+import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
 
 type StatusFilter = InspectionStatus | 'ALL' | 'DUE';
@@ -70,6 +71,7 @@ export class InspectionsPage implements OnInit {
     private readonly api: InspectionService,
     private readonly router: Router,
     protected readonly permissions: PermissionService,
+    private readonly areaService: AreaService,
   ) {}
 
   ngOnInit(): void {
@@ -96,26 +98,36 @@ export class InspectionsPage implements OnInit {
     });
   }
 
+  /** Inspections of the areas chosen in the sidebar (by the areas of their type). */
+  protected get areaInspections(): InspectionSummary[] {
+    return this.inspections.filter((inspection) => this.areaService.overlapsSelection(inspection.areaUuids));
+  }
+
+  /** Due entries of assets in the areas chosen in the sidebar. */
+  protected get areaDue(): InspectionDue[] {
+    return this.due.filter((entry) => this.areaService.overlapsSelection(entry.assetAreaUuids));
+  }
+
   protected get canStart(): boolean {
     return this.permissions.can('ASSET', 'inspect');
   }
 
   protected count(status: StatusFilter): number {
     if (status === 'DUE') {
-      return this.due.length;
+      return this.areaDue.length;
     }
-    return status === 'ALL' ? this.inspections.length : this.inspections.filter((inspection) => inspection.status === status).length;
+    return status === 'ALL' ? this.areaInspections.length : this.areaInspections.filter((inspection) => inspection.status === status).length;
   }
 
   protected get overdueCount(): number {
-    return this.due.filter((entry) => entry.state === 'OVERDUE').length;
+    return this.areaDue.filter((entry) => entry.state === 'OVERDUE').length;
   }
 
   /** Due entries grouped by inspection type, the type with the most overdue first. */
   protected get dueGroups(): DueGroup[] {
     const term = this.search.trim().toLowerCase();
     const groups = new Map<string, DueGroup>();
-    for (const entry of this.due) {
+    for (const entry of this.areaDue) {
       if (term && ![entry.assetName, entry.invId, entry.locationName, entry.inspectionTypeName].some((value) => value?.toLowerCase().includes(term))) {
         continue;
       }
@@ -154,7 +166,7 @@ export class InspectionsPage implements OnInit {
 
   protected get visible(): InspectionSummary[] {
     const term = this.search.trim().toLowerCase();
-    return this.inspections.filter(
+    return this.areaInspections.filter(
       (inspection) =>
         (this.statusFilter === 'ALL' || inspection.status === this.statusFilter) &&
         (!term || [inspection.title, inspection.typeName, inspection.filterSummary, inspection.createdByName].some((value) => value?.toLowerCase().includes(term))),

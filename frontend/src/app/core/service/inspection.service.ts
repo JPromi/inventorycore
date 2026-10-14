@@ -72,6 +72,7 @@ export interface InspectionDue {
   fixedDueDate: string | null;
   state: DueState;
   daysUntilDue: number;
+  assetAreaUuids: string[];
 }
 
 export const CHECK_FIELD_TYPES: { value: AssetFieldType; label: string }[] = [
@@ -109,6 +110,14 @@ export interface InspectionType {
   /** empty = all assets */
   assetTypeUuids: string[];
   assetTypeNames: string[];
+  /** empty = all areas */
+  areaUuids: string[];
+  areaNames: string[];
+  /** the current user may start inspections of this kind (right to inspect in its areas) */
+  usable: boolean;
+  /** the current user may change / delete it (rights in its areas) */
+  editable: boolean;
+  deletable: boolean;
   fields: InspectionField[];
   inspectionCount: number;
 }
@@ -121,6 +130,7 @@ export interface InspectionTypeRequest {
   intervalValue: number | null;
   intervalUnit: IntervalUnit | null;
   assetTypeUuids: string[];
+  areaUuids: string[];
   fields: InspectionField[];
 }
 
@@ -147,6 +157,9 @@ export interface InspectionSummary {
   title: string;
   inspectionTypeUuid: string | null;
   typeName: string;
+  /** areas of the inspection type, empty = all */
+  areaUuids: string[];
+  areaNames: string[];
   status: InspectionStatus;
   mode: InspectionMode;
   filterSummary: string | null;

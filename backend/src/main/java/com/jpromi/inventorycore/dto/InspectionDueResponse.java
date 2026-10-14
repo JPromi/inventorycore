@@ -2,6 +2,7 @@ package com.jpromi.inventorycore.dto;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
@@ -31,5 +32,7 @@ public record InspectionDueResponse(
     LocalDate nextDueDate,
     LocalDate fixedDueDate,
     String state,
-    long daysUntilDue
+    long daysUntilDue,
+    /** Areas of the asset, for the area filter of the overview. */
+    List<UUID> assetAreaUuids
 ) {}

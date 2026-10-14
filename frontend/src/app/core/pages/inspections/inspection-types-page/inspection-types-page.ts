@@ -4,6 +4,7 @@ import { LucideClipboardList, LucidePencil, LucidePlus, LucideTrash2 } from '@lu
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { InspectionService, InspectionType, intervalText } from '../../../service/inspection.service';
+import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
 
 /** Configuration list of the inspection types. */
@@ -23,6 +24,7 @@ export class InspectionTypesPage implements OnInit {
     private readonly router: Router,
     private readonly permissions: PermissionService,
     private readonly confirmDialog: ConfirmDialogService,
+    private readonly areaService: AreaService,
   ) {}
 
   ngOnInit(): void {
@@ -39,12 +41,13 @@ export class InspectionTypesPage implements OnInit {
     });
   }
 
-  protected get canEdit(): boolean {
-    return this.permissions.can('ASSET_TYPE', 'edit');
+  /** Types of the areas chosen in the sidebar (types without areas are for all). */
+  protected get visibleTypes(): InspectionType[] {
+    return this.types.filter((type) => this.areaService.overlapsSelection(type.areaUuids));
   }
 
-  protected get canDelete(): boolean {
-    return this.permissions.can('ASSET_TYPE', 'delete');
+  protected get canEdit(): boolean {
+    return this.permissions.can('ASSET_TYPE', 'edit');
   }
 
   protected readonly intervalText = intervalText;

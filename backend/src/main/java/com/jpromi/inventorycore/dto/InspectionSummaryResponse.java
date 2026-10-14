@@ -1,6 +1,7 @@
 package com.jpromi.inventorycore.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.jpromi.inventorycore.enums.InspectionMode;
@@ -11,6 +12,9 @@ public record InspectionSummaryResponse(
     String title,
     UUID inspectionTypeUuid,
     String typeName,
+    /** Areas of the inspection type (empty = all). */
+    List<UUID> areaUuids,
+    List<String> areaNames,
     InspectionStatus status,
     InspectionMode mode,
     String filterSummary,

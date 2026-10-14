@@ -111,7 +111,7 @@
     } @else if (!visible.length) {
         <div class="empty-state">
             @if (inspections.length) {
-                Keine Prüfungen gefunden.
+                Keine Prüfungen gefunden. Eventuell ist links ein anderer Bereich ausgewählt.
             } @else {
                 Noch keine Prüfungen. Lege zuerst unter Konfiguration eine Prüfungsart an und starte dann eine Prüfung.
             }
@@ -130,6 +130,9 @@
                             <strong>{{ inspection.title }}</strong>
                             @if (inspection.title !== inspection.typeName) {
                                 <span class="type">{{ inspection.typeName }}</span>
+                            }
+                            @for (area of inspection.areaNames; track area) {
+                                <span class="badge">{{ area }}</span>
                             }
                         </div>
                         <span class="filter">{{ inspection.filterSummary }}</span>

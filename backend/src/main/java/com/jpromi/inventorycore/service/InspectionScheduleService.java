@@ -91,7 +91,12 @@ public class InspectionScheduleService {
     public List<InspectionDueResponse> all(AccessContext access) {
         PermissionService.require(access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.INSPECT));
         List<Asset> assets = assetRepository.findByDeletedFalse().stream().filter(access::canViewAsset).toList();
-        return compute(assets);
+        // only kinds of inspection the user may do (e.g. not those of other areas)
+        Set<UUID> usable = typeRepository.findAll().stream()
+            .filter(type -> InspectionService.canUse(access, type))
+            .map(InspectionType::getUuid)
+            .collect(java.util.stream.Collectors.toSet());
+        return compute(assets).stream().filter(entry -> usable.contains(entry.inspectionTypeUuid())).toList();
     }
 
     @Transactional(readOnly = true)
@@ -160,7 +165,7 @@ public class InspectionScheduleService {
         List<InspectionDueResponse> result = new ArrayList<>();
         for (Asset asset : assets) {
             for (InspectionType type : types) {
-                if (type.appliesTo(asset.getAssetType())) {
+                if (type.appliesTo(asset)) {
                     Key key = new Key(asset.getId(), type.getId());
                     result.add(entry(asset, type, checks.get(key), overrides.get(key), locations, today));
                 }
@@ -212,7 +217,8 @@ public class InspectionScheduleService {
             due,
             fixed,
             state,
-            days
+            days,
+            asset.getAreas().stream().map(area -> area.getUuid()).toList()
         );
     }
 
