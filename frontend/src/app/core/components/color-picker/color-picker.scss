@@ -1,0 +1,217 @@
+:host {
+    position: relative;
+    display: inline-block;
+}
+
+.trigger {
+    min-height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    padding: 0 .65rem 0 .4rem;
+    border: 1px solid var(--border);
+    border-radius: .45rem;
+    background: var(--surface);
+    color: var(--text);
+    font-size: .88rem;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+
+    &:hover:not(:disabled),
+    &.open {
+        border-color: var(--border-strong);
+    }
+
+    &.open {
+        box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: .6;
+    }
+
+    &.compact {
+        width: 2.35rem;
+        justify-content: center;
+        padding: 0;
+    }
+}
+
+.swatch,
+.preview {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: .35rem;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+
+    // diagonal line for "no color"
+    &.empty {
+        background: linear-gradient(135deg, transparent 46%, var(--accent) 46%, var(--accent) 54%, transparent 54%), var(--surface);
+        box-shadow: inset 0 0 0 1px var(--border-strong);
+    }
+}
+
+.trigger-text {
+    min-width: 4.6rem;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: .82rem;
+    text-align: left;
+}
+
+.chevron {
+    color: var(--text-subtle);
+}
+
+.popover {
+    position: absolute;
+    top: calc(100% + .4rem);
+    left: 0;
+    z-index: 50;
+    width: 15.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding: .8rem;
+    border: 1px solid var(--border);
+    border-radius: .65rem;
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+}
+
+.presets {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: .35rem;
+}
+
+.preset {
+    aspect-ratio: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: .35rem;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
+    transition: transform .1s;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+
+    &.active {
+        box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+    }
+
+    &.none {
+        background: var(--surface);
+        color: var(--text-subtle);
+        box-shadow: inset 0 0 0 1px var(--border-strong);
+
+        &.active {
+            color: var(--accent);
+            box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+        }
+    }
+}
+
+.area {
+    position: relative;
+    height: 9rem;
+    border-radius: .45rem;
+    // white to the left (saturation), black to the bottom (value), hue as background color
+    background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.hue {
+    position: relative;
+    height: .85rem;
+    border-radius: 999px;
+    background: linear-gradient(to right, #f00 0%, #ff0 16.66%, #0f0 33.33%, #0ff 50%, #00f 66.66%, #f0f 83.33%, #f00 100%);
+    cursor: pointer;
+    touch-action: none;
+}
+
+.area,
+.hue {
+    outline: none;
+
+    &:focus-visible {
+        box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+}
+
+.handle {
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .3), 0 1px 3px rgba(0, 0, 0, .35);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.hue .handle {
+    top: 50%;
+}
+
+.hex-row {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+
+    .preview {
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: .4rem;
+    }
+}
+
+.hex-field {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+
+    span {
+        color: var(--text-muted);
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+    input {
+        width: 100%;
+        min-height: 2.2rem;
+        padding: 0 .5rem;
+        border: 1px solid var(--border);
+        border-radius: .4rem;
+        background: var(--surface);
+        color: var(--text);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: .85rem;
+        text-transform: uppercase;
+    }
+}
+
+.done {
+    min-height: 2.2rem;
+    padding: 0 .75rem;
+    border: 1px solid var(--accent);
+    border-radius: .4rem;
+    background: var(--accent);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--accent-hover);
+    }
+}

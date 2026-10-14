@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -227,10 +228,14 @@ public class InventoryController {
 
     @DeleteMapping("/tags/{uuid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
     public void deleteTag(@PathVariable UUID uuid, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
         require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
-        tagRepository.delete(tagOr404(uuid));
+        Tag tag = tagOr404(uuid);
+        tagRepository.detachFromAssets(tag.getId());
+        tagRepository.detachFromAssetTypes(tag.getId());
+        tagRepository.delete(tag);
     }
 
     // ---- assets ----

@@ -1,0 +1,110 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ visibleRows.length }} von {{ rows.length }} Tags</p>
+            <h1>
+                <svg lucideTags size="20"></svg>
+                <span>Tags</span>
+            </h1>
+        </div>
+    </header>
+
+    @if (canCreate) {
+        <form class="card create-row" (ngSubmit)="create()">
+            <app-color-picker [(ngModel)]="newColor" name="newColor" label="Farbe des neuen Tags" />
+            <input
+                type="text"
+                class="name-input"
+                [(ngModel)]="newName"
+                name="newName"
+                placeholder="Neuer Tag, z. B. Defekt"
+                aria-label="Name des neuen Tags"
+                maxlength="80"
+            />
+            <span
+                class="tag-preview"
+                [style.background]="newColor || 'var(--surface-active)'"
+                [style.color]="newColor ? textColor(newColor) : 'var(--text)'"
+            >
+                {{ newName.trim() || 'Vorschau' }}
+            </span>
+            <button type="submit" class="primary-action" [disabled]="!newName.trim() || creating">
+                <svg lucidePlus size="17"></svg>
+                <span>{{ creating ? 'Legt an...' : 'Anlegen' }}</span>
+            </button>
+        </form>
+    }
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" placeholder="Tag suchen..." aria-label="Tag suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Tags...</p>
+    } @else if (!visibleRows.length) {
+        <div class="empty-state">{{ rows.length ? 'Keine Tags gefunden.' : 'Noch keine Tags angelegt.' }}</div>
+    } @else {
+        <div class="tag-list">
+            @for (row of visibleRows; track row.uuid) {
+                <div class="tag-row">
+                    <app-color-picker
+                        [ngModel]="row.color"
+                        (ngModelChange)="colorChanged(row, $event)"
+                        [disabled]="!canEdit"
+                        [label]="'Farbe von ' + row.name"
+                    />
+                    <input
+                        type="text"
+                        class="name-input"
+                        [(ngModel)]="row.name"
+                        [disabled]="!canEdit"
+                        (blur)="saveName(row)"
+                        (keydown.enter)="$any($event.target).blur()"
+                        (keydown.escape)="row.name = row.savedName; $any($event.target).blur()"
+                        [attr.aria-label]="'Name von ' + row.savedName"
+                        maxlength="80"
+                    />
+                    <span
+                        class="tag-preview"
+                        [style.background]="row.color || 'var(--surface-active)'"
+                        [style.color]="row.color ? textColor(row.color) : 'var(--text)'"
+                    >
+                        {{ row.name || row.savedName }}
+                    </span>
+                    <span class="usage">{{ usageText(row) || 'Nicht verwendet' }}</span>
+                    <span class="state" [class.error]="row.state === 'error'">
+                        @switch (row.state) {
+                            @case ('saving') {
+                                Speichert...
+                            }
+                            @case ('saved') {
+                                <svg lucideCheck size="14"></svg>
+                                Gespeichert
+                            }
+                            @case ('error') {
+                                Fehler beim Speichern
+                            }
+                        }
+                    </span>
+                    @if (canDelete) {
+                        <button type="button" class="icon-button danger" title="Löschen" (click)="remove(row)">
+                            <svg lucideTrash2 size="15"></svg>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</section>

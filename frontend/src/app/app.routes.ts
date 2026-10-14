@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { LucideBoxes, LucideMapPin, LucideShapes, LucideTags } from '@lucide/angular';
+import { LucideBoxes, LucideMapPin, LucideShapes } from '@lucide/angular';
 
 import { adminGuard } from './core/guards/admin.guard';
 import { AuthGuard } from './core/guards/auth.guard';
@@ -218,23 +218,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/tags',
-        component: InventoryPage,
-        data: {
-          inventoryConfig: {
-            title: 'Tags',
-            endpoint: 'tags',
-            resourceType: 'ASSET_TYPE',
-            icon: LucideTags,
-            filter: {
-              searchFields: ['name'],
-              searchPlaceholder: 'Tag suchen...',
-            },
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'color', label: 'Farbe', type: 'color' },
-            ],
-          },
-        },
+        loadComponent: () => import('./core/pages/tags-page/tags-page').then((m) => m.TagsPage),
       },
 
       {
