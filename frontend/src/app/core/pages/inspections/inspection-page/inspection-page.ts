@@ -45,6 +45,7 @@ import {
   fieldOptions,
   formatCheckValue,
 } from '../../../service/inspection.service';
+import { AreaService } from '../../../service/area.service';
 import { FileApiService } from '../../../service/file-api.service';
 import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import { PermissionService } from '../../../service/permission.service';
@@ -142,6 +143,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     private readonly confirmDialog: ConfirmDialogService,
     private readonly inventory: InventoryApiService,
     private readonly files: FileApiService,
+    private readonly areaService: AreaService,
   ) {}
 
   ngOnInit(): void {
@@ -272,7 +274,7 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected get assetOptions(): SelectOption[] {
     const inList = new Set(this.detail?.items.map((item) => item.assetUuid));
     return this.addableAssets
-      .filter((asset) => !inList.has(asset.uuid))
+      .filter((asset) => !inList.has(asset.uuid) && this.areaService.matchesSelection(asset))
       .map((asset) => ({ value: asset.uuid, label: asset.name, hint: asset.invId ?? undefined }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }

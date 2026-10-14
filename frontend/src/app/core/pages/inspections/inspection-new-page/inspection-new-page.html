@@ -136,10 +136,11 @@
                             <app-multi-select
                                 [options]="areaOptions"
                                 [(ngModel)]="filter.areaUuids"
-                                (ngModelChange)="filterChanged()"
+                                (ngModelChange)="areasChanged()"
                                 name="areas"
-                                placeholder="Bereich hinzufügen..."
+                                placeholder="Alle Bereiche"
                             />
+                            <small class="hint">Vorbelegt mit dem links gewählten Bereich. Typen, Tags und Standorte zeigen nur, was es dort gibt.</small>
                         </div>
                     </div>
                 </section>
