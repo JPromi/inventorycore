@@ -9,6 +9,7 @@ import { InventoryPage } from './core/pages/inventory-page/inventory-page';
 import { LoginPage } from './core/pages/login-page/login-page';
 import { PlaceholderPage } from './core/pages/placeholder-page/placeholder-page';
 import { MainRoute } from './core/routes/main-route/main-route';
+import { ASSET_DETAIL_CONFIG, LOCATION_DETAIL_CONFIG } from './core/pages/inventory-detail-page/detail-configs';
 
 const assetFormConfig = {
   title: 'Asset',
@@ -113,22 +114,7 @@ export const routes: Routes = [
       {
         path: 'assets/:uuid',
         loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
-        data: {
-          inventoryDetailConfig: {
-            title: 'Asset',
-            endpoint: 'assets',
-            listRoute: '/assets',
-            editRoutePrefix: '/assets',
-            resourceType: 'ASSET',
-            icon: LucideBoxes,
-            fields: [
-              { key: 'serialNumber', label: 'Seriennummer' },
-              { key: 'inventoryNumber', label: 'Inventarnummer' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall', suffix: ' Tage' },
-              { key: 'description', label: 'Beschreibung' },
-            ],
-          },
-        },
+        data: { inventoryDetailConfig: ASSET_DETAIL_CONFIG },
       },
 
       // Standorte
@@ -158,20 +144,7 @@ export const routes: Routes = [
       {
         path: 'locations/:uuid',
         loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
-        data: {
-          inventoryDetailConfig: {
-            title: 'Standort',
-            endpoint: 'locations',
-            listRoute: '/locations',
-            editRoutePrefix: '/locations',
-            resourceType: 'LOCATION',
-            icon: LucideMapPin,
-            fields: [
-              { key: 'address', label: 'Adresse' },
-              { key: 'description', label: 'Beschreibung' },
-            ],
-          },
-        },
+        data: { inventoryDetailConfig: LOCATION_DETAIL_CONFIG },
       },
 
       // Konfiguration
@@ -215,6 +188,10 @@ export const routes: Routes = [
             ],
           },
         },
+      },
+      {
+        path: 'scan',
+        loadComponent: () => import('./core/pages/scan-page/scan-page').then((m) => m.ScanPage),
       },
       {
         path: 'config/tags',

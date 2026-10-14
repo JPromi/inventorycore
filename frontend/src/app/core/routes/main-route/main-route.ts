@@ -26,6 +26,7 @@ import {
   LucideSettings,
   LucideShapes,
   LucideShield,
+  LucideScanBarcode,
   LucideTags,
   LucideUser,
   LucideUsers,
@@ -67,6 +68,7 @@ export class MainRoute implements OnInit {
   protected readonly navIconInputs = { size: 17 };
   protected readonly primaryNavItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: LucideHouse },
+    { label: 'Scannen', route: '/scan', icon: LucideScanBarcode },
     { label: 'Inventar', route: '/assets', icon: LucideBoxes },
     { label: 'Standorte', route: '/locations', icon: LucideMapPin },
     { label: 'Prüfungen', route: '/reports', icon: LucideClipboardCheck },
