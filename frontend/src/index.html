@@ -5,7 +5,8 @@
     <title>InventoryCore</title>
     <base href="/" />
     <!-- viewport-fit=cover: the layout uses env(safe-area-inset-*) for notch and home indicator -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- no zooming on phones: the layout is made for the screen width (inputs use 16px, so iOS does not zoom into them) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="description" content="Inventar, Standorte und Prüfungen an einem Ort." />
 
     <!-- PWA -->

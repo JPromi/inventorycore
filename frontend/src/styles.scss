@@ -4,6 +4,21 @@ html,
 body {
     width: 100%;
     height: 100%;
+    // the app scrolls inside its pages, never the document: no rubber band on iOS,
+    // no pull-to-refresh, the top bar and navigation stay where they are
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+// pinned to the screen; otherwise iOS Safari still moves the whole document when dragged
+body {
+    position: fixed;
+    inset: 0;
+}
+
+app-root {
+    display: block;
+    height: 100%;
 }
 
 * {
@@ -11,6 +26,12 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Poppins', sans-serif;
+    // scroll areas keep their own momentum and bounce, but never pass the scroll on to the area
+    // behind them (the document itself does not bounce, see html / body above)
+    overscroll-behavior: contain;
+    // touch: scrolling yes, pinch and double-tap zoom no (the color picker and the label editor
+    // set their own value for dragging)
+    touch-action: pan-x pan-y;
 }
 
 // ---- design tokens: components use only these variables for colors, shadows and radii ----
@@ -728,6 +749,10 @@ label.field {
     .page {
         height: auto !important;
         overflow: visible !important;
+    }
+
+    body {
+        position: static !important;
     }
 
     .page {

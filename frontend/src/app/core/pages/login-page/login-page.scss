@@ -2,8 +2,9 @@
 
 :host {
     display: block;
-    min-height: 100vh;
-    min-height: 100dvh;
+    // the document does not scroll (styles.scss), so the page does
+    height: 100%;
+    overflow-y: auto;
     background: var(--background);
     color: var(--text);
 }
