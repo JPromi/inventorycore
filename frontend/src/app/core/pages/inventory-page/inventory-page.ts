@@ -19,6 +19,7 @@ import {
 } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
+import { FilterBar } from '../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
@@ -64,6 +65,7 @@ interface FieldConfig {
   imports: [
     CommonModule,
     FormsModule,
+    FilterBar,
     SearchSelect,
     LucideChevronRight,
     LucideLayers,
@@ -161,6 +163,11 @@ export class InventoryPage implements OnInit {
       return [];
     }
     return (item.areaUuids ?? []).map((uuid) => this.areaService.name(uuid));
+  }
+
+  /** Set filters without the search (for the folded filter button on phones). */
+  protected get activeFilterCount(): number {
+    return [this.tagFilter, this.locationFilter, this.assetTypeFilter, this.areaFilter].filter(Boolean).length;
   }
 
   protected get hasActiveFilters(): boolean {

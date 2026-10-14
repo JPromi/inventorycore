@@ -5,6 +5,7 @@ import { LucidePlus, LucideShield, LucideTrash2, LucideX } from '@lucide/angular
 import { forkJoin } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { FilterBar } from '../../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { PermissionResourceType } from '../../../entities/user.entity';
 import {
@@ -31,7 +32,7 @@ const ALL = '__all__';
 
 @Component({
   selector: 'app-permissions-page',
-  imports: [FormsModule, RouterLink, SearchSelect, LucidePlus, LucideShield, LucideTrash2, LucideX],
+  imports: [FormsModule, FilterBar, RouterLink, SearchSelect, LucidePlus, LucideShield, LucideTrash2, LucideX],
   templateUrl: './permissions-page.html',
   styleUrl: './permissions-page.scss',
 })
@@ -91,6 +92,10 @@ export class PermissionsPage implements OnInit {
           this.areaName(a.permission.areaUuid).localeCompare(this.areaName(b.permission.areaUuid)) ||
           (a.permission.resourceType ?? '').localeCompare(b.permission.resourceType ?? ''),
       );
+  }
+
+  protected get activeFilterCount(): number {
+    return [this.groupFilter, this.typeFilter, this.areaFilter].filter(Boolean).length;
   }
 
   protected get hasActiveFilters(): boolean {

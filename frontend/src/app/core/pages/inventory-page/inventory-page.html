@@ -39,8 +39,14 @@
     </header>
 
     @if (config.filter; as filter) {
-        <div class="toolbar">
-            <div class="search-box">
+        <app-filter-bar
+            class="toolbar"
+            [hasFilters]="!!(filter.tags || filter.locations || filter.assetTypes || (filter.areas && areaOptions.length > 1))"
+            [activeCount]="activeFilterCount"
+            [canReset]="hasActiveFilters"
+            (reset)="resetFilters()"
+        >
+            <div class="search-box" filterSearch>
                 <svg class="search-icon" lucideSearch size="18"></svg>
                 <input
                     #searchInput
@@ -103,13 +109,7 @@
                     searchPlaceholder="Typ suchen..."
                 />
             }
-            @if (hasActiveFilters) {
-                <button type="button" class="reset-filters" (click)="resetFilters()">
-                    <svg lucideX size="15"></svg>
-                    <span>Filter zurücksetzen</span>
-                </button>
-            }
-        </div>
+        </app-filter-bar>
     }
 
     @if (error) {

@@ -69,30 +69,6 @@
         flex: 0 1 13rem;
         min-width: min(100%, 10rem);
     }
-
-    .reset-filters {
-        min-height: 2.35rem;
-        padding: 0 .6rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: .3rem;
-        border: 0;
-        border-radius: var(--radius-sm);
-        background: transparent;
-        color: var(--accent);
-        font-size: .85rem;
-        font-weight: 700;
-        cursor: pointer;
-
-        &:hover {
-            background: var(--accent-soft);
-        }
-
-        @include bp.phone {
-            min-height: 2.6rem;
-        }
-    }
 }
 
 .empty-state {

@@ -15,8 +15,8 @@
         </div>
     </header>
 
-    <div class="toolbar">
-        <div class="search-box">
+    <app-filter-bar class="toolbar" [activeCount]="activeFilterCount" [canReset]="hasActiveFilters" (reset)="resetFilters()">
+        <div class="search-box" filterSearch>
             <svg class="search-icon" lucideSearch size="18"></svg>
             <input type="text" [(ngModel)]="search" placeholder="Name, Benutzername oder E-Mail suchen..." aria-label="Suchen" />
             @if (search) {
@@ -40,10 +40,7 @@
             placeholder="Alle Status"
             clearLabel="Alle Status"
         />
-        @if (hasActiveFilters) {
-            <button type="button" class="secondary-action compact" (click)="resetFilters()">Zurücksetzen</button>
-        }
-    </div>
+    </app-filter-bar>
 
     @if (error) {
         <p class="error">{{ error }}</p>

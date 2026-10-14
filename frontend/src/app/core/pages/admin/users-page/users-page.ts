@@ -5,13 +5,14 @@ import { LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, L
 import { forkJoin } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { FilterBar } from '../../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AdminApiService, AdminGroup, AdminUser, PROVIDER_LABELS } from '../../../service/admin-api.service';
 import { AuthStateService } from '../../../service/auth-state.service';
 
 @Component({
   selector: 'app-users-page',
-  imports: [FormsModule, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
+  imports: [FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss',
 })
@@ -66,6 +67,10 @@ export class UsersPage implements OnInit {
           return true;
       }
     });
+  }
+
+  protected get activeFilterCount(): number {
+    return [this.groupFilter, this.statusFilter].filter(Boolean).length;
   }
 
   protected get hasActiveFilters(): boolean {
