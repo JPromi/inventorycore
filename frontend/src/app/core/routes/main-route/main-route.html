@@ -1,9 +1,67 @@
 <nav>
     <header>Logo</header>
-    <div>
-        <li>Item 1</li>
-        <li>Item 2</li>
-        <li>Item 3</li>
+    <div class="nav-groups">
+        <ul class="nav-list">
+            @for (item of primaryNavItems; track item.label) {
+                <li>
+                    @if (item.children) {
+                        <button
+                            type="button"
+                            class="nav-item"
+                            [class.active]="isGroupActive(item)"
+                            [class.disabled]="item.disabled"
+                            (click)="toggleGroup(item.label)"
+                            [attr.aria-expanded]="isGroupExpanded(item)"
+                        >
+                            <span class="nav-label">
+                                @if (item.icon) {
+                                    <ng-container *ngComponentOutlet="item.icon; inputs: navIconInputs"></ng-container>
+                                }
+                                <span>{{ item.label }}</span>
+                            </span>
+                            <svg class="chevron" lucideChevronDown size="15"></svg>
+                        </button>
+                        @if (isGroupExpanded(item)) {
+                            <ul class="sub-nav">
+                                @for (child of item.children; track child.label) {
+                                    <li>
+                                        @if (child.route) {
+                                            <a [routerLink]="child.route" routerLinkActive="active">
+                                                @if (child.icon) {
+                                                    <ng-container *ngComponentOutlet="child.icon; inputs: navIconInputs"></ng-container>
+                                                }
+                                                <span>{{ child.label }}</span>
+                                            </a>
+                                        } @else {
+                                            <span>
+                                                @if (child.icon) {
+                                                    <ng-container *ngComponentOutlet="child.icon; inputs: navIconInputs"></ng-container>
+                                                }
+                                                <span>{{ child.label }}</span>
+                                            </span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    } @else {
+                        <a
+                            class="nav-item"
+                            [class.active]="isItemActive(item)"
+                            [routerLink]="item.route"
+                            routerLinkActive="active"
+                        >
+                            <span class="nav-label">
+                                @if (item.icon) {
+                                    <ng-container *ngComponentOutlet="item.icon; inputs: navIconInputs"></ng-container>
+                                }
+                                <span>{{ item.label }}</span>
+                            </span>
+                        </a>
+                    }
+                </li>
+            }
+        </ul>
     </div>
     <footer>
         <a class="user" href="#">

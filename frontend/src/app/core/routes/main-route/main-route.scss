@@ -5,18 +5,20 @@
     background-color: var(--background);
 
     nav {
-        background-color: var(--primary);
+        background-color: var(--surface);
         display: flex;
         flex-direction: column;
-        width: 18rem;
+        width: 15.25rem;
+        border-right: 1px solid var(--border);
 
         header {
             padding: 1rem;
-
+            color: var(--text);
+            font-weight: 700;
         }
 
-        div {
-            padding: 1rem;
+        .nav-groups {
+            padding: 0 .5rem 1rem;
             flex: 1;
             overflow-y: auto;
 
@@ -26,12 +28,130 @@
             }
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
+
+            .nav-list {
+                display: flex;
+                flex-direction: column;
+                gap: .125rem;
+                list-style: none;
+            }
+
+            .nav-section {
+                margin-top: 1.5rem;
+
+                h2 {
+                    padding: 0 .5rem .375rem;
+                    color: var(--text-muted);
+                    font-size: .82rem;
+                    font-weight: 500;
+                }
+            }
+
+            .nav-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                min-height: 2rem;
+                padding: .375rem .5rem;
+                border: 1px solid transparent;
+                border-radius: .375rem;
+                background: transparent;
+                color: var(--text);
+                cursor: pointer;
+                font-size: .94rem;
+                font-weight: 700;
+                text-align: left;
+                text-decoration: none;
+
+                &:hover {
+                    background-color: var(--surface-hover);
+                }
+
+                &.active {
+                    background-color: var(--surface-active);
+                }
+
+                &[aria-expanded="true"] {
+                    background-color: var(--surface);
+                }
+
+                &.disabled {
+                    color: var(--text-subtle);
+
+                    svg {
+                        color: var(--text-subtle);
+                    }
+                }
+
+                .nav-label {
+                    display: flex;
+                    align-items: center;
+                    min-width: 0;
+                    gap: .55rem;
+                }
+
+                svg {
+                    flex: 0 0 auto;
+                    color: var(--text-muted);
+                }
+
+                &.active:not([aria-expanded="true"]) {
+                    color: var(--accent);
+
+                    svg {
+                        color: var(--accent);
+                    }
+                }
+
+                .chevron {
+                    color: var(--text-subtle);
+                }
+            }
+
+            .sub-nav {
+                display: flex;
+                flex-direction: column;
+                gap: .125rem;
+                padding: .25rem 0 .25rem 2.15rem;
+                list-style: none;
+
+                a,
+                span {
+                    display: flex;
+                    align-items: center;
+                    gap: .5rem;
+                    min-height: 1.85rem;
+                    color: var(--text-muted);
+                    font-size: .92rem;
+                    font-weight: 500;
+                    text-decoration: none;
+                }
+
+                svg {
+                    flex: 0 0 auto;
+                    color: var(--text-subtle);
+                }
+
+                a.active,
+                a:hover {
+                    color: var(--accent);
+
+                    svg {
+                        color: var(--accent);
+                    }
+                }
+
+                span {
+                    color: var(--text-subtle);
+                }
+            }
         }
 
         footer {
             margin-top: auto;
             padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 1px solid var(--border);
             padding: 1rem;
 
             .user {
@@ -39,7 +159,7 @@
                 align-items: center;
                 gap: .5rem;
                 text-decoration: none;
-                color: var(--primary-text);
+                color: var(--text);
 
                 span.avatar {
                     display: flex;
@@ -48,8 +168,8 @@
                     width: 2rem;
                     height: 2rem;
                     border-radius: 50%;
-                    background-color: #fff;
-                    color: var(--primary);
+                    background-color: var(--primary);
+                    color: var(--primary-text);
                     overflow: hidden;
 
                     img {
