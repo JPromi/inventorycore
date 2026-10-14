@@ -1,0 +1,34 @@
+// Breakpoints for components: `@use 'breakpoints' as bp;` then `@include bp.phone { ... }`.
+// Only variables and mixins, so using it adds no CSS by itself.
+
+$phone: 640px;
+$tablet: 900px;
+$laptop: 1100px;
+
+/// Phones (narrow screens).
+@mixin phone {
+    @media (max-width: $phone) {
+        @content;
+    }
+}
+
+/// Tablets and phones; the navigation turns into a drawer below this width.
+@mixin tablet {
+    @media (max-width: $tablet) {
+        @content;
+    }
+}
+
+/// Small laptops: wide layouts (editor with side panel, wide tables) with the side navigation still visible.
+@mixin laptop {
+    @media (max-width: $laptop) {
+        @content;
+    }
+}
+
+/// Devices without hover (touch): show things that otherwise appear on hover.
+@mixin touch {
+    @media (hover: none) {
+        @content;
+    }
+}

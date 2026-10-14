@@ -1,40 +1,56 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
     height: 100%;
 }
 
-.filter-select {
+.toolbar .filter-select {
     flex: 0 1 13rem;
     min-width: 10rem;
-}
 
-.user-cell {
-    display: flex;
-    align-items: center;
-    gap: .65rem;
-
-    > span:last-child {
-        display: flex;
-        flex-direction: column;
+    // every filter gets its own line, like the global toolbar rule
+    @include bp.phone {
+        flex: 1 1 100%;
     }
 }
 
-.avatar {
-    width: 2rem;
-    height: 2rem;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 700;
-}
+.data-table {
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
 
-td.actions .icon-button {
-    width: 2rem;
-    height: 2rem;
-    margin-left: .3rem;
+        > span:last-child {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    .avatar {
+        width: 2rem;
+        height: 2rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+    }
+
+    td.actions .icon-button {
+        width: 2rem;
+        height: 2rem;
+        margin-left: .3rem;
+
+        @include bp.phone {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+    }
 }

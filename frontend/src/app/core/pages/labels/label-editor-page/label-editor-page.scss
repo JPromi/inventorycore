@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
@@ -9,62 +11,111 @@
     grid-template-columns: 22rem minmax(0, 1fr);
     gap: 1rem;
     align-items: start;
-}
 
-.sidebar {
-    gap: .75rem;
-}
-
-.fields {
-    display: flex;
-    flex-direction: column;
-    gap: .7rem;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: .3rem;
-}
-
-label.field > span,
-.field-label {
-    color: var(--text-muted);
-    font-size: .8rem;
-    font-weight: 700;
-}
-
-.two {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: .6rem;
-}
-
-.four {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: .4rem;
-
-    input {
-        padding: .4rem;
+    // canvas on top, properties below
+    @include bp.laptop {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
-.toggle {
-    min-height: 1.8rem;
-    font-size: .85rem;
-}
-
-.style-toggles {
-    display: flex;
+// ---- properties panel ----
+.sidebar {
     gap: .75rem;
-}
+    min-width: 0;
 
-.add-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .4rem;
-    margin-bottom: .6rem;
+    .fields {
+        display: flex;
+        flex-direction: column;
+        gap: .7rem;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+    }
+
+    label.field > span,
+    .field-label {
+        color: var(--text-muted);
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .6rem;
+    }
+
+    .four {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: .4rem;
+
+        input {
+            padding: .4rem;
+        }
+
+        @include bp.phone {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .toggle {
+        min-height: 1.8rem;
+        font-size: .85rem;
+
+        @include bp.phone {
+            min-height: 2.5rem;
+        }
+    }
+
+    .style-toggles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+    }
+
+    .add-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin-bottom: .6rem;
+
+        @include bp.phone {
+            > * {
+                flex: 1 1 auto;
+            }
+        }
+    }
+
+    .placeholders {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .3rem;
+        margin-top: -.3rem;
+
+        button {
+            padding: .15rem .5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            background: var(--surface-active);
+            color: var(--text);
+            font-size: .74rem;
+            cursor: pointer;
+
+            &:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            @include bp.touch {
+                padding: .45rem .75rem;
+                font-size: .8rem;
+            }
+        }
+    }
 }
 
 .element-list {
@@ -78,7 +129,7 @@ label.field > span,
         align-items: center;
         gap: .45rem;
         padding: .35rem .45rem;
-        border-radius: .375rem;
+        border-radius: var(--radius-sm);
         color: var(--text-muted);
         font-size: .85rem;
         cursor: pointer;
@@ -93,14 +144,19 @@ label.field > span,
             font-weight: 700;
         }
 
+        &.empty-item {
+            cursor: default;
+        }
+
         button {
             width: 1.5rem;
             height: 1.5rem;
+            flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border: 0;
-            border-radius: .25rem;
+            border-radius: var(--radius-xs);
             background: transparent;
             color: inherit;
             cursor: pointer;
@@ -113,6 +169,11 @@ label.field > span,
             &:hover:not(:disabled) {
                 background: var(--surface-active);
             }
+
+            @include bp.touch {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
         }
     }
 
@@ -124,107 +185,101 @@ label.field > span,
         white-space: nowrap;
         color: var(--text);
     }
-
-    .empty-item {
-        cursor: default;
-    }
 }
 
-.placeholders {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .3rem;
-    margin-top: -.3rem;
-
-    button {
-        padding: .15rem .5rem;
-        border: 1px solid var(--border);
-        border-radius: 999px;
-        background: var(--surface-active);
-        color: var(--text);
-        font-size: .74rem;
-        cursor: pointer;
-
-        &:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-    }
-}
-
+// ---- canvas ----
 .canvas-column {
     position: sticky;
     top: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: .6rem;
-}
 
-.canvas-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: .6rem;
-}
-
-.sample {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-
-    .sample-select {
-        width: 16rem;
-    }
-}
-
-.zoom {
-    display: flex;
-    align-items: center;
-    gap: .3rem;
-
-    .zoom-value {
-        min-width: 4rem;
-        height: 2.25rem;
-        border: 1px solid var(--border);
-        border-radius: .375rem;
-        background: var(--surface);
-        color: var(--text);
-        font-size: .82rem;
-        font-weight: 700;
-        cursor: pointer;
-    }
-}
-
-.canvas {
-    min-height: 24rem;
-    max-height: 70vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: auto;
-    padding: 2rem;
-    border: 1px solid var(--border);
-    border-radius: .5rem;
-    background:
-        linear-gradient(45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 16px 16px,
-        linear-gradient(-45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 16px 16px,
-        var(--surface-hover);
-}
-
-.canvas-hint code {
-    padding: 0 .25rem;
-    border-radius: .25rem;
-    background: var(--surface-active);
-}
-
-@media (max-width: 1100px) {
-    .editor-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .canvas-column {
+    @include bp.laptop {
         position: static;
         order: -1;
+    }
+
+    .canvas-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: .6rem;
+    }
+
+    .sample {
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .5rem;
+
+        .sample-select {
+            width: min(100%, 16rem);
+        }
+
+        @include bp.phone {
+            flex: 1 1 100%;
+
+            .sample-select {
+                flex: 1 1 12rem;
+            }
+        }
+    }
+
+    .zoom {
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+
+        .zoom-value {
+            min-width: 4rem;
+            height: 2.25rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            color: var(--text);
+            font-size: .82rem;
+            font-weight: 700;
+            cursor: pointer;
+
+            @include bp.phone {
+                height: 2.5rem;
+            }
+        }
+
+        @include bp.phone {
+            margin-left: auto;
+        }
+    }
+
+    .canvas {
+        min-height: 24rem;
+        max-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+        padding: 2rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background:
+            linear-gradient(45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 16px 16px,
+            linear-gradient(-45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 16px 16px,
+            var(--surface-hover);
+
+        @include bp.phone {
+            min-height: 14rem;
+            max-height: 55vh;
+            padding: 1rem;
+        }
+    }
+
+    .canvas-hint code {
+        padding: 0 .25rem;
+        border-radius: var(--radius-xs);
+        background: var(--surface-active);
     }
 }

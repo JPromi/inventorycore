@@ -1,41 +1,51 @@
+@use 'breakpoints' as bp;
+
 // Only editor helpers live here; the label itself uses inline styles so it prints identically.
 :host {
     display: inline-block;
 }
 
 .label {
-    box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
-}
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--black) 25%, transparent);
 
-.editable {
-    touch-action: none;
-    user-select: none;
+    &.editable {
+        touch-action: none;
+        user-select: none;
 
-    .element {
-        cursor: move;
-        outline: 1px dashed rgba(100, 116, 139, .45);
-        outline-offset: -1px;
-
-        &:hover {
-            outline-color: rgba(182, 47, 47, .6);
-        }
-
-        &.selected {
-            outline: 2px solid var(--accent, #b62f2f);
+        .element {
+            cursor: move;
+            outline: 1px dashed color-mix(in srgb, var(--text-muted) 45%, transparent);
             outline-offset: -1px;
-            overflow: visible !important;
+
+            &:hover {
+                outline-color: color-mix(in srgb, var(--accent) 60%, transparent);
+            }
+
+            &.selected {
+                outline: 2px solid var(--accent);
+                outline-offset: -1px;
+                overflow: visible !important;
+            }
         }
     }
-}
 
-.resize-handle {
-    position: absolute;
-    right: -5px;
-    bottom: -5px;
-    width: 10px;
-    height: 10px;
-    border: 2px solid #fff;
-    border-radius: 2px;
-    background: var(--accent, #b62f2f);
-    cursor: nwse-resize;
+    .resize-handle {
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        width: 10px;
+        height: 10px;
+        border: 2px solid var(--white);
+        border-radius: var(--radius-xs);
+        background: var(--accent);
+        cursor: nwse-resize;
+
+        // bigger grip for fingers
+        @include bp.touch {
+            right: -9px;
+            bottom: -9px;
+            width: 18px;
+            height: 18px;
+        }
+    }
 }

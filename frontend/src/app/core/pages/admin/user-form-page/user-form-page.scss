@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
@@ -8,33 +10,35 @@
     width: min(100%, 48rem);
 }
 
+// non-label fields (role, status, groups); label.field is styled globally
 .field {
     display: flex;
     flex-direction: column;
     gap: .35rem;
-}
 
-.field-label {
-    color: var(--text-muted);
-    font-size: .85rem;
-    font-weight: 700;
-}
+    .field-label {
+        color: var(--text-muted);
+        font-size: .85rem;
+        font-weight: 700;
+    }
 
-.groups {
-    margin-top: 1rem;
+    &.groups {
+        margin-top: 1rem;
+    }
 }
 
 .segmented {
+    max-width: 100%;
     display: inline-flex;
     align-self: flex-start;
     padding: .15rem;
     border: 1px solid var(--border);
-    border-radius: .45rem;
+    border-radius: var(--radius-sm);
     background: var(--surface-active);
 
     label {
         padding: .4rem .85rem;
-        border-radius: .3rem;
+        border-radius: var(--radius-xs);
         color: var(--text-muted);
         font-size: .88rem;
         font-weight: 600;
@@ -45,12 +49,25 @@
             color: var(--text);
             box-shadow: var(--shadow-sm);
         }
+
+        @include bp.phone {
+            flex: 1 1 0;
+            min-height: 2.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
     }
 
     input {
         position: absolute;
         opacity: 0;
         pointer-events: none;
+    }
+
+    @include bp.phone {
+        align-self: stretch;
     }
 }
 

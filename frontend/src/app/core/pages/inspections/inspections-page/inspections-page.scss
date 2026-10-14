@@ -1,8 +1,17 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
     height: 100%;
 }
+
+.overdue-text {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+// ---- inspections ----
 
 .inspection-list {
     display: flex;
@@ -25,110 +34,96 @@
         border-color: var(--border-strong);
         box-shadow: var(--shadow-sm);
     }
-}
 
-.main {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: .3rem;
-}
-
-.title-line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .5rem;
-
-    strong {
-        font-size: 1rem;
+    .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
     }
 
-    .type {
-        color: var(--text-muted);
-        font-size: .82rem;
-    }
-}
-
-.filter {
-    overflow: hidden;
-    color: var(--text-muted);
-    font-size: .85rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.meta {
-    color: var(--text-subtle);
-    font-size: .78rem;
-}
-
-.stats {
-    display: flex;
-    flex-direction: column;
-    gap: .45rem;
-}
-
-.progress {
-    height: .5rem;
-    display: flex;
-    overflow: hidden;
-    border-radius: 999px;
-    background: var(--surface-active);
-
-    .present {
-        background: var(--success);
-    }
-
-    .missing {
-        background: var(--accent);
-    }
-}
-
-.numbers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .35rem .9rem;
-    color: var(--text-muted);
-    font-size: .8rem;
-
-    strong {
-        color: var(--text);
-    }
-
-    .warning {
-        display: inline-flex;
+    .title-line {
+        display: flex;
+        flex-wrap: wrap;
         align-items: center;
-        gap: .2rem;
-        color: #b45309;
+        gap: .5rem;
 
         strong {
-            color: inherit;
+            font-size: 1rem;
+            overflow-wrap: anywhere;
+        }
+
+        .type {
+            color: var(--text-muted);
+            font-size: .82rem;
         }
     }
-}
 
-@media (max-width: 760px) {
-    .inspection-row {
+    .filter {
+        overflow: hidden;
+        color: var(--text-muted);
+        font-size: .85rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .meta {
+        color: var(--text-subtle);
+        font-size: .78rem;
+    }
+
+    .stats {
+        display: flex;
+        flex-direction: column;
+        gap: .45rem;
+    }
+
+    .progress {
+        height: .5rem;
+        display: flex;
+        overflow: hidden;
+        border-radius: var(--radius-pill);
+        background: var(--surface-active);
+
+        .present {
+            background: var(--success);
+        }
+
+        .missing {
+            background: var(--accent);
+        }
+    }
+
+    .numbers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem .9rem;
+        color: var(--text-muted);
+        font-size: .8rem;
+
+        strong {
+            color: var(--text);
+        }
+
+        .warning {
+            display: inline-flex;
+            align-items: center;
+            gap: .2rem;
+            color: var(--warning);
+
+            strong {
+                color: inherit;
+            }
+        }
+    }
+
+    @include bp.phone {
         grid-template-columns: minmax(0, 1fr);
         gap: .75rem;
     }
 }
 
-.overdue-text {
-    color: var(--accent);
-    font-weight: 700;
-}
-
-.segmented-tabs .count.alert {
-    background: var(--accent);
-    color: #fff;
-}
-
-.badge.warn {
-    background: #fef3c7;
-    color: #b45309;
-}
+// ---- due assets, grouped by inspection type ----
 
 .due-groups {
     display: flex;
@@ -140,6 +135,14 @@
     position: relative;
     overflow: hidden;
     padding: 0;
+
+    .stripe {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: .3rem;
+    }
 }
 
 .due-head {
@@ -156,25 +159,40 @@
     text-align: left;
     cursor: pointer;
 
-    > svg:first-of-type { color: var(--text-muted); }
-    .chevron { color: var(--text-subtle); transition: transform .15s; }
-    .chevron.open { transform: rotate(180deg); }
-}
+    > svg:first-of-type {
+        color: var(--text-muted);
+    }
 
-.stripe {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: .3rem;
-}
+    .due-title {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
 
-.due-title {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+        small {
+            color: var(--text-muted);
+            font-size: .78rem;
+        }
 
-    small { color: var(--text-muted); font-size: .78rem; }
+        @include bp.phone {
+            flex-basis: calc(100% - 2rem);
+        }
+    }
+
+    .chevron {
+        color: var(--text-subtle);
+        transition: transform .15s;
+
+        &.open {
+            transform: rotate(180deg);
+        }
+    }
+
+    @include bp.phone {
+        .primary-action {
+            margin-left: auto;
+        }
+    }
 }
 
 .due-list {
@@ -189,19 +207,46 @@
         padding: .5rem 1rem .5rem 1.25rem;
         font-size: .86rem;
 
-        & + li { border-top: 1px solid var(--border); }
+        & + li {
+            border-top: 1px solid var(--border);
+        }
+
+        &.overdue .when {
+            color: var(--accent);
+        }
+
+        @include bp.phone {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
     }
 
-    a { color: var(--text); font-weight: 700; }
-    .meta { overflow: hidden; color: var(--text-muted); text-overflow: ellipsis; white-space: nowrap; }
-    .when { color: #b45309; font-weight: 700; white-space: nowrap; }
-    .overdue .when { color: var(--accent); }
-    .when small { color: var(--text-subtle); font-weight: 400; }
-    .last { color: var(--text-subtle); font-size: .78rem; white-space: nowrap; }
-}
+    a {
+        color: var(--text);
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
 
-@media (max-width: 760px) {
-    .due-list li {
-        grid-template-columns: minmax(0, 1fr) auto;
+    .meta {
+        overflow: hidden;
+        color: var(--text-muted);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .when {
+        color: var(--warning);
+        font-weight: 700;
+        white-space: nowrap;
+
+        small {
+            color: var(--text-subtle);
+            font-weight: 400;
+        }
+    }
+
+    .last {
+        color: var(--text-subtle);
+        font-size: .78rem;
+        white-space: nowrap;
     }
 }

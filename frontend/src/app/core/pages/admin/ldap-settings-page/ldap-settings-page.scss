@@ -1,78 +1,25 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
     height: 100%;
 }
 
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: .35rem;
-    color: var(--text-muted);
-    font-size: .85rem;
-    font-weight: 700;
-
-    &.wide {
-        grid-column: 1 / -1;
-    }
-
-    small {
-        color: var(--text-subtle);
-        font-size: .75rem;
-        font-weight: 400;
-    }
-}
-
-.mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .82rem !important;
-}
-
-.switch {
-    font-weight: 700;
-}
-
-.options {
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-}
-
-.toggle.option {
-    align-items: flex-start;
-    margin-top: .75rem;
-
-    input {
-        margin-top: .2rem;
-    }
-
-    > span {
-        display: flex;
-        flex-direction: column;
-        gap: .1rem;
-    }
-
-    small {
-        color: var(--text-muted);
-        font-size: .78rem;
-        font-weight: 400;
-    }
-
-    &.warn > span {
-        color: var(--accent);
-    }
-}
-
-.options .toggle.option {
-    margin-top: 0;
-}
-
+// test and sync results above the form
 .result {
     margin-bottom: 1rem;
     padding: .9rem 1rem;
     border: 1px solid var(--border);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
     background: var(--surface);
+
+    .result-head {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        overflow-wrap: anywhere;
+    }
 
     &.success {
         border-color: var(--success);
@@ -96,44 +43,100 @@
         margin-top: .4rem;
         font-size: .9rem;
     }
+
+    .counts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+        gap: 1rem;
+        margin-top: .75rem;
+
+        > div {
+            display: flex;
+            flex-direction: column;
+            gap: .2rem;
+            font-size: .85rem;
+        }
+
+        .count {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .samples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .3rem;
+            margin-top: .35rem;
+        }
+    }
 }
 
-.result-head {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-}
+.card {
+    .card-title {
+        @include bp.phone {
+            flex-wrap: wrap;
+        }
 
-.counts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 1rem;
-    margin-top: .75rem;
+        .switch {
+            font-weight: 700;
+        }
+    }
 
-    > div {
+    // label.field comes from the global styles
+    .field small {
+        font-size: .75rem;
+        overflow-wrap: anywhere;
+    }
+
+    .mono {
+        font-family: var(--font-mono);
+        font-size: .82rem !important;
+
+        @include bp.phone {
+            font-size: 1rem !important;
+        }
+    }
+
+    .options {
         display: flex;
         flex-direction: column;
-        gap: .2rem;
+        gap: .5rem;
+
+        .toggle.option {
+            margin-top: 0;
+        }
+    }
+
+    .toggle.option {
+        align-items: flex-start;
+        margin-top: .75rem;
+
+        input {
+            margin-top: .2rem;
+        }
+
+        > span {
+            display: flex;
+            flex-direction: column;
+            gap: .1rem;
+        }
+
+        small {
+            color: var(--text-muted);
+            font-size: .78rem;
+            font-weight: 400;
+        }
+
+        &.warn > span {
+            color: var(--accent);
+        }
+    }
+
+    .last-sync {
+        margin-top: 1rem;
+        padding-top: .75rem;
+        border-top: 1px solid var(--border);
         font-size: .85rem;
     }
-
-    .count {
-        font-size: 1.8rem;
-        font-weight: 700;
-        line-height: 1;
-    }
-}
-
-.samples {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .3rem;
-    margin-top: .35rem;
-}
-
-.last-sync {
-    margin-top: 1rem;
-    padding-top: .75rem;
-    border-top: 1px solid var(--border);
-    font-size: .85rem;
 }

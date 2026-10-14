@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
@@ -12,75 +14,98 @@
 .editor {
     margin-bottom: 1rem;
 
+    .field-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-top: .9rem;
+
+        @include bp.phone {
+            gap: 1rem;
+        }
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+    }
+
+    .field-label {
+        color: var(--text-muted);
+        font-size: .85rem;
+        font-weight: 700;
+    }
+
+    .colors {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+
+        @include bp.phone {
+            gap: .55rem;
+        }
+    }
+
+    .swatch {
+        width: 1.75rem;
+        height: 1.75rem;
+        border: 2px solid var(--surface);
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px var(--border);
+        cursor: pointer;
+
+        &.active {
+            box-shadow: 0 0 0 2px var(--text);
+        }
+
+        @include bp.phone {
+            width: 2.25rem;
+            height: 2.25rem;
+        }
+    }
+
     .editor-actions {
         margin-top: 1rem;
     }
 }
 
-.field-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 1.5rem;
-    margin-top: .9rem;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: .35rem;
-}
-
-.field-label {
-    color: var(--text-muted);
-    font-size: .85rem;
-    font-weight: 700;
-}
-
-.colors {
-    display: flex;
-    gap: .4rem;
-}
-
-.swatch {
-    width: 1.75rem;
-    height: 1.75rem;
-    border: 2px solid var(--surface);
-    border-radius: 50%;
-    box-shadow: 0 0 0 1px var(--border);
-    cursor: pointer;
-
-    &.active {
-        box-shadow: 0 0 0 2px var(--text);
-    }
-}
-
-.area-cell {
-    display: flex;
-    align-items: center;
-    gap: .65rem;
-
-    > span:last-child {
+.data-table {
+    .area-cell {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        gap: .2rem .5rem;
+        gap: .65rem;
+
+        > span:last-child {
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .2rem .5rem;
+        }
+
+        .area-dot {
+            width: .85rem;
+            height: .85rem;
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+
+        .description {
+            flex-basis: 100%;
+            overflow-wrap: anywhere;
+        }
     }
 
-    .description {
-        flex-basis: 100%;
+    td.actions .icon-button {
+        width: 2rem;
+        height: 2rem;
+        margin-left: .3rem;
+
+        @include bp.phone {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
     }
-}
-
-.area-dot {
-    width: .85rem;
-    height: .85rem;
-    flex-shrink: 0;
-    border-radius: 50%;
-}
-
-td.actions .icon-button {
-    width: 2rem;
-    height: 2rem;
-    margin-left: .3rem;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { filter } from 'rxjs';
@@ -21,6 +21,7 @@ import {
   LucideHouse,
   LucideKeyRound,
   LucideLayers,
+  LucideMenu,
   LucideMapPin,
   LucideNetwork,
   LucideQrCode,
@@ -31,6 +32,7 @@ import {
   LucideTags,
   LucideUser,
   LucideUsers,
+  LucideX,
   type LucideIcon,
 } from '@lucide/angular';
 
@@ -57,13 +59,17 @@ type NavItem = NavChild & {
     RouterLinkActive,
     ConfirmDialog,
     AreaSwitcher,
-    LucideChevronDown
+    LucideChevronDown,
+    LucideMenu,
+    LucideX,
   ],
   templateUrl: './main-route.html',
   styleUrl: './main-route.scss',
 })
 export class MainRoute implements OnInit {
   protected user: UserEntity | null = null;
+  /** Phones and tablets: the navigation is a drawer that slides in. */
+  protected menuOpen = false;
   protected currentUrl = '';
   protected readonly expandedGroups = new Set<string>();
   protected readonly navIconInputs = { size: 17 };
@@ -123,7 +129,28 @@ export class MainRoute implements OnInit {
       .subscribe((event) => {
         this.currentUrl = event.urlAfterRedirects;
         this.expandActiveGroups();
+        // a link was chosen: close the drawer
+        this.menuOpen = false;
       });
+  }
+
+  /** Title of the current section for the mobile top bar. */
+  protected get currentTitle(): string {
+    for (const item of this.visibleNavItems) {
+      if (item.route && this.currentUrl.startsWith(item.route)) {
+        return item.label;
+      }
+      const child = item.children?.find((entry) => entry.route && this.currentUrl.startsWith(entry.route));
+      if (child) {
+        return child.label;
+      }
+    }
+    return 'Inventar';
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeMenu(): void {
+    this.menuOpen = false;
   }
 
   protected toggleGroup(groupLabel: string): void {

@@ -84,7 +84,7 @@
                         {{ row.name || row.savedName }}
                     </span>
                     <span class="usage">{{ usageText(row) || 'Nicht verwendet' }}</span>
-                    <span class="state" [class.error]="row.state === 'error'">
+                    <span class="state" [class.failed]="row.state === 'error'">
                         @switch (row.state) {
                             @case ('saving') {
                                 Speichert...

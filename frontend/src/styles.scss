@@ -1,4 +1,7 @@
-html, body {
+@use 'breakpoints' as bp;
+
+html,
+body {
     width: 100%;
     height: 100%;
 }
@@ -10,8 +13,9 @@ html, body {
     font-family: 'Poppins', sans-serif;
 }
 
-// lightmode
+// ---- design tokens: components use only these variables for colors, shadows and radii ----
 body {
+    // surfaces and text
     --background: #f5f5f5;
     --surface: #ffffff;
     --surface-hover: #f3f4f6;
@@ -21,36 +25,83 @@ body {
     --text: #212121;
     --text-muted: #64748b;
     --text-subtle: #94a3b8;
+
+    // brand
     --accent: #b62f2f;
     --accent-hover: #9d2828;
     --accent-soft: rgba(182, 47, 47, .12);
+    /** text and icons on top of accent, success or other strong colors */
+    --on-accent: #ffffff;
+
+    // states
     --success: #15803d;
     --success-soft: rgba(21, 128, 61, .12);
+    --warning: #b45309;
+    --warning-soft: #fef3c7;
+    --warning-border: #f59e0b;
+
+    // fixed colors where the meaning is "white" / "black" (e.g. the color picker spectrum, masks)
+    --white: #ffffff;
+    --black: #000000;
+
+    // camera and image areas, overlays
+    --media-background: #111827;
+    --media-text: #e5e7eb;
+    /** behind dialogs */
+    --overlay: rgba(15, 23, 42, .45);
+    /** darkening around a scan frame or under image captions */
+    --scrim: rgba(0, 0, 0, .35);
+
+    // depth
     --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
     --shadow-md: 0 10px 30px rgba(15, 23, 42, .12);
-}
 
-body input:focus,
-body select:focus,
-body textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-}
+    // shape
+    --radius-xs: .3rem;
+    --radius-sm: .4rem;
+    --radius-md: .55rem;
+    --radius-lg: .75rem;
+    --radius-pill: 999px;
 
-body button:focus-visible,
-body a:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
+    // type
+    --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
 
-body select:not([multiple]) {
-    appearance: none;
-    padding-right: 2rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right .6rem center;
-    cursor: pointer;
+    // layout
+    --nav-width: 15.25rem;
+    --page-padding: 1.5rem;
+
+    @include bp.phone {
+        --page-padding: 1rem;
+    }
+
+    // focus styles for all form controls and links
+    input,
+    select,
+    textarea {
+        &:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+    }
+
+    button,
+    a {
+        &:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+    }
+
+    select:not([multiple]) {
+        appearance: none;
+        padding-right: 2rem;
+        // chevron in --text-muted; data URIs cannot use CSS variables
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right .6rem center;
+        cursor: pointer;
+    }
 }
 
 // ---- shared page building blocks (admin, overview and detail pages) ----
@@ -58,9 +109,31 @@ body select:not([multiple]) {
 .page {
     width: 100%;
     height: 100%;
-    padding: 1.5rem;
+    padding: var(--page-padding);
     overflow: auto;
     color: var(--text);
+
+    :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+        width: 100%;
+        min-height: 2.35rem;
+        padding: .5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text);
+        background-color: var(--surface);
+        font-size: .9rem;
+
+        // 16px keeps iOS from zooming into the field
+        @include bp.phone {
+            min-height: 2.6rem;
+            font-size: 1rem;
+        }
+    }
+
+    textarea {
+        min-height: 6rem;
+        resize: vertical;
+    }
 }
 
 .page-shell {
@@ -87,6 +160,22 @@ body select:not([multiple]) {
         gap: .5rem;
         font-size: 1.5rem;
         line-height: 1.25;
+
+        @include bp.phone {
+            font-size: 1.25rem;
+        }
+    }
+
+    @include bp.phone {
+        gap: .75rem;
+
+        .header-actions {
+            width: 100%;
+
+            > * {
+                flex: 1 1 auto;
+            }
+        }
     }
 }
 
@@ -108,7 +197,7 @@ body select:not([multiple]) {
     justify-content: center;
     gap: .4rem;
     border: 1px solid var(--border);
-    border-radius: .375rem;
+    border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--text);
     font-size: .9rem;
@@ -127,20 +216,25 @@ body select:not([multiple]) {
         padding: 0 .6rem;
         font-size: .85rem;
     }
-}
 
-.secondary-action:hover:not(:disabled) {
-    background: var(--surface-hover);
+    // bigger touch targets
+    @include bp.phone {
+        min-height: 2.6rem;
+    }
 }
 
 .primary-action {
     border-color: var(--accent);
     background: var(--accent);
-    color: var(--surface);
+    color: var(--on-accent);
 
     &:hover:not(:disabled) {
         background: var(--accent-hover);
     }
+}
+
+.secondary-action:hover:not(:disabled) {
+    background: var(--surface-hover);
 }
 
 .danger-action {
@@ -154,11 +248,12 @@ body select:not([multiple]) {
 .icon-button {
     width: 2.25rem;
     height: 2.25rem;
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border);
-    border-radius: .375rem;
+    border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--text);
     cursor: pointer;
@@ -170,13 +265,18 @@ body select:not([multiple]) {
     &.danger {
         color: var(--accent);
     }
+
+    @include bp.phone {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
 }
 
 .card {
     padding: 1rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
 
     > h2,
     .card-title h2 {
@@ -185,6 +285,10 @@ body select:not([multiple]) {
 
     > h2 {
         margin-bottom: .75rem;
+    }
+
+    @include bp.phone {
+        padding: .85rem;
     }
 }
 
@@ -204,7 +308,7 @@ body select:not([multiple]) {
 
 .field-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
     gap: .9rem;
 }
 
@@ -224,22 +328,6 @@ label.field {
         color: var(--text-subtle);
         font-weight: 400;
     }
-}
-
-.page :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
-    width: 100%;
-    min-height: 2.35rem;
-    padding: .5rem;
-    border: 1px solid var(--border);
-    border-radius: .375rem;
-    color: var(--text);
-    background-color: var(--surface);
-    font-size: .9rem;
-}
-
-.page textarea {
-    min-height: 6rem;
-    resize: vertical;
 }
 
 .toggle {
@@ -264,7 +352,7 @@ label.field {
     overflow-x: auto;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
 }
 
 .data-table {
@@ -278,6 +366,14 @@ label.field {
         text-align: left;
         border-bottom: 1px solid var(--border);
         vertical-align: middle;
+
+        @include bp.phone {
+            padding: .55rem .6rem;
+        }
+
+        &.center {
+            text-align: center;
+        }
     }
 
     th {
@@ -287,6 +383,7 @@ label.field {
         text-transform: uppercase;
         letter-spacing: .03em;
         background: var(--surface-active);
+        white-space: nowrap;
     }
 
     tr:last-child td {
@@ -305,11 +402,6 @@ label.field {
         width: 1%;
         white-space: nowrap;
         text-align: right;
-    }
-
-    td.center,
-    th.center {
-        text-align: center;
     }
 
     .muted {
@@ -331,7 +423,7 @@ label.field {
     align-items: center;
     gap: .35rem;
     border: 1px solid var(--border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: var(--surface-active);
     color: var(--text);
     font-size: .8rem;
@@ -349,8 +441,9 @@ label.field {
 .badge {
     display: inline-flex;
     align-items: center;
+    gap: .25rem;
     padding: .1rem .5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: .75rem;
     font-weight: 700;
     background: var(--surface-active);
@@ -364,6 +457,11 @@ label.field {
     &.accent {
         background: var(--accent-soft);
         color: var(--accent);
+    }
+
+    &.warn {
+        background: var(--warning-soft);
+        color: var(--warning);
     }
 }
 
@@ -380,13 +478,17 @@ label.field {
         pointer-events: none;
     }
 
-    // same specificity as the generic `.page :is(input:not(...))` rule above, so this one wins
+    // same specificity as the generic `.page :is(input...)` rule, so this one wins
     input:not([type='checkbox']):not([type='radio']) {
         min-height: 2.6rem;
         padding: 0 2.4rem 0 2.6rem;
-        border-radius: 999px;
+        border-radius: var(--radius-pill);
         box-shadow: var(--shadow-sm);
         font-size: .95rem;
+
+        @include bp.phone {
+            font-size: 1rem;
+        }
     }
 
     .clear {
@@ -415,6 +517,15 @@ label.field {
     flex-wrap: wrap;
     gap: .6rem;
     margin-bottom: 1rem;
+
+    // on phones every filter gets its own line
+    @include bp.phone {
+        align-items: stretch;
+
+        > * {
+            flex: 1 1 100%;
+        }
+    }
 }
 
 .empty,
@@ -429,13 +540,13 @@ label.field {
     color: var(--text-muted);
     background: var(--surface);
     border: 1px dashed var(--border-strong);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
 }
 
 .error {
     margin-bottom: 1rem;
     border: 1px solid var(--accent-soft);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
     background: var(--accent-soft);
     color: var(--accent);
 }
@@ -447,29 +558,41 @@ label.field {
 
 .editor-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: .5rem;
+
+    @include bp.phone {
+        > * {
+            flex: 1 1 auto;
+        }
+    }
 }
 
-// tabs with counters, e.g. "Offen 3 | Abgeschlossen 5"
+// tabs with counters, e.g. "Offen 3 | Abgeschlossen 5"; scrolls sideways on phones
 .segmented-tabs {
+    max-width: 100%;
     display: inline-flex;
+    overflow-x: auto;
     padding: .2rem;
     border: 1px solid var(--border);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
     background: var(--surface);
+    scrollbar-width: none;
 
     button {
+        flex-shrink: 0;
         display: inline-flex;
         align-items: center;
         gap: .4rem;
         padding: .4rem .75rem;
         border: 0;
-        border-radius: .35rem;
+        border-radius: var(--radius-sm);
         background: transparent;
         color: var(--text-muted);
         font-size: .86rem;
         font-weight: 600;
+        white-space: nowrap;
         cursor: pointer;
 
         &.active {
@@ -481,10 +604,15 @@ label.field {
     .count {
         min-width: 1.3rem;
         padding: 0 .35rem;
-        border-radius: 999px;
+        border-radius: var(--radius-pill);
         background: var(--border);
         font-size: .72rem;
         text-align: center;
+
+        &.alert {
+            background: var(--accent);
+            color: var(--on-accent);
+        }
     }
 }
 
@@ -508,23 +636,44 @@ label.field {
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: rgba(15, 23, 42, .45);
+    background: var(--overlay);
+
+    // bottom sheet on phones
+    @include bp.phone {
+        align-items: flex-end;
+        padding: 0;
+    }
 }
 
 .dialog {
     width: min(100%, 30rem);
+    max-height: 100%;
     display: flex;
     flex-direction: column;
     gap: .9rem;
+    overflow-y: auto;
     box-shadow: var(--shadow-md);
+
+    @include bp.phone {
+        width: 100%;
+        max-height: 90vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
 }
 
 .dialog-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: .5rem;
-}
 
+    @include bp.phone {
+        > * {
+            flex: 1 1 auto;
+        }
+    }
+}
 
 // compact table for reports and protocols (prints well)
 .report-table {
@@ -532,21 +681,36 @@ label.field {
     border-collapse: collapse;
     font-size: .85rem;
 
-    th, td {
+    th,
+    td {
         padding: .45rem .6rem;
         border-bottom: 1px solid var(--border);
         text-align: left;
         vertical-align: top;
     }
 
-    th { color: var(--text-muted); font-size: .74rem; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .by, .note { display: block; color: var(--text-subtle); font-size: .76rem; }
+    th {
+        color: var(--text-muted);
+        font-size: .74rem;
+        white-space: nowrap;
+    }
+
+    .mono {
+        font-family: var(--font-mono);
+    }
+
+    .by,
+    .note {
+        display: block;
+        color: var(--text-subtle);
+        font-size: .76rem;
+    }
 }
 
 // printing a page (e.g. an inspection protocol): only the content, no navigation
 @media print {
     app-main-route > nav,
+    app-main-route > .mobile-bar,
     .no-print {
         display: none !important;
     }

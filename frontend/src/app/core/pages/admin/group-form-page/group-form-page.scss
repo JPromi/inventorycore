@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
@@ -8,6 +10,10 @@
     display: flex;
     flex-direction: column;
     gap: .35rem;
+
+    &.members {
+        margin-top: 1rem;
+    }
 }
 
 .field-label {
@@ -16,32 +22,12 @@
     font-weight: 700;
 }
 
-.quick-grant {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .5rem;
-    margin-bottom: 1rem;
-    padding: .75rem;
-    border: 1px dashed var(--border-strong);
-    border-radius: .5rem;
-
-    .quick-area {
-        flex: 1 1 14rem;
-    }
-
-    select {
-        width: auto;
-        min-width: 11rem;
-    }
-}
-
 .admin-toggle {
     align-items: flex-start;
     margin-top: 1rem;
     padding: .65rem .75rem;
     border: 1px solid var(--border);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
 
     input {
         margin-top: .2rem;
@@ -65,17 +51,55 @@
     }
 }
 
-.members {
-    margin-top: 1rem;
-}
-
 .card-title {
     align-items: flex-start;
+
+    @include bp.phone {
+        flex-wrap: wrap;
+    }
+}
+
+.quick-grant {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+    padding: .75rem;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+
+    .quick-area {
+        flex: 1 1 14rem;
+    }
+
+    select {
+        width: auto;
+        min-width: 11rem;
+    }
+
+    // one control per line
+    @include bp.phone {
+        align-items: stretch;
+
+        > * {
+            flex: 1 1 100%;
+        }
+
+        select {
+            width: 100%;
+            min-width: 0;
+        }
+    }
 }
 
 .data-table-wrap.flat {
     // dropdowns of the search select must not be clipped
     overflow: visible;
+
+    @include bp.laptop {
+        overflow-x: auto;
+    }
 }
 
 .permission-table {
@@ -90,33 +114,32 @@
 
     .object-cell {
         min-width: 13rem;
+
+        .duplicate-note {
+            display: block;
+            margin-top: .2rem;
+            color: var(--accent);
+            font-size: .75rem;
+        }
     }
 
     tr.duplicate td {
         background: var(--accent-soft);
     }
-}
 
-.flag {
-    width: 1.05rem;
-    height: 1.05rem;
-    accent-color: var(--accent);
-    cursor: pointer;
-}
+    .flag {
+        width: 1.05rem;
+        height: 1.05rem;
+        accent-color: var(--accent);
+        cursor: pointer;
 
-.duplicate-note {
-    display: block;
-    margin-top: .2rem;
-    color: var(--accent);
-    font-size: .75rem;
+        @include bp.touch {
+            width: 1.35rem;
+            height: 1.35rem;
+        }
+    }
 }
 
 .editor-actions .delete {
     margin-right: auto;
-}
-
-@media (max-width: 1100px) {
-    .data-table-wrap.flat {
-        overflow-x: auto;
-    }
 }

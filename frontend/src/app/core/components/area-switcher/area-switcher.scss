@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
     position: relative;
     display: block;
@@ -6,12 +8,13 @@
 
 .trigger {
     width: 100%;
+    min-height: 2.5rem;
     padding: .45rem .6rem;
     display: flex;
     align-items: center;
     gap: .55rem;
     border: 1px solid var(--border);
-    border-radius: .45rem;
+    border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--text);
     text-align: left;
@@ -51,6 +54,7 @@
     }
 
     .chevron {
+        flex-shrink: 0;
         color: var(--text-muted);
     }
 }
@@ -61,101 +65,117 @@
     bottom: calc(100% + .35rem);
     left: 0;
     width: 100%;
-    max-height: 60vh;
+    max-height: min(60vh, 28rem);
     overflow-y: auto;
     padding: .3rem;
     border: 1px solid var(--border);
-    border-radius: .5rem;
+    border-radius: var(--radius-md);
     background: var(--surface);
     box-shadow: var(--shadow-md);
-}
 
-.option {
-    width: 100%;
-    min-height: 2rem;
-    padding: .3rem .45rem;
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    border: 0;
-    border-radius: .375rem;
-    background: transparent;
-    color: var(--text);
-    font-size: .85rem;
-    text-align: left;
-    cursor: pointer;
+    .option {
+        width: 100%;
+        min-height: 2rem;
+        padding: .3rem .45rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text);
+        font-size: .85rem;
+        text-align: left;
+        cursor: pointer;
 
-    &:hover {
-        background: var(--surface-hover);
+        &:hover {
+            background: var(--surface-hover);
+
+            .only {
+                visibility: visible;
+            }
+        }
+
+        &.selected {
+            .name {
+                font-weight: 700;
+            }
+
+            .check.box {
+                border-color: var(--accent);
+                background: var(--accent);
+                color: var(--on-accent);
+            }
+        }
+
+        .check {
+            width: 1rem;
+            height: 1rem;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+
+            &.box {
+                border: 1px solid var(--border-strong);
+                border-radius: var(--radius-xs);
+            }
+        }
+
+        .dot {
+            width: .55rem;
+            height: .55rem;
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+
+        .name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         .only {
-            visibility: visible;
+            visibility: hidden;
+            padding: 0 .35rem;
+            border-radius: var(--radius-xs);
+            color: var(--text-muted);
+            font-size: .72rem;
+            font-weight: 700;
+
+            &:hover {
+                background: var(--surface-active);
+                color: var(--text);
+            }
+        }
+
+        @include bp.touch {
+            min-height: 2.75rem;
+
+            // no hover on touch: always offer "nur" with a tappable size
+            .only {
+                min-height: 2rem;
+                display: inline-flex;
+                align-items: center;
+                padding: 0 .6rem;
+                visibility: visible;
+                background: var(--surface-active);
+            }
         }
     }
 
-    &.selected .name {
-        font-weight: 700;
+    .divider {
+        height: 1px;
+        margin: .25rem 0;
+        background: var(--border);
     }
 
-    .name {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .note {
+        padding: .35rem .45rem .2rem;
+        color: var(--text-subtle);
+        font-size: .72rem;
     }
-}
-
-.check {
-    width: 1rem;
-    height: 1rem;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-
-    &.box {
-        border: 1px solid var(--border-strong);
-        border-radius: .25rem;
-    }
-}
-
-.selected .check.box {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--surface);
-}
-
-.dot {
-    width: .55rem;
-    height: .55rem;
-    flex-shrink: 0;
-    border-radius: 50%;
-}
-
-.only {
-    visibility: hidden;
-    padding: 0 .35rem;
-    border-radius: .25rem;
-    color: var(--text-muted);
-    font-size: .72rem;
-    font-weight: 700;
-
-    &:hover {
-        background: var(--surface-active);
-        color: var(--text);
-    }
-}
-
-.divider {
-    height: 1px;
-    margin: .25rem 0;
-    background: var(--border);
-}
-
-.note {
-    padding: .35rem .45rem .2rem;
-    color: var(--text-subtle);
-    font-size: .72rem;
 }

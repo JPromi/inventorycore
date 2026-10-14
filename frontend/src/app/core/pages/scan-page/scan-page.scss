@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
     display: block;
     width: 100%;
@@ -12,17 +14,23 @@ code,
 kbd {
     padding: .05rem .35rem;
     border: 1px solid var(--border);
-    border-radius: .3rem;
+    border-radius: var(--radius-xs);
     background: var(--surface-active);
-    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-family: var(--font-mono);
     font-size: .82em;
 }
 
 .auto-open {
     padding: 0 .75rem;
     border: 1px solid var(--border);
-    border-radius: .45rem;
+    border-radius: var(--radius-sm);
     background: var(--surface);
+}
+
+.hint {
+    color: var(--text-muted);
+    font-size: .82rem;
+    line-height: 1.5;
 }
 
 // ---- mode switch ----
@@ -39,7 +47,7 @@ kbd {
         gap: .75rem;
         padding: .75rem 1rem;
         border: 1px solid var(--border);
-        border-radius: .6rem;
+        border-radius: var(--radius-md);
         background: var(--surface);
         color: var(--text-muted);
         text-align: left;
@@ -59,6 +67,10 @@ kbd {
 
         small {
             font-size: .78rem;
+
+            @include bp.phone {
+                display: none;
+            }
         }
 
         &:hover:not(:disabled) {
@@ -76,6 +88,11 @@ kbd {
             cursor: not-allowed;
             opacity: .55;
         }
+
+        @include bp.phone {
+            gap: .5rem;
+            padding: .7rem .75rem;
+        }
     }
 }
 
@@ -86,6 +103,23 @@ kbd {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     gap: 1rem;
+
+    // one column: the result right below the camera, the history last
+    @include bp.tablet {
+        grid-template-columns: minmax(0, 1fr);
+
+        .input-panel {
+            display: contents;
+        }
+
+        .history {
+            order: 3;
+        }
+
+        .result-panel {
+            order: 2;
+        }
+    }
 }
 
 .input-panel,
@@ -102,62 +136,61 @@ kbd {
     display: flex;
     flex-direction: column;
     gap: .75rem;
-}
 
-.scan-field {
-    position: relative;
-    display: flex;
-    align-items: center;
-
-    .field-icon {
-        position: absolute;
-        left: 1rem;
-        color: var(--text-subtle);
-        pointer-events: none;
-    }
-
-    // as specific as the generic `.page :is(input...)` rule, so this one wins
-    input:not([type='checkbox']):not([type='radio']) {
-        width: 100%;
-        min-height: 3.5rem;
-        padding: 0 3.5rem 0 3.2rem;
-        border: 2px solid var(--border-strong);
-        border-radius: .6rem;
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: 1.15rem;
-        letter-spacing: .02em;
-
-        &:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--accent-soft);
-            outline: none;
-        }
-    }
-
-    &.busy input:not([type='checkbox']):not([type='radio']) {
-        background-image: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
-        background-size: 200% 100%;
-        animation: busy 1s linear infinite;
-    }
-
-    .submit {
-        position: absolute;
-        right: .5rem;
-        width: 2.5rem;
-        height: 2.5rem;
-        display: inline-flex;
+    .scan-field {
+        position: relative;
+        display: flex;
         align-items: center;
-        justify-content: center;
-        border: 0;
-        border-radius: .45rem;
-        background: var(--accent);
-        color: #fff;
-        cursor: pointer;
 
-        &:disabled {
-            background: var(--surface-active);
+        .field-icon {
+            position: absolute;
+            left: 1rem;
             color: var(--text-subtle);
-            cursor: default;
+            pointer-events: none;
+        }
+
+        // more specific than the generic `.page :is(input...)` rule, so this one wins
+        input:not([type='checkbox']):not([type='radio']) {
+            width: 100%;
+            min-height: 3.5rem;
+            padding: 0 3.5rem 0 3.2rem;
+            border: 2px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            font-size: 1.15rem;
+            letter-spacing: .02em;
+
+            &:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 4px var(--accent-soft);
+            }
+        }
+
+        &.busy input {
+            background-image: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
+            background-size: 200% 100%;
+            animation: busy 1s linear infinite;
+        }
+
+        .submit {
+            position: absolute;
+            right: .5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            color: var(--on-accent);
+            cursor: pointer;
+
+            &:disabled {
+                background: var(--surface-active);
+                color: var(--text-subtle);
+                cursor: default;
+            }
         }
     }
 }
@@ -172,12 +205,6 @@ kbd {
     }
 }
 
-.hint {
-    color: var(--text-muted);
-    font-size: .82rem;
-    line-height: 1.5;
-}
-
 // ---- camera ----
 
 .camera-card {
@@ -185,14 +212,19 @@ kbd {
     flex-direction: column;
     gap: .75rem;
     padding: .75rem;
+
+    @include bp.phone {
+        padding: .5rem;
+    }
 }
 
 .viewport {
     position: relative;
+    width: 100%;
     aspect-ratio: 4 / 3;
     overflow: hidden;
-    border-radius: .5rem;
-    background: #111827;
+    border-radius: var(--radius-md);
+    background: var(--media-background);
     transition: box-shadow .15s;
 
     video {
@@ -204,69 +236,58 @@ kbd {
 
     &.flash {
         box-shadow: 0 0 0 4px var(--success);
+
+        .frame::before {
+            border-color: var(--success);
+        }
     }
-}
 
-.frame {
-    position: absolute;
-    inset: 18% 15%;
-    border-radius: .75rem;
-    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .35);
-    pointer-events: none;
+    .frame {
+        position: absolute;
+        inset: 18% 15%;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 0 0 100vmax var(--scrim);
+        pointer-events: none;
 
-    // corner marks
-    &::before,
-    &::after {
-        content: '';
+        // corner marks
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 3px solid var(--white);
+            border-radius: var(--radius-lg);
+            mask: linear-gradient(var(--black) 0 0) top left / 1.6rem 1.6rem no-repeat,
+                linear-gradient(var(--black) 0 0) top right / 1.6rem 1.6rem no-repeat,
+                linear-gradient(var(--black) 0 0) bottom left / 1.6rem 1.6rem no-repeat,
+                linear-gradient(var(--black) 0 0) bottom right / 1.6rem 1.6rem no-repeat;
+        }
+
+        // scan line
+        &::after {
+            inset: 50% 6% auto;
+            height: 2px;
+            border: 0;
+            border-radius: 0;
+            background: color-mix(in srgb, var(--accent) 85%, transparent);
+            mask: none;
+            animation: sweep 2s ease-in-out infinite;
+        }
+    }
+
+    .camera-overlay {
         position: absolute;
         inset: 0;
-        border: 3px solid #fff;
-        border-radius: .75rem;
-        mask: linear-gradient(#000 0 0) top left / 1.6rem 1.6rem no-repeat,
-            linear-gradient(#000 0 0) top right / 1.6rem 1.6rem no-repeat,
-            linear-gradient(#000 0 0) bottom left / 1.6rem 1.6rem no-repeat,
-            linear-gradient(#000 0 0) bottom right / 1.6rem 1.6rem no-repeat;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .75rem;
+        padding: 1.5rem;
+        color: var(--media-text);
+        text-align: center;
+        font-size: .9rem;
     }
-
-    // scan line
-    &::after {
-        inset: 50% 6% auto;
-        height: 2px;
-        border: 0;
-        border-radius: 0;
-        background: rgba(239, 68, 68, .85);
-        mask: none;
-        animation: sweep 2s ease-in-out infinite;
-    }
-}
-
-.viewport.flash .frame::before {
-    border-color: var(--success);
-}
-
-@keyframes sweep {
-    0%,
-    100% {
-        top: 12%;
-    }
-
-    50% {
-        top: 88%;
-    }
-}
-
-.camera-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: .75rem;
-    padding: 1.5rem;
-    color: #e5e7eb;
-    text-align: center;
-    font-size: .9rem;
 }
 
 .camera-actions {
@@ -278,10 +299,25 @@ kbd {
     select {
         max-width: 100%;
         min-height: 2.25rem;
+
+        @include bp.phone {
+            flex: 1 1 100%;
+        }
     }
 
     .spacer {
         flex: 1;
+    }
+}
+
+@keyframes sweep {
+    0%,
+    100% {
+        top: 12%;
+    }
+
+    50% {
+        top: 88%;
     }
 }
 
@@ -315,6 +351,10 @@ kbd {
         &.missing .label {
             color: var(--accent);
         }
+
+        @include bp.phone {
+            gap: .5rem;
+        }
     }
 
     .time {
@@ -323,19 +363,24 @@ kbd {
         font-variant-numeric: tabular-nums;
     }
 
-    a {
+    a,
+    code {
         overflow: hidden;
-        color: var(--text);
-        font-weight: 700;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
+    a {
+        color: var(--text);
+        font-weight: 700;
+    }
+
     code {
         max-width: 11rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+
+        @include bp.phone {
+            max-width: 6.5rem;
+        }
     }
 }
 
@@ -346,6 +391,7 @@ kbd {
     align-items: center;
     gap: .75rem;
     font-size: .92rem;
+    overflow-wrap: anywhere;
 
     &.failure {
         border-color: var(--accent);
@@ -367,6 +413,10 @@ kbd {
 
         strong {
             color: var(--text-muted);
+        }
+
+        @include bp.tablet {
+            min-height: 9rem;
         }
     }
 }
@@ -400,22 +450,23 @@ kbd {
             width: 6.5rem;
             flex-shrink: 0;
             aspect-ratio: 1;
+
+            @include bp.phone {
+                width: 4.5rem;
+            }
         }
 
         .result-body {
             padding: .75rem 1rem;
+
+            @include bp.phone {
+                padding: .65rem .75rem;
+            }
         }
 
         h2 {
             font-size: 1.05rem;
         }
-    }
-}
-
-@keyframes appear {
-    from {
-        opacity: 0;
-        transform: translateY(.4rem);
     }
 }
 
@@ -434,31 +485,25 @@ kbd {
     h2 {
         font-size: 1.35rem;
         line-height: 1.25;
+        overflow-wrap: anywhere;
     }
 
     dl {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
         gap: .55rem 1rem;
-
-        dt {
-            color: var(--text-muted);
-            font-size: .74rem;
-            font-weight: 700;
-        }
-
-        dd {
-            margin: 0;
-            overflow-wrap: anywhere;
-            font-size: .9rem;
-        }
     }
 
-    .chip .dot {
-        width: .55rem;
-        height: .55rem;
-        border-radius: 50%;
-        background: var(--text-subtle);
+    dt {
+        color: var(--text-muted);
+        font-size: .74rem;
+        font-weight: 700;
+    }
+
+    dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+        font-size: .9rem;
     }
 
     .description {
@@ -466,34 +511,26 @@ kbd {
         font-size: .88rem;
         white-space: pre-line;
     }
-}
 
-.result-actions {
-    display: flex;
-    gap: .5rem;
-}
-
-@media (max-width: 900px) {
-    .scan-layout {
-        grid-template-columns: minmax(0, 1fr);
+    @include bp.phone {
+        padding: .85rem;
     }
 
-    // on phones the result should be right below the camera, the history last
-    .input-panel {
-        display: contents;
-    }
+    .result-actions {
+        display: flex;
+        gap: .5rem;
 
-    .history {
-        order: 3;
-    }
-
-    .result-panel {
-        order: 2;
+        @include bp.phone {
+            > * {
+                flex: 1;
+            }
+        }
     }
 }
 
-@media (max-width: 560px) {
-    .mode-switch small {
-        display: none;
+@keyframes appear {
+    from {
+        opacity: 0;
+        transform: translateY(.4rem);
     }
 }
