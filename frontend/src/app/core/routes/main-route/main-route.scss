@@ -101,6 +101,19 @@ nav {
         color: var(--text);
         font-weight: 700;
 
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            color: inherit;
+            font-size: 1.05rem;
+            text-decoration: none;
+
+            img {
+                border-radius: var(--radius-sm);
+            }
+        }
+
         .menu-close {
             display: none;
             width: 2.5rem;
@@ -250,6 +263,30 @@ nav {
         margin-top: auto;
         padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
         border-top: 1px solid var(--border);
+
+        .install {
+            width: 100%;
+            min-height: 2.25rem;
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            margin-bottom: .75rem;
+            padding: 0 .65rem;
+            border: 1px dashed var(--border-strong);
+            border-radius: var(--radius-sm);
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            cursor: pointer;
+
+            &:hover {
+                border-color: var(--accent);
+            }
+
+            @include bp.tablet {
+                min-height: 2.6rem;
+            }
+        }
 
         .user {
             display: flex;

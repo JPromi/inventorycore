@@ -39,12 +39,12 @@ import { ConfirmDialogService } from './confirm-dialog.service';
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      background: rgba(15, 23, 42, .35);
+      background: var(--overlay);
     }
     .dialog {
       width: min(100%, 26rem);
       padding: 1.25rem;
-      border-radius: .75rem;
+      border-radius: var(--radius-lg);
       background: var(--surface);
       color: var(--text);
       box-shadow: var(--shadow-md);
@@ -82,7 +82,7 @@ import { ConfirmDialogService } from './confirm-dialog.service';
       min-height: 2.25rem;
       padding: 0 .9rem;
       border: 1px solid var(--border);
-      border-radius: .375rem;
+      border-radius: var(--radius-sm);
       background: var(--surface);
       color: var(--text);
       font-weight: 700;

@@ -11,7 +11,10 @@
 
 <nav [class.open]="menuOpen">
     <header>
-        <span>Logo</span>
+        <a class="brand" routerLink="/dashboard">
+            <img src="icons/icon.svg" alt="" width="28" height="28" />
+            <span>InventoryCore</span>
+        </a>
         <button type="button" class="menu-close" aria-label="Menü schließen" (click)="menuOpen = false">
             <svg lucideX size="20"></svg>
         </button>
@@ -80,6 +83,12 @@
         </ul>
     </div>
     <footer>
+        @if (pwa.canInstall()) {
+            <button type="button" class="install" (click)="pwa.install()">
+                <svg lucideDownload size="17"></svg>
+                <span>App installieren</span>
+            </button>
+        }
         <app-area-switcher />
         <a class="user" href="#">
             <span class="avatar">{{ user?.displayName?.charAt(0) }}</span>

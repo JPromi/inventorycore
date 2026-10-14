@@ -7,6 +7,7 @@ import { AreaSwitcher } from '../../components/area-switcher/area-switcher';
 import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
 import { UserEntity } from '../../entities/user.entity';
 import { AuthStateService } from '../../service/auth-state.service';
+import { PwaService } from '../../service/pwa.service';
 import { CommonModule } from '@angular/common';
 import {
   LucideAlarmClock,
@@ -17,6 +18,7 @@ import {
   LucideChevronDown,
   LucideClipboardCheck,
   LucideClipboardList,
+  LucideDownload,
   LucideFileText,
   LucideHouse,
   LucideKeyRound,
@@ -60,6 +62,7 @@ type NavItem = NavChild & {
     ConfirmDialog,
     AreaSwitcher,
     LucideChevronDown,
+    LucideDownload,
     LucideMenu,
     LucideX,
   ],
@@ -114,6 +117,7 @@ export class MainRoute implements OnInit {
   constructor(
     private readonly authStateService: AuthStateService,
     private readonly router: Router,
+    protected readonly pwa: PwaService,
   ) {}
 
   ngOnInit(): void {

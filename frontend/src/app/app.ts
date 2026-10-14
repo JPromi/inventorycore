@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { PwaStatus } from './core/components/pwa-status/pwa-status';
 import { AuthService } from './core/service/auth.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, PwaStatus],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
