@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideImagePlus, LucidePlus, LucideSave, LucideTrash2, type LucideIcon } from '@lucide/angular';
@@ -61,6 +61,8 @@ export class InventoryFormPage implements OnInit {
   /** Assigned areas the user has no rights in; they are kept unchanged. */
   protected lockedAreaUuids: string[] = [];
   private originalAreaUuids: string[] = [];
+  /** Shown after "Erstellen & neu" so the user knows the previous entry was saved. */
+  protected lastCreated: { uuid: string; name: string } | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -68,6 +70,7 @@ export class InventoryFormPage implements OnInit {
     private readonly api: InventoryApiService,
     protected readonly permissions: PermissionService,
     private readonly areaService: AreaService,
+    private readonly host: ElementRef<HTMLElement>,
   ) {}
 
   ngOnInit(): void {
@@ -78,6 +81,7 @@ export class InventoryFormPage implements OnInit {
       this.originalAreaUuids = [];
       this.lockedAreaUuids = [];
       this.selectedAreaUuids = [];
+      this.lastCreated = null;
 
       if (this.uuid) {
         this.load(this.uuid);
@@ -140,7 +144,8 @@ export class InventoryFormPage implements OnInit {
     return this.uuid && this.config.detailRoutePrefix ? [this.config.detailRoutePrefix, this.uuid] : [this.config.listRoute];
   }
 
-  protected save(): void {
+  /** `createAnother` keeps the context (areas, location, type, ...) and opens an empty form again. */
+  protected save(createAnother = false): void {
     if (!this.canSave || this.saving) {
       return;
     }
@@ -159,12 +164,46 @@ export class InventoryFormPage implements OnInit {
     save$.subscribe({
       next: (saved) => {
         this.saving = false;
+        if (createAnother && !this.uuid) {
+          this.lastCreated = { uuid: saved.uuid, name: saved.name };
+          this.prepareNext();
+          return;
+        }
         this.router.navigate(this.config.detailRoutePrefix ? [this.config.detailRoutePrefix, saved.uuid] : [this.config.listRoute]);
       },
       error: () => {
         this.saving = false;
         this.error = 'Speichern fehlgeschlagen. Bitte Eingaben prüfen.';
       },
+    });
+  }
+
+  /**
+   * Clears what is specific to one entry (name, numbers, images, values) and keeps
+   * what the next entry most likely shares: areas, location, type, tags, interval, address.
+   */
+  private prepareNext(): void {
+    const previous = this.form;
+    this.form = {
+      ...this.emptyForm(),
+      address: previous.address,
+      inspectionIntervalDays: previous.inspectionIntervalDays,
+      assetTypeUuid: previous.assetTypeUuid,
+      locationUuid: previous.locationUuid,
+      parentLocationUuid: previous.parentLocationUuid,
+      // types: the next type often has similar fields
+      fieldDefinitions: (previous.fieldDefinitions ?? []).map((definition) => ({ ...definition })),
+      // assets: keep the names of own custom fields, not their values
+      fieldValues: (previous.fieldValues ?? [])
+        .filter((field) => field.customAssetField)
+        .map((field) => ({ ...field, value: '' })),
+    };
+    // rebuilds the (empty) fields of the selected type
+    this.applySelectedAssetType(true);
+
+    setTimeout(() => {
+      this.host.nativeElement.querySelector('.form-page')?.scrollTo({ top: 0, behavior: 'smooth' });
+      this.host.nativeElement.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
     });
   }
 

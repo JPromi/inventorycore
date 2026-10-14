@@ -19,6 +19,15 @@
             <p class="error">{{ error }}</p>
         }
 
+        @if (lastCreated) {
+            <p class="success">
+                <span>„{{ lastCreated.name }}“ wurde erstellt. Felder wie Bereich, Standort und Typ sind für den nächsten Eintrag übernommen.</span>
+                @if (config.detailRoutePrefix) {
+                    <a [routerLink]="[config.detailRoutePrefix, lastCreated.uuid]">Ansehen</a>
+                }
+            </p>
+        }
+
         @if (loading) {
             <p class="empty">Lade Daten...</p>
         } @else {
@@ -235,9 +244,21 @@
 
                 <div class="editor-actions">
                     <a class="secondary-action" [routerLink]="backRoute">Abbrechen</a>
+                    @if (!uuid) {
+                        <button
+                            type="button"
+                            class="secondary-action"
+                            [disabled]="!canSave || saving"
+                            (click)="save(true)"
+                            title="Speichern und direkt einen weiteren Eintrag mit denselben Vorgaben anlegen"
+                        >
+                            <svg lucidePlus size="17"></svg>
+                            <span>Erstellen &amp; neu</span>
+                        </button>
+                    }
                     <button type="submit" class="primary-action" [disabled]="!canSave || saving">
                         <svg lucideSave size="18"></svg>
-                        <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+                        <span>{{ saving ? 'Speichert...' : uuid ? 'Speichern' : 'Erstellen' }}</span>
                     </button>
                 </div>
             </form>
