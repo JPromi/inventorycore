@@ -70,6 +70,7 @@ export class MainRoute implements OnInit {
       children: [
         { label: 'Standorte', route: '/config/locations', icon: LucideMapPin },
         { label: 'Tags', route: '/config/tags', icon: LucideTags },
+        { label: 'Typen', route: '/config/types', icon: LucideShapes },
         { label: 'Protokolle', route: '/config/reports', icon: LucideClipboardCheck },
       ],
     },
