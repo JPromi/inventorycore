@@ -7,7 +7,6 @@ import {
   LucideBoxes,
   LucideCalendarClock,
   LucideChevronRight,
-  LucideClipboardCheck,
   LucideMapPin,
   LucidePencil,
   LucidePrinter,
@@ -20,6 +19,7 @@ import { catchError } from 'rxjs/operators';
 
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
+import { AssetInspectionList } from '../../components/asset-inspection-list/asset-inspection-list';
 import { AuditHistory } from '../../components/audit-history/audit-history';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
@@ -78,6 +78,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
 @Component({
   selector: 'app-inventory-detail-page',
   imports: [
+    AssetInspectionList,
     AuditHistory,
     CommonModule,
     FormsModule,
@@ -87,7 +88,6 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     LucideBoxes,
     LucideCalendarClock,
     LucideChevronRight,
-    LucideClipboardCheck,
     LucideMapPin,
     LucidePencil,
     LucidePrinter,
@@ -117,7 +117,6 @@ export class InventoryDetailPage implements OnInit {
   protected fixedDateInput = '';
   protected readonly dueText = dueText;
   protected readonly intervalText = intervalText;
-  protected readonly formatCheckValue = formatCheckValue;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -169,26 +168,6 @@ export class InventoryDetailPage implements OnInit {
       },
       error: () => (this.error = 'Prüftermin konnte nicht gespeichert werden.'),
     });
-  }
-
-  protected inspectionResult(entry: AssetInspection): { label: string; tone: 'good' | 'bad' | 'warn' | 'neutral' } {
-    if (!entry.expected) {
-      return { label: 'Als fremder Gegenstand gefunden', tone: 'warn' };
-    }
-    switch (entry.status) {
-      case 'PRESENT':
-        return entry.condition === 'DEFECT'
-          ? { label: 'Da, defekt', tone: 'bad' }
-          : { label: entry.condition === 'OK' ? 'Da, in Ordnung' : 'Da', tone: 'good' };
-      case 'MISSING':
-        return { label: 'Fehlt', tone: 'bad' };
-      case 'PASSED':
-        return { label: 'In Ordnung', tone: 'good' };
-      case 'FAILED':
-        return { label: 'Mangel', tone: 'bad' };
-      default:
-        return entry.inspectionStatus === 'OPEN' ? { label: 'Noch nicht geprüft', tone: 'neutral' } : { label: 'Nicht geprüft', tone: 'bad' };
-    }
   }
 
   protected get canEdit(): boolean {

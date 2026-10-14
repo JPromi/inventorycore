@@ -1,15 +1,20 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { LucideHistory } from '@lucide/angular';
+import { RouterLink } from '@angular/router';
+import { LucideChevronRight, LucideHistory } from '@lucide/angular';
 
 import { AuditLog, AuditService } from '../../service/audit.service';
 import { AuditTimeline } from '../audit-timeline/audit-timeline';
 
 const PAGE_SIZE = 15;
 
-/** "Verlauf" card of an asset or location: edits, scans, inspection results; loads more on demand. */
+/**
+ * "Verlauf" card of an asset or location: edits, scans, inspection results. With {@code limit}
+ * only the newest entries and a link to the full history ({@code moreLink}); without it, all
+ * entries with "load older".
+ */
 @Component({
   selector: 'app-audit-history',
-  imports: [AuditTimeline, LucideHistory],
+  imports: [AuditTimeline, RouterLink, LucideChevronRight, LucideHistory],
   template: `
     <section class="card">
       <div class="card-title">
@@ -26,7 +31,12 @@ const PAGE_SIZE = 15;
         <p class="hint">Noch keine Einträge. Änderungen, Scans und Prüfergebnisse erscheinen hier.</p>
       } @else {
         <app-audit-timeline [entries]="entries" />
-        @if (entries.length < total) {
+        @if (limit && moreLink && total > entries.length) {
+          <a class="secondary-action compact more" [routerLink]="moreLink">
+            <span>Gesamten Verlauf anzeigen ({{ total }})</span>
+            <svg lucideChevronRight size="15"></svg>
+          </a>
+        } @else if (!limit && entries.length < total) {
           <button type="button" class="secondary-action compact more" [disabled]="loading" (click)="loadMore()">
             {{ loading ? 'Lädt...' : 'Ältere anzeigen' }}
           </button>
@@ -42,12 +52,16 @@ const PAGE_SIZE = 15;
     }
     .more {
       width: 100%;
+      justify-content: center;
     }
   `,
 })
 export class AuditHistory implements OnChanges {
   @Input({ required: true }) endpoint!: 'assets' | 'locations';
   @Input({ required: true }) uuid!: string;
+  /** Show only this many entries (newest), plus a link to {@link moreLink}. */
+  @Input() limit: number | null = null;
+  @Input() moreLink: unknown[] | null = null;
 
   protected entries: AuditLog[] = [];
   protected total = 0;
@@ -72,7 +86,7 @@ export class AuditHistory implements OnChanges {
   private load(): void {
     this.loading = true;
     this.error = '';
-    this.audit.ofObject(this.endpoint, this.uuid, this.page, PAGE_SIZE).subscribe({
+    this.audit.ofObject(this.endpoint, this.uuid, this.page, this.limit ?? PAGE_SIZE).subscribe({
       next: (result) => {
         this.entries = [...this.entries, ...result.items];
         this.total = result.total;

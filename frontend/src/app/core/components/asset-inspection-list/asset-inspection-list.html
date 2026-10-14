@@ -1,0 +1,40 @@
+<ul class="inspection-history">
+    @for (entry of entries; track entry.inspectionUuid) {
+        <li>
+            <a [routerLink]="['/inspections', entry.inspectionUuid]">
+                <svg lucideClipboardCheck size="17"></svg>
+                <span class="what">
+                    <strong>{{ entry.title }}</strong>
+                    <small>
+                        {{ entry.typeName }} · {{ entry.completedAt ?? entry.createdAt | date: 'dd.MM.yyyy' }}
+                        @if (entry.inspectionStatus === 'OPEN') {
+                            · läuft noch
+                        }
+                        @if (entry.checkedByName) {
+                            · geprüft von {{ entry.checkedByName }}
+                        }
+                    </small>
+                </span>
+                <span class="result" [class]="'result ' + result(entry).tone">{{ result(entry).label }}</span>
+            </a>
+            @if (entry.values.length || entry.note) {
+                <dl class="check-values">
+                    @for (value of entry.values; track value.fieldUuid) {
+                        <div>
+                            <dt>{{ value.fieldName }}</dt>
+                            <dd [class.no]="value.fieldType === 'BOOLEAN' && value.value === 'false'">
+                                {{ formatCheckValue(value.value, value.fieldType) }}
+                            </dd>
+                        </div>
+                    }
+                    @if (entry.note) {
+                        <div>
+                            <dt>Notiz</dt>
+                            <dd>{{ entry.note }}</dd>
+                        </div>
+                    }
+                </dl>
+            }
+        </li>
+    }
+</ul>

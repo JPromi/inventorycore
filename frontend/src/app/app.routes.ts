@@ -114,6 +114,16 @@ export const routes: Routes = [
         loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
         data: { inventoryDetailConfig: ASSET_DETAIL_CONFIG },
       },
+      {
+        path: 'assets/:uuid/history',
+        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        data: { endpoint: 'assets', view: 'history' },
+      },
+      {
+        path: 'assets/:uuid/inspections',
+        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        data: { endpoint: 'assets', view: 'inspections' },
+      },
 
       // Standorte
       {
@@ -143,6 +153,11 @@ export const routes: Routes = [
         path: 'locations/:uuid',
         loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
         data: { inventoryDetailConfig: LOCATION_DETAIL_CONFIG },
+      },
+      {
+        path: 'locations/:uuid/history',
+        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        data: { endpoint: 'locations', view: 'history' },
       },
 
       // Konfiguration
