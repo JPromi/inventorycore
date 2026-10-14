@@ -1,0 +1,68 @@
+<div class="backdrop" (click)="close()">
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Label drucken" (click)="$event.stopPropagation()">
+        <header>
+            <h2>
+                <svg lucidePrinter size="18"></svg>
+                <span>Label drucken</span>
+            </h2>
+            <button type="button" class="close" title="Schließen" (click)="close()">
+                <svg lucideX size="16"></svg>
+            </button>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="hint">Lade Vorlagen...</p>
+        } @else if (!templates.length) {
+            <p class="hint">
+                Es gibt noch keine Label-Vorlagen.
+                <a routerLink="/config/labels/new" (click)="close()">Vorlage anlegen</a>
+            </p>
+        } @else {
+            <div class="controls">
+                <div class="field grow">
+                    <span>Vorlage</span>
+                    <app-search-select
+                        [options]="options"
+                        [ngModel]="templateUuid"
+                        (ngModelChange)="select($event)"
+                        placeholder="Vorlage wählen"
+                        searchPlaceholder="Vorlage suchen..."
+                    />
+                </div>
+                <label class="field copies">
+                    <span>Anzahl</span>
+                    <input type="number" min="1" max="100" [(ngModel)]="copies" />
+                </label>
+            </div>
+
+            <div class="preview">
+                @if (template; as current) {
+                    <app-label-renderer
+                        [style.zoom]="zoom"
+                        [widthMm]="current.widthMm"
+                        [heightMm]="current.heightMm"
+                        [elements]="elements"
+                        [context]="context"
+                    />
+                }
+            </div>
+            @if (template; as current) {
+                <p class="hint">
+                    {{ current.widthMm }} × {{ current.heightMm }} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.
+                </p>
+            }
+        }
+
+        <footer>
+            <button type="button" class="secondary" (click)="close()">Abbrechen</button>
+            <button type="button" class="primary" [disabled]="!template" (click)="print()">
+                <svg lucidePrinter size="16"></svg>
+                <span>Drucken</span>
+            </button>
+        </footer>
+    </div>
+</div>

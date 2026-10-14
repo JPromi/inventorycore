@@ -1,0 +1,53 @@
+/**
+ * Prints a rendered label through a hidden iframe whose page size equals the label size,
+ * so label printers (Brother, Dymo, Zebra, ...) get exactly one label per page.
+ */
+export function printLabel(label: HTMLElement, widthMm: number, heightMm: number, copies = 1): void {
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument;
+  const win = iframe.contentWindow;
+  if (!doc || !win) {
+    iframe.remove();
+    return;
+  }
+
+  // the label carries only inline styles; drop the editor shadow for print
+  const markup = label.outerHTML.replace(/box-shadow:[^;"]*;?/g, '');
+  const pages = Array.from({ length: Math.max(1, copies) }, () => `<div class="page">${markup}</div>`).join('');
+  doc.open();
+  doc.write(`<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Label</title>
+<style>
+  @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
+  html, body { margin: 0; padding: 0; }
+  .page { width: ${widthMm}mm; height: ${heightMm}mm; overflow: hidden; page-break-after: always; break-after: page; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .label { box-shadow: none !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style>
+</head>
+<body>${pages}</body>
+</html>`);
+  doc.close();
+
+  const cleanup = () => setTimeout(() => iframe.remove(), 500);
+  win.addEventListener('afterprint', cleanup, { once: true });
+  // give the browser a moment to lay out the SVGs
+  setTimeout(() => {
+    win.focus();
+    win.print();
+    // some browsers do not fire afterprint for iframes
+    setTimeout(cleanup, 60_000);
+  }, 150);
+}

@@ -231,6 +231,20 @@ export const routes: Routes = [
         },
       },
 
+      {
+        path: 'config/labels',
+        loadComponent: () =>
+          import('./core/pages/labels/label-templates-page/label-templates-page').then((m) => m.LabelTemplatesPage),
+      },
+      {
+        path: 'config/labels/new',
+        loadComponent: () => import('./core/pages/labels/label-editor-page/label-editor-page').then((m) => m.LabelEditorPage),
+      },
+      {
+        path: 'config/labels/:uuid/edit',
+        loadComponent: () => import('./core/pages/labels/label-editor-page/label-editor-page').then((m) => m.LabelEditorPage),
+      },
+
       // Administration
       {
         path: 'admin',

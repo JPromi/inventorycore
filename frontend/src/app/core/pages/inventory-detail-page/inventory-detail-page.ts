@@ -7,6 +7,7 @@ import {
   LucideChevronRight,
   LucideMapPin,
   LucidePencil,
+  LucidePrinter,
   LucideShapes,
   LucideTrash2,
   type LucideIcon,
@@ -15,6 +16,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
+import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
 import { InventoryApiService, InventoryImage, InventoryItem, TagItem } from '../../service/inventory-api.service';
@@ -56,7 +58,19 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
 
 @Component({
   selector: 'app-inventory-detail-page',
-  imports: [CommonModule, RouterLink, LucideArrowLeft, LucideBoxes, LucideChevronRight, LucideMapPin, LucidePencil, LucideShapes, LucideTrash2],
+  imports: [
+    CommonModule,
+    RouterLink,
+    LabelPrintDialog,
+    LucideArrowLeft,
+    LucideBoxes,
+    LucideChevronRight,
+    LucideMapPin,
+    LucidePencil,
+    LucidePrinter,
+    LucideShapes,
+    LucideTrash2,
+  ],
   templateUrl: './inventory-detail-page.html',
   styleUrl: './inventory-detail-page.scss',
 })
@@ -72,6 +86,7 @@ export class InventoryDetailPage implements OnInit {
   protected locations: InventoryItem[] = [];
   protected assetTypes: InventoryItem[] = [];
   protected assets: InventoryItem[] = [];
+  protected showPrintDialog = false;
 
   constructor(
     private readonly route: ActivatedRoute,

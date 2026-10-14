@@ -1,0 +1,41 @@
+// Only editor helpers live here; the label itself uses inline styles so it prints identically.
+:host {
+    display: inline-block;
+}
+
+.label {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
+}
+
+.editable {
+    touch-action: none;
+    user-select: none;
+
+    .element {
+        cursor: move;
+        outline: 1px dashed rgba(100, 116, 139, .45);
+        outline-offset: -1px;
+
+        &:hover {
+            outline-color: rgba(182, 47, 47, .6);
+        }
+
+        &.selected {
+            outline: 2px solid var(--accent, #b62f2f);
+            outline-offset: -1px;
+            overflow: visible !important;
+        }
+    }
+}
+
+.resize-handle {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-radius: 2px;
+    background: var(--accent, #b62f2f);
+    cursor: nwse-resize;
+}

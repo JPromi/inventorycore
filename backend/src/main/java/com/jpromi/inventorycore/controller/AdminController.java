@@ -38,6 +38,7 @@ import com.jpromi.inventorycore.repository.AppUserRepository;
 import com.jpromi.inventorycore.repository.AreaRepository;
 import com.jpromi.inventorycore.repository.AssetRepository;
 import com.jpromi.inventorycore.repository.AssetTypeRepository;
+import com.jpromi.inventorycore.repository.LabelTemplateRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
 import com.jpromi.inventorycore.repository.GroupPermissionRepository;
 import com.jpromi.inventorycore.repository.GroupRepository;
@@ -54,6 +55,7 @@ public class AdminController {
     private final AssetRepository assetRepository;
     private final LocationRepository locationRepository;
     private final AssetTypeRepository assetTypeRepository;
+    private final LabelTemplateRepository labelTemplateRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApiMapper mapper;
 
@@ -65,6 +67,7 @@ public class AdminController {
         AssetRepository assetRepository,
         LocationRepository locationRepository,
         AssetTypeRepository assetTypeRepository,
+        LabelTemplateRepository labelTemplateRepository,
         PasswordEncoder passwordEncoder,
         ApiMapper mapper
     ) {
@@ -75,6 +78,7 @@ public class AdminController {
         this.assetRepository = assetRepository;
         this.locationRepository = locationRepository;
         this.assetTypeRepository = assetTypeRepository;
+        this.labelTemplateRepository = labelTemplateRepository;
         this.passwordEncoder = passwordEncoder;
         this.mapper = mapper;
     }
@@ -127,6 +131,10 @@ public class AdminController {
         assetRepository.findByArea(area).forEach(asset -> moveOut(asset.getAreas(), area, defaultArea));
         locationRepository.findByArea(area).forEach(location -> moveOut(location.getAreas(), area, defaultArea));
         assetTypeRepository.findByArea(area).forEach(type -> moveOut(type.getAreas(), area, defaultArea));
+        labelTemplateRepository.findByArea(area).forEach(template -> {
+            template.setArea(defaultArea);
+            template.setDefaultForArea(false);
+        });
         permissionRepository.findByArea(area).forEach(permission -> permission.getGroup().getPermissions().remove(permission));
         permissionRepository.flush();
         areaRepository.delete(area);

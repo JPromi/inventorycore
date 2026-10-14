@@ -40,6 +40,12 @@
                 </div>
 
                 <div class="header-actions">
+                    @if (config.endpoint === 'assets') {
+                        <button type="button" class="secondary-action" (click)="showPrintDialog = true">
+                            <svg lucidePrinter size="16"></svg>
+                            <span>Label drucken</span>
+                        </button>
+                    }
                     @if (canDelete) {
                         <button type="button" class="danger-action" (click)="remove()">
                             <svg lucideTrash2 size="16"></svg>
@@ -256,3 +262,7 @@
         }
     </div>
 </section>
+
+@if (showPrintDialog && item) {
+    <app-label-print-dialog [asset]="item" [locations]="locations" [assetTypes]="assetTypes" (closed)="showPrintDialog = false" />
+}

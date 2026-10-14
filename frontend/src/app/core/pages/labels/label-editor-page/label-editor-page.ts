@@ -1,0 +1,387 @@
+import { Component, HostListener, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import {
+  LucideArrowLeft,
+  LucideChevronDown,
+  LucideChevronUp,
+  LucideCopy,
+  LucideQrCode,
+  LucideSave,
+  LucideSquare,
+  LucideTrash2,
+  LucideType,
+  LucideZoomIn,
+  LucideZoomOut,
+} from '@lucide/angular';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
+import { LabelRenderer } from '../../../labels/label-renderer/label-renderer';
+import { LabelTemplateService } from '../../../labels/label-template.service';
+import {
+  LABEL_SIZE_PRESETS,
+  LabelContext,
+  LabelElement,
+  LabelElementType,
+  PLACEHOLDERS,
+  Placeholder,
+  SAMPLE_CONTEXT,
+  SYMBOLOGIES,
+  assetLabelContext,
+  newElementId,
+  parseElements,
+} from '../../../labels/label.model';
+import { AreaService } from '../../../service/area.service';
+import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
+import { PermissionService } from '../../../service/permission.service';
+
+const MM_TO_PX = 96 / 25.4;
+
+@Component({
+  selector: 'app-label-editor-page',
+  imports: [
+    FormsModule,
+    RouterLink,
+    SearchSelect,
+    LabelRenderer,
+    LucideArrowLeft,
+    LucideChevronDown,
+    LucideChevronUp,
+    LucideCopy,
+    LucideQrCode,
+    LucideSave,
+    LucideSquare,
+    LucideTrash2,
+    LucideType,
+    LucideZoomIn,
+    LucideZoomOut,
+  ],
+  templateUrl: './label-editor-page.html',
+  styleUrl: './label-editor-page.scss',
+})
+export class LabelEditorPage implements OnInit {
+  protected readonly presets = LABEL_SIZE_PRESETS;
+  protected readonly symbologies = SYMBOLOGIES;
+  protected readonly symbologyOptions: SelectOption[] = SYMBOLOGIES.map((entry) => ({ value: entry.id, label: entry.label, hint: entry.hint }));
+  protected uuid: string | null = null;
+  protected name = '';
+  protected description = '';
+  protected areaUuid: string | null = null;
+  protected defaultForArea = false;
+  protected widthMm = 62;
+  protected heightMm = 29;
+  protected elements: LabelElement[] = [];
+  protected selectedId: string | null = null;
+  protected zoom = 2;
+  protected loading = false;
+  protected saving = false;
+  protected error = '';
+
+  protected assets: InventoryItem[] = [];
+  protected locations: InventoryItem[] = [];
+  protected assetTypes: InventoryItem[] = [];
+  protected sampleAssetUuid: string | null = null;
+
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly api: LabelTemplateService,
+    private readonly inventoryApi: InventoryApiService,
+    private readonly confirmDialog: ConfirmDialogService,
+    private readonly areaService: AreaService,
+    private readonly permissions: PermissionService,
+  ) {}
+
+  ngOnInit(): void {
+    this.uuid = this.route.snapshot.paramMap.get('uuid');
+    this.load();
+  }
+
+  // ---- derived state ----
+
+  protected get title(): string {
+    return this.uuid ? 'Label-Vorlage bearbeiten' : 'Label-Vorlage erstellen';
+  }
+
+  protected get selected(): LabelElement | null {
+    return this.elements.find((element) => element.id === this.selectedId) ?? null;
+  }
+
+  protected get areaOptions(): SelectOption[] {
+    const action = this.uuid ? 'edit' : 'create';
+    return this.areaService.areas
+      .filter((area) => this.permissions.canInArea('ASSET_TYPE', action, area.uuid))
+      .map((area) => ({ value: area.uuid, label: area.name, color: area.color, hint: area.defaultArea ? 'Standardbereich' : undefined }));
+  }
+
+  protected get assetOptions(): SelectOption[] {
+    return this.assets.map((asset) => ({ value: asset.uuid, label: asset.name, hint: asset.invId ?? undefined }));
+  }
+
+  protected get context(): LabelContext {
+    const asset = this.assets.find((entry) => entry.uuid === this.sampleAssetUuid);
+    if (!asset) {
+      return SAMPLE_CONTEXT;
+    }
+    return assetLabelContext(asset, {
+      locations: this.locations,
+      assetTypes: this.assetTypes,
+      areaName: (uuid) => this.areaService.name(uuid),
+    });
+  }
+
+  /** Standard placeholders plus the custom fields of the sample asset. */
+  protected get placeholders(): Placeholder[] {
+    const asset = this.assets.find((entry) => entry.uuid === this.sampleAssetUuid);
+    const fields = (asset?.fieldValues ?? []).map((field) => ({ key: `field:${field.fieldKey ?? field.name}`, label: field.name }));
+    return [...PLACEHOLDERS, ...fields];
+  }
+
+  protected get selectedSymbology() {
+    return SYMBOLOGIES.find((entry) => entry.id === this.selected?.symbology);
+  }
+
+  // ---- size ----
+
+  protected applyPreset(index: string): void {
+    const preset = this.presets[Number(index)];
+    if (preset) {
+      this.widthMm = preset.width;
+      this.heightMm = preset.height;
+      this.onSizeChange();
+    }
+  }
+
+  /** Keeps all elements on the label after the size changed. */
+  protected onSizeChange(): void {
+    this.widthMm = Math.max(5, Number(this.widthMm) || 5);
+    this.heightMm = Math.max(5, Number(this.heightMm) || 5);
+    for (const element of this.elements) {
+      element.width = Math.min(element.width, this.widthMm);
+      element.height = Math.min(element.height, this.heightMm);
+      element.x = Math.min(element.x, this.widthMm - element.width);
+      element.y = Math.min(element.y, this.heightMm - element.height);
+    }
+    this.fitZoom();
+  }
+
+  protected setZoom(zoom: number): void {
+    this.zoom = Math.min(8, Math.max(0.5, Math.round(zoom * 4) / 4));
+  }
+
+  protected fitZoom(): void {
+    this.setZoom(Math.min(620 / (this.widthMm * MM_TO_PX), 420 / (this.heightMm * MM_TO_PX)));
+  }
+
+  // ---- elements ----
+
+  protected add(type: LabelElementType): void {
+    const base = { id: newElementId(), type, x: 2, y: 2 };
+    let element: LabelElement;
+    switch (type) {
+      case 'text':
+        element = { ...base, width: Math.min(30, this.widthMm - 4), height: 6, content: '{name}', fontSize: 9, align: 'left', verticalAlign: 'top' };
+        break;
+      case 'barcode': {
+        const size = Math.max(5, Math.min(20, this.heightMm - 4, this.widthMm - 4));
+        element = { ...base, width: size, height: size, content: '{invId}', symbology: 'qrcode', showText: true };
+        break;
+      }
+      case 'box':
+        element = { ...base, x: 0.5, y: 0.5, width: this.widthMm - 1, height: this.heightMm - 1, borderWidth: 0.3 };
+        break;
+    }
+    this.elements = [...this.elements, element];
+    this.selectedId = element.id;
+  }
+
+  protected duplicate(element: LabelElement): void {
+    const copy = { ...element, id: newElementId(), x: Math.min(element.x + 2, this.widthMm - element.width), y: Math.min(element.y + 2, this.heightMm - element.height) };
+    this.elements = [...this.elements, copy];
+    this.selectedId = copy.id;
+  }
+
+  protected remove(element: LabelElement): void {
+    this.elements = this.elements.filter((entry) => entry !== element);
+    if (this.selectedId === element.id) {
+      this.selectedId = null;
+    }
+  }
+
+  /** Later elements are drawn on top. */
+  protected moveLayer(element: LabelElement, direction: -1 | 1): void {
+    const index = this.elements.indexOf(element);
+    const target = index + direction;
+    if (target < 0 || target >= this.elements.length) {
+      return;
+    }
+    const elements = [...this.elements];
+    [elements[index], elements[target]] = [elements[target], elements[index]];
+    this.elements = elements;
+  }
+
+  protected changeSymbology(symbology: string | null): void {
+    if (this.selected && symbology) {
+      this.selected.symbology = symbology;
+      const twoDimensional = SYMBOLOGIES.find((entry) => entry.id === symbology)?.twoDimensional;
+      // square box for 2D codes, a flat one for linear codes
+      if (twoDimensional) {
+        const size = Math.min(this.selected.width, this.selected.height);
+        this.selected.width = size;
+        this.selected.height = size;
+      } else if (this.selected.height >= this.selected.width) {
+        this.selected.width = Math.min(this.widthMm - this.selected.x, Math.max(30, this.selected.width));
+        this.selected.height = Math.min(this.selected.height, 12);
+      }
+    }
+  }
+
+  protected insertPlaceholder(key: string): void {
+    if (this.selected && this.selected.type !== 'box') {
+      this.selected.content = `${this.selected.content ?? ''}{${key}}`;
+    }
+  }
+
+  protected elementLabel(element: LabelElement): string {
+    switch (element.type) {
+      case 'text':
+        return element.content || 'Text';
+      case 'barcode':
+        return `${SYMBOLOGIES.find((entry) => entry.id === element.symbology)?.label ?? 'Code'}: ${element.content ?? ''}`;
+      case 'box':
+        return 'Rahmen';
+    }
+  }
+
+  /** Arrow keys move, Delete removes, Ctrl+D duplicates the selected element. */
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement;
+    if (!this.selected || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+      return;
+    }
+    const step = event.shiftKey ? 2 : 0.5;
+    const element = this.selected;
+    switch (event.key) {
+      case 'ArrowLeft':
+        element.x = Math.max(0, element.x - step);
+        break;
+      case 'ArrowRight':
+        element.x = Math.min(this.widthMm - element.width, element.x + step);
+        break;
+      case 'ArrowUp':
+        element.y = Math.max(0, element.y - step);
+        break;
+      case 'ArrowDown':
+        element.y = Math.min(this.heightMm - element.height, element.y + step);
+        break;
+      case 'Delete':
+      case 'Backspace':
+        this.remove(element);
+        break;
+      case 'Escape':
+        this.selectedId = null;
+        break;
+      case 'd':
+        if (!event.ctrlKey && !event.metaKey) {
+          return;
+        }
+        this.duplicate(element);
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+  }
+
+  // ---- persistence ----
+
+  protected save(): void {
+    if (this.saving) {
+      return;
+    }
+    if (!this.name.trim()) {
+      this.error = 'Bitte einen Namen vergeben.';
+      return;
+    }
+    this.saving = true;
+    this.error = '';
+    const request = {
+      name: this.name.trim(),
+      description: this.description.trim() || null,
+      areaUuid: this.areaUuid,
+      defaultForArea: this.defaultForArea,
+      widthMm: this.widthMm,
+      heightMm: this.heightMm,
+      elementsJson: JSON.stringify(this.elements.map((element) => this.round(element))),
+    };
+    const save$ = this.uuid ? this.api.update(this.uuid, request) : this.api.create(request);
+    save$.subscribe({
+      next: () => this.router.navigate(['/config/labels']),
+      error: () => {
+        this.saving = false;
+        this.error = 'Speichern fehlgeschlagen.';
+      },
+    });
+  }
+
+  protected async deleteTemplate(): Promise<void> {
+    if (!this.uuid || !(await this.confirmDialog.confirmDelete(this.name))) {
+      return;
+    }
+    this.api.delete(this.uuid).subscribe({
+      next: () => this.router.navigate(['/config/labels']),
+      error: () => (this.error = 'Vorlage konnte nicht gelöscht werden.'),
+    });
+  }
+
+  private round(element: LabelElement): LabelElement {
+    const round = (value: number) => Math.round(value * 100) / 100;
+    return { ...element, x: round(element.x), y: round(element.y), width: round(element.width), height: round(element.height) };
+  }
+
+  private load(): void {
+    this.loading = true;
+    const list = (endpoint: string) => this.inventoryApi.list<InventoryItem>(endpoint).pipe(catchError(() => of([] as InventoryItem[])));
+    forkJoin({
+      template: this.uuid ? this.api.get(this.uuid) : of(null),
+      areas: this.areaService.load(),
+      assets: list('assets'),
+      locations: list('locations'),
+      assetTypes: list('asset-types'),
+    }).subscribe({
+      next: ({ template, assets, locations, assetTypes }) => {
+        this.assets = assets.sort((a, b) => a.name.localeCompare(b.name));
+        this.locations = locations;
+        this.assetTypes = assetTypes;
+        if (template) {
+          this.name = template.name;
+          this.description = template.description ?? '';
+          this.areaUuid = template.areaUuid;
+          this.defaultForArea = template.defaultForArea;
+          this.widthMm = template.widthMm;
+          this.heightMm = template.heightMm;
+          this.elements = parseElements(template.elementsJson);
+        } else {
+          const selected = this.areaService.selected.find((uuid) => this.areaOptions.some((option) => option.value === uuid));
+          this.areaUuid = selected ?? this.areaService.defaultArea?.uuid ?? this.areaOptions[0]?.value ?? null;
+          this.add('barcode');
+          this.add('text');
+          const [code, text] = this.elements;
+          text.x = code.x + code.width + 2;
+          text.width = Math.max(5, this.widthMm - text.x - 2);
+          this.selectedId = null;
+        }
+        this.fitZoom();
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'Vorlage konnte nicht geladen werden.';
+        this.loading = false;
+      },
+    });
+  }
+}

@@ -1,0 +1,267 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Konfiguration · Labels</p>
+            <h1>
+                <svg lucideQrCode size="20"></svg>
+                <span>{{ title }}</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <a class="secondary-action" routerLink="/config/labels">
+                <svg lucideArrowLeft size="16"></svg>
+                <span>Zurück</span>
+            </a>
+            @if (uuid) {
+                <button type="button" class="danger-action" (click)="deleteTemplate()">
+                    <svg lucideTrash2 size="16"></svg>
+                    <span>Löschen</span>
+                </button>
+            }
+            <button type="button" class="primary-action" (click)="save()" [disabled]="saving || loading">
+                <svg lucideSave size="16"></svg>
+                <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+            </button>
+        </div>
+    </header>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Vorlage...</p>
+    } @else {
+        <div class="editor-layout">
+            <aside class="stack sidebar">
+                <section class="card">
+                    <h2>Vorlage</h2>
+                    <div class="fields">
+                        <label class="field">
+                            <span>Name *</span>
+                            <input type="text" [(ngModel)]="name" placeholder="z. B. EDV Geräte-Label" />
+                        </label>
+                        <div class="field">
+                            <span class="field-label">Bereich</span>
+                            <app-search-select [options]="areaOptions" [(ngModel)]="areaUuid" placeholder="Bereich wählen" searchPlaceholder="Bereich suchen..." />
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" [(ngModel)]="defaultForArea" />
+                            <span>Standard-Vorlage für diesen Bereich</span>
+                        </label>
+                        <label class="field">
+                            <span>Beschreibung</span>
+                            <input type="text" [(ngModel)]="description" />
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Größe</h2>
+                    <div class="fields">
+                        <label class="field">
+                            <span>Vorlage</span>
+                            <select #presetSelect (change)="applyPreset(presetSelect.value); presetSelect.value = ''">
+                                <option value="" selected disabled>Etikettengröße wählen...</option>
+                                @for (preset of presets; track preset.label; let index = $index) {
+                                    <option [value]="index">{{ preset.label }}</option>
+                                }
+                            </select>
+                        </label>
+                        <div class="two">
+                            <label class="field">
+                                <span>Breite (mm)</span>
+                                <input type="number" min="5" step="0.5" [(ngModel)]="widthMm" (change)="onSizeChange()" />
+                            </label>
+                            <label class="field">
+                                <span>Höhe (mm)</span>
+                                <input type="number" min="5" step="0.5" [(ngModel)]="heightMm" (change)="onSizeChange()" />
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-title">
+                        <h2>Elemente</h2>
+                    </div>
+                    <div class="add-buttons">
+                        <button type="button" class="secondary-action compact" (click)="add('text')">
+                            <svg lucideType size="15"></svg><span>Text</span>
+                        </button>
+                        <button type="button" class="secondary-action compact" (click)="add('barcode')">
+                            <svg lucideQrCode size="15"></svg><span>Code</span>
+                        </button>
+                        <button type="button" class="secondary-action compact" (click)="add('box')">
+                            <svg lucideSquare size="15"></svg><span>Rahmen</span>
+                        </button>
+                    </div>
+                    <ul class="element-list">
+                        @for (element of elements; track element.id; let first = $first; let last = $last) {
+                            <li [class.active]="element.id === selectedId" (click)="selectedId = element.id">
+                                @switch (element.type) {
+                                    @case ('text') { <svg lucideType size="14"></svg> }
+                                    @case ('barcode') { <svg lucideQrCode size="14"></svg> }
+                                    @case ('box') { <svg lucideSquare size="14"></svg> }
+                                }
+                                <span class="element-name">{{ elementLabel(element) }}</span>
+                                <button type="button" title="Nach hinten" [disabled]="first" (click)="$event.stopPropagation(); moveLayer(element, -1)">
+                                    <svg lucideChevronUp size="14"></svg>
+                                </button>
+                                <button type="button" title="Nach vorne" [disabled]="last" (click)="$event.stopPropagation(); moveLayer(element, 1)">
+                                    <svg lucideChevronDown size="14"></svg>
+                                </button>
+                            </li>
+                        } @empty {
+                            <li class="empty-item">Noch keine Elemente.</li>
+                        }
+                    </ul>
+                </section>
+
+                @if (selected; as element) {
+                    <section class="card">
+                        <div class="card-title">
+                            <h2>
+                                @switch (element.type) {
+                                    @case ('text') { Text }
+                                    @case ('barcode') { Barcode }
+                                    @case ('box') { Rahmen }
+                                }
+                            </h2>
+                            <div class="inline-actions">
+                                <button type="button" class="icon-button" title="Duplizieren (Strg+D)" (click)="duplicate(element)">
+                                    <svg lucideCopy size="15"></svg>
+                                </button>
+                                <button type="button" class="icon-button danger" title="Entfernen (Entf)" (click)="remove(element)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="fields">
+                            @if (element.type === 'barcode') {
+                                <div class="field">
+                                    <span class="field-label">Code-Art</span>
+                                    <app-search-select
+                                        [options]="symbologyOptions"
+                                        [ngModel]="element.symbology"
+                                        (ngModelChange)="changeSymbology($event)"
+                                        searchPlaceholder="Code-Art suchen..."
+                                    />
+                                </div>
+                            }
+                            @if (element.type !== 'box') {
+                                <label class="field">
+                                    <span>{{ element.type === 'barcode' ? 'Inhalt' : 'Text' }}</span>
+                                    <textarea rows="2" [(ngModel)]="element.content"></textarea>
+                                </label>
+                                <div class="placeholders">
+                                    @for (placeholder of placeholders; track placeholder.key) {
+                                        <button type="button" (click)="insertPlaceholder(placeholder.key)" [title]="'{' + placeholder.key + '}'">
+                                            {{ placeholder.label }}
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @if (element.type === 'barcode') {
+                                @if (selectedSymbology?.hint) {
+                                    <p class="hint">{{ selectedSymbology?.hint }}</p>
+                                }
+                                @if (!selectedSymbology?.twoDimensional) {
+                                    <label class="toggle">
+                                        <input type="checkbox" [(ngModel)]="element.showText" />
+                                        <span>Klartext unter dem Code</span>
+                                    </label>
+                                }
+                            }
+                            @if (element.type === 'text') {
+                                <div class="two">
+                                    <label class="field">
+                                        <span>Schriftgröße (pt)</span>
+                                        <input type="number" min="3" max="72" step="0.5" [(ngModel)]="element.fontSize" />
+                                    </label>
+                                    <label class="field">
+                                        <span>Ausrichtung</span>
+                                        <select [(ngModel)]="element.align">
+                                            <option value="left">Links</option>
+                                            <option value="center">Zentriert</option>
+                                            <option value="right">Rechts</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="two">
+                                    <label class="field">
+                                        <span>Vertikal</span>
+                                        <select [(ngModel)]="element.verticalAlign">
+                                            <option value="top">Oben</option>
+                                            <option value="middle">Mitte</option>
+                                            <option value="bottom">Unten</option>
+                                        </select>
+                                    </label>
+                                    <div class="field">
+                                        <span class="field-label">Stil</span>
+                                        <div class="style-toggles">
+                                            <label class="toggle"><input type="checkbox" [(ngModel)]="element.bold" /><b>Fett</b></label>
+                                            <label class="toggle"><input type="checkbox" [(ngModel)]="element.italic" /><i>Kursiv</i></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            @if (element.type === 'box') {
+                                <label class="field">
+                                    <span>Linienstärke (mm)</span>
+                                    <input type="number" min="0.1" max="5" step="0.1" [(ngModel)]="element.borderWidth" />
+                                </label>
+                            }
+                            <div class="four">
+                                <label class="field"><span>X</span><input type="number" step="0.5" min="0" [(ngModel)]="element.x" /></label>
+                                <label class="field"><span>Y</span><input type="number" step="0.5" min="0" [(ngModel)]="element.y" /></label>
+                                <label class="field"><span>Breite</span><input type="number" step="0.5" min="1" [(ngModel)]="element.width" /></label>
+                                <label class="field"><span>Höhe</span><input type="number" step="0.5" min="1" [(ngModel)]="element.height" /></label>
+                            </div>
+                            <p class="hint">Alle Maße in mm. Pfeiltasten verschieben (Shift = 2 mm).</p>
+                        </div>
+                    </section>
+                }
+            </aside>
+
+            <div class="canvas-column">
+                <div class="canvas-toolbar">
+                    <div class="sample">
+                        <span class="field-label">Vorschau mit</span>
+                        <app-search-select
+                            class="sample-select"
+                            [options]="assetOptions"
+                            [(ngModel)]="sampleAssetUuid"
+                            placeholder="Beispieldaten"
+                            clearLabel="Beispieldaten"
+                            searchPlaceholder="Asset suchen..."
+                        />
+                    </div>
+                    <div class="zoom">
+                        <button type="button" class="icon-button" title="Verkleinern" (click)="setZoom(zoom - 0.25)">
+                            <svg lucideZoomOut size="16"></svg>
+                        </button>
+                        <button type="button" class="zoom-value" title="Einpassen" (click)="fitZoom()">{{ (zoom * 100).toFixed(0) }} %</button>
+                        <button type="button" class="icon-button" title="Vergrößern" (click)="setZoom(zoom + 0.25)">
+                            <svg lucideZoomIn size="16"></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas">
+                    <app-label-renderer
+                        [style.zoom]="zoom"
+                        [widthMm]="widthMm"
+                        [heightMm]="heightMm"
+                        [elements]="elements"
+                        [context]="context"
+                        [editable]="true"
+                        [(selectedId)]="selectedId"
+                    />
+                </div>
+                <p class="hint canvas-hint">
+                    Elemente mit der Maus verschieben, am roten Griff die Größe ändern. Platzhalter wie <code>{{ '{' }}name{{ '}' }}</code> werden beim Drucken durch die Werte des Assets ersetzt.
+                </p>
+            </div>
+        </div>
+    }
+</section>
