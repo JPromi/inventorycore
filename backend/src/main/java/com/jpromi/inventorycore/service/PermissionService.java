@@ -41,7 +41,7 @@ public class PermissionService {
         require(context.can(type, action, areas));
     }
 
-    private User currentUser(Authentication authentication) {
+    public User currentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
         }

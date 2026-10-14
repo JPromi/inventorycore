@@ -1,0 +1,86 @@
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.card > h2 {
+    margin-bottom: .5rem;
+}
+
+.card > .hint {
+    margin-bottom: .85rem;
+    color: var(--text-muted);
+    font-size: .82rem;
+}
+
+.fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+
+    > span {
+        color: var(--text-muted);
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .hint {
+        color: var(--text-subtle);
+        font-size: .78rem;
+    }
+
+    .toggle {
+        min-height: 1.8rem;
+        font-size: .82rem;
+        font-weight: 500;
+    }
+}
+
+.start-bar {
+    position: sticky;
+    bottom: .75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.preview {
+    display: flex;
+    align-items: baseline;
+    gap: .4rem;
+
+    strong {
+        font-size: 1.5rem;
+    }
+
+    span {
+        color: var(--text-muted);
+    }
+}
+
+.empty-state a {
+    margin-left: .25rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

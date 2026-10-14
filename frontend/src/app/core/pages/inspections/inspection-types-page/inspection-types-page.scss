@@ -1,0 +1,80 @@
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.intro {
+    max-width: 48rem;
+    margin-bottom: 1rem;
+}
+
+.type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: .85rem;
+}
+
+.type-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    overflow: hidden;
+    padding-left: 1.25rem;
+
+    &.clickable {
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-sm);
+        }
+    }
+}
+
+.stripe {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: .3rem;
+}
+
+.type-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .5rem;
+
+    h2 {
+        font-size: 1.05rem;
+    }
+}
+
+.actions {
+    display: flex;
+    gap: .25rem;
+}
+
+.description {
+    color: var(--text-muted);
+    font-size: .85rem;
+}
+
+dl {
+    display: flex;
+    gap: 1.5rem;
+
+    dt {
+        color: var(--text-muted);
+        font-size: .74rem;
+        font-weight: 700;
+    }
+
+    dd {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+}

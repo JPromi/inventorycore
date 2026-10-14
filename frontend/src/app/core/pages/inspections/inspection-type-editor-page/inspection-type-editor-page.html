@@ -1,0 +1,148 @@
+<section class="page">
+    <div class="page-shell">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">Konfiguration · Prüfungsarten</p>
+                <h1>
+                    <svg lucideClipboardList size="20"></svg>
+                    <span>{{ title }}</span>
+                </h1>
+            </div>
+            <a class="secondary-action" routerLink="/config/inspection-types">
+                <svg lucideArrowLeft size="16"></svg>
+                <span>Zurück</span>
+            </a>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="empty">Lade Daten...</p>
+        } @else {
+            <form class="stack" (ngSubmit)="save()">
+                <section class="card">
+                    <h2>Allgemein</h2>
+                    <div class="general">
+                        <label class="field">
+                            <span>Name *</span>
+                            <input type="text" [(ngModel)]="name" name="name" required placeholder="z. B. Fahrzeugprüfung, EDV-Inventur" />
+                        </label>
+                        <div class="field">
+                            <span class="field-label">Farbe</span>
+                            <app-color-picker [(ngModel)]="color" name="color" />
+                        </div>
+                        <label class="field wide">
+                            <span>Beschreibung</span>
+                            <textarea [(ngModel)]="description" name="description" rows="2" placeholder="Wofür ist diese Prüfung?"></textarea>
+                        </label>
+                    </div>
+                </section>
+
+                @for (group of groups; track group; let groupIndex = $index) {
+                    <section class="card field-group">
+                        <div class="card-title">
+                            <h2>
+                                @if (group.assetTypeUuid) {
+                                    <svg lucideShapes size="16"></svg>
+                                    Nur für Typ „{{ typeName(group.assetTypeUuid) }}“
+                                } @else {
+                                    Prüffelder für alle Assets
+                                }
+                            </h2>
+                            @if (group.assetTypeUuid) {
+                                <button type="button" class="icon-button" title="Typ entfernen" (click)="removeGroup(group)">
+                                    <svg lucideX size="16"></svg>
+                                </button>
+                            }
+                        </div>
+
+                        @if (!group.fields.length) {
+                            <p class="hint">Noch keine Felder. Ohne Felder wird nur geprüft, ob das Asset da ist.</p>
+                        }
+
+                        <div class="field-list">
+                            @for (field of group.fields; track field; let index = $index; let first = $first; let last = $last) {
+                                <div class="field-row">
+                                    <div class="order">
+                                        <button type="button" class="icon-button" title="Nach oben" [disabled]="first" (click)="moveField(group, index, -1)">
+                                            <svg lucideArrowUp size="14"></svg>
+                                        </button>
+                                        <button type="button" class="icon-button" title="Nach unten" [disabled]="last" (click)="moveField(group, index, 1)">
+                                            <svg lucideArrowDown size="14"></svg>
+                                        </button>
+                                    </div>
+                                    <label class="field">
+                                        <span>Bezeichnung</span>
+                                        <input
+                                            type="text"
+                                            [(ngModel)]="field.name"
+                                            [name]="'name-' + groupIndex + '-' + index"
+                                            placeholder="z. B. Bildschirm funktioniert"
+                                        />
+                                    </label>
+                                    <label class="field">
+                                        <span>Art</span>
+                                        <select [(ngModel)]="field.fieldType" [name]="'type-' + groupIndex + '-' + index">
+                                            @for (type of fieldTypes; track type.value) {
+                                                <option [value]="type.value">{{ type.label }}</option>
+                                            }
+                                        </select>
+                                    </label>
+                                    <label class="toggle required">
+                                        <input type="checkbox" [(ngModel)]="field.required" [name]="'required-' + groupIndex + '-' + index" />
+                                        <span>Pflicht</span>
+                                    </label>
+                                    <button type="button" class="icon-button danger" title="Feld entfernen" (click)="removeField(group, index)">
+                                        <svg lucideTrash2 size="15"></svg>
+                                    </button>
+                                    @if (field.fieldType === 'SELECT') {
+                                        <label class="field options">
+                                            <span>Optionen (mit Komma getrennt)</span>
+                                            <input
+                                                type="text"
+                                                [(ngModel)]="field.optionsText"
+                                                [name]="'options-' + groupIndex + '-' + index"
+                                                placeholder="z. B. In Ordnung, Mangel, Defekt"
+                                            />
+                                        </label>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" class="secondary-action compact add" (click)="addField(group)">
+                            <svg lucidePlus size="15"></svg>
+                            <span>Feld hinzufügen</span>
+                        </button>
+                    </section>
+                }
+
+                <section class="card add-type">
+                    <div>
+                        <h2>Felder für einen bestimmten Typ</h2>
+                        <p class="hint">Diese Felder erscheinen in der Prüfung nur bei Assets dieses Typs.</p>
+                    </div>
+                    <app-search-select
+                        [options]="typeOptions"
+                        [(ngModel)]="typeToAdd"
+                        (ngModelChange)="addTypeGroup($event)"
+                        name="typeToAdd"
+                        placeholder="Typ hinzufügen..."
+                        searchPlaceholder="Typ suchen..."
+                        emptyText="Alle Typen haben schon Felder"
+                    />
+                </section>
+
+                <div class="editor-actions">
+                    <a class="secondary-action" routerLink="/config/inspection-types">Abbrechen</a>
+                    <button type="submit" class="primary-action" [disabled]="saving">
+                        <svg lucideSave size="17"></svg>
+                        <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</section>

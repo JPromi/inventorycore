@@ -22,6 +22,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { CameraDevice, CameraScanner } from '../../scan/camera-scanner';
+import { scanFeedback } from '../../scan/scan-feedback';
 import { InventoryApiService, InventoryItem } from '../../service/inventory-api.service';
 import { ScanResult, ScanService } from '../../service/scan.service';
 import { locationPath } from '../../util/location-utils';
@@ -100,7 +101,6 @@ export class ScanPage implements OnInit, OnDestroy {
   private lastCodeAt = 0;
   private locations: InventoryItem[] = [];
   private types: InventoryItem[] = [];
-  private audio: AudioContext | null = null;
 
   constructor(
     private readonly scanService: ScanService,
@@ -125,7 +125,6 @@ export class ScanPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.scanner?.stop();
-    this.audio?.close();
   }
 
   // ---- mode & settings ----
@@ -342,30 +341,12 @@ export class ScanPage implements OnInit, OnDestroy {
     this.history = [{ code: result.code, time: new Date(), label, route: this.routeOf(result) }, ...this.history].slice(0, HISTORY_SIZE);
   }
 
-  /** Beep and vibration, so the result is noticed without looking at the screen. */
   private feedback(success: boolean): void {
     if (success) {
       this.flash = true;
       setTimeout(() => (this.flash = false), 400);
     }
-    navigator.vibrate?.(success ? 60 : [80, 60, 80]);
-    if (!this.sound) {
-      return;
-    }
-    try {
-      this.audio ??= new AudioContext();
-      const oscillator = this.audio.createOscillator();
-      const gain = this.audio.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = success ? 1046 : 220;
-      gain.gain.setValueAtTime(0.15, this.audio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.audio.currentTime + (success ? 0.12 : 0.3));
-      oscillator.connect(gain).connect(this.audio.destination);
-      oscillator.start();
-      oscillator.stop(this.audio.currentTime + (success ? 0.12 : 0.3));
-    } catch {
-      // no audio available
-    }
+    scanFeedback(success ? 'success' : 'error', this.sound);
   }
 
   private focusInput(): void {

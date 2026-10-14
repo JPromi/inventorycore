@@ -16,6 +16,7 @@ import {
   LucideChartColumn,
   LucideChevronDown,
   LucideClipboardCheck,
+  LucideClipboardList,
   LucideFileText,
   LucideHouse,
   LucideKeyRound,
@@ -71,7 +72,7 @@ export class MainRoute implements OnInit {
     { label: 'Scannen', route: '/scan', icon: LucideScanBarcode },
     { label: 'Inventar', route: '/assets', icon: LucideBoxes },
     { label: 'Standorte', route: '/locations', icon: LucideMapPin },
-    { label: 'Prüfungen', route: '/reports', icon: LucideClipboardCheck },
+    { label: 'Prüfungen', route: '/inspections', icon: LucideClipboardCheck },
     {
       label: 'Konfiguration',
       icon: LucideSettings,
@@ -80,7 +81,7 @@ export class MainRoute implements OnInit {
         { label: 'Tags', route: '/config/tags', icon: LucideTags },
         { label: 'Typen', route: '/config/types', icon: LucideShapes },
         { label: 'Labels', route: '/config/labels', icon: LucideQrCode },
-        { label: 'Protokolle', route: '/config/reports', icon: LucideClipboardCheck },
+        { label: 'Prüfungsarten', route: '/config/inspection-types', icon: LucideClipboardList },
       ],
     },
     {

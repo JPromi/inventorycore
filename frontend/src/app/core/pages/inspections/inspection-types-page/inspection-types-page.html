@@ -1,0 +1,77 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ types.length }} Prüfungsarten</p>
+            <h1>
+                <svg lucideClipboardList size="20"></svg>
+                <span>Prüfungsarten</span>
+            </h1>
+        </div>
+        @if (canEdit) {
+            <div class="header-actions">
+                <a class="primary-action" routerLink="/config/inspection-types/new">
+                    <svg lucidePlus size="17"></svg>
+                    <span>Neue Prüfungsart</span>
+                </a>
+            </div>
+        }
+    </header>
+
+    <p class="hint intro">
+        Eine Prüfungsart legt fest, was bei jedem Asset geprüft wird: Felder für alle Assets
+        und zusätzliche Felder nur für bestimmte Typen, z. B. „Bildschirm funktioniert“ bei Laptops.
+    </p>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Prüfungsarten...</p>
+    } @else if (!types.length) {
+        <div class="empty-state">Noch keine Prüfungsart angelegt.</div>
+    } @else {
+        <div class="type-grid">
+            @for (type of types; track type.uuid) {
+                <article class="card type-card" [class.clickable]="canEdit" (click)="canEdit && edit(type)">
+                    <span class="stripe" [style.background]="type.color || 'var(--border-strong)'"></span>
+                    <div class="type-head">
+                        <h2>{{ type.name }}</h2>
+                        <div class="actions">
+                            @if (canEdit) {
+                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(type)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                            }
+                            @if (canDelete) {
+                                <button type="button" class="icon-button danger" title="Löschen" (click)="remove(type, $event)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    @if (type.description) {
+                        <p class="description">{{ type.description }}</p>
+                    }
+                    <dl>
+                        <div>
+                            <dt>Felder für alle</dt>
+                            <dd>{{ generalFieldCount(type) }}</dd>
+                        </div>
+                        <div>
+                            <dt>Prüfungen</dt>
+                            <dd>{{ type.inspectionCount }}</dd>
+                        </div>
+                    </dl>
+                    @if (typeFieldSummary(type).length) {
+                        <div class="chip-list">
+                            @for (entry of typeFieldSummary(type); track entry) {
+                                <span class="chip">{{ entry }}</span>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>

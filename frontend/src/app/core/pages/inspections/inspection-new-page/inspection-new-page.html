@@ -1,0 +1,135 @@
+<section class="page">
+    <div class="page-shell narrow">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">Prüfungen</p>
+                <h1>
+                    <svg lucideClipboardCheck size="20"></svg>
+                    <span>Neue Prüfung</span>
+                </h1>
+            </div>
+            <a class="secondary-action" routerLink="/inspections">
+                <svg lucideArrowLeft size="16"></svg>
+                <span>Zurück</span>
+            </a>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="empty">Lade Daten...</p>
+        } @else if (!types.length) {
+            <div class="empty-state">
+                Es gibt noch keine Prüfungsart.
+                <a routerLink="/config/inspection-types/new">Jetzt unter Konfiguration anlegen</a>
+            </div>
+        } @else {
+            <form class="stack" (ngSubmit)="start()">
+                <section class="card">
+                    <h2>Prüfung</h2>
+                    <div class="fields">
+                        <div class="field">
+                            <span>Prüfungsart *</span>
+                            <app-search-select
+                                [options]="typeOptions"
+                                [ngModel]="typeUuid"
+                                (ngModelChange)="selectType($event)"
+                                name="type"
+                                placeholder="Prüfungsart wählen"
+                                searchPlaceholder="Prüfungsart suchen..."
+                            />
+                            @if (selectedType; as type) {
+                                <small class="hint">
+                                    {{ type.fields.length }} Prüffelder
+                                    @if (type.description) {
+                                        · {{ type.description }}
+                                    }
+                                </small>
+                            }
+                        </div>
+                        <label class="field">
+                            <span>Titel</span>
+                            <input type="text" [(ngModel)]="title" (ngModelChange)="titleChanged()" name="title" />
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>Welche Assets werden geprüft?</h2>
+                    <p class="hint">Leer gelassene Filter schränken nicht ein. Innerhalb eines Filters reicht eine Übereinstimmung.</p>
+                    <div class="fields">
+                        <div class="field">
+                            <span>Standort</span>
+                            <app-search-select
+                                [options]="locationOptions"
+                                [(ngModel)]="filter.locationUuid"
+                                (ngModelChange)="filterChanged()"
+                                name="location"
+                                placeholder="Alle Standorte"
+                                clearLabel="Alle Standorte"
+                                searchPlaceholder="Standort suchen..."
+                            />
+                            <label class="toggle">
+                                <input
+                                    type="checkbox"
+                                    [(ngModel)]="filter.includeSubLocations"
+                                    (ngModelChange)="filterChanged()"
+                                    name="includeSub"
+                                    [disabled]="!filter.locationUuid"
+                                />
+                                <span>Unterstandorte einschließen</span>
+                            </label>
+                        </div>
+                        <div class="field">
+                            <span>Tags</span>
+                            <app-multi-select
+                                [options]="tagOptions"
+                                [(ngModel)]="filter.tagUuids"
+                                (ngModelChange)="filterChanged()"
+                                name="tags"
+                                placeholder="Tag hinzufügen..."
+                            />
+                        </div>
+                        <div class="field">
+                            <span>Typen</span>
+                            <app-multi-select
+                                [options]="assetTypeOptions"
+                                [(ngModel)]="filter.assetTypeUuids"
+                                (ngModelChange)="filterChanged()"
+                                name="assetTypes"
+                                placeholder="Typ hinzufügen..."
+                            />
+                        </div>
+                        <div class="field">
+                            <span>Bereiche</span>
+                            <app-multi-select
+                                [options]="areaOptions"
+                                [(ngModel)]="filter.areaUuids"
+                                (ngModelChange)="filterChanged()"
+                                name="areas"
+                                placeholder="Bereich hinzufügen..."
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                <div class="start-bar card">
+                    <div class="preview">
+                        @if (previewLoading) {
+                            <span class="hint">Zähle Assets...</span>
+                        } @else if (previewCount !== null) {
+                            <strong>{{ previewCount }}</strong>
+                            <span>{{ previewCount === 1 ? 'Asset wird' : 'Assets werden' }} erwartet</span>
+                        }
+                    </div>
+                    <button type="submit" class="primary-action" [disabled]="!typeUuid || starting">
+                        <svg lucidePlay size="16"></svg>
+                        <span>{{ starting ? 'Startet...' : 'Prüfung starten' }}</span>
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</section>

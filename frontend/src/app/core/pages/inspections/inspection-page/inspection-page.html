@@ -1,0 +1,525 @@
+<section class="page">
+    <div class="page-shell">
+        <a class="back-link no-print" routerLink="/inspections">
+            <svg lucideArrowLeft size="16"></svg>
+            <span>Alle Prüfungen</span>
+        </a>
+
+        @if (error) {
+            <p class="error no-print">
+                {{ error }}
+                <button type="button" class="icon-button" title="Ausblenden" (click)="error = ''">
+                    <svg lucideX size="14"></svg>
+                </button>
+            </p>
+        }
+
+        @if (loading && !detail) {
+            <p class="empty">Lade Prüfung...</p>
+        } @else if (detail) {
+            <header class="page-header">
+                <div>
+                    <p class="eyebrow">
+                        {{ detail.summary.typeName }}
+                        @if (open) {
+                            · <span class="badge accent">Offen</span>
+                        } @else {
+                            · <span class="badge success"><svg lucideLock size="11"></svg> Abgeschlossen</span>
+                        }
+                    </p>
+                    <h1>
+                        <svg lucideClipboardCheck size="20"></svg>
+                        <span>{{ detail.summary.title }}</span>
+                    </h1>
+                    <p class="filter-summary">{{ detail.summary.filterSummary }}</p>
+                </div>
+                <div class="header-actions no-print">
+                    @if (canDelete) {
+                        <button type="button" class="danger-action" (click)="remove()">
+                            <svg lucideTrash2 size="16"></svg>
+                            <span>Löschen</span>
+                        </button>
+                    }
+                    @if (open) {
+                        <button type="button" class="primary-action" (click)="startCompleting()">
+                            <svg lucideCircleCheck size="16"></svg>
+                            <span>Abschließen</span>
+                        </button>
+                    } @else {
+                        <button type="button" class="primary-action" (click)="print()">
+                            <svg lucidePrinter size="16"></svg>
+                            <span>Drucken</span>
+                        </button>
+                    }
+                </div>
+            </header>
+
+            <!-- key figures -->
+            <div class="stats">
+                <div class="stat">
+                    <span class="value">{{ count('ALL') }}</span>
+                    <span class="label">Erwartet</span>
+                </div>
+                <div class="stat present">
+                    <span class="value">{{ count('PRESENT') }}</span>
+                    <span class="label">Da</span>
+                </div>
+                <div class="stat missing">
+                    <span class="value">{{ open ? count('MISSING') : count('MISSING') + count('PENDING') }}</span>
+                    <span class="label">Fehlen</span>
+                </div>
+                @if (open) {
+                    <div class="stat">
+                        <span class="value">{{ count('PENDING') }}</span>
+                        <span class="label">Noch offen</span>
+                    </div>
+                }
+                <div class="stat" [class.warning]="unexpectedItems.length">
+                    <span class="value">{{ unexpectedItems.length }}</span>
+                    <span class="label">Fremd / unbekannt</span>
+                </div>
+                @if (open) {
+                    <div class="progress-wrap">
+                        <div class="progress">
+                            <span class="present" [style.width.%]="count('ALL') ? (count('PRESENT') / count('ALL')) * 100 : 0"></span>
+                            <span class="missing" [style.width.%]="count('ALL') ? (count('MISSING') / count('ALL')) * 100 : 0"></span>
+                        </div>
+                        <span class="hint">{{ progress }} % geprüft</span>
+                    </div>
+                }
+            </div>
+
+            @if (open) {
+                <!-- ================= DOING THE INSPECTION ================= -->
+                <section class="card scan-card">
+                    <form class="scan-row" (ngSubmit)="submitCode()">
+                        <label class="scan-field" [class.busy]="scanning">
+                            <svg class="field-icon" lucideScanBarcode size="20"></svg>
+                            <input
+                                #scanInput
+                                type="text"
+                                name="code"
+                                [(ngModel)]="code"
+                                placeholder="Asset scannen oder Code eintippen..."
+                                aria-label="Gescannter Code"
+                                autocomplete="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                enterkeyhint="send"
+                            />
+                            <button type="submit" class="submit" title="Prüfen (Enter)" [disabled]="!code.trim()">
+                                <svg lucideCornerDownLeft size="17"></svg>
+                            </button>
+                        </label>
+                        @if (cameraAvailable) {
+                            <button type="button" class="secondary-action camera-toggle" [class.active]="cameraOn" (click)="toggleCamera()">
+                                @if (cameraOn) {
+                                    <svg lucideCameraOff size="17"></svg>
+                                    <span>Kamera aus</span>
+                                } @else {
+                                    <svg lucideCamera size="17"></svg>
+                                    <span>Kamera</span>
+                                }
+                            </button>
+                        }
+                    </form>
+
+                    @if (cameraOn) {
+                        <div class="camera">
+                            <video #video muted playsinline></video>
+                            @if (cameraError) {
+                                <p class="camera-error">{{ cameraError }}</p>
+                            } @else {
+                                <div class="frame" aria-hidden="true"></div>
+                            }
+                        </div>
+                    }
+
+                    @if (lastScan; as scan) {
+                        <div
+                            class="scan-result"
+                            [class.success]="scan.outcome === 'CHECKED'"
+                            [class.warning]="scan.outcome === 'UNEXPECTED' || scan.outcome === 'UNKNOWN'"
+                            [class.neutral]="scan.outcome === 'ALREADY_CHECKED' || scan.outcome === 'IGNORED'"
+                            role="status"
+                        >
+                            @switch (scan.outcome) {
+                                @case ('CHECKED') {
+                                    <svg lucideCircleCheck size="20"></svg>
+                                }
+                                @case ('UNEXPECTED') {
+                                    <svg lucideTriangleAlert size="20"></svg>
+                                }
+                                @case ('UNKNOWN') {
+                                    <svg lucideTriangleAlert size="20"></svg>
+                                }
+                                @default {
+                                    <svg lucideCircleAlert size="20"></svg>
+                                }
+                            }
+                            <span>{{ scan.message }}</span>
+                        </div>
+                    }
+                </section>
+
+                @if (unexpectedItems.length) {
+                    <section class="card unexpected">
+                        <h2>
+                            <svg lucideTriangleAlert size="18"></svg>
+                            Fremde Gegenstände ({{ unexpectedItems.length }})
+                        </h2>
+                        <p class="hint">Diese wurden hier gefunden, gehören aber nicht zu dieser Prüfung.</p>
+                        <ul>
+                            @for (item of unexpectedItems; track item.uuid) {
+                                <li>
+                                    <div>
+                                        @if (item.assetUuid) {
+                                            <a [routerLink]="['/assets', item.assetUuid]" target="_blank">{{ item.assetName }}</a>
+                                        } @else {
+                                            <strong>{{ item.assetName }}</strong>
+                                        }
+                                        <span class="meta">
+                                            @if (item.invId) {
+                                                {{ item.invId }} ·
+                                            }
+                                            @if (item.assetUuid) {
+                                                {{ item.locationName ? 'gehört zu ' + item.locationName : 'ohne Standort' }}
+                                            } @else {
+                                                Code: <code>{{ item.scannedCode }}</code>
+                                            }
+                                        </span>
+                                    </div>
+                                    <button type="button" class="icon-button" title="Entfernen (versehentlich gescannt)" (click)="removeUnexpected(item)">
+                                        <svg lucideX size="15"></svg>
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+
+                <div class="toolbar list-toolbar">
+                    <div class="segmented-tabs" role="tablist">
+                        <button type="button" [class.active]="itemFilter === 'ALL'" (click)="itemFilter = 'ALL'">Alle <span class="count">{{ count('ALL') }}</span></button>
+                        <button type="button" [class.active]="itemFilter === 'PENDING'" (click)="itemFilter = 'PENDING'">Offen <span class="count">{{ count('PENDING') }}</span></button>
+                        <button type="button" [class.active]="itemFilter === 'PRESENT'" (click)="itemFilter = 'PRESENT'">Da <span class="count">{{ count('PRESENT') }}</span></button>
+                        <button type="button" [class.active]="itemFilter === 'MISSING'" (click)="itemFilter = 'MISSING'">Fehlt <span class="count">{{ count('MISSING') }}</span></button>
+                    </div>
+                    <div class="search-box">
+                        <svg class="search-icon" lucideSearch size="18"></svg>
+                        <input type="text" [(ngModel)]="search" placeholder="In dieser Prüfung suchen..." aria-label="Suchen" />
+                        @if (search) {
+                            <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                                <svg lucideX size="15"></svg>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                @if (!expectedItems.length) {
+                    <div class="empty-state">Die Filter haben keine Assets ausgewählt. Gefundene Gegenstände erscheinen oben als fremd.</div>
+                } @else if (!visibleItems.length) {
+                    <div class="empty-state">Keine Einträge in dieser Ansicht.</div>
+                }
+
+                <div class="item-list">
+                    @for (item of visibleItems; track item.uuid) {
+                        <article
+                            class="item"
+                            [id]="'item-' + item.uuid"
+                            [class.present]="item.status === 'PRESENT'"
+                            [class.missing]="item.status === 'MISSING'"
+                            [class.highlight]="highlighted === item.uuid"
+                        >
+                            <div class="item-row">
+                                <span class="status-dot" [title]="statusLabel(item)"></span>
+                                <div class="item-main">
+                                    <a [routerLink]="['/assets', item.assetUuid]" target="_blank" class="item-name">{{ item.assetName }}</a>
+                                    <span class="meta">
+                                        {{ itemMeta(item) }}
+                                    </span>
+                                    @if (item.checkedAt) {
+                                        <span class="checked">
+                                            {{ item.method === 'SCAN' ? 'Gescannt' : 'Manuell' }} von {{ item.checkedByName }},
+                                            {{ item.checkedAt | date: 'HH:mm' }}
+                                        </span>
+                                    }
+                                </div>
+                                @if (fieldsFor(item).length) {
+                                    <button type="button" class="fields-toggle" [class.open]="expanded.has(item.uuid)" (click)="toggleExpanded(item)">
+                                        <span [class.incomplete]="item.status === 'PRESENT' && missingRequired(item)">
+                                            {{ filledCount(item) }}/{{ fieldsFor(item).length }} Felder
+                                        </span>
+                                        <svg lucideChevronDown size="15"></svg>
+                                    </button>
+                                }
+                                <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
+                                    <button type="button" class="present" [class.active]="item.status === 'PRESENT'" (click)="setStatus(item, 'PRESENT')">
+                                        <svg lucideCheck size="15"></svg>
+                                        <span>Da</span>
+                                    </button>
+                                    <button type="button" class="missing" [class.active]="item.status === 'MISSING'" (click)="setStatus(item, 'MISSING')">
+                                        <svg lucideX size="15"></svg>
+                                        <span>Fehlt</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            @if (expanded.has(item.uuid)) {
+                                <div class="item-fields">
+                                    @for (field of fieldsFor(item); track field.uuid) {
+                                        <div class="check-field" [class.wide]="field.fieldType === 'TEXT'">
+                                            <span class="check-label">
+                                                {{ field.name }}
+                                                @if (field.required) {
+                                                    <span class="required">*</span>
+                                                }
+                                                @if (field.assetTypeName) {
+                                                    <span class="scope">{{ field.assetTypeName }}</span>
+                                                }
+                                            </span>
+                                            @switch (field.fieldType) {
+                                                @case ('BOOLEAN') {
+                                                    <div class="yes-no">
+                                                        <button
+                                                            type="button"
+                                                            class="yes"
+                                                            [class.active]="value(item, field) === 'true'"
+                                                            (click)="setValue(item, field, value(item, field) === 'true' ? '' : 'true')"
+                                                        >
+                                                            Ja
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="no"
+                                                            [class.active]="value(item, field) === 'false'"
+                                                            (click)="setValue(item, field, value(item, field) === 'false' ? '' : 'false')"
+                                                        >
+                                                            Nein
+                                                        </button>
+                                                    </div>
+                                                }
+                                                @case ('SELECT') {
+                                                    <select [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event)">
+                                                        <option value="">—</option>
+                                                        @for (option of options(field); track option) {
+                                                            <option [value]="option">{{ option }}</option>
+                                                        }
+                                                    </select>
+                                                }
+                                                @case ('NUMBER') {
+                                                    <input type="number" [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event?.toString() ?? '', true)" />
+                                                }
+                                                @case ('DATE') {
+                                                    <input type="date" [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event)" />
+                                                }
+                                                @case ('DATETIME') {
+                                                    <input type="datetime-local" [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event)" />
+                                                }
+                                                @default {
+                                                    <input
+                                                        [type]="field.fieldType === 'EMAIL' ? 'email' : field.fieldType === 'URL' ? 'url' : 'text'"
+                                                        [ngModel]="value(item, field)"
+                                                        (ngModelChange)="setValue(item, field, $event, true)"
+                                                    />
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                    <label class="check-field wide">
+                                        <span class="check-label">Notiz</span>
+                                        <input type="text" [ngModel]="item.note ?? ''" #note (blur)="saveNote(item, note.value)" placeholder="Optional" />
+                                    </label>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+
+                @if (completing) {
+                    <div class="dialog-backdrop" (click)="completing = false">
+                        <div class="card dialog" role="dialog" aria-modal="true" aria-labelledby="complete-title" (click)="$event.stopPropagation()">
+                            <h2 id="complete-title">Prüfung abschließen</h2>
+                            <ul class="complete-summary">
+                                <li><strong>{{ count('PRESENT') }}</strong> von {{ count('ALL') }} Assets sind da</li>
+                                @if (count('MISSING')) {
+                                    <li class="bad"><strong>{{ count('MISSING') }}</strong> fehlen</li>
+                                }
+                                @if (count('PENDING')) {
+                                    <li class="bad"><strong>{{ count('PENDING') }}</strong> wurden nicht geprüft und erscheinen im Bericht als „nicht geprüft“</li>
+                                }
+                                @if (unexpectedItems.length) {
+                                    <li class="warn"><strong>{{ unexpectedItems.length }}</strong> fremde Gegenstände / unbekannte Codes</li>
+                                }
+                                @if (missingRequiredTotal) {
+                                    <li class="warn"><strong>{{ missingRequiredTotal }}</strong> Pflichtfelder sind leer</li>
+                                }
+                            </ul>
+                            <label class="check-field wide">
+                                <span class="check-label">Kommentar zur Prüfung</span>
+                                <textarea [(ngModel)]="comment" rows="4" placeholder="z. B. Auffälligkeiten, offene Punkte"></textarea>
+                            </label>
+                            <p class="hint lock-hint">
+                                <svg lucideLock size="14"></svg>
+                                Nach dem Abschließen kann die Prüfung nicht mehr bearbeitet werden.
+                            </p>
+                            <div class="dialog-actions">
+                                <button type="button" class="secondary-action" (click)="completing = false">Abbrechen</button>
+                                <button type="button" class="primary-action" [disabled]="submitting" (click)="complete()">
+                                    <svg lucideLock size="15"></svg>
+                                    <span>{{ submitting ? 'Schließt ab...' : 'Endgültig abschließen' }}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            } @else {
+                <!-- ================= PROTOCOL ================= -->
+                <section class="card protocol-meta">
+                    <dl>
+                        <div><dt>Prüfungsart</dt><dd>{{ detail.summary.typeName }}</dd></div>
+                        <div><dt>Umfang</dt><dd>{{ detail.summary.filterSummary }}</dd></div>
+                        <div>
+                            <dt>Gestartet</dt>
+                            <dd>{{ detail.summary.createdAt | date: 'dd.MM.yyyy HH:mm' }} von {{ detail.summary.createdByName }}</dd>
+                        </div>
+                        <div>
+                            <dt>Abgeschlossen</dt>
+                            <dd>{{ detail.summary.completedAt | date: 'dd.MM.yyyy HH:mm' }} von {{ detail.summary.completedByName }}</dd>
+                        </div>
+                    </dl>
+                    @if (detail.comment) {
+                        <div class="comment">
+                            <dt>Kommentar</dt>
+                            <dd>{{ detail.comment }}</dd>
+                        </div>
+                    }
+                </section>
+
+                <section class="card report-section" [class.empty-section]="!reportMissing.length">
+                    <h2 class="bad">Fehlende Assets ({{ reportMissing.length }})</h2>
+                    @if (reportMissing.length) {
+                        <div class="table-wrap">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Inventar-ID</th>
+                                        <th>Typ</th>
+                                        <th>Standort</th>
+                                        <th>Status</th>
+                                        <th>Notiz</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of reportMissing; track item.uuid) {
+                                        <tr>
+                                            <td>{{ item.assetName }}</td>
+                                            <td class="mono">{{ item.invId || '—' }}</td>
+                                            <td>{{ item.assetTypeName || '—' }}</td>
+                                            <td>{{ item.locationName || '—' }}</td>
+                                            <td>
+                                                {{ statusLabel(item) }}
+                                                @if (item.checkedByName) {
+                                                    <span class="by">({{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }})</span>
+                                                }
+                                            </td>
+                                            <td>{{ item.note || '' }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    } @else {
+                        <p class="hint">Keine – alle erwarteten Assets wurden gefunden.</p>
+                    }
+                </section>
+
+                <section class="card report-section" [class.empty-section]="!unexpectedItems.length">
+                    <h2 class="warn">Fremde Gegenstände ({{ unexpectedItems.length }})</h2>
+                    @if (unexpectedItems.length) {
+                        <div class="table-wrap">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Gegenstand</th>
+                                        <th>Inventar-ID / Code</th>
+                                        <th>Gehört zu</th>
+                                        <th>Erfasst</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of unexpectedItems; track item.uuid) {
+                                        <tr>
+                                            <td>{{ item.assetName }}</td>
+                                            <td class="mono">{{ item.invId || item.scannedCode || '—' }}</td>
+                                            <td>{{ item.assetUuid ? item.locationName || 'ohne Standort' : 'unbekannter Code' }}</td>
+                                            <td>{{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    } @else {
+                        <p class="hint">Keine.</p>
+                    }
+                </section>
+
+                <section class="card report-section">
+                    <h2 class="good">Geprüfte Assets ({{ reportPresent.length }})</h2>
+                    @if (reportPresent.length) {
+                        <div class="table-wrap">
+                            <table class="report-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Inventar-ID</th>
+                                        <th>Typ</th>
+                                        <th>Prüfwerte</th>
+                                        <th>Geprüft</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (item of reportPresent; track item.uuid) {
+                                        <tr>
+                                            <td>
+                                                {{ item.assetName }}
+                                                @if (item.note) {
+                                                    <span class="note">Notiz: {{ item.note }}</span>
+                                                }
+                                            </td>
+                                            <td class="mono">{{ item.invId || '—' }}</td>
+                                            <td>{{ item.assetTypeName || '—' }}</td>
+                                            <td>
+                                                @if (item.values.length) {
+                                                    <dl class="values">
+                                                        @for (entry of item.values; track entry.fieldUuid) {
+                                                            <div>
+                                                                <dt>{{ entry.fieldName }}</dt>
+                                                                <dd [class.no]="entry.fieldType === 'BOOLEAN' && entry.value === 'false'">
+                                                                    {{ formatValue(entry.value, entry.fieldType) }}
+                                                                </dd>
+                                                            </div>
+                                                        }
+                                                    </dl>
+                                                } @else {
+                                                    <span class="by">—</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                {{ item.checkedByName }}
+                                                <span class="by">{{ item.checkedAt | date: 'dd.MM. HH:mm' }} · {{ item.method === 'SCAN' ? 'Scan' : 'manuell' }}</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    } @else {
+                        <p class="hint">Keine.</p>
+                    }
+                </section>
+            }
+        }
+    </div>
+</section>

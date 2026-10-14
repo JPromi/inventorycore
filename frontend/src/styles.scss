@@ -450,3 +450,123 @@ label.field {
     justify-content: flex-end;
     gap: .5rem;
 }
+
+// tabs with counters, e.g. "Offen 3 | Abgeschlossen 5"
+.segmented-tabs {
+    display: inline-flex;
+    padding: .2rem;
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    background: var(--surface);
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .4rem .75rem;
+        border: 0;
+        border-radius: .35rem;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: .86rem;
+        font-weight: 600;
+        cursor: pointer;
+
+        &.active {
+            background: var(--surface-active);
+            color: var(--text);
+        }
+    }
+
+    .count {
+        min-width: 1.3rem;
+        padding: 0 .35rem;
+        border-radius: 999px;
+        background: var(--border);
+        font-size: .72rem;
+        text-align: center;
+    }
+}
+
+// "back to the list" link above a page header
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-bottom: .9rem;
+    color: var(--text-muted);
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+// simple modal dialog: <div class="dialog-backdrop"><div class="card dialog">...</div></div>
+.dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, .45);
+}
+
+.dialog {
+    width: min(100%, 30rem);
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    box-shadow: var(--shadow-md);
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+
+// compact table for reports and protocols (prints well)
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+
+    th, td {
+        padding: .45rem .6rem;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    th { color: var(--text-muted); font-size: .74rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .by, .note { display: block; color: var(--text-subtle); font-size: .76rem; }
+}
+
+// printing a page (e.g. an inspection protocol): only the content, no navigation
+@media print {
+    app-main-route > nav,
+    .no-print {
+        display: none !important;
+    }
+
+    html,
+    body,
+    app-root,
+    app-main-route,
+    app-main-route > main,
+    .page {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .page {
+        padding: 0 !important;
+    }
+
+    .card {
+        break-inside: avoid;
+        box-shadow: none !important;
+    }
+}

@@ -1,0 +1,104 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ count('OPEN') }} offen · {{ count('COMPLETED') }} abgeschlossen</p>
+            <h1>
+                <svg lucideClipboardCheck size="20"></svg>
+                <span>Prüfungen</span>
+            </h1>
+        </div>
+        @if (canStart) {
+            <div class="header-actions">
+                <a class="primary-action" routerLink="/inspections/new">
+                    <svg lucidePlus size="17"></svg>
+                    <span>Neue Prüfung</span>
+                </a>
+            </div>
+        }
+    </header>
+
+    <div class="toolbar">
+        <div class="segmented-tabs" role="tablist">
+            <button type="button" role="tab" [class.active]="statusFilter === 'OPEN'" (click)="statusFilter = 'OPEN'">
+                Offen <span class="count">{{ count('OPEN') }}</span>
+            </button>
+            <button type="button" role="tab" [class.active]="statusFilter === 'COMPLETED'" (click)="statusFilter = 'COMPLETED'">
+                Abgeschlossen <span class="count">{{ count('COMPLETED') }}</span>
+            </button>
+            <button type="button" role="tab" [class.active]="statusFilter === 'ALL'" (click)="statusFilter = 'ALL'">
+                Alle <span class="count">{{ count('ALL') }}</span>
+            </button>
+        </div>
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" placeholder="Titel, Art, Standort oder Person suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Prüfungen...</p>
+    } @else if (!visible.length) {
+        <div class="empty-state">
+            @if (inspections.length) {
+                Keine Prüfungen gefunden.
+            } @else {
+                Noch keine Prüfungen. Lege zuerst unter Konfiguration eine Prüfungsart an und starte dann eine Prüfung.
+            }
+        </div>
+    } @else {
+        <div class="inspection-list">
+            @for (inspection of visible; track inspection.uuid) {
+                <button type="button" class="card inspection-row" (click)="open(inspection)">
+                    <div class="main">
+                        <div class="title-line">
+                            @if (inspection.status === 'OPEN') {
+                                <span class="badge accent">Offen</span>
+                            } @else {
+                                <span class="badge success">Abgeschlossen</span>
+                            }
+                            <strong>{{ inspection.title }}</strong>
+                            @if (inspection.title !== inspection.typeName) {
+                                <span class="type">{{ inspection.typeName }}</span>
+                            }
+                        </div>
+                        <span class="filter">{{ inspection.filterSummary }}</span>
+                        <span class="meta">
+                            Gestartet {{ inspection.createdAt | date: 'dd.MM.yyyy HH:mm' }} von {{ inspection.createdByName }}
+                            @if (inspection.completedAt) {
+                                · abgeschlossen {{ inspection.completedAt | date: 'dd.MM.yyyy HH:mm' }} von {{ inspection.completedByName }}
+                            }
+                        </span>
+                    </div>
+                    <div class="stats">
+                        <div class="progress" [title]="progress(inspection) + ' % geprüft'">
+                            <span class="present" [style.width.%]="inspection.counts.expected ? (inspection.counts.present / inspection.counts.expected) * 100 : 0"></span>
+                            <span class="missing" [style.width.%]="inspection.counts.expected ? (inspection.counts.missing / inspection.counts.expected) * 100 : 0"></span>
+                        </div>
+                        <div class="numbers">
+                            <span><strong>{{ inspection.counts.present }}</strong> da</span>
+                            <span><strong>{{ inspection.counts.missing + (inspection.status === 'COMPLETED' ? inspection.counts.pending : 0) }}</strong> fehlen</span>
+                            @if (inspection.status === 'OPEN') {
+                                <span><strong>{{ inspection.counts.pending }}</strong> offen</span>
+                            }
+                            @if (inspection.counts.unexpected) {
+                                <span class="warning">
+                                    <svg lucideTriangleAlert size="13"></svg>
+                                    <strong>{{ inspection.counts.unexpected }}</strong> fremd
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </button>
+            }
+        </div>
+    }
+</section>

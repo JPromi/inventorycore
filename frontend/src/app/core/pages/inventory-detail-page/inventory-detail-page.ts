@@ -5,6 +5,7 @@ import {
   LucideArrowLeft,
   LucideBoxes,
   LucideChevronRight,
+  LucideClipboardCheck,
   LucideMapPin,
   LucidePencil,
   LucidePrinter,
@@ -19,6 +20,7 @@ import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-di
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
+import { AssetInspection, InspectionService, formatCheckValue } from '../../service/inspection.service';
 import { InventoryApiService, InventoryImage, InventoryItem, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
@@ -65,6 +67,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     LucideArrowLeft,
     LucideBoxes,
     LucideChevronRight,
+    LucideClipboardCheck,
     LucideMapPin,
     LucidePencil,
     LucidePrinter,
@@ -87,6 +90,8 @@ export class InventoryDetailPage implements OnInit {
   protected assetTypes: InventoryItem[] = [];
   protected assets: InventoryItem[] = [];
   protected showPrintDialog = false;
+  protected inspections: AssetInspection[] = [];
+  protected readonly formatCheckValue = formatCheckValue;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -95,6 +100,7 @@ export class InventoryDetailPage implements OnInit {
     private readonly confirmDialog: ConfirmDialogService,
     protected readonly permissions: PermissionService,
     private readonly areaService: AreaService,
+    private readonly inspectionService: InspectionService,
   ) {}
 
   ngOnInit(): void {
@@ -107,6 +113,25 @@ export class InventoryDetailPage implements OnInit {
         this.load(uuid);
       }
     });
+  }
+
+  /** Inspection history is shown on assets to users who may inspect. */
+  protected get canSeeInspections(): boolean {
+    return this.config.endpoint === 'assets' && this.permissions.can('ASSET', 'inspect');
+  }
+
+  protected inspectionResult(entry: AssetInspection): { label: string; tone: 'good' | 'bad' | 'warn' | 'neutral' } {
+    if (!entry.expected) {
+      return { label: 'Als fremder Gegenstand gefunden', tone: 'warn' };
+    }
+    switch (entry.status) {
+      case 'PRESENT':
+        return { label: 'Da', tone: 'good' };
+      case 'MISSING':
+        return { label: 'Fehlt', tone: 'bad' };
+      default:
+        return entry.inspectionStatus === 'OPEN' ? { label: 'Noch nicht geprüft', tone: 'neutral' } : { label: 'Nicht geprüft', tone: 'bad' };
+    }
   }
 
   protected get canEdit(): boolean {
@@ -231,9 +256,13 @@ export class InventoryDetailPage implements OnInit {
       locations: optional<InventoryItem>('locations', this.permissions.can('LOCATION', 'view')),
       assetTypes: optional<InventoryItem>('asset-types', this.config.endpoint === 'assets'),
       assets: optional<InventoryItem>('assets', needsAssets),
+      inspections: this.canSeeInspections
+        ? this.inspectionService.inspectionsOfAsset(uuid).pipe(catchError(() => of([] as AssetInspection[])))
+        : of([] as AssetInspection[]),
     }).subscribe({
-      next: ({ item, locations, assetTypes, assets }) => {
+      next: ({ item, locations, assetTypes, assets, inspections }) => {
         this.item = item;
+        this.inspections = inspections;
         this.locations = locations;
         this.assetTypes = assetTypes;
         this.assets = assets;

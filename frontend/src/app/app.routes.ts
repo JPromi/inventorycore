@@ -189,6 +189,34 @@ export const routes: Routes = [
           },
         },
       },
+      // Prüfungen
+      {
+        path: 'inspections',
+        loadComponent: () => import('./core/pages/inspections/inspections-page/inspections-page').then((m) => m.InspectionsPage),
+      },
+      {
+        path: 'inspections/new',
+        loadComponent: () => import('./core/pages/inspections/inspection-new-page/inspection-new-page').then((m) => m.InspectionNewPage),
+      },
+      {
+        path: 'inspections/:uuid',
+        loadComponent: () => import('./core/pages/inspections/inspection-page/inspection-page').then((m) => m.InspectionPage),
+      },
+      {
+        path: 'config/inspection-types',
+        loadComponent: () =>
+          import('./core/pages/inspections/inspection-types-page/inspection-types-page').then((m) => m.InspectionTypesPage),
+      },
+      {
+        path: 'config/inspection-types/new',
+        loadComponent: () =>
+          import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
+      },
+      {
+        path: 'config/inspection-types/:uuid',
+        loadComponent: () =>
+          import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
+      },
       {
         path: 'scan',
         loadComponent: () => import('./core/pages/scan-page/scan-page').then((m) => m.ScanPage),

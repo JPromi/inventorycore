@@ -1,0 +1,158 @@
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LucideArrowLeft, LucideClipboardCheck, LucidePlay } from '@lucide/angular';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { catchError, debounceTime, switchMap } from 'rxjs/operators';
+
+import { MultiSelect } from '../../../components/multi-select/multi-select';
+import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
+import { AreaService } from '../../../service/area.service';
+import { InspectionFilter, InspectionService, InspectionType } from '../../../service/inspection.service';
+import { InventoryApiService, InventoryItem, TagItem } from '../../../service/inventory-api.service';
+import { locationPath } from '../../../util/location-utils';
+
+/** Start an inspection: choose the type and filter which assets are expected. */
+@Component({
+  selector: 'app-inspection-new-page',
+  imports: [FormsModule, RouterLink, MultiSelect, SearchSelect, LucideArrowLeft, LucideClipboardCheck, LucidePlay],
+  templateUrl: './inspection-new-page.html',
+  styleUrl: './inspection-new-page.scss',
+})
+export class InspectionNewPage implements OnInit, OnDestroy {
+  protected types: InspectionType[] = [];
+  protected typeUuid: string | null = null;
+  protected title = '';
+  private titleTouched = false;
+  protected filter: InspectionFilter = { locationUuid: null, includeSubLocations: true, tagUuids: [], assetTypeUuids: [], areaUuids: [] };
+
+  protected locations: InventoryItem[] = [];
+  protected assetTypes: InventoryItem[] = [];
+  protected tags: TagItem[] = [];
+
+  protected previewCount: number | null = null;
+  protected previewLoading = false;
+  protected loading = false;
+  protected starting = false;
+  protected error = '';
+
+  private readonly previewRequests = new Subject<InspectionFilter>();
+  private previewSubscription?: Subscription;
+
+  constructor(
+    private readonly api: InspectionService,
+    private readonly inventory: InventoryApiService,
+    protected readonly areaService: AreaService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+  ) {}
+
+  ngOnInit(): void {
+    this.previewSubscription = this.previewRequests
+      .pipe(
+        debounceTime(250),
+        switchMap((filter) => this.api.preview(filter).pipe(catchError(() => of(null)))),
+      )
+      .subscribe((count) => {
+        this.previewCount = count;
+        this.previewLoading = false;
+      });
+
+    this.loading = true;
+    const optional = <T>(request: ReturnType<InventoryApiService['list']>) => request.pipe(catchError(() => of([] as T[])));
+    forkJoin({
+      types: this.api.types(),
+      locations: optional<InventoryItem>(this.inventory.list('locations')),
+      assetTypes: optional<InventoryItem>(this.inventory.list('asset-types')),
+      tags: optional<TagItem>(this.inventory.list('tags')),
+      areas: this.areaService.load(),
+    }).subscribe({
+      next: ({ types, locations, assetTypes, tags }) => {
+        this.types = types.sort((a, b) => a.name.localeCompare(b.name));
+        this.locations = locations;
+        this.assetTypes = assetTypes;
+        this.tags = tags;
+        // "?type=..." preselects, otherwise the only type
+        const preset = this.route.snapshot.queryParamMap.get('type');
+        this.selectType(preset ?? (types.length === 1 ? types[0].uuid : null));
+        this.loading = false;
+        this.filterChanged();
+      },
+      error: () => {
+        this.error = 'Daten konnten nicht geladen werden.';
+        this.loading = false;
+      },
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.previewSubscription?.unsubscribe();
+  }
+
+  protected get typeOptions(): SelectOption[] {
+    return this.types.map((type) => ({ value: type.uuid, label: type.name, color: type.color, hint: type.description ?? undefined }));
+  }
+
+  protected get locationOptions(): SelectOption[] {
+    return this.locations
+      .map((location) => ({ value: location.uuid, label: locationPath(this.locations, location), hint: location.address ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get assetTypeOptions(): SelectOption[] {
+    return this.assetTypes.map((type) => ({ value: type.uuid, label: type.name })).sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get tagOptions(): SelectOption[] {
+    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color })).sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get areaOptions(): SelectOption[] {
+    return this.areaService.areas.map((area) => ({ value: area.uuid, label: area.name, color: area.color }));
+  }
+
+  protected get selectedType(): InspectionType | null {
+    return this.types.find((type) => type.uuid === this.typeUuid) ?? null;
+  }
+
+  protected selectType(uuid: string | null): void {
+    this.typeUuid = uuid;
+    if (!this.titleTouched) {
+      this.title = this.defaultTitle();
+    }
+  }
+
+  protected titleChanged(): void {
+    this.titleTouched = true;
+  }
+
+  protected filterChanged(): void {
+    if (!this.titleTouched) {
+      this.title = this.defaultTitle();
+    }
+    this.previewLoading = true;
+    this.previewRequests.next({ ...this.filter });
+  }
+
+  protected start(): void {
+    if (!this.typeUuid || this.starting) {
+      this.error = this.typeUuid ? '' : 'Bitte eine Prüfungsart wählen.';
+      return;
+    }
+    this.starting = true;
+    this.error = '';
+    this.api.create(this.typeUuid, this.title.trim(), this.filter).subscribe({
+      next: (inspection) => this.router.navigate(['/inspections', inspection.summary.uuid]),
+      error: () => {
+        this.starting = false;
+        this.error = 'Prüfung konnte nicht gestartet werden.';
+      },
+    });
+  }
+
+  /** "Fahrzeugprüfung – Garage – 14.10.2026" */
+  private defaultTitle(): string {
+    const location = this.locations.find((entry) => entry.uuid === this.filter.locationUuid);
+    return [this.selectedType?.name ?? 'Prüfung', location?.name, new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
+  }
+}
