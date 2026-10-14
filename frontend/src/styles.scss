@@ -9,3 +9,11 @@ html, body {
     padding: 0;
     font-family: 'Poppins', sans-serif;
 }
+
+// lightmode
+body {
+    --primary: #1e1e2f;
+    --primary-text: #ffffff;
+    --background: #f5f5f5;
+    --text: #212121;
+}
