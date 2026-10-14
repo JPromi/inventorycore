@@ -19,15 +19,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jpromi.inventorycore.dto.AuthLoginRequest;
 import com.jpromi.inventorycore.dto.AuthResponse;
+import com.jpromi.inventorycore.entity.User;
+import com.jpromi.inventorycore.repository.AppUserRepository;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
+    private final AppUserRepository userRepository;
 
-    public AuthController(AuthenticationManager authenticationManager) {
+    public AuthController(AuthenticationManager authenticationManager, AppUserRepository userRepository) {
         this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
     }
 
     @PostMapping
@@ -48,7 +52,7 @@ public class AuthController {
             return ResponseEntity.ok(AuthResponse.builder()
                 .authenticated(true)
                 .username(authentication.getName())
-                .displayName(authentication.getName())
+                .displayName(resolveUser(authentication).getDisplayName())
                 .role(role)
                 .build());
         } catch (BadCredentialsException exception) {
@@ -73,18 +77,32 @@ public class AuthController {
                 .build();
         }
 
-        String role = authentication.getAuthorities().stream()
+        User user = resolveUser(authentication);
+
+        return AuthResponse.builder()
+            .authenticated(true)
+            .username(user.getUsername())
+            .displayName(user.getDisplayName())
+            .role(user.getRole())
+            .build();
+    }
+
+    private User resolveUser(Authentication authentication) {
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+            .orElseGet(() -> User.builder()
+                .username(username)
+                .displayName(username)
+                .role(resolveRole(authentication))
+                .build());
+    }
+
+    private String resolveRole(Authentication authentication) {
+        return authentication.getAuthorities().stream()
             .map(authority -> authority.getAuthority())
             .findFirst()
             .map(authority -> authority.replace("ROLE_", ""))
             .orElse("USER");
-
-        return AuthResponse.builder()
-            .authenticated(true)
-            .username(authentication.getName())
-            .displayName(authentication.getName())
-            .role(role)
-            .build();
     }
 
     @PostMapping("/logout")
