@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LucideArrowLeft, LucideImagePlus, LucidePlus, LucideSave, LucideTrash2, type LucideIcon } from '@lucide/angular';
+import { LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2, type LucideIcon } from '@lucide/angular';
 
+import { ImageUpload } from '../../components/image-upload/image-upload';
 import { MultiSelect } from '../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 
@@ -39,7 +40,7 @@ interface FieldConfig {
 
 @Component({
   selector: 'app-inventory-form-page',
-  imports: [CommonModule, FormsModule, RouterLink, MultiSelect, SearchSelect, LucideArrowLeft, LucideImagePlus, LucidePlus, LucideSave, LucideTrash2],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUpload, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2],
   templateUrl: './inventory-form-page.html',
   styleUrl: './inventory-form-page.scss',
 })
@@ -63,6 +64,8 @@ export class InventoryFormPage implements OnInit {
   private originalAreaUuids: string[] = [];
   /** Shown after "Erstellen & neu" so the user knows the previous entry was saved. */
   protected lastCreated: { uuid: string; name: string } | null = null;
+  /** Images are still uploading; saving waits for them. */
+  protected uploading = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -146,7 +149,7 @@ export class InventoryFormPage implements OnInit {
 
   /** `createAnother` keeps the context (areas, location, type, ...) and opens an empty form again. */
   protected save(createAnother = false): void {
-    if (!this.canSave || this.saving) {
+    if (!this.canSave || this.saving || this.uploading) {
       return;
     }
     if (!this.selectedAreaUuids.length && !this.lockedAreaUuids.length) {
@@ -281,7 +284,7 @@ export class InventoryFormPage implements OnInit {
       parentLocationUuid: request.parentLocationUuid || null,
       fieldDefinitions: request.fieldDefinitions ?? [],
       fieldValues: request.fieldValues ?? [],
-      images: request.images?.filter((image) => image.url?.trim()) ?? [],
+      images: request.images?.filter((image) => image.fileUuid || image.url?.trim()) ?? [],
       tagUuids: this.config.tags ? this.selectedTagUuids : [],
       areaUuids: [...new Set([...this.lockedAreaUuids, ...this.selectedAreaUuids])],
     };
@@ -330,23 +333,6 @@ export class InventoryFormPage implements OnInit {
     }
 
     this.form.fieldValues = (this.form.fieldValues ?? []).filter((_, fieldIndex) => fieldIndex !== index);
-  }
-
-  protected addImage(kind: 'THUMBNAIL' | 'GALLERY' = 'GALLERY'): void {
-    this.form.images = [
-      ...(this.form.images ?? []),
-      {
-        kind,
-        url: '',
-        fileName: '',
-        contentType: '',
-        sortOrder: this.form.images?.length ?? 0,
-      },
-    ];
-  }
-
-  protected removeImage(index: number): void {
-    this.form.images = (this.form.images ?? []).filter((_, imageIndex) => imageIndex !== index);
   }
 
   protected get locationOptions(): SelectOption[] {

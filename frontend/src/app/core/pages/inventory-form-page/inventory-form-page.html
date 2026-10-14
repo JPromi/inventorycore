@@ -203,42 +203,14 @@
                     <section class="form-section">
                         <div class="section-title">
                             <h2>Bilder</h2>
-                            <div class="inline-actions">
-                                <button type="button" class="secondary-action compact" (click)="addImage('THUMBNAIL')">
-                                    <svg lucideImagePlus size="16"></svg>
-                                    <span>Thumbnail</span>
-                                </button>
-                                <button type="button" class="secondary-action compact" (click)="addImage()">
-                                    <svg lucideImagePlus size="16"></svg>
-                                    <span>Galerie</span>
-                                </button>
-                            </div>
+                            <span class="hint">Werden automatisch verkleinert. Das Titelbild erscheint in Listen.</span>
                         </div>
-
-                        <div class="repeat-list">
-                            @for (image of form.images ?? []; track $index) {
-                                <div class="repeat-row image-row">
-                                    <label>
-                                        <span>Art</span>
-                                        <select [(ngModel)]="image.kind" name="imageKind{{ $index }}">
-                                            <option value="THUMBNAIL">Thumbnail</option>
-                                            <option value="GALLERY">Galerie</option>
-                                        </select>
-                                    </label>
-                                    <label class="wide">
-                                        <span>Bild-URL</span>
-                                        <input type="url" [(ngModel)]="image.url" name="imageUrl{{ $index }}" />
-                                    </label>
-                                    <label>
-                                        <span>Dateiname</span>
-                                        <input type="text" [(ngModel)]="image.fileName" name="imageFileName{{ $index }}" />
-                                    </label>
-                                    <button type="button" class="icon-button danger" (click)="removeImage($index)">
-                                        <svg lucideTrash2 size="16"></svg>
-                                    </button>
-                                </div>
-                            }
-                        </div>
+                        <app-image-upload
+                            [images]="form.images ?? []"
+                            (imagesChange)="form.images = $event"
+                            (busyChange)="uploading = $event"
+                            [disabled]="!canSave"
+                        />
                     </section>
                 }
 
@@ -248,7 +220,7 @@
                         <button
                             type="button"
                             class="secondary-action"
-                            [disabled]="!canSave || saving"
+                            [disabled]="!canSave || saving || uploading"
                             (click)="save(true)"
                             title="Speichern und direkt einen weiteren Eintrag mit denselben Vorgaben anlegen"
                         >
@@ -256,9 +228,9 @@
                             <span>Erstellen &amp; neu</span>
                         </button>
                     }
-                    <button type="submit" class="primary-action" [disabled]="!canSave || saving">
+                    <button type="submit" class="primary-action" [disabled]="!canSave || saving || uploading">
                         <svg lucideSave size="18"></svg>
-                        <span>{{ saving ? 'Speichert...' : uuid ? 'Speichern' : 'Erstellen' }}</span>
+                        <span>{{ saving ? 'Speichert...' : uploading ? 'Lädt Bilder...' : uuid ? 'Speichern' : 'Erstellen' }}</span>
                     </button>
                 </div>
             </form>

@@ -277,7 +277,8 @@ export class InventoryPage implements OnInit {
 
   protected thumbnail(item: InventoryItem): string | null {
     const images = item.images ?? [];
-    return (images.find((image) => image.kind === 'THUMBNAIL') ?? images[0])?.url ?? null;
+    const cover = images.find((image) => image.kind === 'THUMBNAIL') ?? images[0];
+    return cover?.thumbnailUrl || cover?.url || null;
   }
 
   protected itemMeta(item: InventoryItem): string {

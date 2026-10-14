@@ -43,6 +43,7 @@ import com.jpromi.inventorycore.entity.AssetType;
 import com.jpromi.inventorycore.entity.AssetTypeImage;
 import com.jpromi.inventorycore.entity.Location;
 import com.jpromi.inventorycore.entity.LocationImage;
+import com.jpromi.inventorycore.entity.StoredFile;
 import com.jpromi.inventorycore.entity.Tag;
 import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
@@ -50,6 +51,7 @@ import com.jpromi.inventorycore.repository.AreaRepository;
 import com.jpromi.inventorycore.repository.AssetRepository;
 import com.jpromi.inventorycore.repository.AssetTypeRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
+import com.jpromi.inventorycore.repository.StoredFileRepository;
 import com.jpromi.inventorycore.repository.TagRepository;
 import com.jpromi.inventorycore.service.AccessContext;
 import com.jpromi.inventorycore.service.ApiMapper;
@@ -66,6 +68,7 @@ public class InventoryController {
     private final LocationRepository locationRepository;
     private final TagRepository tagRepository;
     private final AreaRepository areaRepository;
+    private final StoredFileRepository fileRepository;
     private final PermissionService permissionService;
     private final ApiMapper mapper;
 
@@ -75,6 +78,7 @@ public class InventoryController {
         LocationRepository locationRepository,
         TagRepository tagRepository,
         AreaRepository areaRepository,
+        StoredFileRepository fileRepository,
         PermissionService permissionService,
         ApiMapper mapper
     ) {
@@ -83,6 +87,7 @@ public class InventoryController {
         this.locationRepository = locationRepository;
         this.tagRepository = tagRepository;
         this.areaRepository = areaRepository;
+        this.fileRepository = fileRepository;
         this.permissionService = permissionService;
         this.mapper = mapper;
     }
@@ -328,7 +333,8 @@ public class InventoryController {
         location.setParentLocation(parent);
         location.getImages().clear();
         if (request.images() != null) {
-            request.images().forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest)));
+            request.images().stream().filter(InventoryController::hasSource)
+                .forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest)));
         }
     }
 
@@ -342,7 +348,8 @@ public class InventoryController {
         }
         type.getImages().clear();
         if (request.images() != null) {
-            request.images().forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest)));
+            request.images().stream().filter(InventoryController::hasSource)
+                .forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest)));
         }
         type.setTags(new HashSet<>());
         if (request.tagUuids() != null) {
@@ -384,7 +391,8 @@ public class InventoryController {
         }
         asset.getImages().clear();
         if (request.images() != null) {
-            request.images().forEach(imageRequest -> asset.getImages().add(assetImage(asset, imageRequest)));
+            request.images().stream().filter(InventoryController::hasSource)
+                .forEach(imageRequest -> asset.getImages().add(assetImage(asset, imageRequest)));
         }
     }
 
@@ -412,10 +420,12 @@ public class InventoryController {
     }
 
     private AssetImage assetImage(Asset asset, AssetImageRequest request) {
+        StoredFile file = file(request.fileUuid());
         return AssetImage.builder()
             .asset(asset)
             .kind(request.kind())
-            .url(request.url())
+            .file(file)
+            .url(file == null ? request.url() : null)
             .fileName(request.fileName())
             .contentType(request.contentType())
             .sortOrder(request.sortOrder())
@@ -423,10 +433,12 @@ public class InventoryController {
     }
 
     private LocationImage locationImage(Location location, LocationImageRequest request) {
+        StoredFile file = file(request.fileUuid());
         return LocationImage.builder()
             .location(location)
             .kind(request.kind())
-            .url(request.url())
+            .file(file)
+            .url(file == null ? request.url() : null)
             .fileName(request.fileName())
             .contentType(request.contentType())
             .sortOrder(request.sortOrder())
@@ -434,14 +446,33 @@ public class InventoryController {
     }
 
     private AssetTypeImage assetTypeImage(AssetType assetType, AssetImageRequest request) {
+        StoredFile file = file(request.fileUuid());
         return AssetTypeImage.builder()
             .assetType(assetType)
             .kind(request.kind())
-            .url(request.url())
+            .file(file)
+            .url(file == null ? request.url() : null)
             .fileName(request.fileName())
             .contentType(request.contentType())
             .sortOrder(request.sortOrder())
             .build();
+    }
+
+    private StoredFile file(UUID uuid) {
+        if (uuid == null) {
+            return null;
+        }
+        return fileRepository.findByUuid(uuid)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown file " + uuid));
+    }
+
+    /** An image needs an uploaded file or an external url. */
+    private static boolean hasSource(AssetImageRequest request) {
+        return request.fileUuid() != null || (request.url() != null && !request.url().isBlank());
+    }
+
+    private static boolean hasSource(LocationImageRequest request) {
+        return request.fileUuid() != null || (request.url() != null && !request.url().isBlank());
     }
 
     private String generateInvId() {

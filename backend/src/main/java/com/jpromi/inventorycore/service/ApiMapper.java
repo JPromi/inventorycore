@@ -12,6 +12,7 @@ import com.jpromi.inventorycore.dto.AreaResponse;
 import com.jpromi.inventorycore.dto.AssetFieldDefinitionResponse;
 import com.jpromi.inventorycore.dto.AssetFieldValueResponse;
 import com.jpromi.inventorycore.dto.AssetImageResponse;
+import com.jpromi.inventorycore.dto.FileResponse;
 import com.jpromi.inventorycore.dto.AssetResponse;
 import com.jpromi.inventorycore.dto.AssetTypeResponse;
 import com.jpromi.inventorycore.dto.GroupPermissionResponse;
@@ -31,6 +32,7 @@ import com.jpromi.inventorycore.entity.Group;
 import com.jpromi.inventorycore.entity.GroupPermission;
 import com.jpromi.inventorycore.entity.Location;
 import com.jpromi.inventorycore.entity.LocationImage;
+import com.jpromi.inventorycore.entity.StoredFile;
 import com.jpromi.inventorycore.entity.Tag;
 import com.jpromi.inventorycore.entity.User;
 
@@ -138,7 +140,9 @@ public class ApiMapper {
     }
 
     public LocationImageResponse toResponse(LocationImage image) {
-        return new LocationImageResponse(image.getUuid(), image.getKind(), image.getUrl(), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+        StoredFile file = image.getFile();
+        return new LocationImageResponse(image.getUuid(), image.getKind(), file == null ? null : file.getUuid(), imageUrl(file, image.getUrl(), false),
+            imageUrl(file, image.getUrl(), true), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
     }
 
     public AssetResponse toResponse(Asset asset) {
@@ -179,10 +183,28 @@ public class ApiMapper {
     }
 
     public AssetImageResponse toResponse(AssetImage image) {
-        return new AssetImageResponse(image.getUuid(), image.getKind(), image.getUrl(), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+        StoredFile file = image.getFile();
+        return new AssetImageResponse(image.getUuid(), image.getKind(), file == null ? null : file.getUuid(), imageUrl(file, image.getUrl(), false),
+            imageUrl(file, image.getUrl(), true), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
     }
 
     public AssetImageResponse toResponse(AssetTypeImage image) {
-        return new AssetImageResponse(image.getUuid(), image.getKind(), image.getUrl(), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+        StoredFile file = image.getFile();
+        return new AssetImageResponse(image.getUuid(), image.getKind(), file == null ? null : file.getUuid(), imageUrl(file, image.getUrl(), false),
+            imageUrl(file, image.getUrl(), true), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+    }
+
+    public FileResponse toResponse(StoredFile file) {
+        return new FileResponse(file.getUuid(), fileUrl(file, false), fileUrl(file, true), file.getOriginalName(), file.getContentType(),
+            file.getSize(), file.getOriginalSize(), file.getWidth(), file.getHeight(), file.getUploadedAt(), file.getUploadedByUuid(), file.getUploadedByName());
+    }
+
+    /** Uploaded files are served by the file endpoint; external images keep their url. */
+    private static String imageUrl(StoredFile file, String externalUrl, boolean thumbnail) {
+        return file == null ? externalUrl : fileUrl(file, thumbnail);
+    }
+
+    private static String fileUrl(StoredFile file, boolean thumbnail) {
+        return "/api/files/" + file.getUuid() + (thumbnail && file.isHasThumbnail() ? "?variant=thumb" : "");
     }
 }

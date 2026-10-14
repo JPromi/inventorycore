@@ -239,7 +239,9 @@
                     <section class="card gallery">
                         <div class="main-image">
                             @if (activeImage) {
-                                <img [src]="activeImage.url" [alt]="activeImage.fileName || item.name" />
+                                <a [href]="activeImage.url" target="_blank" rel="noopener" title="In Originalgröße öffnen">
+                                    <img [src]="activeImage.url" [alt]="activeImage.fileName || item.name" />
+                                </a>
                             } @else {
                                 <div class="no-image">
                                     <ng-container *ngComponentOutlet="config.icon; inputs: placeholderIconInputs"></ng-container>
@@ -251,7 +253,7 @@
                             <div class="thumbs">
                                 @for (image of images; track $index) {
                                     <button type="button" [class.active]="image === activeImage" (click)="activeImage = image" [title]="image.fileName || ''">
-                                        <img [src]="image.url" [alt]="image.fileName || item.name" loading="lazy" />
+                                        <img [src]="image.thumbnailUrl || image.url" [alt]="image.fileName || item.name" loading="lazy" />
                                     </button>
                                 }
                             </div>

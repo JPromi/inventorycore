@@ -49,7 +49,12 @@ public class AssetTypeImage {
     @Enumerated(EnumType.STRING)
     private ImageKind kind;
 
-    @Column(nullable = false, length = 1000)
+    /** Uploaded file; null for images that are only referenced by an external url. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "file_id")
+    private StoredFile file;
+
+    @Column(length = 1000)
     private String url;
 
     private String fileName;

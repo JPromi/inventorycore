@@ -68,7 +68,12 @@ export interface CustomFieldValue {
 
 export interface InventoryImage {
   kind: ImageKind;
-  url: string;
+  /** Uploaded file (see FileApiService); null for images that only have an external url. */
+  fileUuid?: string | null;
+  /** Full size image; for uploads the file endpoint. */
+  url?: string | null;
+  /** Small preview, falls back to `url`. */
+  thumbnailUrl?: string | null;
   fileName?: string | null;
   contentType?: string | null;
   sortOrder: number;

@@ -25,6 +25,13 @@ public class SchemaMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // images may reference an uploaded file instead of an external url
+        for (String table : new String[] { "asset_images", "location_images", "asset_type_images" }) {
+            if (columnExists(table, "url")) {
+                jdbc.execute("alter table " + table + " alter column url drop not null");
+            }
+        }
+
         if (!tableExists("group_permissions")) {
             return;
         }
