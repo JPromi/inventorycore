@@ -75,6 +75,10 @@ public class User {
     @Builder.Default
     private Provider sourceProvider = Provider.LOCAL;
 
+    /** Identifier at the source provider: the DN for LDAP, the subject for OIDC. */
+    @Column(length = 1000)
+    private String externalId;
+
     @ManyToMany
     @JoinTable(
         name = "user_groups",
@@ -83,6 +87,16 @@ public class User {
     )
     @Builder.Default
     private Set<Group> groups = new HashSet<>();
+
+    /** Admin by role or by membership in a group flagged as admin group. */
+    public boolean isAdmin() {
+        return "ADMIN".equalsIgnoreCase(role) || groups.stream().anyMatch(Group::isAdminGroup);
+    }
+
+    /** Role used for the session (ROLE_ADMIN / ROLE_USER). */
+    public String effectiveRole() {
+        return isAdmin() ? "ADMIN" : (role == null ? "USER" : role.toUpperCase());
+    }
 
     @PrePersist
     void ensureUuid() {

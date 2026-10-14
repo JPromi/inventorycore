@@ -34,6 +34,8 @@ export class GroupFormPage implements OnInit {
   protected uuid: string | null = null;
   protected name = '';
   protected readOnlyName = false;
+  protected adminGroup = false;
+  protected sourceProvider: string = 'LOCAL';
   protected permissions: AdminPermissionRequest[] = [];
   protected memberUuids: string[] = [];
   protected users: AdminUser[] = [];
@@ -139,7 +141,7 @@ export class GroupFormPage implements OnInit {
       return;
     }
 
-    const request: AdminGroupRequest = { name: this.name.trim(), permissions: this.permissions };
+    const request: AdminGroupRequest = { name: this.name.trim(), permissions: this.permissions, adminGroup: this.adminGroup };
     this.saving = true;
     this.error = '';
     const save$ = this.uuid ? this.api.updateGroup(this.uuid, request) : this.api.createGroup(request);
@@ -207,6 +209,8 @@ export class GroupFormPage implements OnInit {
           } else {
             this.name = group.name;
             this.readOnlyName = group.sourceProvider !== 'LOCAL';
+            this.sourceProvider = group.sourceProvider;
+            this.adminGroup = group.adminGroup;
             this.permissions = group.permissions
               .map(({ uuid: _uuid, ...permission }) => ({ ...permission }))
               .sort((a, b) => this.areaSortKey(a.areaUuid).localeCompare(this.areaSortKey(b.areaUuid)) || (a.resourceType ?? '').localeCompare(b.resourceType ?? ''));

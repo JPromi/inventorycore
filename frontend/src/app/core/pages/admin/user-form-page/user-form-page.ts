@@ -7,7 +7,7 @@ import { forkJoin } from 'rxjs';
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SelectOption } from '../../../components/search-select/search-select';
-import { AdminApiService, AdminGroup, AdminUserRequest } from '../../../service/admin-api.service';
+import { AdminApiService, AdminGroup, AdminUserRequest, AuthProvider, PROVIDER_LABELS } from '../../../service/admin-api.service';
 import { AuthStateService } from '../../../service/auth-state.service';
 
 @Component({
@@ -24,6 +24,8 @@ export class UserFormPage implements OnInit {
   protected saving = false;
   protected error = '';
   protected isSelf = false;
+  protected readonly providerLabels = PROVIDER_LABELS;
+  protected sourceProvider: AuthProvider = 'LOCAL';
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -116,6 +118,7 @@ export class UserFormPage implements OnInit {
               groupUuids: [...user.groupUuids],
             };
             this.isSelf = this.authState.getCurrentUser()?.username === user.username;
+            this.sourceProvider = user.sourceProvider ?? 'LOCAL';
           }
         }
         this.loading = false;

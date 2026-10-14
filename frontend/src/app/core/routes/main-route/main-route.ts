@@ -21,6 +21,7 @@ import {
   LucideKeyRound,
   LucideLayers,
   LucideMapPin,
+  LucideNetwork,
   LucideQrCode,
   LucideSettings,
   LucideShapes,
@@ -74,7 +75,6 @@ export class MainRoute implements OnInit {
       icon: LucideSettings,
       disabled: false,
       children: [
-        { label: 'Standorte', route: '/config/locations', icon: LucideMapPin },
         { label: 'Tags', route: '/config/tags', icon: LucideTags },
         { label: 'Typen', route: '/config/types', icon: LucideShapes },
         { label: 'Labels', route: '/config/labels', icon: LucideQrCode },
@@ -91,7 +91,8 @@ export class MainRoute implements OnInit {
         { label: 'Benutzer', route: '/admin/users', icon: LucideUser },
         { label: 'Gruppen', route: '/admin/groups', icon: LucideUsers },
         { label: 'Gruppen Berechtigungen', route: '/admin/group-permissions', icon: LucideShield },
-        { label: 'Authentifizierung', route: '/admin/auth', icon: LucideKeyRound },
+        { label: 'LDAP', route: '/admin/ldap', icon: LucideNetwork },
+        { label: 'OIDC', route: '/admin/oidc', icon: LucideKeyRound },
       ],
     },
   ];

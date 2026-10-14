@@ -8,6 +8,12 @@ import { AuthResponseDto } from '../dtos/auth-response.dto';
 import { UserEntity } from '../entities/user.entity';
 import { AuthStateService } from './auth-state.service';
 
+export interface LoginProviders {
+  oidcEnabled: boolean;
+  oidcLabel: string;
+  oidcLoginUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly backendUrl = environment.apiUrl;
@@ -61,6 +67,13 @@ export class AuthService {
         return of(null);
       })
     );
+  }
+
+  /** Login options shown on the login page (e.g. SSO button). */
+  providers(): Observable<LoginProviders> {
+    return this.http
+      .get<LoginProviders>(`${this.backendUrl}/auth/providers`, { withCredentials: true })
+      .pipe(catchError(() => of({ oidcEnabled: false, oidcLabel: 'SSO', oidcLoginUrl: '' })));
   }
 
   logout(): Observable<void> {

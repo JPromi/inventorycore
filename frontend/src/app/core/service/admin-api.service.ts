@@ -14,7 +14,16 @@ export interface AdminUser {
   role: string;
   enabled: boolean;
   groupUuids: string[];
+  sourceProvider: AuthProvider;
 }
+
+export type AuthProvider = 'LOCAL' | 'OIDC' | 'LDAP';
+
+export const PROVIDER_LABELS: Record<AuthProvider, string> = {
+  LOCAL: 'Lokal',
+  LDAP: 'LDAP',
+  OIDC: 'OIDC',
+};
 
 export interface AdminUserRequest {
   username: string;
@@ -29,13 +38,86 @@ export interface AdminUserRequest {
 export interface AdminGroup {
   uuid: string;
   name: string;
-  sourceProvider: 'LOCAL' | 'OIDC' | 'LDAP';
+  sourceProvider: AuthProvider;
   permissions: AdminPermission[];
+  adminGroup: boolean;
 }
 
 export interface AdminGroupRequest {
   name: string;
   permissions: AdminPermissionRequest[];
+  adminGroup: boolean;
+}
+
+export interface LdapSettings {
+  enabled: boolean;
+  url: string | null;
+  ignoreCertificates: boolean;
+  bindDn: string | null;
+  /** write only; empty keeps the stored password */
+  bindPassword: string | null;
+  bindPasswordSet: boolean;
+  baseDn: string | null;
+  userSearchBase: string | null;
+  userFilter: string | null;
+  usernameAttribute: string | null;
+  displayNameAttribute: string | null;
+  emailAttribute: string | null;
+  groupSearchBase: string | null;
+  groupFilter: string | null;
+  groupNameAttribute: string | null;
+  groupMemberAttribute: string | null;
+  loginEnabled: boolean;
+  disableMissingUsers: boolean;
+  lastSyncAt?: string | null;
+  lastSyncResult?: string | null;
+}
+
+export interface LdapTestResult {
+  success: boolean;
+  message: string;
+  userCount: number | null;
+  groupCount: number | null;
+  sampleUsers: string[];
+  sampleGroups: string[];
+}
+
+export interface LdapSyncResult {
+  success: boolean;
+  message: string;
+  usersCreated: number;
+  usersUpdated: number;
+  usersDisabled: number;
+  usersSkipped: number;
+  groupsCreated: number;
+  groupsUpdated: number;
+}
+
+export interface OidcSettings {
+  enabled: boolean;
+  buttonLabel: string | null;
+  issuerUri: string | null;
+  clientId: string | null;
+  /** write only; empty keeps the stored secret */
+  clientSecret: string | null;
+  clientSecretSet: boolean;
+  scopes: string | null;
+  usernameClaim: string | null;
+  displayNameClaim: string | null;
+  emailClaim: string | null;
+  groupsClaim: string | null;
+  autoCreateUsers: boolean;
+  syncGroups: boolean;
+  crossProviderLogin: boolean;
+  publicUrl: string | null;
+  redirectUri?: string | null;
+}
+
+export interface OidcTestResult {
+  success: boolean;
+  message: string;
+  issuer: string | null;
+  authorizationEndpoint: string | null;
 }
 
 export interface AdminPermissionRequest {
@@ -118,6 +200,34 @@ export class AdminApiService {
 
   deleteArea(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/areas/${uuid}`, this.options);
+  }
+
+  ldapSettings(): Observable<LdapSettings> {
+    return this.http.get<LdapSettings>(`${this.apiUrl}/ldap`, this.options);
+  }
+
+  saveLdapSettings(settings: LdapSettings): Observable<LdapSettings> {
+    return this.http.put<LdapSettings>(`${this.apiUrl}/ldap`, settings, this.options);
+  }
+
+  testLdap(settings: LdapSettings): Observable<LdapTestResult> {
+    return this.http.post<LdapTestResult>(`${this.apiUrl}/ldap/test`, settings, this.options);
+  }
+
+  syncLdap(): Observable<LdapSyncResult> {
+    return this.http.post<LdapSyncResult>(`${this.apiUrl}/ldap/sync`, null, this.options);
+  }
+
+  oidcSettings(): Observable<OidcSettings> {
+    return this.http.get<OidcSettings>(`${this.apiUrl}/oidc`, this.options);
+  }
+
+  saveOidcSettings(settings: OidcSettings): Observable<OidcSettings> {
+    return this.http.put<OidcSettings>(`${this.apiUrl}/oidc`, settings, this.options);
+  }
+
+  testOidc(settings: OidcSettings): Observable<OidcTestResult> {
+    return this.http.post<OidcTestResult>(`${this.apiUrl}/oidc/test`, settings, this.options);
   }
 
   users(): Observable<AdminUser[]> {

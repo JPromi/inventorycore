@@ -9,5 +9,6 @@ public record GroupResponse(
     UUID uuid,
     String name,
     Provider sourceProvider,
-    Set<GroupPermissionResponse> permissions
+    Set<GroupPermissionResponse> permissions,
+    boolean adminGroup
 ) {}

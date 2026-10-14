@@ -49,6 +49,15 @@ public class Group {
     @Builder.Default
     private Provider sourceProvider = Provider.LOCAL;
 
+    /** Identifier at the source provider: the DN for LDAP, the claim value for OIDC. */
+    @Column(length = 1000)
+    private String externalId;
+
+    /** Members of an admin group get full access, like users with the ADMIN role. */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean adminGroup = false;
+
     @ManyToMany(mappedBy = "groups")
     @Builder.Default
     private Set<User> users = new HashSet<>();

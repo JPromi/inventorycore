@@ -4,5 +4,6 @@ import java.util.Set;
 
 public record GroupRequest(
     String name,
-    Set<GroupPermissionRequest> permissions
+    Set<GroupPermissionRequest> permissions,
+    boolean adminGroup
 ) {}

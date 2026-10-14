@@ -51,6 +51,9 @@
                         <tr class="clickable" (click)="edit(group)">
                             <td>
                                 <strong>{{ group.name }}</strong>
+                                @if (group.adminGroup) {
+                                    <span class="badge accent provider">Admin</span>
+                                }
                                 @if (group.sourceProvider !== 'LOCAL') {
                                     <span class="badge provider">{{ group.sourceProvider }}</span>
                                 }

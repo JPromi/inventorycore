@@ -92,6 +92,9 @@
                                     @if (isAdmin(user)) {
                                         <span class="badge accent">Admin</span>
                                     }
+                                    @if (user.sourceProvider !== 'LOCAL') {
+                                        <span class="badge" [title]="'Quelle: ' + providerLabels[user.sourceProvider]">{{ providerLabels[user.sourceProvider] }}</span>
+                                    }
                                     @if (user.enabled) {
                                         <span class="badge success">Aktiv</span>
                                     } @else {

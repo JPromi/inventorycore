@@ -197,6 +197,7 @@ public class AdminController {
         Group group = Group.builder()
             .name(request.name())
             .sourceProvider(Provider.LOCAL)
+            .adminGroup(request.adminGroup())
             .build();
         applyPermissions(group, request);
         return mapper.toResponse(groupRepository.save(group));
@@ -206,7 +207,11 @@ public class AdminController {
     @Transactional
     public GroupResponse updateGroup(@PathVariable UUID uuid, @RequestBody GroupRequest request) {
         Group group = group(uuid);
-        group.setName(request.name());
+        // names of LDAP / OIDC groups are managed by the provider
+        if (group.getSourceProvider() == Provider.LOCAL) {
+            group.setName(request.name());
+        }
+        group.setAdminGroup(request.adminGroup());
         group.getPermissions().clear();
         // delete old permissions before inserting new ones, otherwise the unique constraint fails
         groupRepository.flush();

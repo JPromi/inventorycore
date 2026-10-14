@@ -33,6 +33,13 @@
                             }
                         </label>
                     </div>
+                    <label class="toggle admin-toggle" [class.on]="adminGroup">
+                        <input type="checkbox" [(ngModel)]="adminGroup" name="adminGroup" />
+                        <span>
+                            Admin-Gruppe
+                            <small>Mitglieder haben vollen Zugriff auf alles, auch auf die Administration, unabhängig von den Berechtigungen unten.</small>
+                        </span>
+                    </label>
                     <div class="field members">
                         <span class="field-label">Mitglieder</span>
                         <app-multi-select

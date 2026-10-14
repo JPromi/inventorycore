@@ -45,7 +45,8 @@ public class ApiMapper {
             user.getEmail(),
             user.getRole(),
             user.isEnabled(),
-            user.getGroups().stream().map(Group::getUuid).collect(Collectors.toSet())
+            user.getGroups().stream().map(Group::getUuid).collect(Collectors.toSet()),
+            user.getSourceProvider()
         );
     }
 
@@ -54,7 +55,8 @@ public class ApiMapper {
             group.getUuid(),
             group.getName(),
             group.getSourceProvider(),
-            group.getPermissions().stream().map(this::toResponse).collect(Collectors.toSet())
+            group.getPermissions().stream().map(this::toResponse).collect(Collectors.toSet()),
+            group.isAdminGroup()
         );
     }
 

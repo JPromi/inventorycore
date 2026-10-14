@@ -6,7 +6,7 @@ import { forkJoin } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
-import { AdminApiService, AdminGroup, AdminUser } from '../../../service/admin-api.service';
+import { AdminApiService, AdminGroup, AdminUser, PROVIDER_LABELS } from '../../../service/admin-api.service';
 import { AuthStateService } from '../../../service/auth-state.service';
 
 @Component({
@@ -16,6 +16,7 @@ import { AuthStateService } from '../../../service/auth-state.service';
   styleUrl: './users-page.scss',
 })
 export class UsersPage implements OnInit {
+  protected readonly providerLabels = PROVIDER_LABELS;
   protected users: AdminUser[] = [];
   protected groups: AdminGroup[] = [];
   protected loading = false;
@@ -77,8 +78,9 @@ export class UsersPage implements OnInit {
     this.statusFilter = null;
   }
 
+  /** Admin by role or through an admin group. */
   protected isAdmin(user: AdminUser): boolean {
-    return user.role?.toUpperCase() === 'ADMIN';
+    return user.role?.toUpperCase() === 'ADMIN' || this.groups.some((group) => group.adminGroup && user.groupUuids.includes(group.uuid));
   }
 
   protected isSelf(user: AdminUser): boolean {

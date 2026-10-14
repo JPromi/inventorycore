@@ -268,6 +268,14 @@ export const routes: Routes = [
           { path: 'groups/new', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
           { path: 'groups/:uuid/edit', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
           { path: 'group-permissions', loadComponent: () => import('./core/pages/admin/permissions-page/permissions-page').then((m) => m.PermissionsPage) },
+          {
+            path: 'ldap',
+            loadComponent: () => import('./core/pages/admin/ldap-settings-page/ldap-settings-page').then((m) => m.LdapSettingsPage),
+          },
+          {
+            path: 'oidc',
+            loadComponent: () => import('./core/pages/admin/oidc-settings-page/oidc-settings-page').then((m) => m.OidcSettingsPage),
+          },
         ],
       },
 

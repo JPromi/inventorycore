@@ -37,16 +37,26 @@
                             <span>E-Mail</span>
                             <input type="email" [(ngModel)]="form.email" name="email" />
                         </label>
-                        <label class="field">
-                            <span>Passwort {{ passwordRequired ? '*' : '' }}</span>
-                            <input
-                                type="password"
-                                [(ngModel)]="form.password"
-                                name="password"
-                                autocomplete="new-password"
-                                [placeholder]="passwordRequired ? '' : 'Leer lassen, um es nicht zu ändern'"
-                            />
-                        </label>
+                        @if (sourceProvider === 'LOCAL') {
+                            <label class="field">
+                                <span>Passwort {{ passwordRequired ? '*' : '' }}</span>
+                                <input
+                                    type="password"
+                                    [(ngModel)]="form.password"
+                                    name="password"
+                                    autocomplete="new-password"
+                                    [placeholder]="passwordRequired ? '' : 'Leer lassen, um es nicht zu ändern'"
+                                />
+                            </label>
+                        } @else {
+                            <div class="field">
+                                <span class="field-label">Anmeldung</span>
+                                <p class="hint provider-hint">
+                                    Konto aus {{ providerLabels[sourceProvider] }}. Das Passwort wird dort verwaltet;
+                                    Name und E-Mail werden bei der nächsten Synchronisation bzw. Anmeldung überschrieben.
+                                </p>
+                            </div>
+                        }
                     </div>
                 </section>
 

@@ -27,7 +27,7 @@ public class PermissionService {
 
     public AccessContext context(Authentication authentication) {
         User user = currentUser(authentication);
-        boolean admin = "ADMIN".equalsIgnoreCase(user.getRole());
+        boolean admin = user.isAdmin();
         return new AccessContext(admin, admin ? java.util.List.of() : permissionRepository.findByGroupIn(user.getGroups().stream().toList()));
     }
 

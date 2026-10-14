@@ -25,7 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jpromi.inventorycore.dto.AuthLoginRequest;
 import com.jpromi.inventorycore.dto.AuthResponse;
 import com.jpromi.inventorycore.entity.User;
+import com.jpromi.inventorycore.entity.OidcSettings;
 import com.jpromi.inventorycore.repository.AppUserRepository;
+import com.jpromi.inventorycore.repository.OidcSettingsRepository;
 import com.jpromi.inventorycore.service.ApiMapper;
 
 @RestController
@@ -35,12 +37,29 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final AppUserRepository userRepository;
     private final ApiMapper mapper;
+    private final OidcSettingsRepository oidcSettingsRepository;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
-    public AuthController(AuthenticationManager authenticationManager, AppUserRepository userRepository, ApiMapper mapper) {
+    public AuthController(
+        AuthenticationManager authenticationManager,
+        AppUserRepository userRepository,
+        ApiMapper mapper,
+        OidcSettingsRepository oidcSettingsRepository
+    ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.mapper = mapper;
+        this.oidcSettingsRepository = oidcSettingsRepository;
+    }
+
+    /** Login options for the login page (public). */
+    public record LoginProviders(boolean oidcEnabled, String oidcLabel, String oidcLoginUrl) {}
+
+    @GetMapping("/providers")
+    public LoginProviders providers() {
+        OidcSettings oidc = oidcSettingsRepository.load();
+        boolean enabled = oidc.isEnabled() && oidc.getIssuerUri() != null && oidc.getClientId() != null;
+        return new LoginProviders(enabled, oidc.getButtonLabel() == null ? "SSO" : oidc.getButtonLabel(), "/oauth2/authorization/oidc");
     }
 
     @PostMapping
@@ -104,7 +123,7 @@ public class AuthController {
             .authenticated(true)
             .username(user.getUsername())
             .displayName(user.getDisplayName())
-            .role(user.getRole())
+            .role(user.effectiveRole())
             .permissions(user.getGroups().stream()
                 .flatMap(group -> group.getPermissions().stream())
                 .map(mapper::toResponse)

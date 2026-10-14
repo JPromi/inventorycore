@@ -85,6 +85,14 @@
                     }
                 </button>
             </form>
+
+            @if (providers?.oidcEnabled) {
+                <div class="divider"><span>oder</span></div>
+                <button type="button" class="sso-button" [disabled]="loading" (click)="loginWithSso()">
+                    <svg lucideKeyRound size="18"></svg>
+                    <span>Mit {{ providers?.oidcLabel }} anmelden</span>
+                </button>
+            }
         </div>
     </main>
 </section>

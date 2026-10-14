@@ -5,6 +5,7 @@ import {
   LucideBoxes,
   LucideEye,
   LucideEyeOff,
+  LucideKeyRound,
   LucideLayers,
   LucideLoaderCircle,
   LucideLock,
@@ -14,12 +15,22 @@ import {
   LucideUser,
 } from '@lucide/angular';
 
-import { AuthService } from '../../service/auth.service';
+import { AuthService, LoginProviders } from '../../service/auth.service';
+
+/** Messages for the ?error= codes the backend sends after a rejected SSO login. */
+const SSO_ERRORS: Record<string, string> = {
+  oidc_local_user: 'Lokale Konten können sich nicht per SSO anmelden. Bitte mit Benutzername und Passwort anmelden.',
+  oidc_unknown_user: 'Für dieses SSO-Konto gibt es keinen Benutzer. Bitte an einen Administrator wenden.',
+  oidc_provider_mismatch: 'Dieses Konto stammt aus einem anderen Verzeichnis und darf sich nicht per SSO anmelden.',
+  oidc_disabled_user: 'Dieses Konto ist deaktiviert.',
+  oidc_no_username: 'Der Identity Provider hat keinen Benutzernamen geliefert.',
+  oidc_failed: 'SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
+};
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [FormsModule, LucideBoxes, LucideEye, LucideEyeOff, LucideLayers, LucideLoaderCircle, LucideLock, LucideLogIn, LucideMapPin, LucideQrCode, LucideUser],
+  imports: [FormsModule, LucideBoxes, LucideEye, LucideEyeOff, LucideKeyRound, LucideLayers, LucideLoaderCircle, LucideLock, LucideLogIn, LucideMapPin, LucideQrCode, LucideUser],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
 })
@@ -30,6 +41,7 @@ export class LoginPage implements OnInit {
   protected loading = false;
   protected error = '';
   protected readonly year = new Date().getFullYear();
+  protected providers: LoginProviders | null = null;
 
   constructor(
     private readonly router: Router,
@@ -40,6 +52,20 @@ export class LoginPage implements OnInit {
   ngOnInit(): void {
     if (this.authService.getCurrentUser()) {
       this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
+    const errorCode = this.route.snapshot.queryParamMap.get('error');
+    if (errorCode) {
+      this.error = SSO_ERRORS[errorCode] ?? SSO_ERRORS['oidc_failed'];
+    }
+    this.authService.providers().subscribe((providers) => (this.providers = providers));
+  }
+
+  /** The SSO login is a full page redirect to the identity provider. */
+  protected loginWithSso(): void {
+    if (this.providers?.oidcLoginUrl) {
+      this.loading = true;
+      window.location.href = this.providers.oidcLoginUrl;
     }
   }
 
