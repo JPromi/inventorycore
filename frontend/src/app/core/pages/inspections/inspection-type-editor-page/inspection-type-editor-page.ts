@@ -77,6 +77,8 @@ export class InspectionTypeEditorPage implements OnInit {
   protected readonly intervalUnits = INTERVAL_UNITS;
   protected mode: InspectionMode = 'INVENTORY';
   protected recurring = false;
+  /** inventory: also in order / defect */
+  protected checkFunction = false;
   protected intervalValue = 6;
   protected intervalUnit: IntervalUnit = 'WEEKS';
   /** Asset types the inspection is for; empty = all assets. */
@@ -120,6 +122,7 @@ export class InspectionTypeEditorPage implements OnInit {
           this.color = type.color ?? null;
           this.mode = type.mode ?? 'INVENTORY';
           this.recurring = !!type.intervalValue && !!type.intervalUnit;
+          this.checkFunction = !!type.checkFunction;
           this.intervalValue = type.intervalValue ?? 6;
           this.intervalUnit = type.intervalUnit ?? 'WEEKS';
           this.assetTypeUuids = [...(type.assetTypeUuids ?? [])];
@@ -225,6 +228,7 @@ export class InspectionTypeEditorPage implements OnInit {
       description: this.description.trim() || null,
       color: this.color,
       mode: this.mode,
+      checkFunction: this.mode === 'INVENTORY' && this.checkFunction,
       intervalValue: this.recurring ? Math.round(this.intervalValue) : null,
       intervalUnit: this.recurring ? this.intervalUnit : null,
       assetTypeUuids: this.assetTypeUuids,

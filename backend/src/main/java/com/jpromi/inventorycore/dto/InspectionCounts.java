@@ -12,5 +12,8 @@ public record InspectionCounts(
     int passed,
     int failed,
     int pending,
-    int unexpected
+    int unexpected,
+    /** function check: present but defect / present and not checked yet */
+    int defect,
+    int functionUnchecked
 ) {}

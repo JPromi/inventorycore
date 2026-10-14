@@ -71,6 +71,12 @@ public class InspectionType {
     @Enumerated(EnumType.STRING)
     private IntervalUnit intervalUnit;
 
+    /**
+     * Inventory: besides present / missing, also check whether the asset works (in order / defect).
+     * Default for new inspections; nullable, so the column can be added to existing tables.
+     */
+    private Boolean checkFunction;
+
     /** Asset types this inspection is for; empty = all assets. */
     @ManyToMany
     @JoinTable(
@@ -108,6 +114,10 @@ public class InspectionType {
 
     public InspectionMode getMode() {
         return mode == null ? InspectionMode.INVENTORY : mode;
+    }
+
+    public boolean isCheckFunction() {
+        return getMode() == InspectionMode.INVENTORY && Boolean.TRUE.equals(checkFunction);
     }
 
     public boolean isRecurring() {

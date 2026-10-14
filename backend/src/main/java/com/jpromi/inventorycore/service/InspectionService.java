@@ -54,6 +54,7 @@ import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
 import com.jpromi.inventorycore.enums.ImageKind;
 import com.jpromi.inventorycore.enums.InspectionCheckMethod;
+import com.jpromi.inventorycore.enums.InspectionCondition;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 import com.jpromi.inventorycore.enums.InspectionMode;
 import com.jpromi.inventorycore.enums.InspectionPhotoTarget;
@@ -186,6 +187,8 @@ public class InspectionService {
         type.setDescription(blankToNull(request.description()));
         type.setColor(blankToNull(request.color()));
         type.setMode(request.mode() == null ? InspectionMode.INVENTORY : request.mode());
+        // single checks are always about whether the device is in order
+        type.setCheckFunction(type.getMode() == InspectionMode.INVENTORY && Boolean.TRUE.equals(request.checkFunction()));
         boolean recurring = request.intervalValue() != null && request.intervalValue() > 0 && request.intervalUnit() != null;
         type.setIntervalValue(recurring ? request.intervalValue() : null);
         type.setIntervalUnit(recurring ? request.intervalUnit() : null);
@@ -301,6 +304,8 @@ public class InspectionService {
         Inspection inspection = Inspection.builder()
             .inspectionType(type)
             .mode(type.getMode())
+            .checkFunction(type.getMode() == InspectionMode.INVENTORY
+                && (request.checkFunction() == null ? type.isCheckFunction() : request.checkFunction()))
             .typeName(type.getName())
             .title(blankToNull(request.title()) == null ? type.getName() : request.title().trim())
             .filterLocationUuid(filter.locationUuid())
@@ -320,6 +325,7 @@ public class InspectionService {
             "INSPECTION_STARTED",
             "inspectionType", type.getName(),
             "mode", type.getMode().name(),
+            "checkFunction", inspection.isCheckFunction() ? true : null,
             "expected", assets.size(),
             "location", filter.locationUuid() == null ? null : locationRepository.findByUuid(filter.locationUuid()).map(Location::getName).orElse(null),
             "includeSubLocations", filter.locationUuid() == null ? null : filter.includeSubLocations(),
@@ -430,6 +436,9 @@ public class InspectionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status passt nicht zur Art der Prüfung.");
         }
         if (request.status() != null && request.status() != item.getStatus()) {
+            if (request.status() != InspectionItemStatus.PRESENT) {
+                item.setCondition(null);
+            }
             if (request.status() == InspectionItemStatus.PENDING) {
                 item.setStatus(InspectionItemStatus.PENDING);
                 item.setMethod(null);
@@ -443,6 +452,9 @@ public class InspectionService {
                 audit.log(AuditAction.INSPECT, AuditObjectType.ASSET, item.getAsset().getUuid(), item.getAssetName(), AuditDetail.event(
                     "INSPECTION_RESULT", "inspection", inspection.getTitle(), "inspectionUuid", uuid.toString(), "status", request.status().name()));
             }
+        }
+        if (request.condition() != null) {
+            setCondition(inspection, item, request.condition(), user, uuid);
         }
         if (request.note() != null) {
             item.setNote(blankToNull(request.note()));
@@ -550,6 +562,31 @@ public class InspectionService {
         return toResponse(item, locationsById());
     }
 
+    /** Function check: OK / DEFECT ("" clears). Checking the function means the asset is there. */
+    private void setCondition(Inspection inspection, InspectionItem item, String value, User user, UUID uuid) {
+        if (!inspection.isCheckFunction()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Diese Prüfung prüft keine Funktion.");
+        }
+        InspectionCondition condition;
+        try {
+            condition = value.isBlank() ? null : InspectionCondition.valueOf(value);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Zustand " + value);
+        }
+        if (condition == item.getCondition()) {
+            return;
+        }
+        if (condition != null && item.getStatus() != InspectionItemStatus.PRESENT) {
+            check(item, InspectionItemStatus.PRESENT, InspectionCheckMethod.MANUAL, user);
+        }
+        item.setCondition(condition);
+        if (item.getAsset() != null) {
+            audit.log(AuditAction.INSPECT, AuditObjectType.ASSET, item.getAsset().getUuid(), item.getAssetName(), AuditDetail.event(
+                "INSPECTION_CONDITION", "inspection", inspection.getTitle(), "inspectionUuid", uuid.toString(),
+                "condition", condition == null ? "NONE" : condition.name()));
+        }
+    }
+
     private static Set<InspectionItemStatus> allowedStatus(InspectionMode mode) {
         return mode == InspectionMode.CHECK
             ? Set.of(InspectionItemStatus.PENDING, InspectionItemStatus.PASSED, InspectionItemStatus.FAILED)
@@ -594,6 +631,7 @@ public class InspectionService {
             "failed", counts.failed(),
             "pending", counts.pending(),
             "unexpected", counts.unexpected(),
+            "defect", inspection.isCheckFunction() ? counts.defect() : null,
             "comment", inspection.getComment()));
         return completed;
     }
@@ -628,6 +666,7 @@ public class InspectionService {
                     item.isExpected(),
                     item.getStatus(),
                     item.getMethod(),
+                    item.getCondition(),
                     item.getCheckedAt(),
                     item.getCheckedByName(),
                     item.getLocationName(),
@@ -768,6 +807,7 @@ public class InspectionService {
             type.getMode(),
             type.getIntervalValue(),
             type.getIntervalUnit(),
+            type.isCheckFunction(),
             type.getAssetTypes().stream().map(AssetType::getUuid).toList(),
             type.getAssetTypes().stream().map(AssetType::getName).sorted().toList(),
             type.getAreas().stream().map(Area::getUuid).toList(),
@@ -802,12 +842,19 @@ public class InspectionService {
         int failed = 0;
         int pending = 0;
         int unexpected = 0;
+        int defect = 0;
+        int functionUnchecked = 0;
         for (InspectionItem item : inspection.getItems()) {
             if (!item.isExpected()) {
                 unexpected++;
                 continue;
             }
             expected++;
+            if (item.getCondition() == InspectionCondition.DEFECT) {
+                defect++;
+            } else if (inspection.isCheckFunction() && item.getStatus() == InspectionItemStatus.PRESENT && item.getCondition() == null) {
+                functionUnchecked++;
+            }
             switch (item.getStatus()) {
                 case PRESENT -> present++;
                 case MISSING -> missing++;
@@ -825,12 +872,13 @@ public class InspectionService {
             inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getName).sorted().toList(),
             inspection.getStatus(),
             inspection.getMode(),
+            inspection.isCheckFunction(),
             inspection.getFilterSummary(),
             inspection.getCreatedAt(),
             inspection.getCreatedByName(),
             inspection.getCompletedAt(),
             inspection.getCompletedByName(),
-            new InspectionCounts(expected, present, missing, passed, failed, pending, unexpected)
+            new InspectionCounts(expected, present, missing, passed, failed, pending, unexpected, defect, functionUnchecked)
         );
     }
 
@@ -873,6 +921,7 @@ public class InspectionService {
             item.isExpected(),
             item.getStatus(),
             item.getMethod(),
+            item.getCondition(),
             item.getScannedCode(),
             item.getCheckedAt(),
             item.getCheckedByName(),

@@ -113,6 +113,8 @@ const RESULTS: Record<string, string> = {
   PENDING: 'zurückgesetzt (nicht geprüft)',
 };
 
+const CONDITIONS: Record<string, string> = { OK: 'in Ordnung', DEFECT: 'defekt', NONE: 'zurückgesetzt' };
+
 const SIMPLE_EVENTS: Record<string, string> = {
   PASSWORD_CHANGED: 'Passwort geändert',
   BIND_PASSWORD_CHANGED: 'Bind-Passwort geändert',
@@ -152,6 +154,8 @@ function eventLines(code: string, params: Record<string, unknown>): string[] {
       return [`${inspection}: ${SCAN_OUTCOMES[p('outcome')] ?? p('outcome')}`];
     case 'INSPECTION_RESULT':
       return [`${inspection}: ${RESULTS[p('status')] ?? p('status')}`];
+    case 'INSPECTION_CONDITION':
+      return [`${inspection}: Funktion ${CONDITIONS[p('condition')] ?? p('condition')}`];
     case 'INSPECTION_ITEM_ADDED':
       return [`Zur ${inspection} hinzugefügt`];
     case 'PHOTO_ADDED':
@@ -166,7 +170,7 @@ function eventLines(code: string, params: Record<string, unknown>): string[] {
       const counts =
         p('mode') === 'CHECK'
           ? `${p('passed')} in Ordnung, ${p('failed')} Mangel, ${p('pending')} nicht geprüft`
-          : `${p('present')} da, ${p('missing')} fehlen, ${p('pending')} nicht geprüft, ${p('unexpected')} fremd`;
+          : `${p('present')} da${p('defect') ? ` (davon ${p('defect')} defekt)` : ''}, ${p('missing')} fehlen, ${p('pending')} nicht geprüft, ${p('unexpected')} fremd`;
       return p('comment') ? [counts, `Kommentar: ${p('comment')}`] : [counts];
     }
     case 'INSPECTION_DELETED':
@@ -190,6 +194,9 @@ function eventLines(code: string, params: Record<string, unknown>): string[] {
 
 function startedLines(params: Record<string, unknown>, p: (key: string) => string): string[] {
   const lines = [`${p('inspectionType')} (${VALUES[p('mode')] ?? p('mode')}), ${p('expected')} Assets erwartet`];
+  if (params['checkFunction']) {
+    lines.push('Mit Funktionsprüfung');
+  }
   if (p('location')) {
     lines.push(`Standort: ${p('location')}${params['includeSubLocations'] ? ' (mit Unterstandorten)' : ''}`);
   }

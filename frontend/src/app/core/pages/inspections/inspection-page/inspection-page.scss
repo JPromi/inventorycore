@@ -397,6 +397,10 @@
         font-weight: 700;
     }
 
+    .checked.function-open {
+        color: var(--warning);
+    }
+
     .checked {
         color: var(--text-subtle);
         font-size: .74rem;

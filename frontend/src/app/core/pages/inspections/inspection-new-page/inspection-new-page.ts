@@ -38,6 +38,8 @@ export class InspectionNewPage implements OnInit, OnDestroy {
 
   /** Only assets whose recurring inspection is overdue or due within {@link dueWithinDays}. */
   protected onlyDue = false;
+  /** inventory: also in order / defect (default from the type) */
+  protected checkFunction = false;
   protected dueWithinDays = 7;
   protected readonly intervalText = intervalText;
 
@@ -128,6 +130,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
 
   protected selectType(uuid: string | null): void {
     this.typeUuid = uuid;
+    this.checkFunction = !!this.selectedType?.checkFunction;
     if (!this.titleTouched) {
       this.title = this.defaultTitle();
     }
@@ -156,7 +159,8 @@ export class InspectionNewPage implements OnInit, OnDestroy {
     this.starting = true;
     this.error = '';
     const onlyDue = this.onlyDue && !!this.selectedType?.intervalValue;
-    this.api.create(this.typeUuid, this.title.trim(), this.filter, onlyDue, this.dueWithinDays).subscribe({
+    const checkFunction = this.selectedType?.mode === 'INVENTORY' ? this.checkFunction : null;
+    this.api.create(this.typeUuid, this.title.trim(), this.filter, onlyDue, this.dueWithinDays, checkFunction).subscribe({
       next: (inspection) => this.router.navigate(['/inspections', inspection.summary.uuid]),
       error: () => {
         this.starting = false;

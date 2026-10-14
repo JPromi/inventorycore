@@ -21,6 +21,7 @@ import com.jpromi.inventorycore.entity.AssetInspectionSchedule;
 import com.jpromi.inventorycore.entity.AssetType;
 import com.jpromi.inventorycore.entity.GroupPermission;
 import com.jpromi.inventorycore.entity.InspectionType;
+import com.jpromi.inventorycore.enums.InspectionCondition;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 import com.jpromi.inventorycore.enums.IntervalUnit;
 import com.jpromi.inventorycore.repository.AssetInspectionScheduleRepository;
@@ -90,6 +91,21 @@ class InspectionScheduleServiceTest {
         InspectionDueResponse entry = service.all(admin).get(0);
         assertEquals("OVERDUE", entry.state());
         assertEquals(InspectionItemStatus.FAILED, entry.lastResult());
+    }
+
+    @Test
+    void defectFoundInInventoryIsDueAgainAtOnce() {
+        check(InspectionItemStatus.PASSED, 20);
+        checks.add(new Object[] { car.getId(), brakes.getId(), InspectionItemStatus.PRESENT, OffsetDateTime.now().minusDays(2), "Tester",
+            InspectionCondition.DEFECT });
+        InspectionDueResponse entry = service.all(admin).get(0);
+        assertEquals("OVERDUE", entry.state());
+        assertEquals(InspectionItemStatus.FAILED, entry.lastResult());
+
+        // present and working resets the interval as usual
+        checks.add(new Object[] { car.getId(), brakes.getId(), InspectionItemStatus.PRESENT, OffsetDateTime.now(), "Tester",
+            InspectionCondition.OK });
+        assertEquals("OK", service.all(admin).get(0).state());
     }
 
     @Test

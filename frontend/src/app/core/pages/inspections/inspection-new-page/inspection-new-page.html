@@ -59,6 +59,16 @@
                     </div>
                 </section>
 
+                @if (selectedType?.mode === 'INVENTORY') {
+                    <section class="card due-card">
+                        <label class="toggle">
+                            <input type="checkbox" [(ngModel)]="checkFunction" name="checkFunction" />
+                            <span>Funktion prüfen – vorhandene Assets auch als „In Ordnung“ oder „Defekt“ erfassen</span>
+                        </label>
+                        <p class="hint">Vorgabe der Prüfungsart: {{ selectedType?.checkFunction ? 'mit' : 'ohne' }} Funktionsprüfung</p>
+                    </section>
+                }
+
                 @if (selectedType?.intervalValue) {
                     <section class="card due-card">
                         <label class="toggle">

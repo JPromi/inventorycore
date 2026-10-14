@@ -20,6 +20,8 @@ export type InspectionScanOutcome =
   | 'ADDED_OTHER_TYPE';
 /** INVENTORY: fixed list from filters, present/missing. CHECK: devices are checked one by one. */
 export type InspectionMode = 'INVENTORY' | 'CHECK';
+/** Function check in an inventory: the asset is there and works / is broken. */
+export type InspectionCondition = 'OK' | 'DEFECT';
 export type IntervalUnit = 'DAYS' | 'WEEKS' | 'MONTHS' | 'YEARS';
 export type DueState = 'OVERDUE' | 'DUE' | 'OK';
 
@@ -107,6 +109,8 @@ export interface InspectionType {
   mode: InspectionMode;
   intervalValue: number | null;
   intervalUnit: IntervalUnit | null;
+  /** inventory: also check whether present assets work */
+  checkFunction: boolean;
   /** empty = all assets */
   assetTypeUuids: string[];
   assetTypeNames: string[];
@@ -129,6 +133,7 @@ export interface InspectionTypeRequest {
   mode: InspectionMode;
   intervalValue: number | null;
   intervalUnit: IntervalUnit | null;
+  checkFunction: boolean;
   assetTypeUuids: string[];
   areaUuids: string[];
   fields: InspectionField[];
@@ -150,6 +155,9 @@ export interface InspectionCounts {
   failed: number;
   pending: number;
   unexpected: number;
+  /** function check: present but defect / present and not checked yet */
+  defect: number;
+  functionUnchecked: number;
 }
 
 export interface InspectionSummary {
@@ -162,6 +170,7 @@ export interface InspectionSummary {
   areaNames: string[];
   status: InspectionStatus;
   mode: InspectionMode;
+  checkFunction: boolean;
   filterSummary: string | null;
   createdAt: string;
   createdByName: string | null;
@@ -189,6 +198,7 @@ export interface InspectionItem {
   expected: boolean;
   status: InspectionItemStatus;
   method: InspectionCheckMethod | null;
+  condition: InspectionCondition | null;
   scannedCode: string | null;
   checkedAt: string | null;
   checkedByName: string | null;
@@ -235,6 +245,7 @@ export interface AssetInspection {
   expected: boolean;
   status: InspectionItemStatus;
   method: InspectionCheckMethod | null;
+  condition: InspectionCondition | null;
   checkedAt: string | null;
   checkedByName: string | null;
   locationName: string | null;
@@ -244,6 +255,8 @@ export interface AssetInspection {
 
 export interface InspectionItemUpdate {
   status?: InspectionItemStatus;
+  /** '' clears; OK / DEFECT also marks the asset as present */
+  condition?: InspectionCondition | '';
   note?: string;
   values?: Record<string, string>;
 }
@@ -322,10 +335,18 @@ export class InspectionService {
       .pipe(map((response) => response.count));
   }
 
-  create(inspectionTypeUuid: string, title: string, filter: InspectionFilter, onlyDue = false, dueWithinDays = 7): Observable<InspectionDetail> {
+  /** `checkFunction` null = default of the type. */
+  create(
+    inspectionTypeUuid: string,
+    title: string,
+    filter: InspectionFilter,
+    onlyDue = false,
+    dueWithinDays = 7,
+    checkFunction: boolean | null = null,
+  ): Observable<InspectionDetail> {
     return this.http.post<InspectionDetail>(
       `${this.apiUrl}/inspections`,
-      { inspectionTypeUuid, title, filter, onlyDue, dueWithinDays },
+      { inspectionTypeUuid, title, filter, onlyDue, dueWithinDays, checkFunction },
       this.options,
     );
   }

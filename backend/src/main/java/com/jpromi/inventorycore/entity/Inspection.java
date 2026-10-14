@@ -75,6 +75,9 @@ public class Inspection {
     @Enumerated(EnumType.STRING)
     private InspectionMode mode;
 
+    /** Inventory with function check (snapshot of the choice when it was started). */
+    private Boolean checkFunction;
+
     // filters used to select the expected assets (uuid lists comma separated) and as readable text
     private UUID filterLocationUuid;
     private boolean filterIncludeSubLocations;
@@ -118,5 +121,9 @@ public class Inspection {
 
     public boolean isCompleted() {
         return status == InspectionStatus.COMPLETED;
+    }
+
+    public boolean isCheckFunction() {
+        return Boolean.TRUE.equals(checkFunction);
     }
 }

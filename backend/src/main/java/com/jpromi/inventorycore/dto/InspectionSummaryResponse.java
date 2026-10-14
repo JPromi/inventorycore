@@ -17,6 +17,7 @@ public record InspectionSummaryResponse(
     List<String> areaNames,
     InspectionStatus status,
     InspectionMode mode,
+    boolean checkFunction,
     String filterSummary,
     OffsetDateTime createdAt,
     String createdByName,

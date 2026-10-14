@@ -66,6 +66,18 @@
                             </span>
                         </label>
                     </div>
+                    @if (mode === 'INVENTORY') {
+                        <label class="toggle function-check">
+                            <input type="checkbox" [(ngModel)]="checkFunction" name="checkFunction" />
+                            <span>
+                                <strong>Funktion prüfen</strong>
+                                <small>
+                                    Vorhandene Assets zusätzlich als „In Ordnung“ oder „Defekt“ erfassen. Defekte werden bei
+                                    wiederkehrenden Prüfungen sofort wieder fällig. Beim Start einer Prüfung änderbar.
+                                </small>
+                            </span>
+                        </label>
+                    }
                 </section>
 
                 <section class="card">

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.jpromi.inventorycore.enums.InspectionCheckMethod;
+import com.jpromi.inventorycore.enums.InspectionCondition;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 
 /** {@code locationName} is where the asset belongs (for unexpected items: its actual home). */
@@ -20,6 +21,7 @@ public record InspectionItemResponse(
     boolean expected,
     InspectionItemStatus status,
     InspectionCheckMethod method,
+    InspectionCondition condition,
     String scannedCode,
     OffsetDateTime checkedAt,
     String checkedByName,

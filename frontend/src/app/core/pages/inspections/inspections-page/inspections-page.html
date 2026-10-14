@@ -155,6 +155,9 @@
                             } @else {
                                 <span><strong>{{ inspection.counts.present }}</strong> da</span>
                                 <span><strong>{{ inspection.counts.missing + (inspection.status === 'COMPLETED' ? inspection.counts.pending : 0) }}</strong> fehlen</span>
+                                @if (inspection.checkFunction && inspection.counts.defect) {
+                                    <span class="warning"><strong>{{ inspection.counts.defect }}</strong> defekt</span>
+                                }
                             }
                             @if (inspection.status === 'OPEN') {
                                 <span><strong>{{ inspection.counts.pending }}</strong> offen</span>

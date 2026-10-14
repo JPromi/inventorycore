@@ -68,6 +68,12 @@
                     <span class="value">{{ open || isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</span>
                     <span class="label">{{ isCheck ? 'Mängel' : 'Fehlen' }}</span>
                 </div>
+                @if (checkFunction) {
+                    <div class="stat missing">
+                        <span class="value">{{ count('DEFECT') }}</span>
+                        <span class="label">Defekt</span>
+                    </div>
+                }
                 @if (open || isCheck) {
                     <div class="stat">
                         <span class="value">{{ count('PENDING') }}</span>
@@ -169,14 +175,29 @@
                                             <span class="meta">{{ itemMeta(item) }}</span>
                                         </div>
                                         <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
-                                            <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
-                                                <svg lucideCheck size="18"></svg>
-                                                <span>{{ goodLabel }}</span>
-                                            </button>
-                                            <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
-                                                <svg lucideX size="18"></svg>
-                                                <span>{{ badLabel }}</span>
-                                            </button>
+                                            @if (checkFunction) {
+                                                <button type="button" class="present" [class.active]="item.condition === 'OK'" (click)="setCondition(item, 'OK')" title="Da und funktioniert">
+                                                    <svg lucideCheck size="18"></svg>
+                                                    <span>i. O.</span>
+                                                </button>
+                                                <button type="button" class="missing" [class.active]="item.condition === 'DEFECT'" (click)="setCondition(item, 'DEFECT')" title="Da, aber defekt">
+                                                    <svg lucideWrench size="18"></svg>
+                                                    <span>Defekt</span>
+                                                </button>
+                                                <button type="button" class="missing" [class.active]="item.status === 'MISSING'" (click)="setStatus(item, 'MISSING')">
+                                                    <svg lucideX size="18"></svg>
+                                                    <span>Fehlt</span>
+                                                </button>
+                                            } @else {
+                                                <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
+                                                    <svg lucideCheck size="18"></svg>
+                                                    <span>{{ goodLabel }}</span>
+                                                </button>
+                                                <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
+                                                    <svg lucideX size="18"></svg>
+                                                    <span>{{ badLabel }}</span>
+                                                </button>
+                                            }
                                         </div>
                                         <app-inspection-item-editor
                                             [item]="item"
@@ -277,6 +298,11 @@
                         <button type="button" [class.active]="itemFilter === badStatus" (click)="itemFilter = badStatus">
                             {{ badLabel }} <span class="count">{{ count(badStatus) }}</span>
                         </button>
+                        @if (checkFunction) {
+                            <button type="button" [class.active]="itemFilter === 'DEFECT'" (click)="itemFilter = 'DEFECT'">
+                                Defekt <span class="count" [class.alert]="count('DEFECT')">{{ count('DEFECT') }}</span>
+                            </button>
+                        }
                     </div>
                     <div class="search-box">
                         <svg class="search-icon" lucideSearch size="18"></svg>
@@ -306,8 +332,8 @@
                         <article
                             class="item"
                             [id]="'item-' + item.uuid"
-                            [class.present]="item.status === goodStatus"
-                            [class.missing]="item.status === badStatus"
+                            [class.present]="item.status === goodStatus && item.condition !== 'DEFECT'"
+                            [class.missing]="item.status === badStatus || item.condition === 'DEFECT'"
                             [class.highlight]="highlighted === item.uuid"
                         >
                             <div class="item-row">
@@ -320,6 +346,9 @@
                                             {{ item.method === 'SCAN' ? 'Gescannt' : 'Manuell' }} von {{ item.checkedByName }},
                                             {{ item.checkedAt | date: 'dd.MM. HH:mm' }}
                                         </span>
+                                    }
+                                    @if (checkFunction && item.status === 'PRESENT' && !item.condition) {
+                                        <span class="checked function-open">Da – Funktion noch nicht geprüft</span>
                                     }
                                 </div>
                                 @if (item.assetUuid) {
@@ -334,14 +363,29 @@
                                     </button>
                                 }
                                 <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
-                                    <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
-                                        <svg lucideCheck size="15"></svg>
-                                        <span>{{ isCheck ? 'i. O.' : 'Da' }}</span>
-                                    </button>
-                                    <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
-                                        <svg lucideX size="15"></svg>
-                                        <span>{{ badLabel }}</span>
-                                    </button>
+                                    @if (checkFunction) {
+                                        <button type="button" class="present" [class.active]="item.condition === 'OK'" (click)="setCondition(item, 'OK')" title="Da und funktioniert">
+                                            <svg lucideCheck size="15"></svg>
+                                            <span>i. O.</span>
+                                        </button>
+                                        <button type="button" class="missing" [class.active]="item.condition === 'DEFECT'" (click)="setCondition(item, 'DEFECT')" title="Da, aber defekt">
+                                            <svg lucideWrench size="15"></svg>
+                                            <span>Defekt</span>
+                                        </button>
+                                        <button type="button" class="missing" [class.active]="item.status === 'MISSING'" (click)="setStatus(item, 'MISSING')">
+                                            <svg lucideX size="15"></svg>
+                                            <span>Fehlt</span>
+                                        </button>
+                                    } @else {
+                                        <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
+                                            <svg lucideCheck size="15"></svg>
+                                            <span>{{ isCheck ? 'i. O.' : 'Da' }}</span>
+                                        </button>
+                                        <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
+                                            <svg lucideX size="15"></svg>
+                                            <span>{{ badLabel }}</span>
+                                        </button>
+                                    }
                                 </div>
                                 @if (isCheck && item.status === 'PENDING') {
                                     <button type="button" class="icon-button" title="Aus der Prüfung entfernen" (click)="removeUnexpected(item)">
@@ -380,6 +424,12 @@
                                 }
                                 @if (unexpectedItems.length) {
                                     <li class="warn"><strong>{{ unexpectedItems.length }}</strong> fremde Gegenstände / unbekannte Codes</li>
+                                }
+                                @if (checkFunction && count('DEFECT')) {
+                                    <li class="bad"><strong>{{ count('DEFECT') }}</strong> sind defekt</li>
+                                }
+                                @if (checkFunction && functionOpenCount) {
+                                    <li class="warn"><strong>{{ functionOpenCount }}</strong> sind da, aber die Funktion wurde nicht geprüft</li>
                                 }
                                 @if (missingRequiredTotal) {
                                     <li class="warn"><strong>{{ missingRequiredTotal }}</strong> Pflichtfelder sind leer</li>
@@ -440,6 +490,12 @@
                         <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('PASSED'), empty: 'Keine.' }" />
                     </section>
                 } @else {
+                    @if (checkFunction) {
+                        <section class="card report-section" [class.empty-section]="!reportDefect.length">
+                            <h2 class="bad">Defekte Assets ({{ reportDefect.length }})</h2>
+                            <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportDefect, empty: 'Keine defekten Assets.' }" />
+                        </section>
+                    }
                     <section class="card report-section" [class.empty-section]="!reportMissing.length">
                         <h2 class="bad">Fehlende Assets ({{ reportMissing.length }})</h2>
                         <ng-container
@@ -545,6 +601,9 @@
                         <th>Asset</th>
                         <th>Inventar-ID</th>
                         <th>Typ</th>
+                        @if (checkFunction) {
+                            <th>Funktion</th>
+                        }
                         <th>Prüfwerte</th>
                         <th>Geprüft</th>
                     </tr>
@@ -567,6 +626,9 @@
                             </td>
                             <td class="mono">{{ item.invId || '—' }}</td>
                             <td>{{ item.assetTypeName || '—' }}</td>
+                            @if (checkFunction) {
+                                <td [class.bad]="item.condition === 'DEFECT'">{{ conditionLabel(item) }}</td>
+                            }
                             <td>
                                 @if (item.values.length) {
                                     <dl class="values">

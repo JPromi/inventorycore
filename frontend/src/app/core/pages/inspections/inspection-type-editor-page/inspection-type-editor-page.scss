@@ -197,3 +197,20 @@
     padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom));
     background: linear-gradient(to top, var(--background) 70%, transparent);
 }
+
+// "Funktion prüfen" below the inventory / single check choice
+.function-check {
+    align-items: flex-start;
+    margin-top: .85rem;
+
+    > span {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+    }
+
+    small {
+        color: var(--text-muted);
+        font-size: .8rem;
+    }
+}

@@ -11,5 +11,7 @@ public record InspectionCreateRequest(
     String title,
     InspectionFilter filter,
     Boolean onlyDue,
-    Integer dueWithinDays
+    Integer dueWithinDays,
+    /** inventory: function check for this run; null = default of the type */
+    Boolean checkFunction
 ) {}

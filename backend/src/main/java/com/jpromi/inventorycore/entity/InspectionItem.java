@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.jpromi.inventorycore.enums.InspectionCheckMethod;
+import com.jpromi.inventorycore.enums.InspectionCondition;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 
 import jakarta.persistence.CascadeType;
@@ -77,6 +78,11 @@ public class InspectionItem {
 
     @Enumerated(EnumType.STRING)
     private InspectionCheckMethod method;
+
+    /** Function check of a present asset; null = not checked (or no function check). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "item_condition")
+    private InspectionCondition condition;
 
     /** The code as scanned (for unknown codes the only information there is). */
     private String scannedCode;

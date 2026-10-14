@@ -17,6 +17,8 @@ public record InspectionTypeRequest(
     InspectionMode mode,
     Integer intervalValue,
     IntervalUnit intervalUnit,
+    /** inventory only: also check whether assets work */
+    Boolean checkFunction,
     List<UUID> assetTypeUuids,
     List<UUID> areaUuids,
     List<InspectionFieldRequest> fields

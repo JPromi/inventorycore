@@ -24,6 +24,7 @@ import com.jpromi.inventorycore.entity.AssetInspectionSchedule;
 import com.jpromi.inventorycore.entity.InspectionType;
 import com.jpromi.inventorycore.entity.Location;
 import com.jpromi.inventorycore.entity.User;
+import com.jpromi.inventorycore.enums.InspectionCondition;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
@@ -227,6 +228,10 @@ public class InspectionScheduleService {
         for (Object[] row : itemRepository.findChecks()) {
             Key key = new Key((Long) row[0], (Long) row[1]);
             InspectionItemStatus status = (InspectionItemStatus) row[2];
+            if (row.length > 5 && row[5] == InspectionCondition.DEFECT) {
+                // present but broken: must be checked again like a failed single check
+                status = InspectionItemStatus.FAILED;
+            }
             Check check = new Check((OffsetDateTime) row[3], (String) row[4], status);
             LastChecks current = result.getOrDefault(key, new LastChecks(null, null));
             if (status == InspectionItemStatus.FAILED) {

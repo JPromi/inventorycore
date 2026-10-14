@@ -19,6 +19,7 @@ import {
   LucideSearch,
   LucideTrash2,
   LucideTriangleAlert,
+  LucideWrench,
   LucideX,
 } from '@lucide/angular';
 
@@ -32,6 +33,7 @@ import { InspectionItemEditor } from '../inspection-item-editor/inspection-item-
 import { CameraScanner } from '../../../scan/camera-scanner';
 import { scanFeedback } from '../../../scan/scan-feedback';
 import {
+  InspectionCondition,
   InspectionDetail,
   InspectionField,
   InspectionItem,
@@ -47,7 +49,8 @@ import { FileApiService } from '../../../service/file-api.service';
 import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import { PermissionService } from '../../../service/permission.service';
 
-type ItemFilter = 'ALL' | InspectionItemStatus;
+/** DEFECT: present but broken (inventory with function check). */
+type ItemFilter = 'ALL' | InspectionItemStatus | 'DEFECT';
 
 /** Same code from the camera is ignored for this long. */
 const DUPLICATE_WINDOW_MS = 2500;
@@ -81,6 +84,7 @@ const DUPLICATE_WINDOW_MS = 2500;
     LucideSearch,
     LucideTrash2,
     LucideTriangleAlert,
+    LucideWrench,
     LucideX,
   ],
   templateUrl: './inspection-page.html',
@@ -185,7 +189,29 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   protected count(status: ItemFilter): number {
-    return status === 'ALL' ? this.expectedItems.length : this.expectedItems.filter((item) => item.status === status).length;
+    return this.expectedItems.filter((item) => this.matches(item, status)).length;
+  }
+
+  private matches(item: InspectionItem, filter: ItemFilter): boolean {
+    return filter === 'ALL' || (filter === 'DEFECT' ? item.condition === 'DEFECT' : item.status === filter);
+  }
+
+  /** Inventory that also checks whether present assets work. */
+  protected get checkFunction(): boolean {
+    return !this.isCheck && !!this.detail?.summary.checkFunction;
+  }
+
+  /** Present, but the function was not checked yet. */
+  protected get functionOpenCount(): number {
+    return this.expectedItems.filter((item) => item.status === 'PRESENT' && !item.condition).length;
+  }
+
+  protected get reportDefect(): InspectionItem[] {
+    return this.expectedItems.filter((item) => item.condition === 'DEFECT');
+  }
+
+  protected conditionLabel(item: InspectionItem): string {
+    return item.condition === 'OK' ? 'In Ordnung' : item.condition === 'DEFECT' ? 'Defekt' : 'Nicht geprüft';
   }
 
   protected get progress(): number {
@@ -197,7 +223,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     const term = this.search.trim().toLowerCase();
     return this.expectedItems.filter(
       (item) =>
-        (this.itemFilter === 'ALL' || item.status === this.itemFilter) &&
+        this.matches(item, this.itemFilter) &&
         (!term || [item.assetName, item.invId, item.serialNumber, item.assetTypeName, item.locationName].some((value) => value?.toLowerCase().includes(term))),
     );
   }
@@ -451,6 +477,25 @@ export class InspectionPage implements OnInit, OnDestroy {
     });
   }
 
+  /** Function check; clicking the active one again clears it. In order / defect also means "present". */
+  protected setCondition(item: InspectionItem, condition: InspectionCondition): void {
+    if (!this.open || this.busy.has(item.uuid)) {
+      return;
+    }
+    const next = item.condition === condition ? '' : condition;
+    this.busy.add(item.uuid);
+    this.api.updateItem(this.uuid, item.uuid, { condition: next }).subscribe({
+      next: (updated) => {
+        this.busy.delete(item.uuid);
+        this.mergeItem(updated);
+      },
+      error: (error) => {
+        this.busy.delete(item.uuid);
+        this.handleError(error, 'Zustand konnte nicht gespeichert werden.');
+      },
+    });
+  }
+
   protected toggleExpanded(item: InspectionItem): void {
     this.expanded.has(item.uuid) ? this.expanded.delete(item.uuid) : this.expanded.add(item.uuid);
   }
@@ -574,6 +619,9 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   protected statusLabel(item: InspectionItem): string {
+    if (item.status === 'PRESENT' && item.condition) {
+      return item.condition === 'DEFECT' ? 'Da, defekt' : 'Da, in Ordnung';
+    }
     switch (item.status) {
       case 'PRESENT':
         return 'Da';
@@ -629,7 +677,7 @@ export class InspectionPage implements OnInit, OnDestroy {
 
   /** Show the scanned item in the list, with its fields open. */
   private focusItem(item: InspectionItem): void {
-    if (this.itemFilter !== 'ALL' && this.itemFilter !== item.status) {
+    if (!this.matches(item, this.itemFilter)) {
       this.itemFilter = 'ALL';
     }
     this.search = '';

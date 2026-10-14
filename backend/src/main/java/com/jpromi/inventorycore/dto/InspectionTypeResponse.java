@@ -14,6 +14,7 @@ public record InspectionTypeResponse(
     InspectionMode mode,
     Integer intervalValue,
     IntervalUnit intervalUnit,
+    boolean checkFunction,
     List<UUID> assetTypeUuids,
     List<String> assetTypeNames,
     List<UUID> areaUuids,

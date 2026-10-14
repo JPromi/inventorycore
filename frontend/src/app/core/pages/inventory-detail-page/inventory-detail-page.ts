@@ -177,9 +177,15 @@ export class InventoryDetailPage implements OnInit {
     }
     switch (entry.status) {
       case 'PRESENT':
-        return { label: 'Da', tone: 'good' };
+        return entry.condition === 'DEFECT'
+          ? { label: 'Da, defekt', tone: 'bad' }
+          : { label: entry.condition === 'OK' ? 'Da, in Ordnung' : 'Da', tone: 'good' };
       case 'MISSING':
         return { label: 'Fehlt', tone: 'bad' };
+      case 'PASSED':
+        return { label: 'In Ordnung', tone: 'good' };
+      case 'FAILED':
+        return { label: 'Mangel', tone: 'bad' };
       default:
         return entry.inspectionStatus === 'OPEN' ? { label: 'Noch nicht geprüft', tone: 'neutral' } : { label: 'Nicht geprüft', tone: 'bad' };
     }

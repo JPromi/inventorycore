@@ -54,6 +54,9 @@
                     </div>
                     <div class="chip-list">
                         <span class="badge">{{ type.mode === 'CHECK' ? 'Einzelprüfung' : 'Inventur' }}</span>
+                        @if (type.checkFunction) {
+                            <span class="badge">mit Funktionsprüfung</span>
+                        }
                         @if (type.intervalValue) {
                             <span class="badge accent">{{ intervalText(type.intervalValue, type.intervalUnit) }}</span>
                         }
