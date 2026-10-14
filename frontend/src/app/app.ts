@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { AuthService } from './core/service/auth.service';
@@ -10,7 +10,7 @@ import { AuthService } from './core/service/auth.service';
   styleUrl: './app.scss'
 })
 export class App implements OnInit {
-  protected readonly title = signal('inventorycore');
+  protected readonly title = 'inventorycore';
 
   constructor(private readonly authService: AuthService) {}
 
