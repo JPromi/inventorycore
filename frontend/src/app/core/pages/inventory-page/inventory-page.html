@@ -1,0 +1,71 @@
+<section class="inventory-page">
+    <header class="page-header">
+        <div>
+            <p>{{ visibleItems.length }} Einträge</p>
+            <h1>
+                <ng-container *ngComponentOutlet="config.icon; inputs: iconInputs"></ng-container>
+                <span>{{ config.title }}</span>
+            </h1>
+        </div>
+
+        <div class="toolbar">
+            <button type="button" class="icon-button" title="Aktualisieren" (click)="load()">
+                <svg lucideRefreshCw size="18"></svg>
+            </button>
+            <button type="button" class="icon-button" title="Listenansicht" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
+                <svg lucideList size="18"></svg>
+            </button>
+            <button type="button" class="icon-button" title="Kachelansicht" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'">
+                <svg lucideGrid2X2 size="18"></svg>
+            </button>
+            @if (config.createRoute && permissions.can(config.resourceType, 'create')) {
+                <button type="button" class="primary-action" (click)="startCreate()">
+                    <svg lucidePlus size="18"></svg>
+                    <span>Neu</span>
+                </button>
+            }
+        </div>
+    </header>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Daten...</p>
+    } @else if (!pageItems.length) {
+        <p class="empty">Keine Einträge sichtbar.</p>
+    } @else {
+        <div [class.grid]="viewMode === 'grid'" [class.list]="viewMode === 'list'" class="items">
+            @for (item of pageItems; track item.uuid) {
+                <article class="item">
+                    <div class="item-main">
+                        <strong>{{ item.name }}</strong>
+                        <span>{{ itemMeta(item) }}</span>
+                        @if (item.description) {
+                            <p>{{ item.description }}</p>
+                        }
+                    </div>
+                    <div class="item-actions">
+                        @if (config.editRoutePrefix && permissions.can(config.resourceType, 'edit', item.uuid)) {
+                            <button type="button" class="icon-button" title="Bearbeiten" (click)="startEdit(item)">
+                                <svg lucidePencil size="17"></svg>
+                            </button>
+                        }
+                        @if (permissions.can(config.resourceType, 'delete', item.uuid)) {
+                            <button type="button" class="icon-button danger" title="Löschen" (click)="remove(item)">
+                                <svg lucideTrash2 size="17"></svg>
+                            </button>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+
+    <footer class="pagination">
+        <button type="button" (click)="setPage(page - 1)" [disabled]="page === 1">Zurück</button>
+        <span>{{ page }} / {{ pageCount }}</span>
+        <button type="button" (click)="setPage(page + 1)" [disabled]="page === pageCount">Weiter</button>
+    </footer>
+</section>

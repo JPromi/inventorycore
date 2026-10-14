@@ -1,5 +1,7 @@
 package com.jpromi.inventorycore.controller;
 
+import java.util.stream.Collectors;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -59,12 +61,27 @@ public class AuthController {
                 .findFirst()
                 .map(authority -> authority.replace("ROLE_", ""))
                 .orElse("USER");
+            User user = resolveUser(authentication);
 
             return ResponseEntity.ok(AuthResponse.builder()
                 .authenticated(true)
                 .username(authentication.getName())
-                .displayName(resolveUser(authentication).getDisplayName())
+                .displayName(user.getDisplayName())
                 .role(role)
+                .permissions(user.getGroups().stream()
+                    .flatMap(group -> group.getPermissions().stream())
+                    .map(permission -> new com.jpromi.inventorycore.dto.GroupPermissionResponse(
+                        permission.getUuid(),
+                        permission.getResourceType(),
+                        permission.getResourceUuid(),
+                        permission.isCanView(),
+                        permission.isCanEdit(),
+                        permission.isCanInspect(),
+                        permission.isCanDelete(),
+                        permission.isAdmin(),
+                        permission.isCanCreate()
+                    ))
+                    .collect(Collectors.toSet()))
                 .build());
         } catch (BadCredentialsException exception) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthResponse.builder()
@@ -95,6 +112,20 @@ public class AuthController {
             .username(user.getUsername())
             .displayName(user.getDisplayName())
             .role(user.getRole())
+            .permissions(user.getGroups().stream()
+                .flatMap(group -> group.getPermissions().stream())
+                .map(permission -> new com.jpromi.inventorycore.dto.GroupPermissionResponse(
+                    permission.getUuid(),
+                    permission.getResourceType(),
+                    permission.getResourceUuid(),
+                    permission.isCanView(),
+                    permission.isCanEdit(),
+                    permission.isCanInspect(),
+                    permission.isCanDelete(),
+                    permission.isAdmin(),
+                    permission.isCanCreate()
+                ))
+                .collect(Collectors.toSet()))
             .build();
     }
 
@@ -127,3 +158,4 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 }
+

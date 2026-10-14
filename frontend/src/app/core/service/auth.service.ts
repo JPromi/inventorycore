@@ -79,6 +79,7 @@ export class AuthService {
       authProvider: 'LOCAL',
       displayName: payload.displayName ?? 'unknown',
       role: payload.role ?? 'USER',
+      permissions: payload.permissions ?? [],
       isLoggedIn: true,
     };
   }

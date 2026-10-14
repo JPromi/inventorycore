@@ -1,0 +1,186 @@
+<section class="form-page">
+    <div class="form-shell">
+        <header class="page-header">
+            <div>
+                <p>{{ config.title }}</p>
+                <h1>
+                    <ng-container *ngComponentOutlet="config.icon; inputs: iconInputs"></ng-container>
+                    <span>{{ title }}</span>
+                </h1>
+            </div>
+
+            <a class="secondary-action" [routerLink]="config.listRoute">
+                <svg lucideArrowLeft size="18"></svg>
+                <span>Zurück</span>
+            </a>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="empty">Lade Daten...</p>
+        } @else {
+            <form class="editor" (ngSubmit)="save()">
+                <section class="form-section">
+                    <h2>Allgemein</h2>
+                    @if (config.autoInvId && !uuid) {
+                        <p class="hint">Die Inventar-ID wird beim Speichern automatisch generiert.</p>
+                    }
+                    @if (config.selectAssetType) {
+                        <label class="type-select">
+                            <span>Typ</span>
+                            <select [ngModel]="form.assetTypeUuid" name="assetTypeUuid" (ngModelChange)="selectAssetType($event)">
+                                <option [ngValue]="null">Typ auswählen</option>
+                                @for (assetType of assetTypes; track assetType.uuid) {
+                                    <option [ngValue]="assetType.uuid">{{ assetType.name }}</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    <div class="field-grid">
+                        @for (field of generalFields; track field.key) {
+                            <label [class.wide]="field.type === 'textarea'">
+                                <span>{{ field.label }}</span>
+                                @if (field.type === 'textarea') {
+                                    <textarea [(ngModel)]="form[field.key]" [name]="field.key" [required]="field.required ?? false"></textarea>
+                                } @else {
+                                    <input [type]="field.type" [(ngModel)]="form[field.key]" [name]="field.key" [required]="field.required ?? false" />
+                                }
+                            </label>
+                        }
+                    </div>
+                </section>
+
+                @if (config.customFields) {
+                    <section class="form-section">
+                        <div class="section-title">
+                            <h2>Custom Fields</h2>
+                            <button type="button" class="secondary-action compact" (click)="addCustomField()">
+                                <svg lucidePlus size="16"></svg>
+                                <span>Feld</span>
+                            </button>
+                        </div>
+
+                        @if (config.resourceType === 'CATEGORY') {
+                            <div class="repeat-list">
+                                @for (field of form.fieldDefinitions ?? []; track $index) {
+                                    <div class="repeat-row">
+                                        <label>
+                                            <span>Name</span>
+                                            <input type="text" [(ngModel)]="field.name" name="fieldName{{ $index }}" />
+                                        </label>
+                                        <label>
+                                            <span>Typ</span>
+                                            <select [(ngModel)]="field.fieldType" name="fieldType{{ $index }}">
+                                                <option value="TEXT">Text</option>
+                                                <option value="NUMBER">Nummer</option>
+                                                <option value="BOOLEAN">Ja/Nein</option>
+                                                <option value="DATE">Datum</option>
+                                                <option value="URL">URL</option>
+                                                <option value="EMAIL">E-Mail</option>
+                                                <option value="SELECT">Auswahl</option>
+                                            </select>
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" [(ngModel)]="field.required" name="fieldRequired{{ $index }}" />
+                                            <span>Pflichtfeld</span>
+                                        </label>
+                                        <button type="button" class="icon-button danger" (click)="removeCustomField($index)">
+                                            <svg lucideTrash2 size="16"></svg>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        } @else {
+                            <div class="repeat-list">
+                                @for (field of form.fieldValues ?? []; track $index) {
+                                    <div class="repeat-row" [class.locked]="!field.customAssetField">
+                                        <label>
+                                            <span>Name</span>
+                                            <input type="text" [(ngModel)]="field.name" name="valueName{{ $index }}" [readonly]="!field.customAssetField" />
+                                        </label>
+                                        <label>
+                                            <span>Wert</span>
+                                            <input type="text" [(ngModel)]="field.value" name="value{{ $index }}" />
+                                        </label>
+                                        @if (field.customAssetField) {
+                                            <button type="button" class="icon-button danger" (click)="removeCustomField($index)">
+                                                <svg lucideTrash2 size="16"></svg>
+                                            </button>
+                                        } @else {
+                                            <span class="locked-note">Typ-Feld</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </section>
+                }
+
+                <section class="form-section">
+                    <h2>Prüfung</h2>
+                    <div class="field-grid">
+                        @for (field of inspectionFields; track field.key) {
+                            <label>
+                                <span>{{ field.label }}</span>
+                                <input type="number" [(ngModel)]="form[field.key]" [name]="field.key" />
+                            </label>
+                        }
+                    </div>
+                </section>
+
+                @if (config.images) {
+                    <section class="form-section">
+                        <div class="section-title">
+                            <h2>Bilder</h2>
+                            <div class="inline-actions">
+                                <button type="button" class="secondary-action compact" (click)="addImage('THUMBNAIL')">
+                                    <svg lucideImagePlus size="16"></svg>
+                                    <span>Thumbnail</span>
+                                </button>
+                                <button type="button" class="secondary-action compact" (click)="addImage()">
+                                    <svg lucideImagePlus size="16"></svg>
+                                    <span>Galerie</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="repeat-list">
+                            @for (image of form.images ?? []; track $index) {
+                                <div class="repeat-row image-row">
+                                    <label>
+                                        <span>Art</span>
+                                        <select [(ngModel)]="image.kind" name="imageKind{{ $index }}">
+                                            <option value="THUMBNAIL">Thumbnail</option>
+                                            <option value="GALLERY">Galerie</option>
+                                        </select>
+                                    </label>
+                                    <label class="wide">
+                                        <span>Bild-URL</span>
+                                        <input type="url" [(ngModel)]="image.url" name="imageUrl{{ $index }}" />
+                                    </label>
+                                    <label>
+                                        <span>Dateiname</span>
+                                        <input type="text" [(ngModel)]="image.fileName" name="imageFileName{{ $index }}" />
+                                    </label>
+                                    <button type="button" class="icon-button danger" (click)="removeImage($index)">
+                                        <svg lucideTrash2 size="16"></svg>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
+
+                <div class="editor-actions">
+                    <button type="submit" class="primary-action" [disabled]="!canSave">
+                        <svg lucideSave size="18"></svg>
+                        <span>Speichern</span>
+                    </button>
+                </div>
+            </form>
+        }
+    </div>
+</section>

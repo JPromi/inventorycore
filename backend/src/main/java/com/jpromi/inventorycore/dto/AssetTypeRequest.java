@@ -6,5 +6,6 @@ public record AssetTypeRequest(
     String name,
     String description,
     Integer inspectionIntervalDays,
-    List<AssetFieldDefinitionRequest> fieldDefinitions
+    List<AssetFieldDefinitionRequest> fieldDefinitions,
+    List<AssetImageRequest> images
 ) {}

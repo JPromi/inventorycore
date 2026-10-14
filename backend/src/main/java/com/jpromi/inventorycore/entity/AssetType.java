@@ -64,6 +64,10 @@ public class AssetType {
     @Builder.Default
     private List<Asset> assets = new ArrayList<>();
 
+    @OneToMany(mappedBy = "assetType", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<AssetTypeImage> images = new ArrayList<>();
+
     @PrePersist
     void ensureUuid() {
         if (uuid == null) {

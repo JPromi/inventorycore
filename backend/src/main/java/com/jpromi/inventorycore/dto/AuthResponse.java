@@ -1,5 +1,7 @@
 package com.jpromi.inventorycore.dto;
 
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +23,9 @@ public class AuthResponse {
     private String displayName;
 
     private String role;
+
+    @Builder.Default
+    private Set<GroupPermissionResponse> permissions = Set.of();
 
     private String message;
 }

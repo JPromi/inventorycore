@@ -1,0 +1,161 @@
+package com.jpromi.inventorycore.service;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.jpromi.inventorycore.dto.AssetFieldDefinitionResponse;
+import com.jpromi.inventorycore.dto.AssetFieldValueResponse;
+import com.jpromi.inventorycore.dto.AssetImageResponse;
+import com.jpromi.inventorycore.dto.AssetResponse;
+import com.jpromi.inventorycore.dto.AssetTypeResponse;
+import com.jpromi.inventorycore.dto.GroupPermissionResponse;
+import com.jpromi.inventorycore.dto.GroupResponse;
+import com.jpromi.inventorycore.dto.LocationImageResponse;
+import com.jpromi.inventorycore.dto.LocationResponse;
+import com.jpromi.inventorycore.dto.TagResponse;
+import com.jpromi.inventorycore.dto.UserResponse;
+import com.jpromi.inventorycore.entity.Asset;
+import com.jpromi.inventorycore.entity.AssetFieldDefinition;
+import com.jpromi.inventorycore.entity.AssetFieldValue;
+import com.jpromi.inventorycore.entity.AssetImage;
+import com.jpromi.inventorycore.entity.AssetType;
+import com.jpromi.inventorycore.entity.AssetTypeImage;
+import com.jpromi.inventorycore.entity.Group;
+import com.jpromi.inventorycore.entity.GroupPermission;
+import com.jpromi.inventorycore.entity.Location;
+import com.jpromi.inventorycore.entity.LocationImage;
+import com.jpromi.inventorycore.entity.Tag;
+import com.jpromi.inventorycore.entity.User;
+
+@Service
+public class ApiMapper {
+
+    public UserResponse toResponse(User user) {
+        return new UserResponse(
+            user.getUuid(),
+            user.getUsername(),
+            user.getDisplayName(),
+            user.getEmail(),
+            user.getRole(),
+            user.isEnabled(),
+            user.getGroups().stream().map(Group::getUuid).collect(Collectors.toSet())
+        );
+    }
+
+    public GroupResponse toResponse(Group group) {
+        return new GroupResponse(
+            group.getUuid(),
+            group.getName(),
+            group.getSourceProvider(),
+            group.getPermissions().stream().map(this::toResponse).collect(Collectors.toSet())
+        );
+    }
+
+    public GroupPermissionResponse toResponse(GroupPermission permission) {
+        return new GroupPermissionResponse(
+            permission.getUuid(),
+            permission.getResourceType(),
+            permission.getResourceUuid(),
+            permission.isCanView(),
+            permission.isCanEdit(),
+            permission.isCanInspect(),
+            permission.isCanDelete(),
+            permission.isAdmin(),
+            permission.isCanCreate()
+        );
+    }
+
+    public TagResponse toResponse(Tag tag) {
+        return new TagResponse(tag.getUuid(), tag.getName(), tag.getColor());
+    }
+
+    public AssetTypeResponse toResponse(AssetType type) {
+        return new AssetTypeResponse(
+            type.getUuid(),
+            type.getName(),
+            type.getDescription(),
+            type.getInspectionIntervalDays(),
+            type.getCreatedAt(),
+            type.getDeletedAt(),
+            type.isDeleted(),
+            type.getFieldDefinitions().stream().map(this::toResponse).toList(),
+            type.getImages().stream().map(this::toResponse).toList()
+        );
+    }
+
+    public AssetFieldDefinitionResponse toResponse(AssetFieldDefinition definition) {
+        return new AssetFieldDefinitionResponse(
+            definition.getUuid(),
+            definition.getName(),
+            definition.getFieldKey(),
+            definition.getFieldType(),
+            definition.getOptionsJson(),
+            definition.isRequired(),
+            definition.isTypeField(),
+            definition.getSortOrder()
+        );
+    }
+
+    public LocationResponse toResponse(Location location) {
+        return new LocationResponse(
+            location.getUuid(),
+            location.getName(),
+            location.getDescription(),
+            location.getAddress(),
+            location.getParentLocation() == null ? null : location.getParentLocation().getUuid(),
+            location.getChildLocations().stream().map(Location::getUuid).toList(),
+            location.getAssets().stream().map(Asset::getUuid).toList(),
+            location.getImages().stream().map(this::toResponse).toList(),
+            location.getCreatedAt(),
+            location.getDeletedAt(),
+            location.isDeleted()
+        );
+    }
+
+    public LocationImageResponse toResponse(LocationImage image) {
+        return new LocationImageResponse(image.getUuid(), image.getKind(), image.getUrl(), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+    }
+
+    public AssetResponse toResponse(Asset asset) {
+        return new AssetResponse(
+            asset.getUuid(),
+            asset.getInvId(),
+            asset.getName(),
+            asset.getDescription(),
+            asset.getSerialNumber(),
+            asset.getInventoryNumber(),
+            asset.getInspectionIntervalDays(),
+            asset.getAssetType() == null ? null : asset.getAssetType().getUuid(),
+            asset.getLocation() == null ? null : asset.getLocation().getUuid(),
+            asset.getTags().stream().map(this::toResponse).collect(Collectors.toSet()),
+            asset.getFieldValues().stream().map(this::toResponse).toList(),
+            asset.getImages().stream().map(this::toResponse).toList(),
+            asset.getCreatedAt(),
+            asset.getDeletedAt(),
+            asset.isDeleted()
+        );
+    }
+
+    public AssetFieldValueResponse toResponse(AssetFieldValue value) {
+        return new AssetFieldValueResponse(
+            value.getUuid(),
+            value.getFieldDefinition() == null ? null : value.getFieldDefinition().getUuid(),
+            value.getFieldKey(),
+            value.getName(),
+            value.getValue(),
+            value.isCustomAssetField()
+        );
+    }
+
+    public AssetImageResponse toResponse(AssetImage image) {
+        return new AssetImageResponse(image.getUuid(), image.getKind(), image.getUrl(), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+    }
+
+    public AssetImageResponse toResponse(AssetTypeImage image) {
+        return new AssetImageResponse(image.getUuid(), image.getKind(), image.getUrl(), image.getFileName(), image.getContentType(), image.getSortOrder(), image.getUploadedAt());
+    }
+}

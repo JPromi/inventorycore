@@ -2,6 +2,7 @@ package com.jpromi.inventorycore.entity;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import com.jpromi.inventorycore.enums.Provider;
 
@@ -15,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,10 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    @Builder.Default
+    private UUID uuid = UUID.randomUUID();
 
     @Column(nullable = false)
     private String displayName;
@@ -77,5 +83,12 @@ public class User {
     )
     @Builder.Default
     private Set<Group> groups = new HashSet<>();
+
+    @PrePersist
+    void ensureUuid() {
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
+        }
+    }
 }
 
