@@ -3,10 +3,14 @@ import { RouterOutlet } from '@angular/router';
 
 import { UserEntity } from '../../entities/user.entity';
 import { AuthStateService } from '../../service/auth-state.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-main-route',
-  imports: [RouterOutlet],
+  imports: [
+    RouterOutlet,
+    CommonModule
+  ],
   templateUrl: './main-route.html',
   styleUrl: './main-route.scss',
 })
