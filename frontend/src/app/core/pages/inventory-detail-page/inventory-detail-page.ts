@@ -21,7 +21,14 @@ import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-di
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
 import { AssetInspection, InspectionService, formatCheckValue } from '../../service/inspection.service';
-import { InventoryApiService, InventoryImage, InventoryItem, TagItem } from '../../service/inventory-api.service';
+import {
+  AssetFieldType,
+  CustomFieldDefinition,
+  InventoryApiService,
+  InventoryImage,
+  InventoryItem,
+  TagItem,
+} from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
 
@@ -205,6 +212,35 @@ export class InventoryDetailPage implements OnInit {
     return assets
       .map((asset) => ({ uuid: asset.uuid, name: asset.name, hint: this.assetHint(asset) }))
       .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Custom fields of an asset: the fields defined by its type (in their order, also when empty),
+   * then the asset's own extra fields.
+   */
+  protected get customFields(): { name: string; value: string | null; fieldType: AssetFieldType | null }[] {
+    if (this.config.endpoint !== 'assets' || !this.item) {
+      return [];
+    }
+    const values = [...(this.item.fieldValues ?? [])];
+    const take = (definition: CustomFieldDefinition) => {
+      const index = values.findIndex((value) =>
+        definition.fieldKey && value.fieldKey ? value.fieldKey === definition.fieldKey : value.name === definition.name,
+      );
+      return index >= 0 ? values.splice(index, 1)[0] : null;
+    };
+    const definitions = [...(this.assetType?.fieldDefinitions ?? [])].sort((a, b) => a.sortOrder - b.sortOrder);
+    const fromType = definitions.map((definition) => ({
+      name: definition.name,
+      value: take(definition)?.value || null,
+      fieldType: definition.fieldType,
+    }));
+    const own = values.map((value) => ({ name: value.name, value: value.value || null, fieldType: null }));
+    return [...fromType, ...own];
+  }
+
+  protected formatCustomValue(value: string | null, fieldType: AssetFieldType | null): string {
+    return formatCheckValue(value, fieldType);
   }
 
   protected fieldValue(field: DetailField): string | null {

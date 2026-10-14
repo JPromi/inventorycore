@@ -72,6 +72,18 @@
                                     <dd [class.missing]="!fieldValue(field)">{{ fieldValue(field) ?? '—' }}</dd>
                                 </div>
                             }
+                            @for (field of customFields; track $index) {
+                                <div>
+                                    <dt>{{ field.name }}</dt>
+                                    <dd [class.missing]="!field.value">
+                                        @if (field.fieldType === 'URL' && field.value) {
+                                            <a class="inline-link" [href]="field.value" target="_blank" rel="noopener">{{ field.value }}</a>
+                                        } @else {
+                                            {{ formatCustomValue(field.value, field.fieldType) }}
+                                        }
+                                    </dd>
+                                </div>
+                            }
                             @if (config.endpoint === 'assets') {
                                 <div>
                                     <dt>Typ</dt>
@@ -123,20 +135,6 @@
                             } @else {
                                 <p class="hint">Keine Tags vergeben.</p>
                             }
-                        </section>
-                    }
-
-                    @if (config.endpoint === 'assets' && item.fieldValues?.length) {
-                        <section class="card">
-                            <h2>Felder</h2>
-                            <dl class="details">
-                                @for (field of item.fieldValues; track $index) {
-                                    <div>
-                                        <dt>{{ field.name }}</dt>
-                                        <dd [class.missing]="!field.value">{{ field.value || '—' }}</dd>
-                                    </div>
-                                }
-                            </dl>
                         </section>
                     }
 
