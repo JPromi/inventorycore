@@ -18,10 +18,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jpromi.inventorycore.dto.AssetInspectionResponse;
+import com.jpromi.inventorycore.dto.InspectionAddItemRequest;
 import com.jpromi.inventorycore.dto.InspectionCompleteRequest;
 import com.jpromi.inventorycore.dto.InspectionCreateRequest;
 import com.jpromi.inventorycore.dto.InspectionDetailResponse;
+import com.jpromi.inventorycore.dto.InspectionDueResponse;
 import com.jpromi.inventorycore.dto.InspectionFilter;
+import com.jpromi.inventorycore.dto.InspectionFixedDateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemResponse;
 import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
 import com.jpromi.inventorycore.dto.InspectionScanRequest;
@@ -29,6 +32,7 @@ import com.jpromi.inventorycore.dto.InspectionScanResponse;
 import com.jpromi.inventorycore.dto.InspectionSummaryResponse;
 import com.jpromi.inventorycore.dto.InspectionTypeRequest;
 import com.jpromi.inventorycore.dto.InspectionTypeResponse;
+import com.jpromi.inventorycore.service.InspectionScheduleService;
 import com.jpromi.inventorycore.service.InspectionService;
 import com.jpromi.inventorycore.service.PermissionService;
 
@@ -38,10 +42,12 @@ public class InspectionController {
 
     private final InspectionService service;
     private final PermissionService permissionService;
+    private final InspectionScheduleService scheduleService;
 
-    public InspectionController(InspectionService service, PermissionService permissionService) {
+    public InspectionController(InspectionService service, PermissionService permissionService, InspectionScheduleService scheduleService) {
         this.service = service;
         this.permissionService = permissionService;
+        this.scheduleService = scheduleService;
     }
 
     // ---- types ----
@@ -86,8 +92,8 @@ public class InspectionController {
     }
 
     @PostMapping("/inspections/preview")
-    public Map<String, Integer> preview(@RequestBody InspectionFilter filter, Authentication authentication) {
-        return Map.of("count", service.preview(permissionService.context(authentication), filter));
+    public Map<String, Integer> preview(@RequestBody InspectionCreateRequest request, Authentication authentication) {
+        return Map.of("count", service.preview(permissionService.context(authentication), request));
     }
 
     @PostMapping("/inspections")
@@ -120,6 +126,34 @@ public class InspectionController {
         Authentication authentication
     ) {
         return service.updateItem(permissionService.context(authentication), permissionService.currentUser(authentication), uuid, itemUuid, request);
+    }
+
+    @PostMapping("/inspections/{uuid}/items")
+    public InspectionItemResponse addItem(@PathVariable UUID uuid, @RequestBody InspectionAddItemRequest request, Authentication authentication) {
+        return service.addItem(permissionService.context(authentication), uuid, request.assetUuid());
+    }
+
+    // ---- recurring inspections ----
+
+    @GetMapping("/inspection-schedules")
+    public List<InspectionDueResponse> schedules(Authentication authentication) {
+        return scheduleService.all(permissionService.context(authentication));
+    }
+
+    @GetMapping("/assets/{uuid}/inspection-schedules")
+    public List<InspectionDueResponse> schedulesOfAsset(@PathVariable UUID uuid, Authentication authentication) {
+        return scheduleService.ofAsset(permissionService.context(authentication), uuid);
+    }
+
+    @PutMapping("/assets/{uuid}/inspection-schedules/{typeUuid}")
+    public InspectionDueResponse setFixedDate(
+        @PathVariable UUID uuid,
+        @PathVariable UUID typeUuid,
+        @RequestBody InspectionFixedDateRequest request,
+        Authentication authentication
+    ) {
+        return scheduleService.setFixedDate(
+            permissionService.context(authentication), permissionService.currentUser(authentication), uuid, typeUuid, request.fixedDueDate());
     }
 
     @DeleteMapping("/inspections/{uuid}/items/{itemUuid}")

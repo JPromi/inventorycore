@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.jpromi.inventorycore.enums.InspectionMode;
 import com.jpromi.inventorycore.enums.InspectionStatus;
 
 import jakarta.persistence.CascadeType;
@@ -70,6 +71,10 @@ public class Inspection {
     @Builder.Default
     private InspectionStatus status = InspectionStatus.OPEN;
 
+    /** Copied from the type when started; null for inspections from before modes existed. */
+    @Enumerated(EnumType.STRING)
+    private InspectionMode mode;
+
     // filters used to select the expected assets (uuid lists comma separated) and as readable text
     private UUID filterLocationUuid;
     private boolean filterIncludeSubLocations;
@@ -105,6 +110,10 @@ public class Inspection {
         if (uuid == null) {
             uuid = UUID.randomUUID();
         }
+    }
+
+    public InspectionMode getMode() {
+        return mode == null ? InspectionMode.INVENTORY : mode;
     }
 
     public boolean isCompleted() {

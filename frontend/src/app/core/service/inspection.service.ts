@@ -6,9 +6,73 @@ import { environment } from '../../../environments/environment';
 import { AssetFieldType } from './inventory-api.service';
 
 export type InspectionStatus = 'OPEN' | 'COMPLETED';
-export type InspectionItemStatus = 'PENDING' | 'PRESENT' | 'MISSING';
+/** Inventory: PRESENT/MISSING; single checks: PASSED (in order) / FAILED (defect). */
+export type InspectionItemStatus = 'PENDING' | 'PRESENT' | 'MISSING' | 'PASSED' | 'FAILED';
 export type InspectionCheckMethod = 'SCAN' | 'MANUAL';
-export type InspectionScanOutcome = 'CHECKED' | 'ALREADY_CHECKED' | 'UNEXPECTED' | 'UNKNOWN' | 'IGNORED';
+export type InspectionScanOutcome =
+  | 'CHECKED'
+  | 'ALREADY_CHECKED'
+  | 'UNEXPECTED'
+  | 'UNKNOWN'
+  | 'IGNORED'
+  | 'OPENED'
+  | 'ADDED'
+  | 'ADDED_OTHER_TYPE';
+/** INVENTORY: fixed list from filters, present/missing. CHECK: devices are checked one by one. */
+export type InspectionMode = 'INVENTORY' | 'CHECK';
+export type IntervalUnit = 'DAYS' | 'WEEKS' | 'MONTHS' | 'YEARS';
+export type DueState = 'OVERDUE' | 'DUE' | 'OK';
+
+export const INTERVAL_UNITS: { value: IntervalUnit; label: string; singular: string }[] = [
+  { value: 'DAYS', label: 'Tage', singular: 'Tag' },
+  { value: 'WEEKS', label: 'Wochen', singular: 'Woche' },
+  { value: 'MONTHS', label: 'Monate', singular: 'Monat' },
+  { value: 'YEARS', label: 'Jahre', singular: 'Jahr' },
+];
+
+/** "alle 6 Wochen", "jährlich" */
+export function intervalText(value: number | null | undefined, unit: IntervalUnit | null | undefined): string {
+  if (!value || !unit) {
+    return '';
+  }
+  if (value === 1) {
+    return { DAYS: 'täglich', WEEKS: 'wöchentlich', MONTHS: 'monatlich', YEARS: 'jährlich' }[unit];
+  }
+  return `alle ${value} ${INTERVAL_UNITS.find((entry) => entry.value === unit)?.label ?? ''}`;
+}
+
+/** "überfällig seit 3 Tagen", "heute fällig", "in 12 Tagen" */
+export function dueText(days: number): string {
+  if (days < 0) {
+    return `überfällig seit ${-days} ${-days === 1 ? 'Tag' : 'Tagen'}`;
+  }
+  if (days === 0) {
+    return 'heute fällig';
+  }
+  return days === 1 ? 'morgen fällig' : `fällig in ${days} Tagen`;
+}
+
+/** Due date of one recurring inspection for one asset. */
+export interface InspectionDue {
+  assetUuid: string;
+  assetName: string;
+  invId: string | null;
+  assetTypeName: string | null;
+  locationName: string | null;
+  inspectionTypeUuid: string;
+  inspectionTypeName: string;
+  inspectionTypeColor: string | null;
+  intervalValue: number | null;
+  intervalUnit: IntervalUnit | null;
+  lastCheckedAt: string | null;
+  lastCheckedByName: string | null;
+  lastResult: InspectionItemStatus | null;
+  nextDueDate: string;
+  /** set when a fixed date replaces the interval */
+  fixedDueDate: string | null;
+  state: DueState;
+  daysUntilDue: number;
+}
 
 export const CHECK_FIELD_TYPES: { value: AssetFieldType; label: string }[] = [
   { value: 'BOOLEAN', label: 'Ja / Nein' },
@@ -39,6 +103,12 @@ export interface InspectionType {
   name: string;
   description?: string | null;
   color?: string | null;
+  mode: InspectionMode;
+  intervalValue: number | null;
+  intervalUnit: IntervalUnit | null;
+  /** empty = all assets */
+  assetTypeUuids: string[];
+  assetTypeNames: string[];
   fields: InspectionField[];
   inspectionCount: number;
 }
@@ -47,6 +117,10 @@ export interface InspectionTypeRequest {
   name: string;
   description?: string | null;
   color?: string | null;
+  mode: InspectionMode;
+  intervalValue: number | null;
+  intervalUnit: IntervalUnit | null;
+  assetTypeUuids: string[];
   fields: InspectionField[];
 }
 
@@ -62,6 +136,8 @@ export interface InspectionCounts {
   expected: number;
   present: number;
   missing: number;
+  passed: number;
+  failed: number;
   pending: number;
   unexpected: number;
 }
@@ -72,6 +148,7 @@ export interface InspectionSummary {
   inspectionTypeUuid: string | null;
   typeName: string;
   status: InspectionStatus;
+  mode: InspectionMode;
   filterSummary: string | null;
   createdAt: string;
   createdByName: string | null;
@@ -211,14 +288,38 @@ export class InspectionService {
     return this.http.get<InspectionDetail>(`${this.apiUrl}/inspections/${uuid}`, this.options);
   }
 
-  preview(filter: InspectionFilter): Observable<number> {
+  /** Number of assets an inspection would start with. */
+  preview(inspectionTypeUuid: string | null, filter: InspectionFilter, onlyDue = false, dueWithinDays = 7): Observable<number> {
     return this.http
-      .post<{ count: number }>(`${this.apiUrl}/inspections/preview`, filter, this.options)
+      .post<{ count: number }>(`${this.apiUrl}/inspections/preview`, { inspectionTypeUuid, filter, onlyDue, dueWithinDays }, this.options)
       .pipe(map((response) => response.count));
   }
 
-  create(inspectionTypeUuid: string, title: string, filter: InspectionFilter): Observable<InspectionDetail> {
-    return this.http.post<InspectionDetail>(`${this.apiUrl}/inspections`, { inspectionTypeUuid, title, filter }, this.options);
+  create(inspectionTypeUuid: string, title: string, filter: InspectionFilter, onlyDue = false, dueWithinDays = 7): Observable<InspectionDetail> {
+    return this.http.post<InspectionDetail>(
+      `${this.apiUrl}/inspections`,
+      { inspectionTypeUuid, title, filter, onlyDue, dueWithinDays },
+      this.options,
+    );
+  }
+
+  /** Single checks: add a device without scanning it. */
+  addItem(uuid: string, assetUuid: string): Observable<InspectionItem> {
+    return this.http.post<InspectionItem>(`${this.apiUrl}/inspections/${uuid}/items`, { assetUuid }, this.options);
+  }
+
+  /** Recurring inspections of all visible assets, most urgent first. */
+  schedules(): Observable<InspectionDue[]> {
+    return this.http.get<InspectionDue[]>(`${this.apiUrl}/inspection-schedules`, this.options);
+  }
+
+  schedulesOfAsset(assetUuid: string): Observable<InspectionDue[]> {
+    return this.http.get<InspectionDue[]>(`${this.apiUrl}/assets/${assetUuid}/inspection-schedules`, this.options);
+  }
+
+  /** `null` removes the fixed date, so the interval counts again. */
+  setFixedDueDate(assetUuid: string, typeUuid: string, fixedDueDate: string | null): Observable<InspectionDue> {
+    return this.http.put<InspectionDue>(`${this.apiUrl}/assets/${assetUuid}/inspection-schedules/${typeUuid}`, { fixedDueDate }, this.options);
   }
 
   delete(uuid: string): Observable<void> {

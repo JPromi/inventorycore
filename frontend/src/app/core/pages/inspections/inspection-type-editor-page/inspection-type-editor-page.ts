@@ -6,6 +6,9 @@ import {
   LucideArrowLeft,
   LucideArrowUp,
   LucideClipboardList,
+  LucideListChecks,
+  LucidePackageSearch,
+  LucideRepeat,
   LucidePlus,
   LucideSave,
   LucideShapes,
@@ -15,9 +18,19 @@ import {
 import { forkJoin, of } from 'rxjs';
 
 import { ColorPicker } from '../../../components/color-picker/color-picker';
+import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AssetFieldType, InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
-import { CHECK_FIELD_TYPES, InspectionField, InspectionService, fieldOptions } from '../../../service/inspection.service';
+import {
+  CHECK_FIELD_TYPES,
+  INTERVAL_UNITS,
+  InspectionField,
+  InspectionMode,
+  InspectionService,
+  IntervalUnit,
+  fieldOptions,
+  intervalText,
+} from '../../../service/inspection.service';
 
 interface EditableField {
   uuid: string | null;
@@ -40,11 +53,15 @@ interface FieldGroup {
     FormsModule,
     RouterLink,
     ColorPicker,
+    MultiSelect,
     SearchSelect,
     LucideArrowDown,
     LucideArrowLeft,
     LucideArrowUp,
     LucideClipboardList,
+    LucideListChecks,
+    LucidePackageSearch,
+    LucideRepeat,
     LucidePlus,
     LucideSave,
     LucideShapes,
@@ -56,6 +73,13 @@ interface FieldGroup {
 })
 export class InspectionTypeEditorPage implements OnInit {
   protected readonly fieldTypes = CHECK_FIELD_TYPES;
+  protected readonly intervalUnits = INTERVAL_UNITS;
+  protected mode: InspectionMode = 'INVENTORY';
+  protected recurring = false;
+  protected intervalValue = 6;
+  protected intervalUnit: IntervalUnit = 'WEEKS';
+  /** Asset types the inspection is for; empty = all assets. */
+  protected assetTypeUuids: string[] = [];
   protected uuid: string | null = null;
   protected name = '';
   protected description = '';
@@ -87,6 +111,11 @@ export class InspectionTypeEditorPage implements OnInit {
           this.name = type.name;
           this.description = type.description ?? '';
           this.color = type.color ?? null;
+          this.mode = type.mode ?? 'INVENTORY';
+          this.recurring = !!type.intervalValue && !!type.intervalUnit;
+          this.intervalValue = type.intervalValue ?? 6;
+          this.intervalUnit = type.intervalUnit ?? 'WEEKS';
+          this.assetTypeUuids = [...(type.assetTypeUuids ?? [])];
           this.groups = this.toGroups(type.fields);
         }
         this.loading = false;
@@ -100,6 +129,14 @@ export class InspectionTypeEditorPage implements OnInit {
 
   protected get title(): string {
     return this.uuid ? 'Prüfungsart bearbeiten' : 'Neue Prüfungsart';
+  }
+
+  protected get allTypeOptions(): SelectOption[] {
+    return this.assetTypes.map((type) => ({ value: type.uuid, label: type.name }));
+  }
+
+  protected get intervalPreview(): string {
+    return intervalText(this.intervalValue, this.intervalUnit);
   }
 
   /** Asset types that have no group yet. */
@@ -167,7 +204,20 @@ export class InspectionTypeEditorPage implements OnInit {
     }
     fields.forEach((field, index) => (field.sortOrder = index));
 
-    const request = { name: this.name.trim(), description: this.description.trim() || null, color: this.color, fields };
+    if (this.recurring && (!this.intervalValue || this.intervalValue < 1)) {
+      this.error = 'Bitte ein Intervall von mindestens 1 angeben.';
+      return;
+    }
+    const request = {
+      name: this.name.trim(),
+      description: this.description.trim() || null,
+      color: this.color,
+      mode: this.mode,
+      intervalValue: this.recurring ? Math.round(this.intervalValue) : null,
+      intervalUnit: this.recurring ? this.intervalUnit : null,
+      assetTypeUuids: this.assetTypeUuids,
+      fields,
+    };
     this.saving = true;
     this.error = '';
     const save$ = this.uuid ? this.api.updateType(this.uuid, request) : this.api.createType(request);

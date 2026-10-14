@@ -320,3 +320,41 @@
     dd { margin: 0; font-weight: 600; }
     dd.no { color: var(--accent); }
 }
+
+.schedules {
+    h2 { display: flex; align-items: center; gap: .4rem; }
+}
+
+.schedule {
+    padding: .6rem 0;
+    border-top: 1px solid var(--border);
+    font-size: .85rem;
+
+    .schedule-head { display: flex; align-items: center; gap: .4rem; }
+    .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--text-subtle); }
+    small { color: var(--text-subtle); }
+    .due { margin: .25rem 0 .1rem; font-weight: 700; }
+    .last { color: var(--text-muted); font-size: .8rem; }
+    .defect { color: var(--accent); font-weight: 700; }
+    &.overdue .due { color: var(--accent); }
+    &.due .due { color: #b45309; }
+    &.ok .due { color: var(--success); }
+}
+
+.schedule-actions, .fixed-date {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem .8rem;
+    margin-top: .4rem;
+}
+
+.link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+}

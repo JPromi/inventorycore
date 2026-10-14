@@ -20,7 +20,7 @@
             <header class="page-header">
                 <div>
                     <p class="eyebrow">
-                        {{ detail.summary.typeName }}
+                        {{ detail.summary.typeName }} · {{ isCheck ? 'Einzelprüfung' : 'Inventur' }}
                         @if (open) {
                             · <span class="badge accent">Offen</span>
                         } @else {
@@ -58,31 +58,33 @@
             <div class="stats">
                 <div class="stat">
                     <span class="value">{{ count('ALL') }}</span>
-                    <span class="label">Erwartet</span>
+                    <span class="label">{{ isCheck ? 'Geräte' : 'Erwartet' }}</span>
                 </div>
                 <div class="stat present">
-                    <span class="value">{{ count('PRESENT') }}</span>
-                    <span class="label">Da</span>
+                    <span class="value">{{ count(goodStatus) }}</span>
+                    <span class="label">{{ goodLabel }}</span>
                 </div>
                 <div class="stat missing">
-                    <span class="value">{{ open ? count('MISSING') : count('MISSING') + count('PENDING') }}</span>
-                    <span class="label">Fehlen</span>
+                    <span class="value">{{ open || isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</span>
+                    <span class="label">{{ isCheck ? 'Mängel' : 'Fehlen' }}</span>
                 </div>
-                @if (open) {
+                @if (open || isCheck) {
                     <div class="stat">
                         <span class="value">{{ count('PENDING') }}</span>
-                        <span class="label">Noch offen</span>
+                        <span class="label">{{ open ? 'Noch offen' : 'Nicht geprüft' }}</span>
                     </div>
                 }
-                <div class="stat" [class.warning]="unexpectedItems.length">
-                    <span class="value">{{ unexpectedItems.length }}</span>
-                    <span class="label">Fremd / unbekannt</span>
-                </div>
+                @if (!isCheck) {
+                    <div class="stat" [class.warning]="unexpectedItems.length">
+                        <span class="value">{{ unexpectedItems.length }}</span>
+                        <span class="label">Fremd / unbekannt</span>
+                    </div>
+                }
                 @if (open) {
                     <div class="progress-wrap">
                         <div class="progress">
-                            <span class="present" [style.width.%]="count('ALL') ? (count('PRESENT') / count('ALL')) * 100 : 0"></span>
-                            <span class="missing" [style.width.%]="count('ALL') ? (count('MISSING') / count('ALL')) * 100 : 0"></span>
+                            <span class="present" [style.width.%]="count('ALL') ? (count(goodStatus) / count('ALL')) * 100 : 0"></span>
+                            <span class="missing" [style.width.%]="count('ALL') ? (count(badStatus) / count('ALL')) * 100 : 0"></span>
                         </div>
                         <span class="hint">{{ progress }} % geprüft</span>
                     </div>
@@ -100,7 +102,7 @@
                                 type="text"
                                 name="code"
                                 [(ngModel)]="code"
-                                placeholder="Asset scannen oder Code eintippen..."
+                                [placeholder]="isCheck ? 'Gerät scannen, um es zu prüfen...' : 'Asset scannen oder Code eintippen...'"
                                 aria-label="Gescannter Code"
                                 autocomplete="off"
                                 autocapitalize="off"
@@ -124,6 +126,21 @@
                         }
                     </form>
 
+                    @if (isCheck) {
+                        <div class="add-asset">
+                            <span class="hint">oder Gerät suchen:</span>
+                            <app-search-select
+                                [options]="assetOptions"
+                                [(ngModel)]="assetToAdd"
+                                (ngModelChange)="addAsset($event)"
+                                name="assetToAdd"
+                                placeholder="Gerät hinzufügen..."
+                                searchPlaceholder="Name oder Inventar-ID..."
+                                emptyText="Keine weiteren Geräte"
+                            />
+                        </div>
+                    }
+
                     @if (cameraOn) {
                         <div class="camera">
                             <video #video muted playsinline></video>
@@ -138,23 +155,29 @@
                     @if (lastScan; as scan) {
                         <div
                             class="scan-result"
-                            [class.success]="scan.outcome === 'CHECKED'"
-                            [class.warning]="scan.outcome === 'UNEXPECTED' || scan.outcome === 'UNKNOWN'"
+                            [class.success]="scan.outcome === 'CHECKED' || scan.outcome === 'ADDED' || scan.outcome === 'OPENED'"
+                            [class.warning]="scan.outcome === 'UNEXPECTED' || scan.outcome === 'UNKNOWN' || scan.outcome === 'ADDED_OTHER_TYPE'"
                             [class.neutral]="scan.outcome === 'ALREADY_CHECKED' || scan.outcome === 'IGNORED'"
                             role="status"
                         >
                             @switch (scan.outcome) {
-                                @case ('CHECKED') {
-                                    <svg lucideCircleCheck size="20"></svg>
-                                }
                                 @case ('UNEXPECTED') {
                                     <svg lucideTriangleAlert size="20"></svg>
                                 }
                                 @case ('UNKNOWN') {
                                     <svg lucideTriangleAlert size="20"></svg>
                                 }
-                                @default {
+                                @case ('ADDED_OTHER_TYPE') {
+                                    <svg lucideTriangleAlert size="20"></svg>
+                                }
+                                @case ('ALREADY_CHECKED') {
                                     <svg lucideCircleAlert size="20"></svg>
+                                }
+                                @case ('IGNORED') {
+                                    <svg lucideCircleAlert size="20"></svg>
+                                }
+                                @default {
+                                    <svg lucideCircleCheck size="20"></svg>
                                 }
                             }
                             <span>{{ scan.message }}</span>
@@ -202,8 +225,12 @@
                     <div class="segmented-tabs" role="tablist">
                         <button type="button" [class.active]="itemFilter === 'ALL'" (click)="itemFilter = 'ALL'">Alle <span class="count">{{ count('ALL') }}</span></button>
                         <button type="button" [class.active]="itemFilter === 'PENDING'" (click)="itemFilter = 'PENDING'">Offen <span class="count">{{ count('PENDING') }}</span></button>
-                        <button type="button" [class.active]="itemFilter === 'PRESENT'" (click)="itemFilter = 'PRESENT'">Da <span class="count">{{ count('PRESENT') }}</span></button>
-                        <button type="button" [class.active]="itemFilter === 'MISSING'" (click)="itemFilter = 'MISSING'">Fehlt <span class="count">{{ count('MISSING') }}</span></button>
+                        <button type="button" [class.active]="itemFilter === goodStatus" (click)="itemFilter = goodStatus">
+                            {{ goodLabel }} <span class="count">{{ count(goodStatus) }}</span>
+                        </button>
+                        <button type="button" [class.active]="itemFilter === badStatus" (click)="itemFilter = badStatus">
+                            {{ badLabel }} <span class="count">{{ count(badStatus) }}</span>
+                        </button>
                     </div>
                     <div class="search-box">
                         <svg class="search-icon" lucideSearch size="18"></svg>
@@ -217,7 +244,13 @@
                 </div>
 
                 @if (!expectedItems.length) {
-                    <div class="empty-state">Die Filter haben keine Assets ausgewählt. Gefundene Gegenstände erscheinen oben als fremd.</div>
+                    <div class="empty-state">
+                        @if (isCheck) {
+                            Noch keine Geräte. Scanne ein Gerät oder füge es über die Suche hinzu.
+                        } @else {
+                            Die Filter haben keine Assets ausgewählt. Gefundene Gegenstände erscheinen oben als fremd.
+                        }
+                    </div>
                 } @else if (!visibleItems.length) {
                     <div class="empty-state">Keine Einträge in dieser Ansicht.</div>
                 }
@@ -227,42 +260,45 @@
                         <article
                             class="item"
                             [id]="'item-' + item.uuid"
-                            [class.present]="item.status === 'PRESENT'"
-                            [class.missing]="item.status === 'MISSING'"
+                            [class.present]="item.status === goodStatus"
+                            [class.missing]="item.status === badStatus"
                             [class.highlight]="highlighted === item.uuid"
                         >
                             <div class="item-row">
                                 <span class="status-dot" [title]="statusLabel(item)"></span>
                                 <div class="item-main">
                                     <a [routerLink]="['/assets', item.assetUuid]" target="_blank" class="item-name">{{ item.assetName }}</a>
-                                    <span class="meta">
-                                        {{ itemMeta(item) }}
-                                    </span>
+                                    <span class="meta">{{ itemMeta(item) }}</span>
                                     @if (item.checkedAt) {
                                         <span class="checked">
                                             {{ item.method === 'SCAN' ? 'Gescannt' : 'Manuell' }} von {{ item.checkedByName }},
-                                            {{ item.checkedAt | date: 'HH:mm' }}
+                                            {{ item.checkedAt | date: 'dd.MM. HH:mm' }}
                                         </span>
                                     }
                                 </div>
                                 @if (fieldsFor(item).length) {
                                     <button type="button" class="fields-toggle" [class.open]="expanded.has(item.uuid)" (click)="toggleExpanded(item)">
-                                        <span [class.incomplete]="item.status === 'PRESENT' && missingRequired(item)">
+                                        <span [class.incomplete]="item.status !== 'PENDING' && missingRequired(item)">
                                             {{ filledCount(item) }}/{{ fieldsFor(item).length }} Felder
                                         </span>
                                         <svg lucideChevronDown size="15"></svg>
                                     </button>
                                 }
                                 <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
-                                    <button type="button" class="present" [class.active]="item.status === 'PRESENT'" (click)="setStatus(item, 'PRESENT')">
+                                    <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
                                         <svg lucideCheck size="15"></svg>
-                                        <span>Da</span>
+                                        <span>{{ isCheck ? 'i. O.' : 'Da' }}</span>
                                     </button>
-                                    <button type="button" class="missing" [class.active]="item.status === 'MISSING'" (click)="setStatus(item, 'MISSING')">
+                                    <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
                                         <svg lucideX size="15"></svg>
-                                        <span>Fehlt</span>
+                                        <span>{{ badLabel }}</span>
                                     </button>
                                 </div>
+                                @if (isCheck && item.status === 'PENDING') {
+                                    <button type="button" class="icon-button" title="Aus der Prüfung entfernen" (click)="removeUnexpected(item)">
+                                        <svg lucideTrash2 size="14"></svg>
+                                    </button>
+                                }
                             </div>
 
                             @if (expanded.has(item.uuid)) {
@@ -341,9 +377,9 @@
                         <div class="card dialog" role="dialog" aria-modal="true" aria-labelledby="complete-title" (click)="$event.stopPropagation()">
                             <h2 id="complete-title">Prüfung abschließen</h2>
                             <ul class="complete-summary">
-                                <li><strong>{{ count('PRESENT') }}</strong> von {{ count('ALL') }} Assets sind da</li>
-                                @if (count('MISSING')) {
-                                    <li class="bad"><strong>{{ count('MISSING') }}</strong> fehlen</li>
+                                <li><strong>{{ count(goodStatus) }}</strong> von {{ count('ALL') }} {{ isCheck ? 'Geräten in Ordnung' : 'Assets sind da' }}</li>
+                                @if (count(badStatus)) {
+                                    <li class="bad"><strong>{{ count(badStatus) }}</strong> {{ isCheck ? 'mit Mangel' : 'fehlen' }}</li>
                                 }
                                 @if (count('PENDING')) {
                                     <li class="bad"><strong>{{ count('PENDING') }}</strong> wurden nicht geprüft und erscheinen im Bericht als „nicht geprüft“</li>
@@ -377,7 +413,7 @@
                 <!-- ================= PROTOCOL ================= -->
                 <section class="card protocol-meta">
                     <dl>
-                        <div><dt>Prüfungsart</dt><dd>{{ detail.summary.typeName }}</dd></div>
+                        <div><dt>Prüfungsart</dt><dd>{{ detail.summary.typeName }} ({{ isCheck ? 'Einzelprüfung' : 'Inventur' }})</dd></div>
                         <div><dt>Umfang</dt><dd>{{ detail.summary.filterSummary }}</dd></div>
                         <div>
                             <dt>Gestartet</dt>
@@ -396,130 +432,157 @@
                     }
                 </section>
 
-                <section class="card report-section" [class.empty-section]="!reportMissing.length">
-                    <h2 class="bad">Fehlende Assets ({{ reportMissing.length }})</h2>
-                    @if (reportMissing.length) {
-                        <div class="table-wrap">
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Asset</th>
-                                        <th>Inventar-ID</th>
-                                        <th>Typ</th>
-                                        <th>Standort</th>
-                                        <th>Status</th>
-                                        <th>Notiz</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (item of reportMissing; track item.uuid) {
-                                        <tr>
-                                            <td>{{ item.assetName }}</td>
-                                            <td class="mono">{{ item.invId || '—' }}</td>
-                                            <td>{{ item.assetTypeName || '—' }}</td>
-                                            <td>{{ item.locationName || '—' }}</td>
-                                            <td>
-                                                {{ statusLabel(item) }}
-                                                @if (item.checkedByName) {
-                                                    <span class="by">({{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }})</span>
-                                                }
-                                            </td>
-                                            <td>{{ item.note || '' }}</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    } @else {
-                        <p class="hint">Keine – alle erwarteten Assets wurden gefunden.</p>
-                    }
-                </section>
+                @if (isCheck) {
+                    <section class="card report-section">
+                        <h2 class="bad">Mängel ({{ reportWith('FAILED').length }})</h2>
+                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('FAILED'), empty: 'Keine Mängel.' }" />
+                    </section>
+                    <section class="card report-section" [class.empty-section]="!reportWith('PENDING').length">
+                        <h2 class="warn">Nicht geprüft ({{ reportWith('PENDING').length }})</h2>
+                        <ng-container *ngTemplateOutlet="simpleTable; context: { $implicit: reportWith('PENDING'), empty: 'Alle Geräte wurden geprüft.' }" />
+                    </section>
+                    <section class="card report-section">
+                        <h2 class="good">In Ordnung ({{ reportWith('PASSED').length }})</h2>
+                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('PASSED'), empty: 'Keine.' }" />
+                    </section>
+                } @else {
+                    <section class="card report-section" [class.empty-section]="!reportMissing.length">
+                        <h2 class="bad">Fehlende Assets ({{ reportMissing.length }})</h2>
+                        <ng-container
+                            *ngTemplateOutlet="simpleTable; context: { $implicit: reportMissing, empty: 'Keine – alle erwarteten Assets wurden gefunden.' }"
+                        />
+                    </section>
 
-                <section class="card report-section" [class.empty-section]="!unexpectedItems.length">
-                    <h2 class="warn">Fremde Gegenstände ({{ unexpectedItems.length }})</h2>
-                    @if (unexpectedItems.length) {
-                        <div class="table-wrap">
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Gegenstand</th>
-                                        <th>Inventar-ID / Code</th>
-                                        <th>Gehört zu</th>
-                                        <th>Erfasst</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (item of unexpectedItems; track item.uuid) {
+                    <section class="card report-section" [class.empty-section]="!unexpectedItems.length">
+                        <h2 class="warn">Fremde Gegenstände ({{ unexpectedItems.length }})</h2>
+                        @if (unexpectedItems.length) {
+                            <div class="table-wrap">
+                                <table class="report-table">
+                                    <thead>
                                         <tr>
-                                            <td>{{ item.assetName }}</td>
-                                            <td class="mono">{{ item.invId || item.scannedCode || '—' }}</td>
-                                            <td>{{ item.assetUuid ? item.locationName || 'ohne Standort' : 'unbekannter Code' }}</td>
-                                            <td>{{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }}</td>
+                                            <th>Gegenstand</th>
+                                            <th>Inventar-ID / Code</th>
+                                            <th>Gehört zu</th>
+                                            <th>Erfasst</th>
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    } @else {
-                        <p class="hint">Keine.</p>
-                    }
-                </section>
+                                    </thead>
+                                    <tbody>
+                                        @for (item of unexpectedItems; track item.uuid) {
+                                            <tr>
+                                                <td>{{ item.assetName }}</td>
+                                                <td class="mono">{{ item.invId || item.scannedCode || '—' }}</td>
+                                                <td>{{ item.assetUuid ? item.locationName || 'ohne Standort' : 'unbekannter Code' }}</td>
+                                                <td>{{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        } @else {
+                            <p class="hint">Keine.</p>
+                        }
+                    </section>
 
-                <section class="card report-section">
-                    <h2 class="good">Geprüfte Assets ({{ reportPresent.length }})</h2>
-                    @if (reportPresent.length) {
-                        <div class="table-wrap">
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Asset</th>
-                                        <th>Inventar-ID</th>
-                                        <th>Typ</th>
-                                        <th>Prüfwerte</th>
-                                        <th>Geprüft</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (item of reportPresent; track item.uuid) {
-                                        <tr>
-                                            <td>
-                                                {{ item.assetName }}
-                                                @if (item.note) {
-                                                    <span class="note">Notiz: {{ item.note }}</span>
-                                                }
-                                            </td>
-                                            <td class="mono">{{ item.invId || '—' }}</td>
-                                            <td>{{ item.assetTypeName || '—' }}</td>
-                                            <td>
-                                                @if (item.values.length) {
-                                                    <dl class="values">
-                                                        @for (entry of item.values; track entry.fieldUuid) {
-                                                            <div>
-                                                                <dt>{{ entry.fieldName }}</dt>
-                                                                <dd [class.no]="entry.fieldType === 'BOOLEAN' && entry.value === 'false'">
-                                                                    {{ formatValue(entry.value, entry.fieldType) }}
-                                                                </dd>
-                                                            </div>
-                                                        }
-                                                    </dl>
-                                                } @else {
-                                                    <span class="by">—</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                {{ item.checkedByName }}
-                                                <span class="by">{{ item.checkedAt | date: 'dd.MM. HH:mm' }} · {{ item.method === 'SCAN' ? 'Scan' : 'manuell' }}</span>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    } @else {
-                        <p class="hint">Keine.</p>
-                    }
-                </section>
+                    <section class="card report-section">
+                        <h2 class="good">Geprüfte Assets ({{ reportPresent.length }})</h2>
+                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportPresent, empty: 'Keine.' }" />
+                    </section>
+                }
             }
         }
     </div>
 </section>
+
+<!-- assets without check values: missing / not checked -->
+<ng-template #simpleTable let-items let-empty="empty">
+    @if (items.length) {
+        <div class="table-wrap">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Inventar-ID</th>
+                        <th>Typ</th>
+                        <th>Standort</th>
+                        <th>Status</th>
+                        <th>Notiz</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of items; track item.uuid) {
+                        <tr>
+                            <td>{{ item.assetName }}</td>
+                            <td class="mono">{{ item.invId || '—' }}</td>
+                            <td>{{ item.assetTypeName || '—' }}</td>
+                            <td>{{ item.locationName || '—' }}</td>
+                            <td>
+                                {{ statusLabel(item) }}
+                                @if (item.checkedByName) {
+                                    <span class="by">({{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }})</span>
+                                }
+                            </td>
+                            <td>{{ item.note || '' }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    } @else {
+        <p class="hint">{{ empty }}</p>
+    }
+</ng-template>
+
+<!-- checked assets with their check values -->
+<ng-template #checkedTable let-items let-empty="empty">
+    @if (items.length) {
+        <div class="table-wrap">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Inventar-ID</th>
+                        <th>Typ</th>
+                        <th>Prüfwerte</th>
+                        <th>Geprüft</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of items; track item.uuid) {
+                        <tr>
+                            <td>
+                                {{ item.assetName }}
+                                @if (item.note) {
+                                    <span class="note">Notiz: {{ item.note }}</span>
+                                }
+                            </td>
+                            <td class="mono">{{ item.invId || '—' }}</td>
+                            <td>{{ item.assetTypeName || '—' }}</td>
+                            <td>
+                                @if (item.values.length) {
+                                    <dl class="values">
+                                        @for (entry of item.values; track entry.fieldUuid) {
+                                            <div>
+                                                <dt>{{ entry.fieldName }}</dt>
+                                                <dd [class.no]="entry.fieldType === 'BOOLEAN' && entry.value === 'false'">
+                                                    {{ formatValue(entry.value, entry.fieldType) }}
+                                                </dd>
+                                            </div>
+                                        }
+                                    </dl>
+                                } @else {
+                                    <span class="by">—</span>
+                                }
+                            </td>
+                            <td>
+                                {{ item.checkedByName }}
+                                <span class="by">{{ item.checkedAt | date: 'dd.MM. HH:mm' }} · {{ item.method === 'SCAN' ? 'Scan' : 'manuell' }}</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    } @else {
+        <p class="hint">{{ empty }}</p>
+    }
+</ng-template>

@@ -1,7 +1,12 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ count('OPEN') }} offen · {{ count('COMPLETED') }} abgeschlossen</p>
+            <p class="eyebrow">
+                {{ count('OPEN') }} offen · {{ count('COMPLETED') }} abgeschlossen
+                @if (overdueCount) {
+                    · <span class="overdue-text">{{ overdueCount }} überfällig</span>
+                }
+            </p>
             <h1>
                 <svg lucideClipboardCheck size="20"></svg>
                 <span>Prüfungen</span>
@@ -19,6 +24,9 @@
 
     <div class="toolbar">
         <div class="segmented-tabs" role="tablist">
+            <button type="button" role="tab" [class.active]="statusFilter === 'DUE'" (click)="statusFilter = 'DUE'">
+                Fällig <span class="count" [class.alert]="overdueCount">{{ count('DUE') }}</span>
+            </button>
             <button type="button" role="tab" [class.active]="statusFilter === 'OPEN'" (click)="statusFilter = 'OPEN'">
                 Offen <span class="count">{{ count('OPEN') }}</span>
             </button>
@@ -46,6 +54,60 @@
 
     @if (loading) {
         <p class="empty">Lade Prüfungen...</p>
+    } @else if (statusFilter === 'DUE') {
+        @if (!dueGroups.length) {
+            <div class="empty-state">Keine fälligen Prüfungen. Wiederkehrende Prüfungen legst du unter Konfiguration → Prüfungsarten an.</div>
+        }
+        <div class="due-groups">
+            @for (group of dueGroups; track group.typeUuid) {
+                <section class="card due-group">
+                    <button type="button" class="due-head" (click)="toggleGroup(group.typeUuid)">
+                        <span class="stripe" [style.background]="group.color || 'var(--border-strong)'"></span>
+                        <svg lucideCalendarClock size="18"></svg>
+                        <span class="due-title">
+                            <strong>{{ group.typeName }}</strong>
+                            <small>{{ group.interval }}</small>
+                        </span>
+                        @if (group.overdue) {
+                            <span class="badge accent">{{ group.overdue }} überfällig</span>
+                        }
+                        @if (group.entries.length - group.overdue) {
+                            <span class="badge warn">{{ group.entries.length - group.overdue }} bald fällig</span>
+                        }
+                        @if (canStart) {
+                            <span class="primary-action compact" role="button" (click)="startDue(group, $event)">
+                                <svg lucidePlay size="14"></svg>
+                                <span>Fällige prüfen</span>
+                            </span>
+                        }
+                        <svg class="chevron" [class.open]="expandedGroups.has(group.typeUuid)" lucideChevronDown size="16"></svg>
+                    </button>
+                    @if (expandedGroups.has(group.typeUuid)) {
+                        <ul class="due-list">
+                            @for (entry of group.entries; track entry.assetUuid) {
+                                <li [class.overdue]="entry.state === 'OVERDUE'">
+                                    <a [routerLink]="['/assets', entry.assetUuid]">{{ entry.assetName }}</a>
+                                    <span class="meta">{{ [entry.invId, entry.locationName].filter(isSet).join(' · ') }}</span>
+                                    <span class="when">
+                                        {{ dueText(entry.daysUntilDue) }}
+                                        @if (entry.fixedDueDate) {
+                                            <small>(festes Datum)</small>
+                                        }
+                                    </span>
+                                    <span class="last">
+                                        @if (entry.lastCheckedAt) {
+                                            zuletzt {{ entry.lastCheckedAt | date: 'dd.MM.yyyy' }}{{ entry.lastResult === 'FAILED' ? ' – Mangel' : '' }}
+                                        } @else {
+                                            noch nie geprüft
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+            }
+        </div>
     } @else if (!visible.length) {
         <div class="empty-state">
             @if (inspections.length) {
@@ -80,12 +142,17 @@
                     </div>
                     <div class="stats">
                         <div class="progress" [title]="progress(inspection) + ' % geprüft'">
-                            <span class="present" [style.width.%]="inspection.counts.expected ? (inspection.counts.present / inspection.counts.expected) * 100 : 0"></span>
-                            <span class="missing" [style.width.%]="inspection.counts.expected ? (inspection.counts.missing / inspection.counts.expected) * 100 : 0"></span>
+                            <span class="present" [style.width.%]="inspection.counts.expected ? (good(inspection) / inspection.counts.expected) * 100 : 0"></span>
+                            <span class="missing" [style.width.%]="inspection.counts.expected ? (bad(inspection) / inspection.counts.expected) * 100 : 0"></span>
                         </div>
                         <div class="numbers">
-                            <span><strong>{{ inspection.counts.present }}</strong> da</span>
-                            <span><strong>{{ inspection.counts.missing + (inspection.status === 'COMPLETED' ? inspection.counts.pending : 0) }}</strong> fehlen</span>
+                            @if (inspection.mode === 'CHECK') {
+                                <span><strong>{{ inspection.counts.passed }}</strong> i. O.</span>
+                                <span><strong>{{ inspection.counts.failed }}</strong> Mangel</span>
+                            } @else {
+                                <span><strong>{{ inspection.counts.present }}</strong> da</span>
+                                <span><strong>{{ inspection.counts.missing + (inspection.status === 'COMPLETED' ? inspection.counts.pending : 0) }}</strong> fehlen</span>
+                            }
                             @if (inspection.status === 'OPEN') {
                                 <span><strong>{{ inspection.counts.pending }}</strong> offen</span>
                             }

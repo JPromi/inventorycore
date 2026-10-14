@@ -29,7 +29,6 @@ const assetFormConfig = {
     { key: 'description', label: 'Beschreibung', type: 'textarea' },
     { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
     { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
-    { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
   ],
 };
 
@@ -62,7 +61,6 @@ const assetTypeFormConfig = {
   fields: [
     { key: 'name', label: 'Name', type: 'text', required: true },
     { key: 'description', label: 'Beschreibung', type: 'textarea' },
-    { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
   ],
 };
 
@@ -183,7 +181,6 @@ export const routes: Routes = [
             resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
             fields: [
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall', suffix: ' Tage' },
               { key: 'description', label: 'Beschreibung' },
             ],
           },

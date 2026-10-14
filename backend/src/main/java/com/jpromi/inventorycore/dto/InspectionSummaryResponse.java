@@ -3,6 +3,7 @@ package com.jpromi.inventorycore.dto;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.jpromi.inventorycore.enums.InspectionMode;
 import com.jpromi.inventorycore.enums.InspectionStatus;
 
 public record InspectionSummaryResponse(
@@ -11,6 +12,7 @@ public record InspectionSummaryResponse(
     UUID inspectionTypeUuid,
     String typeName,
     InspectionStatus status,
+    InspectionMode mode,
     String filterSummary,
     OffsetDateTime createdAt,
     String createdByName,

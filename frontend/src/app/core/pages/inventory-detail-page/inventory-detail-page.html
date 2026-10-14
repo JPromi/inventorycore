@@ -287,6 +287,57 @@
                 </div>
 
                 <aside class="stack">
+                    @if (schedules.length) {
+                        <section class="card schedules">
+                            <h2><svg lucideCalendarClock size="16"></svg> Prüftermine</h2>
+                            @for (entry of schedules; track entry.inspectionTypeUuid) {
+                                <div class="schedule" [class]="'schedule ' + entry.state.toLowerCase()">
+                                    <div class="schedule-head">
+                                        <span class="dot" [style.background]="entry.inspectionTypeColor || null"></span>
+                                        <strong>{{ entry.inspectionTypeName }}</strong>
+                                        <small>{{ intervalText(entry.intervalValue, entry.intervalUnit) }}</small>
+                                    </div>
+                                    <p class="due">
+                                        {{ dueText(entry.daysUntilDue) }} · {{ entry.nextDueDate | date: 'dd.MM.yyyy' }}
+                                        @if (entry.fixedDueDate) {
+                                            <small>(festes Datum)</small>
+                                        }
+                                    </p>
+                                    <p class="last">
+                                        @if (entry.lastCheckedAt) {
+                                            Zuletzt {{ entry.lastCheckedAt | date: 'dd.MM.yyyy' }} von {{ entry.lastCheckedByName }}
+                                            @if (entry.lastResult === 'FAILED') {
+                                                – <span class="defect">Mangel</span>
+                                            }
+                                        } @else {
+                                            Noch nie geprüft
+                                        }
+                                    </p>
+                                    @if (canPlanInspections) {
+                                        @if (editingSchedule === entry.inspectionTypeUuid) {
+                                            <div class="fixed-date">
+                                                <input type="date" [(ngModel)]="fixedDateInput" aria-label="Nächste Prüfung am" />
+                                                <button type="button" class="primary-action compact" [disabled]="!fixedDateInput" (click)="saveFixedDate(entry, fixedDateInput)">
+                                                    Setzen
+                                                </button>
+                                                <button type="button" class="icon-button" title="Abbrechen" (click)="editingSchedule = null">✕</button>
+                                            </div>
+                                        } @else {
+                                            <div class="schedule-actions">
+                                                <button type="button" class="link-button" (click)="editSchedule(entry)">
+                                                    {{ entry.fixedDueDate ? 'Datum ändern' : 'Festes Datum setzen' }}
+                                                </button>
+                                                @if (entry.fixedDueDate) {
+                                                    <button type="button" class="link-button" (click)="saveFixedDate(entry, null)">Wieder Intervall verwenden</button>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </section>
+                    }
+
                     <section class="card gallery">
                         <div class="main-image">
                             @if (activeImage) {

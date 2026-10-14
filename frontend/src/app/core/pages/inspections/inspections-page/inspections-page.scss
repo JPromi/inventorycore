@@ -114,3 +114,94 @@
         gap: .75rem;
     }
 }
+
+.overdue-text {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.segmented-tabs .count.alert {
+    background: var(--accent);
+    color: #fff;
+}
+
+.badge.warn {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.due-groups {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.due-group {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+.due-head {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    padding: .8rem 1rem .8rem 1.25rem;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    > svg:first-of-type { color: var(--text-muted); }
+    .chevron { color: var(--text-subtle); transition: transform .15s; }
+    .chevron.open { transform: rotate(180deg); }
+}
+
+.stripe {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: .3rem;
+}
+
+.due-title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    small { color: var(--text-muted); font-size: .78rem; }
+}
+
+.due-list {
+    list-style: none;
+    border-top: 1px solid var(--border);
+
+    li {
+        display: grid;
+        grid-template-columns: minmax(8rem, 1.2fr) minmax(0, 1.5fr) auto auto;
+        align-items: center;
+        gap: .4rem 1rem;
+        padding: .5rem 1rem .5rem 1.25rem;
+        font-size: .86rem;
+
+        & + li { border-top: 1px solid var(--border); }
+    }
+
+    a { color: var(--text); font-weight: 700; }
+    .meta { overflow: hidden; color: var(--text-muted); text-overflow: ellipsis; white-space: nowrap; }
+    .when { color: #b45309; font-weight: 700; white-space: nowrap; }
+    .overdue .when { color: var(--accent); }
+    .when small { color: var(--text-subtle); font-weight: 400; }
+    .last { color: var(--text-subtle); font-size: .78rem; white-space: nowrap; }
+}
+
+@media (max-width: 760px) {
+    .due-list li {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+}

@@ -22,6 +22,7 @@ import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-di
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
+import { InspectionDue, InspectionService, dueText } from '../../service/inspection.service';
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
@@ -98,6 +99,8 @@ export class InventoryPage implements OnInit {
   protected tags: TagItem[] = [];
   protected locations: InventoryItem[] = [];
   protected assetTypes: InventoryItem[] = [];
+  /** Most urgent due recurring inspection per asset (only overdue / due soon). */
+  protected dueByAsset = new Map<string, InspectionDue>();
 
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 
@@ -108,6 +111,7 @@ export class InventoryPage implements OnInit {
     private readonly confirmDialog: ConfirmDialogService,
     protected readonly permissions: PermissionService,
     protected readonly areaService: AreaService,
+    private readonly inspections: InspectionService,
   ) {}
 
   ngOnInit(): void {
@@ -216,6 +220,7 @@ export class InventoryPage implements OnInit {
   protected load(): void {
     this.loading = true;
     this.error = '';
+    this.loadDueInspections();
     this.api.list(this.config.endpoint).subscribe({
       next: (items) => {
         this.items = items.sort((a, b) => a.name.localeCompare(b.name));
@@ -229,6 +234,32 @@ export class InventoryPage implements OnInit {
         this.error = 'Daten konnten nicht geladen werden.';
         this.loading = false;
       },
+    });
+  }
+
+  /** "Prüfung überfällig seit 3 Tagen (Bremsen)" */
+  protected dueTitle(due: InspectionDue): string {
+    return `${due.inspectionTypeName}: ${dueText(due.daysUntilDue)}`;
+  }
+
+  private loadDueInspections(): void {
+    this.dueByAsset = new Map();
+    if (this.config.endpoint !== 'assets' || !this.permissions.can('ASSET', 'inspect')) {
+      return;
+    }
+    this.inspections.schedules().subscribe({
+      next: (entries) => {
+        const map = new Map<string, InspectionDue>();
+        for (const entry of entries) {
+          const current = map.get(entry.assetUuid);
+          if (entry.state !== 'OK' && (!current || entry.daysUntilDue < current.daysUntilDue)) {
+            map.set(entry.assetUuid, entry);
+          }
+        }
+        this.dueByAsset = map;
+      },
+      // the list works without due dates
+      error: () => (this.dueByAsset = new Map()),
     });
   }
 

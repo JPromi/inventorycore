@@ -40,6 +40,75 @@
                     </div>
                 </section>
 
+                <section class="card">
+                    <h2>Art der Prüfung</h2>
+                    <div class="mode-choice" role="radiogroup" aria-label="Art der Prüfung">
+                        <label class="mode" [class.active]="mode === 'INVENTORY'">
+                            <input type="radio" name="mode" value="INVENTORY" [(ngModel)]="mode" />
+                            <svg lucidePackageSearch size="20"></svg>
+                            <span>
+                                <strong>Inventur</strong>
+                                <small>
+                                    Die Assets werden beim Start per Filter festgelegt und als „Da“ oder „Fehlt“ markiert.
+                                    Gegenstände, die nicht dazugehören, werden als fremd gemeldet.
+                                </small>
+                            </span>
+                        </label>
+                        <label class="mode" [class.active]="mode === 'CHECK'">
+                            <input type="radio" name="mode" value="CHECK" [(ngModel)]="mode" />
+                            <svg lucideListChecks size="20"></svg>
+                            <span>
+                                <strong>Einzelprüfung</strong>
+                                <small>
+                                    Geräte werden einzeln geprüft („In Ordnung“ / „Mangel“) und können jederzeit per Scan oder Suche
+                                    hinzugefügt werden. Die Prüfung kann offen bleiben, bis alles erledigt ist.
+                                </small>
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><svg lucideRepeat size="16"></svg> Gilt für &amp; Wiederholung</h2>
+                    <div class="general">
+                        <div class="field wide">
+                            <span class="field-label">Gilt für Typen</span>
+                            <app-multi-select
+                                [options]="allTypeOptions"
+                                [(ngModel)]="assetTypeUuids"
+                                name="assetTypeUuids"
+                                placeholder="Alle Assets – Typ hinzufügen, um einzuschränken..."
+                            />
+                            <small class="hint">
+                                Leer = alle Assets. Mit Typen werden beim Start nur Assets dieser Typen übernommen,
+                                und nur diese bekommen einen Prüftermin.
+                            </small>
+                        </div>
+                        <div class="field wide">
+                            <label class="toggle">
+                                <input type="checkbox" [(ngModel)]="recurring" name="recurring" />
+                                <span>Wiederkehrende Prüfung</span>
+                            </label>
+                            @if (recurring) {
+                                <div class="interval">
+                                    <span>Alle</span>
+                                    <input type="number" min="1" step="1" [(ngModel)]="intervalValue" name="intervalValue" aria-label="Intervall" />
+                                    <select [(ngModel)]="intervalUnit" name="intervalUnit" aria-label="Einheit">
+                                        @for (unit of intervalUnits; track unit.value) {
+                                            <option [value]="unit.value">{{ unit.label }}</option>
+                                        }
+                                    </select>
+                                    <span class="hint">= {{ intervalPreview }}</span>
+                                </div>
+                                <small class="hint">
+                                    Jedes Asset bekommt einen eigenen Termin. Nach einer bestandenen Prüfung startet der Zeitraum neu,
+                                    bei einem Mangel ist das Asset sofort wieder fällig. Pro Asset kann auf der Detailseite ein festes Datum gesetzt werden.
+                                </small>
+                            }
+                        </div>
+                    </div>
+                </section>
+
                 @for (group of groups; track group; let groupIndex = $index) {
                     <section class="card field-group">
                         <div class="card-title">

@@ -18,4 +18,18 @@ public interface InspectionItemRepository extends JpaRepository<InspectionItem, 
         order by inspection.createdAt desc
         """)
     List<InspectionItem> findByAsset(@Param("asset") Asset asset);
+
+    /**
+     * Last check per asset and inspection type: [asset id, inspection type id, status, checked at,
+     * checked by]. Only checked items; the caller keeps the newest per pair.
+     */
+    @Query("""
+        select item.asset.id, inspection.inspectionType.id, item.status, item.checkedAt, item.checkedByName
+        from InspectionItem item join item.inspection inspection
+        where item.asset is not null and inspection.inspectionType is not null and item.checkedAt is not null
+          and item.status in (com.jpromi.inventorycore.enums.InspectionItemStatus.PRESENT,
+                              com.jpromi.inventorycore.enums.InspectionItemStatus.PASSED,
+                              com.jpromi.inventorycore.enums.InspectionItemStatus.FAILED)
+        """)
+    List<Object[]> findChecks();
 }

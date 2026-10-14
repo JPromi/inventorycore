@@ -46,10 +46,12 @@ import com.jpromi.inventorycore.entity.User;
 import com.jpromi.inventorycore.enums.AssetFieldType;
 import com.jpromi.inventorycore.enums.InspectionCheckMethod;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
+import com.jpromi.inventorycore.enums.InspectionMode;
 import com.jpromi.inventorycore.enums.InspectionStatus;
 import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
 import com.jpromi.inventorycore.repository.AreaRepository;
+import com.jpromi.inventorycore.repository.AssetInspectionScheduleRepository;
 import com.jpromi.inventorycore.repository.AssetRepository;
 import com.jpromi.inventorycore.repository.AssetTypeRepository;
 import com.jpromi.inventorycore.repository.InspectionItemRepository;
@@ -77,6 +79,8 @@ public class InspectionService {
     private final AreaRepository areaRepository;
     private final ScanResolver scanResolver;
     private final InspectionItemRepository itemRepository;
+    private final AssetInspectionScheduleRepository scheduleRepository;
+    private final InspectionScheduleService scheduleService;
 
     public InspectionService(
         InspectionTypeRepository typeRepository,
@@ -87,7 +91,9 @@ public class InspectionService {
         TagRepository tagRepository,
         AreaRepository areaRepository,
         ScanResolver scanResolver,
-        InspectionItemRepository itemRepository
+        InspectionItemRepository itemRepository,
+        AssetInspectionScheduleRepository scheduleRepository,
+        InspectionScheduleService scheduleService
     ) {
         this.typeRepository = typeRepository;
         this.inspectionRepository = inspectionRepository;
@@ -98,6 +104,8 @@ public class InspectionService {
         this.areaRepository = areaRepository;
         this.scanResolver = scanResolver;
         this.itemRepository = itemRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.scheduleService = scheduleService;
     }
 
     // ---- inspection types ----
@@ -139,6 +147,7 @@ public class InspectionService {
         require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
         InspectionType type = typeOr404(uuid);
         inspectionRepository.detachType(type);
+        scheduleRepository.deleteByInspectionType(type);
         typeRepository.delete(type);
     }
 
@@ -146,6 +155,17 @@ public class InspectionService {
         type.setName(requireName(request.name()));
         type.setDescription(blankToNull(request.description()));
         type.setColor(blankToNull(request.color()));
+        type.setMode(request.mode() == null ? InspectionMode.INVENTORY : request.mode());
+        boolean recurring = request.intervalValue() != null && request.intervalValue() > 0 && request.intervalUnit() != null;
+        type.setIntervalValue(recurring ? request.intervalValue() : null);
+        type.setIntervalUnit(recurring ? request.intervalUnit() : null);
+        type.getAssetTypes().clear();
+        if (request.assetTypeUuids() != null) {
+            for (UUID assetTypeUuid : request.assetTypeUuids()) {
+                type.getAssetTypes().add(assetTypeRepository.findByUuid(assetTypeUuid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Typ " + assetTypeUuid)));
+            }
+        }
 
         // keep existing definitions (and their uuids, which values refer to) where possible
         Map<UUID, InspectionFieldDefinition> existing = type.getFields().stream()
@@ -190,9 +210,31 @@ public class InspectionService {
 
     /** Assets the filters would select, without creating anything (for the preview when starting). */
     @Transactional(readOnly = true)
-    public int preview(AccessContext access, InspectionFilter filter) {
+    public int preview(AccessContext access, InspectionCreateRequest request) {
         requireInspect(access);
-        return expectedAssets(access, filter).size();
+        InspectionType type = request.inspectionTypeUuid() == null ? null : typeOr404(request.inspectionTypeUuid());
+        return selectAssets(access, type, filterOf(request), onlyDue(request, type), request.dueWithinDays()).size();
+    }
+
+    /** Assets an inspection starts with: the filters, the types of the inspection and optionally only due ones. */
+    private List<Asset> selectAssets(AccessContext access, InspectionType type, InspectionFilter filter, boolean onlyDue, Integer dueWithinDays) {
+        List<Asset> assets = expectedAssets(access, filter).stream()
+            .filter(asset -> type == null || type.appliesTo(asset.getAssetType()))
+            .toList();
+        if (onlyDue && type != null) {
+            Set<UUID> due = scheduleService.dueAssetUuids(assets, type,
+                dueWithinDays == null ? InspectionScheduleService.DUE_SOON_DAYS : dueWithinDays);
+            assets = assets.stream().filter(asset -> due.contains(asset.getUuid())).toList();
+        }
+        return assets;
+    }
+
+    private static InspectionFilter filterOf(InspectionCreateRequest request) {
+        return request.filter() == null ? new InspectionFilter(null, true, List.of(), List.of(), List.of()) : request.filter();
+    }
+
+    private static boolean onlyDue(InspectionCreateRequest request, InspectionType type) {
+        return Boolean.TRUE.equals(request.onlyDue()) && type != null && type.isRecurring();
     }
 
     @Transactional
@@ -202,14 +244,20 @@ public class InspectionService {
         if (type == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine Prüfungsart wählen.");
         }
-        InspectionFilter filter = request.filter() == null
-            ? new InspectionFilter(null, true, List.of(), List.of(), List.of())
-            : request.filter();
-
-        List<Asset> assets = expectedAssets(access, filter);
+        InspectionFilter filter = filterOf(request);
+        boolean onlyDue = onlyDue(request, type);
+        List<Asset> assets = selectAssets(access, type, filter, onlyDue, request.dueWithinDays());
         Map<Long, Location> locations = locationsById();
+        String summary = describe(filter, locations);
+        if (!type.getAssetTypes().isEmpty()) {
+            summary = summary + " · nur " + type.getAssetTypes().stream().map(AssetType::getName).sorted().collect(Collectors.joining(", "));
+        }
+        if (onlyDue) {
+            summary = summary + " · nur fällige";
+        }
         Inspection inspection = Inspection.builder()
             .inspectionType(type)
+            .mode(type.getMode())
             .typeName(type.getName())
             .title(blankToNull(request.title()) == null ? type.getName() : request.title().trim())
             .filterLocationUuid(filter.locationUuid())
@@ -217,7 +265,7 @@ public class InspectionService {
             .filterTagUuids(join(filter.tagUuids()))
             .filterAssetTypeUuids(join(filter.assetTypeUuids()))
             .filterAreaUuids(join(filter.areaUuids()))
-            .filterSummary(describe(filter, locations))
+            .filterSummary(summary)
             .createdByUuid(user.getUuid())
             .createdByName(displayName(user))
             .build();
@@ -266,6 +314,20 @@ public class InspectionService {
             .findFirst()
             .orElse(null);
 
+        if (inspection.getMode() == InspectionMode.CHECK) {
+            if (item != null) {
+                return new InspectionScanResponse("OPENED", asset.getName() + " ist bereits in der Prüfung.", toResponse(item, locations));
+            }
+            InspectionItem added = newItem(inspection, asset, true, locations);
+            added.setScannedCode(resolution.code());
+            inspection.getItems().add(added);
+            inspectionRepository.save(inspection);
+            boolean applies = inspection.getInspectionType() == null || inspection.getInspectionType().appliesTo(asset.getAssetType());
+            return new InspectionScanResponse(applies ? "ADDED" : "ADDED_OTHER_TYPE",
+                applies ? asset.getName() + " hinzugefügt." : asset.getName() + " hinzugefügt – der Typ ist für diese Prüfung eigentlich nicht vorgesehen.",
+                toResponse(added, locations));
+        }
+
         if (item != null && item.isExpected()) {
             if (item.getStatus() == InspectionItemStatus.PRESENT) {
                 return new InspectionScanResponse("ALREADY_CHECKED", asset.getName() + " wurde bereits geprüft.", toResponse(item, locations));
@@ -294,6 +356,9 @@ public class InspectionService {
         Inspection inspection = openInspection(uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
 
+        if (request.status() != null && !allowedStatus(inspection.getMode()).contains(request.status())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status passt nicht zur Art der Prüfung.");
+        }
         if (request.status() != null && request.status() != item.getStatus()) {
             if (request.status() == InspectionItemStatus.PENDING) {
                 item.setStatus(InspectionItemStatus.PENDING);
@@ -323,13 +388,41 @@ public class InspectionService {
         return toResponse(item, locationsById());
     }
 
+    /** Adds a device to a single-check inspection (from the search, without scanning). */
+    @Transactional
+    public InspectionItemResponse addItem(AccessContext access, UUID uuid, UUID assetUuid) {
+        requireInspect(access);
+        Inspection inspection = openInspection(uuid);
+        Asset asset = assetRepository.findByUuid(assetUuid)
+            .filter(entry -> !entry.isDeleted() && access.canViewAsset(entry))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden"));
+        Map<Long, Location> locations = locationsById();
+        InspectionItem existing = inspection.getItems().stream()
+            .filter(entry -> entry.getAsset() != null && entry.getAsset().getId().equals(asset.getId()))
+            .findFirst()
+            .orElse(null);
+        if (existing != null) {
+            return toResponse(existing, locations);
+        }
+        InspectionItem item = newItem(inspection, asset, true, locations);
+        inspection.getItems().add(item);
+        inspectionRepository.save(inspection);
+        return toResponse(item, locations);
+    }
+
+    private static Set<InspectionItemStatus> allowedStatus(InspectionMode mode) {
+        return mode == InspectionMode.CHECK
+            ? Set.of(InspectionItemStatus.PENDING, InspectionItemStatus.PASSED, InspectionItemStatus.FAILED)
+            : Set.of(InspectionItemStatus.PENDING, InspectionItemStatus.PRESENT, InspectionItemStatus.MISSING);
+    }
+
     /** Removes an item that was added by mistake; expected assets stay (mark them as missing instead). */
     @Transactional
     public void removeItem(AccessContext access, UUID uuid, UUID itemUuid) {
         requireInspect(access);
         Inspection inspection = openInspection(uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
-        if (item.isExpected()) {
+        if (item.isExpected() && inspection.getMode() == InspectionMode.INVENTORY) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erwartete Assets können nicht entfernt werden.");
         }
         inspection.getItems().remove(item);
@@ -517,6 +610,11 @@ public class InspectionService {
             type.getName(),
             type.getDescription(),
             type.getColor(),
+            type.getMode(),
+            type.getIntervalValue(),
+            type.getIntervalUnit(),
+            type.getAssetTypes().stream().map(AssetType::getUuid).toList(),
+            type.getAssetTypes().stream().map(AssetType::getName).sorted().toList(),
             type.getFields().stream().map(InspectionService::toResponse).toList(),
             inspectionRepository.countByInspectionType(type)
         );
@@ -540,6 +638,8 @@ public class InspectionService {
         int expected = 0;
         int present = 0;
         int missing = 0;
+        int passed = 0;
+        int failed = 0;
         int pending = 0;
         int unexpected = 0;
         for (InspectionItem item : inspection.getItems()) {
@@ -551,6 +651,8 @@ public class InspectionService {
             switch (item.getStatus()) {
                 case PRESENT -> present++;
                 case MISSING -> missing++;
+                case PASSED -> passed++;
+                case FAILED -> failed++;
                 case PENDING -> pending++;
             }
         }
@@ -560,12 +662,13 @@ public class InspectionService {
             inspection.getInspectionType() == null ? null : inspection.getInspectionType().getUuid(),
             inspection.getTypeName(),
             inspection.getStatus(),
+            inspection.getMode(),
             inspection.getFilterSummary(),
             inspection.getCreatedAt(),
             inspection.getCreatedByName(),
             inspection.getCompletedAt(),
             inspection.getCompletedByName(),
-            new InspectionCounts(expected, present, missing, pending, unexpected)
+            new InspectionCounts(expected, present, missing, passed, failed, pending, unexpected)
         );
     }
 

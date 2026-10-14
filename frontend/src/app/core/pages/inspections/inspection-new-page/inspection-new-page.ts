@@ -8,7 +8,7 @@ import { catchError, debounceTime, switchMap } from 'rxjs/operators';
 import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AreaService } from '../../../service/area.service';
-import { InspectionFilter, InspectionService, InspectionType } from '../../../service/inspection.service';
+import { InspectionFilter, InspectionService, InspectionType, intervalText } from '../../../service/inspection.service';
 import { InventoryApiService, InventoryItem, TagItem } from '../../../service/inventory-api.service';
 import { locationPath } from '../../../util/location-utils';
 
@@ -36,7 +36,12 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   protected starting = false;
   protected error = '';
 
-  private readonly previewRequests = new Subject<InspectionFilter>();
+  /** Only assets whose recurring inspection is overdue or due within {@link dueWithinDays}. */
+  protected onlyDue = false;
+  protected dueWithinDays = 7;
+  protected readonly intervalText = intervalText;
+
+  private readonly previewRequests = new Subject<void>();
   private previewSubscription?: Subscription;
 
   constructor(
@@ -51,7 +56,11 @@ export class InspectionNewPage implements OnInit, OnDestroy {
     this.previewSubscription = this.previewRequests
       .pipe(
         debounceTime(250),
-        switchMap((filter) => this.api.preview(filter).pipe(catchError(() => of(null)))),
+        switchMap(() =>
+          this.api
+            .preview(this.typeUuid, { ...this.filter }, this.onlyDue && !!this.selectedType?.intervalValue, this.dueWithinDays)
+            .pipe(catchError(() => of(null))),
+        ),
       )
       .subscribe((count) => {
         this.previewCount = count;
@@ -72,8 +81,9 @@ export class InspectionNewPage implements OnInit, OnDestroy {
         this.locations = locations;
         this.assetTypes = assetTypes;
         this.tags = tags;
-        // "?type=..." preselects, otherwise the only type
+        // "?type=...&due=1" (from the overview of due inspections) preselects
         const preset = this.route.snapshot.queryParamMap.get('type');
+        this.onlyDue = this.route.snapshot.queryParamMap.get('due') === '1';
         this.selectType(preset ?? (types.length === 1 ? types[0].uuid : null));
         this.loading = false;
         this.filterChanged();
@@ -120,6 +130,9 @@ export class InspectionNewPage implements OnInit, OnDestroy {
     if (!this.titleTouched) {
       this.title = this.defaultTitle();
     }
+    if (!this.loading) {
+      this.filterChanged();
+    }
   }
 
   protected titleChanged(): void {
@@ -131,7 +144,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
       this.title = this.defaultTitle();
     }
     this.previewLoading = true;
-    this.previewRequests.next({ ...this.filter });
+    this.previewRequests.next();
   }
 
   protected start(): void {
@@ -141,7 +154,8 @@ export class InspectionNewPage implements OnInit, OnDestroy {
     }
     this.starting = true;
     this.error = '';
-    this.api.create(this.typeUuid, this.title.trim(), this.filter).subscribe({
+    const onlyDue = this.onlyDue && !!this.selectedType?.intervalValue;
+    this.api.create(this.typeUuid, this.title.trim(), this.filter, onlyDue, this.dueWithinDays).subscribe({
       next: (inspection) => this.router.navigate(['/inspections', inspection.summary.uuid]),
       error: () => {
         this.starting = false;
@@ -153,6 +167,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   /** "Fahrzeugprüfung – Garage – 14.10.2026" */
   private defaultTitle(): string {
     const location = this.locations.find((entry) => entry.uuid === this.filter.locationUuid);
-    return [this.selectedType?.name ?? 'Prüfung', location?.name, new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
+    const due = this.onlyDue && this.selectedType?.intervalValue ? 'fällige' : null;
+    return [this.selectedType?.name ?? 'Prüfung', due, location?.name, new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
   }
 }

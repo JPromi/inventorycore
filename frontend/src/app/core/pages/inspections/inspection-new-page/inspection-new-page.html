@@ -42,9 +42,12 @@
                             />
                             @if (selectedType; as type) {
                                 <small class="hint">
-                                    {{ type.fields.length }} Prüffelder
-                                    @if (type.description) {
-                                        · {{ type.description }}
+                                    {{ type.mode === 'CHECK' ? 'Einzelprüfung' : 'Inventur' }} · {{ type.fields.length }} Prüffelder
+                                    @if (type.intervalValue) {
+                                        · {{ intervalText(type.intervalValue, type.intervalUnit) }}
+                                    }
+                                    @if (type.assetTypeNames.length) {
+                                        · nur {{ type.assetTypeNames.join(', ') }}
                                     }
                                 </small>
                             }
@@ -55,6 +58,22 @@
                         </label>
                     </div>
                 </section>
+
+                @if (selectedType?.intervalValue) {
+                    <section class="card due-card">
+                        <label class="toggle">
+                            <input type="checkbox" [(ngModel)]="onlyDue" (ngModelChange)="filterChanged()" name="onlyDue" />
+                            <span>Nur fällige Assets prüfen</span>
+                        </label>
+                        @if (onlyDue) {
+                            <div class="due-days">
+                                <span>überfällig oder fällig in den nächsten</span>
+                                <input type="number" min="0" [(ngModel)]="dueWithinDays" (ngModelChange)="filterChanged()" name="dueWithinDays" />
+                                <span>Tagen</span>
+                            </div>
+                        }
+                    </section>
+                }
 
                 <section class="card">
                     <h2>Welche Assets werden geprüft?</h2>

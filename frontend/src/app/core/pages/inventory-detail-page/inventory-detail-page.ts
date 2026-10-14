@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   LucideArrowLeft,
   LucideBoxes,
+  LucideCalendarClock,
   LucideChevronRight,
   LucideClipboardCheck,
   LucideMapPin,
@@ -20,7 +22,14 @@ import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-di
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
-import { AssetInspection, InspectionService, formatCheckValue } from '../../service/inspection.service';
+import {
+  AssetInspection,
+  InspectionDue,
+  InspectionService,
+  dueText,
+  formatCheckValue,
+  intervalText,
+} from '../../service/inspection.service';
 import {
   AssetFieldType,
   CustomFieldDefinition,
@@ -69,10 +78,12 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
   selector: 'app-inventory-detail-page',
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     LabelPrintDialog,
     LucideArrowLeft,
     LucideBoxes,
+    LucideCalendarClock,
     LucideChevronRight,
     LucideClipboardCheck,
     LucideMapPin,
@@ -98,6 +109,12 @@ export class InventoryDetailPage implements OnInit {
   protected assets: InventoryItem[] = [];
   protected showPrintDialog = false;
   protected inspections: AssetInspection[] = [];
+  /** Recurring inspections of this asset with their due dates. */
+  protected schedules: InspectionDue[] = [];
+  protected editingSchedule: string | null = null;
+  protected fixedDateInput = '';
+  protected readonly dueText = dueText;
+  protected readonly intervalText = intervalText;
   protected readonly formatCheckValue = formatCheckValue;
 
   constructor(
@@ -125,6 +142,31 @@ export class InventoryDetailPage implements OnInit {
   /** Inspection history is shown on assets to users who may inspect. */
   protected get canSeeInspections(): boolean {
     return this.config.endpoint === 'assets' && this.permissions.can('ASSET', 'inspect');
+  }
+
+  /** Fixed dates may be set by whoever may inspect or edit the asset. */
+  protected get canPlanInspections(): boolean {
+    const areas = this.item?.areaUuids ?? [];
+    return this.permissions.can('ASSET', 'inspect', areas) || this.permissions.can('ASSET', 'edit', areas);
+  }
+
+  protected editSchedule(entry: InspectionDue): void {
+    this.editingSchedule = entry.inspectionTypeUuid;
+    this.fixedDateInput = entry.fixedDueDate ?? entry.nextDueDate;
+  }
+
+  /** `null` removes the fixed date, so the interval counts again. */
+  protected saveFixedDate(entry: InspectionDue, date: string | null): void {
+    if (!this.item) {
+      return;
+    }
+    this.inspectionService.setFixedDueDate(this.item.uuid, entry.inspectionTypeUuid, date || null).subscribe({
+      next: (updated) => {
+        this.schedules = this.schedules.map((schedule) => (schedule.inspectionTypeUuid === updated.inspectionTypeUuid ? updated : schedule));
+        this.editingSchedule = null;
+      },
+      error: () => (this.error = 'Prüftermin konnte nicht gespeichert werden.'),
+    });
   }
 
   protected inspectionResult(entry: AssetInspection): { label: string; tone: 'good' | 'bad' | 'warn' | 'neutral' } {
@@ -292,13 +334,18 @@ export class InventoryDetailPage implements OnInit {
       locations: optional<InventoryItem>('locations', this.permissions.can('LOCATION', 'view')),
       assetTypes: optional<InventoryItem>('asset-types', this.config.endpoint === 'assets'),
       assets: optional<InventoryItem>('assets', needsAssets),
+      schedules:
+        this.config.endpoint === 'assets'
+          ? this.inspectionService.schedulesOfAsset(uuid).pipe(catchError(() => of([] as InspectionDue[])))
+          : of([] as InspectionDue[]),
       inspections: this.canSeeInspections
         ? this.inspectionService.inspectionsOfAsset(uuid).pipe(catchError(() => of([] as AssetInspection[])))
         : of([] as AssetInspection[]),
     }).subscribe({
-      next: ({ item, locations, assetTypes, assets, inspections }) => {
+      next: ({ item, locations, assetTypes, assets, inspections, schedules }) => {
         this.item = item;
         this.inspections = inspections;
+        this.schedules = schedules;
         this.locations = locations;
         this.assetTypes = assetTypes;
         this.assets = assets;

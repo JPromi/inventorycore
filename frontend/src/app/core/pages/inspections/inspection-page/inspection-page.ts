@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -25,6 +25,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { CameraScanner } from '../../../scan/camera-scanner';
 import { scanFeedback } from '../../../scan/scan-feedback';
 import {
@@ -37,9 +38,10 @@ import {
   fieldOptions,
   formatCheckValue,
 } from '../../../service/inspection.service';
+import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import { PermissionService } from '../../../service/permission.service';
 
-type ItemFilter = 'ALL' | 'PENDING' | 'PRESENT' | 'MISSING';
+type ItemFilter = 'ALL' | InspectionItemStatus;
 
 /** Same code from the camera is ignored for this long. */
 const DUPLICATE_WINDOW_MS = 2500;
@@ -53,7 +55,9 @@ const DUPLICATE_WINDOW_MS = 2500;
   imports: [
     DatePipe,
     FormsModule,
+    NgTemplateOutlet,
     RouterLink,
+    SearchSelect,
     LucideArrowLeft,
     LucideCamera,
     LucideCameraOff,
@@ -100,6 +104,10 @@ export class InspectionPage implements OnInit, OnDestroy {
   /** Items with a request running, to show a spinner and avoid double clicks. */
   protected busy = new Set<string>();
 
+  /** Single checks: devices that can be added from the search. */
+  protected addableAssets: InventoryItem[] = [];
+  protected assetToAdd: string | null = null;
+
   protected completing = false;
   protected comment = '';
   protected submitting = false;
@@ -117,6 +125,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     private readonly permissions: PermissionService,
     private readonly confirmDialog: ConfirmDialogService,
     private readonly zone: NgZone,
+    private readonly inventory: InventoryApiService,
   ) {}
 
   ngOnInit(): void {
@@ -133,6 +142,27 @@ export class InspectionPage implements OnInit, OnDestroy {
 
   protected get open(): boolean {
     return this.detail?.summary.status === 'OPEN';
+  }
+
+  /** Single checks (in order / defect) instead of an inventory (present / missing). */
+  protected get isCheck(): boolean {
+    return this.detail?.summary.mode === 'CHECK';
+  }
+
+  protected get goodStatus(): InspectionItemStatus {
+    return this.isCheck ? 'PASSED' : 'PRESENT';
+  }
+
+  protected get badStatus(): InspectionItemStatus {
+    return this.isCheck ? 'FAILED' : 'MISSING';
+  }
+
+  protected get goodLabel(): string {
+    return this.isCheck ? 'In Ordnung' : 'Da';
+  }
+
+  protected get badLabel(): string {
+    return this.isCheck ? 'Mangel' : 'Fehlt';
   }
 
   protected get expectedItems(): InspectionItem[] {
@@ -186,7 +216,9 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   protected get missingRequiredTotal(): number {
-    return this.detail?.items.filter((item) => item.status === 'PRESENT').reduce((sum, item) => sum + this.missingRequired(item), 0) ?? 0;
+    return (
+      this.detail?.items.filter((item) => item.status !== 'PENDING' && item.status !== 'MISSING').reduce((sum, item) => sum + this.missingRequired(item), 0) ?? 0
+    );
   }
 
   // ---- report ----
@@ -194,6 +226,33 @@ export class InspectionPage implements OnInit, OnDestroy {
   /** Missing assets for the protocol: confirmed missing first, then not checked. */
   protected get reportMissing(): InspectionItem[] {
     return [...this.expectedItems.filter((item) => item.status === 'MISSING'), ...this.expectedItems.filter((item) => item.status === 'PENDING')];
+  }
+
+  protected reportWith(status: InspectionItemStatus): InspectionItem[] {
+    return this.expectedItems.filter((item) => item.status === status);
+  }
+
+  protected get assetOptions(): SelectOption[] {
+    const inList = new Set(this.detail?.items.map((item) => item.assetUuid));
+    return this.addableAssets
+      .filter((asset) => !inList.has(asset.uuid))
+      .map((asset) => ({ value: asset.uuid, label: asset.name, hint: asset.invId ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  /** Single checks: put a device on the list without scanning it. */
+  protected addAsset(assetUuid: string | null): void {
+    if (!assetUuid) {
+      return;
+    }
+    this.api.addItem(this.uuid, assetUuid).subscribe({
+      next: (item) => {
+        this.replaceItem(item);
+        this.focusItem(item);
+        setTimeout(() => (this.assetToAdd = null));
+      },
+      error: (error) => this.handleError(error, 'Gerät konnte nicht hinzugefügt werden.'),
+    });
   }
 
   protected get reportPresent(): InspectionItem[] {
@@ -271,8 +330,9 @@ export class InspectionPage implements OnInit, OnDestroy {
         if (response.item) {
           this.replaceItem(response.item);
         }
-        const warning = response.outcome === 'UNEXPECTED' || response.outcome === 'UNKNOWN';
-        scanFeedback(response.outcome === 'CHECKED' ? 'success' : warning ? 'warning' : 'error');
+        const warning = ['UNEXPECTED', 'UNKNOWN', 'ADDED_OTHER_TYPE'].includes(response.outcome);
+        const success = ['CHECKED', 'ADDED', 'OPENED'].includes(response.outcome);
+        scanFeedback(success ? 'success' : warning ? 'warning' : 'error');
         if (response.item && response.item.expected) {
           this.focusItem(response.item);
         }
@@ -295,7 +355,7 @@ export class InspectionPage implements OnInit, OnDestroy {
       next: (updated) => {
         this.busy.delete(item.uuid);
         this.replaceItem(updated);
-        if (next === 'PRESENT' && this.fieldsFor(updated).length) {
+        if (next !== 'PENDING' && next !== 'MISSING' && this.fieldsFor(updated).length) {
           this.expanded.add(updated.uuid);
         }
       },
@@ -357,7 +417,9 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected async removeUnexpected(item: InspectionItem): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eintrag entfernen?',
-      message: `„${item.assetName}“ wird aus dieser Prüfung entfernt (z. B. weil versehentlich gescannt).`,
+      message: this.isCheck
+        ? `„${item.assetName}“ wird aus dieser Prüfung entfernt.`
+        : `„${item.assetName}“ wird aus dieser Prüfung entfernt (z. B. weil versehentlich gescannt).`,
       confirmLabel: 'Entfernen',
       danger: true,
     });
@@ -433,6 +495,10 @@ export class InspectionPage implements OnInit, OnDestroy {
         return 'Da';
       case 'MISSING':
         return 'Fehlt';
+      case 'PASSED':
+        return 'In Ordnung';
+      case 'FAILED':
+        return 'Mangel';
       default:
         return this.open ? 'Offen' : 'Nicht geprüft';
     }
@@ -453,6 +519,9 @@ export class InspectionPage implements OnInit, OnDestroy {
       next: (detail) => {
         this.detail = detail;
         this.loading = false;
+        if (this.isCheck && this.open && !this.addableAssets.length) {
+          this.inventory.list<InventoryItem>('assets').subscribe({ next: (assets) => (this.addableAssets = assets) });
+        }
         setTimeout(() => this.scanInput?.nativeElement.focus());
       },
       error: () => {

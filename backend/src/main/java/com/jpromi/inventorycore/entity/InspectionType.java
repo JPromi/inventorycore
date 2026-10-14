@@ -2,15 +2,25 @@ package com.jpromi.inventorycore.entity;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+
+import com.jpromi.inventorycore.enums.InspectionMode;
+import com.jpromi.inventorycore.enums.IntervalUnit;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
@@ -51,6 +61,26 @@ public class InspectionType {
 
     private String color;
 
+    /** Null for rows created before modes existed; see {@link #getMode()}. */
+    @Enumerated(EnumType.STRING)
+    private InspectionMode mode;
+
+    /** Repeat every {@code intervalValue} {@code intervalUnit}; both null = no recurring inspection. */
+    private Integer intervalValue;
+
+    @Enumerated(EnumType.STRING)
+    private IntervalUnit intervalUnit;
+
+    /** Asset types this inspection is for; empty = all assets. */
+    @ManyToMany
+    @JoinTable(
+        name = "inspection_type_asset_types",
+        joinColumns = @JoinColumn(name = "inspection_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "asset_type_id")
+    )
+    @Builder.Default
+    private Set<AssetType> assetTypes = new HashSet<>();
+
     @OneToMany(mappedBy = "inspectionType", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC, id ASC")
     @Builder.Default
@@ -64,5 +94,18 @@ public class InspectionType {
         if (uuid == null) {
             uuid = UUID.randomUUID();
         }
+    }
+
+    public InspectionMode getMode() {
+        return mode == null ? InspectionMode.INVENTORY : mode;
+    }
+
+    public boolean isRecurring() {
+        return intervalValue != null && intervalValue > 0 && intervalUnit != null;
+    }
+
+    /** Whether assets of this type need this inspection. */
+    public boolean appliesTo(AssetType assetType) {
+        return assetTypes.isEmpty() || (assetType != null && assetTypes.stream().anyMatch(type -> type.getId().equals(assetType.getId())));
     }
 }

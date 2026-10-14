@@ -50,6 +50,13 @@
                             }
                         </div>
                     </div>
+                    <div class="chip-list">
+                        <span class="badge">{{ type.mode === 'CHECK' ? 'Einzelprüfung' : 'Inventur' }}</span>
+                        @if (type.intervalValue) {
+                            <span class="badge accent">{{ intervalText(type.intervalValue, type.intervalUnit) }}</span>
+                        }
+                        <span class="badge">{{ type.assetTypeNames.length ? type.assetTypeNames.join(', ') : 'Alle Assets' }}</span>
+                    </div>
                     @if (type.description) {
                         <p class="description">{{ type.description }}</p>
                     }

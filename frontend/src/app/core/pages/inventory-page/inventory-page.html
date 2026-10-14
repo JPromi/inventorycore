@@ -149,7 +149,14 @@
                         <span class="tag-color" [style.background]="item.color || 'var(--text-subtle)'"></span>
                     }
                     <div class="item-main">
-                        <strong>{{ item.name }}</strong>
+                        <strong>
+                            {{ item.name }}
+                            @if (dueByAsset.get(item.uuid); as due) {
+                                <span class="due-badge" [class.overdue]="due.state === 'OVERDUE'" [title]="dueTitle(due)">
+                                    {{ due.state === 'OVERDUE' ? 'Prüfung überfällig' : 'Prüfung fällig' }}
+                                </span>
+                            }
+                        </strong>
                         @if (itemMeta(item)) {
                             <span class="meta">{{ itemMeta(item) }}</span>
                         }

@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { LucideClipboardList, LucidePencil, LucidePlus, LucideTrash2 } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
-import { InspectionService, InspectionType } from '../../../service/inspection.service';
+import { InspectionService, InspectionType, intervalText } from '../../../service/inspection.service';
 import { PermissionService } from '../../../service/permission.service';
 
 /** Configuration list of the inspection types. */
@@ -46,6 +46,8 @@ export class InspectionTypesPage implements OnInit {
   protected get canDelete(): boolean {
     return this.permissions.can('ASSET_TYPE', 'delete');
   }
+
+  protected readonly intervalText = intervalText;
 
   protected generalFieldCount(type: InspectionType): number {
     return type.fields.filter((field) => !field.assetTypeUuid).length;

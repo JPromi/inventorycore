@@ -32,6 +32,9 @@ public class SchemaMigration implements CommandLineRunner {
             }
         }
 
+        // enum check constraints created by Hibernate do not know newly added values
+        jdbc.execute("alter table if exists inspection_items drop constraint if exists inspection_items_status_check");
+
         if (!tableExists("group_permissions")) {
             return;
         }

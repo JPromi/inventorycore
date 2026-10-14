@@ -49,6 +49,23 @@
     }
 }
 
+.due-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.5rem;
+}
+
+.due-days {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--text-muted);
+    font-size: .88rem;
+
+    input { width: 4.5rem; }
+}
+
 .start-bar {
     position: sticky;
     bottom: .75rem;
