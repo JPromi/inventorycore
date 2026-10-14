@@ -1,6 +1,7 @@
 package com.jpromi.inventorycore.dto;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public record LocationRequest(
@@ -8,5 +9,6 @@ public record LocationRequest(
     String description,
     String address,
     UUID parentLocationUuid,
-    List<LocationImageRequest> images
+    List<LocationImageRequest> images,
+    Set<UUID> areaUuids
 ) {}

@@ -5,6 +5,8 @@ import java.text.Normalizer;
 import java.util.Locale;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,7 @@ import com.jpromi.inventorycore.dto.LocationRequest;
 import com.jpromi.inventorycore.dto.LocationResponse;
 import com.jpromi.inventorycore.dto.TagRequest;
 import com.jpromi.inventorycore.dto.TagResponse;
+import com.jpromi.inventorycore.entity.Area;
 import com.jpromi.inventorycore.entity.Asset;
 import com.jpromi.inventorycore.entity.AssetFieldDefinition;
 import com.jpromi.inventorycore.entity.AssetFieldValue;
@@ -41,13 +44,18 @@ import com.jpromi.inventorycore.entity.AssetTypeImage;
 import com.jpromi.inventorycore.entity.Location;
 import com.jpromi.inventorycore.entity.LocationImage;
 import com.jpromi.inventorycore.entity.Tag;
+import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
+import com.jpromi.inventorycore.repository.AreaRepository;
 import com.jpromi.inventorycore.repository.AssetRepository;
 import com.jpromi.inventorycore.repository.AssetTypeRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
 import com.jpromi.inventorycore.repository.TagRepository;
+import com.jpromi.inventorycore.service.AccessContext;
 import com.jpromi.inventorycore.service.ApiMapper;
 import com.jpromi.inventorycore.service.PermissionService;
+
+import static com.jpromi.inventorycore.service.PermissionService.require;
 
 @RestController
 @RequestMapping("/api")
@@ -57,6 +65,7 @@ public class InventoryController {
     private final AssetTypeRepository assetTypeRepository;
     private final LocationRepository locationRepository;
     private final TagRepository tagRepository;
+    private final AreaRepository areaRepository;
     private final PermissionService permissionService;
     private final ApiMapper mapper;
 
@@ -65,6 +74,7 @@ public class InventoryController {
         AssetTypeRepository assetTypeRepository,
         LocationRepository locationRepository,
         TagRepository tagRepository,
+        AreaRepository areaRepository,
         PermissionService permissionService,
         ApiMapper mapper
     ) {
@@ -72,105 +82,138 @@ public class InventoryController {
         this.assetTypeRepository = assetTypeRepository;
         this.locationRepository = locationRepository;
         this.tagRepository = tagRepository;
+        this.areaRepository = areaRepository;
         this.permissionService = permissionService;
         this.mapper = mapper;
     }
 
+    // ---- locations ----
+
     @GetMapping("/locations")
     public List<LocationResponse> locations(Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.LOCATION, null);
-        return locationRepository.findAll().stream().map(mapper::toResponse).toList();
+        AccessContext access = permissionService.context(authentication);
+        return locationRepository.findByDeletedFalse().stream().filter(access::canViewLocation).map(mapper::toResponse).toList();
     }
 
     @GetMapping("/locations/{uuid}")
     public LocationResponse location(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.LOCATION, uuid);
-        return mapper.toResponse(locationOr404(uuid));
+        AccessContext access = permissionService.context(authentication);
+        Location location = locationOr404(uuid);
+        requireVisible(access.canViewLocation(location));
+        return mapper.toResponse(location);
     }
 
     @PostMapping("/locations")
     @ResponseStatus(HttpStatus.CREATED)
     public LocationResponse createLocation(@RequestBody LocationRequest request, Authentication authentication) {
-        permissionService.requireCreate(authentication, PermissionResourceType.LOCATION);
+        AccessContext access = permissionService.context(authentication);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        require(access.canInAll(PermissionResourceType.LOCATION, PermissionAction.CREATE, areas));
         Location location = Location.builder().build();
-        applyLocation(location, request);
+        applyLocation(access, location, request);
+        location.setAreas(areas);
         return mapper.toResponse(locationRepository.save(location));
     }
 
     @PatchMapping("/locations/{uuid}")
     public LocationResponse updateLocation(@PathVariable UUID uuid, @RequestBody LocationRequest request, Authentication authentication) {
-        permissionService.requireEdit(authentication, PermissionResourceType.LOCATION, uuid);
+        AccessContext access = permissionService.context(authentication);
         Location location = locationOr404(uuid);
-        applyLocation(location, request);
+        require(access, PermissionResourceType.LOCATION, PermissionAction.EDIT, location.getAreas());
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        requireAreaChange(access, PermissionResourceType.LOCATION, location.getAreas(), areas);
+        applyLocation(access, location, request);
+        location.setAreas(areas);
         return mapper.toResponse(locationRepository.save(location));
     }
 
     @DeleteMapping("/locations/{uuid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLocation(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireDelete(authentication, PermissionResourceType.LOCATION, uuid);
+        AccessContext access = permissionService.context(authentication);
         Location location = locationOr404(uuid);
+        require(access, PermissionResourceType.LOCATION, PermissionAction.DELETE, location.getAreas());
         location.setDeleted(true);
         location.setDeletedAt(OffsetDateTime.now());
         locationRepository.save(location);
     }
 
+    // ---- asset types ----
+
     @GetMapping("/asset-types")
     public List<AssetTypeResponse> assetTypes(Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.CATEGORY, null);
-        return assetTypeRepository.findAll().stream().map(mapper::toResponse).toList();
+        AccessContext access = permissionService.context(authentication);
+        return assetTypeRepository.findByDeletedFalse().stream().filter(access::canViewAssetType).map(mapper::toResponse).toList();
     }
 
     @GetMapping("/asset-types/{uuid}")
     public AssetTypeResponse assetType(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.CATEGORY, uuid);
-        return mapper.toResponse(assetTypeOr404(uuid));
+        AccessContext access = permissionService.context(authentication);
+        AssetType type = assetTypeOr404(uuid);
+        requireVisible(access.canViewAssetType(type));
+        return mapper.toResponse(type);
     }
 
     @PostMapping("/asset-types")
     @ResponseStatus(HttpStatus.CREATED)
     public AssetTypeResponse createAssetType(@RequestBody AssetTypeRequest request, Authentication authentication) {
-        permissionService.requireCreate(authentication, PermissionResourceType.CATEGORY);
+        AccessContext access = permissionService.context(authentication);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        require(access.canInAll(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE, areas));
         AssetType type = AssetType.builder().build();
         applyAssetType(type, request);
+        type.setAreas(areas);
         return mapper.toResponse(assetTypeRepository.save(type));
     }
 
     @PatchMapping("/asset-types/{uuid}")
     public AssetTypeResponse updateAssetType(@PathVariable UUID uuid, @RequestBody AssetTypeRequest request, Authentication authentication) {
-        permissionService.requireEdit(authentication, PermissionResourceType.CATEGORY, uuid);
+        AccessContext access = permissionService.context(authentication);
         AssetType type = assetTypeOr404(uuid);
+        require(access, PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT, type.getAreas());
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        requireAreaChange(access, PermissionResourceType.ASSET_TYPE, type.getAreas(), areas);
         applyAssetType(type, request);
+        type.setAreas(areas);
         return mapper.toResponse(assetTypeRepository.save(type));
     }
 
     @DeleteMapping("/asset-types/{uuid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAssetType(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireDelete(authentication, PermissionResourceType.CATEGORY, uuid);
+        AccessContext access = permissionService.context(authentication);
         AssetType type = assetTypeOr404(uuid);
+        require(access, PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE, type.getAreas());
         type.setDeleted(true);
         type.setDeletedAt(OffsetDateTime.now());
         assetTypeRepository.save(type);
     }
 
+    // ---- tags (global, not bound to areas) ----
+
     @GetMapping("/tags")
     public List<TagResponse> tags(Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.CATEGORY, null);
+        permissionService.context(authentication);
         return tagRepository.findAll().stream().map(mapper::toResponse).toList();
     }
 
     @PostMapping("/tags")
     @ResponseStatus(HttpStatus.CREATED)
     public TagResponse createTag(@RequestBody TagRequest request, Authentication authentication) {
-        permissionService.requireCreate(authentication, PermissionResourceType.CATEGORY);
+        AccessContext access = permissionService.context(authentication);
+        // anyone who maintains assets or types may create new tags while tagging
+        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE)
+            || access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT)
+            || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.CREATE)
+            || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.EDIT));
         Tag tag = Tag.builder().name(request.name()).color(request.color()).build();
         return mapper.toResponse(tagRepository.save(tag));
     }
 
     @PatchMapping("/tags/{uuid}")
     public TagResponse updateTag(@PathVariable UUID uuid, @RequestBody TagRequest request, Authentication authentication) {
-        permissionService.requireEdit(authentication, PermissionResourceType.CATEGORY, uuid);
+        AccessContext access = permissionService.context(authentication);
+        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
         Tag tag = tagOr404(uuid);
         tag.setName(request.name());
         tag.setColor(request.color());
@@ -180,54 +223,109 @@ public class InventoryController {
     @DeleteMapping("/tags/{uuid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTag(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireDelete(authentication, PermissionResourceType.CATEGORY, uuid);
+        AccessContext access = permissionService.context(authentication);
+        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
         tagRepository.delete(tagOr404(uuid));
     }
 
+    // ---- assets ----
+
     @GetMapping("/assets")
     public List<AssetResponse> assets(Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.ASSET, null);
-        return assetRepository.findAll().stream().map(mapper::toResponse).toList();
+        AccessContext access = permissionService.context(authentication);
+        return assetRepository.findByDeletedFalse().stream().filter(access::canViewAsset).map(mapper::toResponse).toList();
     }
 
     @GetMapping("/assets/{uuid}")
     public AssetResponse asset(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireView(authentication, PermissionResourceType.ASSET, uuid);
-        return mapper.toResponse(assetOr404(uuid));
+        AccessContext access = permissionService.context(authentication);
+        Asset asset = assetOr404(uuid);
+        requireVisible(access.canViewAsset(asset));
+        return mapper.toResponse(asset);
     }
 
     @PostMapping("/assets")
     @ResponseStatus(HttpStatus.CREATED)
     public AssetResponse createAsset(@RequestBody AssetRequest request, Authentication authentication) {
-        permissionService.requireCreate(authentication, PermissionResourceType.ASSET);
+        AccessContext access = permissionService.context(authentication);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        require(access.canInAll(PermissionResourceType.ASSET, PermissionAction.CREATE, areas));
         Asset asset = Asset.builder().build();
-        applyAsset(asset, request);
+        applyAsset(access, asset, request);
+        asset.setAreas(areas);
         return mapper.toResponse(assetRepository.save(asset));
     }
 
     @PatchMapping("/assets/{uuid}")
     public AssetResponse updateAsset(@PathVariable UUID uuid, @RequestBody AssetRequest request, Authentication authentication) {
-        permissionService.requireEdit(authentication, PermissionResourceType.ASSET, uuid);
+        AccessContext access = permissionService.context(authentication);
         Asset asset = assetOr404(uuid);
-        applyAsset(asset, request);
+        require(access, PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas());
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        requireAreaChange(access, PermissionResourceType.ASSET, asset.getAreas(), areas);
+        applyAsset(access, asset, request);
+        asset.setAreas(areas);
         return mapper.toResponse(assetRepository.save(asset));
     }
 
     @DeleteMapping("/assets/{uuid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAsset(@PathVariable UUID uuid, Authentication authentication) {
-        permissionService.requireDelete(authentication, PermissionResourceType.ASSET, uuid);
+        AccessContext access = permissionService.context(authentication);
         Asset asset = assetOr404(uuid);
+        require(access, PermissionResourceType.ASSET, PermissionAction.DELETE, asset.getAreas());
         asset.setDeleted(true);
         asset.setDeletedAt(OffsetDateTime.now());
         assetRepository.save(asset);
     }
 
-    private void applyLocation(Location location, LocationRequest request) {
+    // ---- areas & access helpers ----
+
+    /** Requested areas, or the default area when none were chosen. */
+    private Set<Area> resolveAreas(Set<UUID> areaUuids) {
+        Set<Area> areas = new HashSet<>();
+        if (areaUuids != null) {
+            areaUuids.forEach(areaUuid -> areas.add(areaRepository.findByUuid(areaUuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Area not found"))));
+        }
+        if (areas.isEmpty()) {
+            areas.add(areaRepository.findFirstByDefaultAreaTrue()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No default area configured")));
+        }
+        return areas;
+    }
+
+    /** Areas that are added or removed need edit rights in exactly those areas. */
+    private void requireAreaChange(AccessContext access, PermissionResourceType type, Set<Area> before, Set<Area> after) {
+        Set<Long> beforeIds = before.stream().map(Area::getId).collect(Collectors.toSet());
+        Set<Long> afterIds = after.stream().map(Area::getId).collect(Collectors.toSet());
+        Set<Area> changed = new HashSet<>();
+        before.stream().filter(area -> !afterIds.contains(area.getId())).forEach(changed::add);
+        after.stream().filter(area -> !beforeIds.contains(area.getId())).forEach(changed::add);
+        require(access.canInAll(type, PermissionAction.EDIT, changed));
+    }
+
+    /** Hidden objects are reported as missing so their existence is not leaked. */
+    private void requireVisible(boolean visible) {
+        if (!visible) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found");
+        }
+    }
+
+    private void applyLocation(AccessContext access, Location location, LocationRequest request) {
         location.setName(request.name());
         location.setDescription(request.description());
         location.setAddress(request.address());
-        location.setParentLocation(request.parentLocationUuid() == null ? null : locationOr404(request.parentLocationUuid()));
+        Location parent = request.parentLocationUuid() == null ? null : locationOr404(request.parentLocationUuid());
+        if (parent != null && parent != location.getParentLocation()) {
+            requireVisible(access.canViewLocation(parent));
+        }
+        for (Location current = parent; current != null; current = current.getParentLocation()) {
+            if (current == location) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Location cannot be its own parent");
+            }
+        }
+        location.setParentLocation(parent);
         location.getImages().clear();
         if (request.images() != null) {
             request.images().forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest)));
@@ -246,9 +344,13 @@ public class InventoryController {
         if (request.images() != null) {
             request.images().forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest)));
         }
+        type.setTags(new HashSet<>());
+        if (request.tagUuids() != null) {
+            request.tagUuids().forEach(tagUuid -> type.getTags().add(tagOr404(tagUuid)));
+        }
     }
 
-    private void applyAsset(Asset asset, AssetRequest request) {
+    private void applyAsset(AccessContext access, Asset asset, AssetRequest request) {
         if (request.invId() != null && !request.invId().isBlank()) {
             asset.setInvId(request.invId());
         } else if (asset.getInvId() == null || asset.getInvId().isBlank()) {
@@ -259,8 +361,19 @@ public class InventoryController {
         asset.setSerialNumber(request.serialNumber());
         asset.setInventoryNumber(request.inventoryNumber());
         asset.setInspectionIntervalDays(request.inspectionIntervalDays());
-        asset.setAssetType(request.assetTypeUuid() == null ? null : assetTypeOr404(request.assetTypeUuid()));
-        asset.setLocation(request.locationUuid() == null ? null : locationOr404(request.locationUuid()));
+
+        // newly referenced type / location must be visible to the user
+        AssetType type = request.assetTypeUuid() == null ? null : assetTypeOr404(request.assetTypeUuid());
+        if (type != null && type != asset.getAssetType()) {
+            requireVisible(access.canViewAssetType(type));
+        }
+        asset.setAssetType(type);
+        Location location = request.locationUuid() == null ? null : locationOr404(request.locationUuid());
+        if (location != null && location != asset.getLocation()) {
+            requireVisible(access.canViewLocation(location));
+        }
+        asset.setLocation(location);
+
         asset.setTags(new HashSet<>());
         if (request.tagUuids() != null) {
             request.tagUuids().forEach(tagUuid -> asset.getTags().add(tagOr404(tagUuid)));

@@ -2,7 +2,7 @@
     <header>Logo</header>
     <div class="nav-groups">
         <ul class="nav-list">
-            @for (item of primaryNavItems; track item.label) {
+            @for (item of visibleNavItems; track item.label) {
                 <li>
                     @if (item.children) {
                         <button
@@ -64,6 +64,7 @@
         </ul>
     </div>
     <footer>
+        <app-area-switcher />
         <a class="user" href="#">
             <span class="avatar">{{ user?.displayName?.charAt(0) }}</span>
             <span>{{ user?.displayName }}</span>
@@ -73,3 +74,4 @@
 <main>
     <router-outlet />
 </main>
+<app-confirm-dialog />

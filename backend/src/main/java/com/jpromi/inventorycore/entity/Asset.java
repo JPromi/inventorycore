@@ -75,6 +75,15 @@ public class Asset {
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "asset_areas",
+        joinColumns = @JoinColumn(name = "asset_id"),
+        inverseJoinColumns = @JoinColumn(name = "area_id")
+    )
+    @Builder.Default
+    private Set<Area> areas = new HashSet<>();
+
     @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AssetFieldValue> fieldValues = new ArrayList<>();

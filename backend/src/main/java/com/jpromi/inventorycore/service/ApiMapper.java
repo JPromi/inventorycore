@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.HashSet;
 
 import org.springframework.stereotype.Service;
 
+import com.jpromi.inventorycore.dto.AreaResponse;
 import com.jpromi.inventorycore.dto.AssetFieldDefinitionResponse;
 import com.jpromi.inventorycore.dto.AssetFieldValueResponse;
 import com.jpromi.inventorycore.dto.AssetImageResponse;
@@ -18,6 +20,7 @@ import com.jpromi.inventorycore.dto.LocationImageResponse;
 import com.jpromi.inventorycore.dto.LocationResponse;
 import com.jpromi.inventorycore.dto.TagResponse;
 import com.jpromi.inventorycore.dto.UserResponse;
+import com.jpromi.inventorycore.entity.Area;
 import com.jpromi.inventorycore.entity.Asset;
 import com.jpromi.inventorycore.entity.AssetFieldDefinition;
 import com.jpromi.inventorycore.entity.AssetFieldValue;
@@ -59,13 +62,26 @@ public class ApiMapper {
         return new GroupPermissionResponse(
             permission.getUuid(),
             permission.getResourceType(),
-            permission.getResourceUuid(),
+            permission.getArea() == null ? null : permission.getArea().getUuid(),
             permission.isCanView(),
             permission.isCanEdit(),
             permission.isCanInspect(),
             permission.isCanDelete(),
             permission.isAdmin(),
             permission.isCanCreate()
+        );
+    }
+
+    public AreaResponse toResponse(Area area, Long assetCount, Long locationCount, Long assetTypeCount) {
+        return new AreaResponse(
+            area.getUuid(),
+            area.getName(),
+            area.getDescription(),
+            area.getColor(),
+            area.isDefaultArea(),
+            assetCount,
+            locationCount,
+            assetTypeCount
         );
     }
 
@@ -83,7 +99,9 @@ public class ApiMapper {
             type.getDeletedAt(),
             type.isDeleted(),
             type.getFieldDefinitions().stream().map(this::toResponse).toList(),
-            type.getImages().stream().map(this::toResponse).toList()
+            type.getImages().stream().map(this::toResponse).toList(),
+            type.getTags().stream().map(this::toResponse).toList(),
+            type.getAreas().stream().map(Area::getUuid).toList()
         );
     }
 
@@ -112,7 +130,8 @@ public class ApiMapper {
             location.getImages().stream().map(this::toResponse).toList(),
             location.getCreatedAt(),
             location.getDeletedAt(),
-            location.isDeleted()
+            location.isDeleted(),
+            location.getAreas().stream().map(Area::getUuid).toList()
         );
     }
 
@@ -121,6 +140,11 @@ public class ApiMapper {
     }
 
     public AssetResponse toResponse(Asset asset) {
+        Set<TagResponse> tags = new HashSet<>(asset.getTags().stream().map(this::toResponse).collect(Collectors.toSet()));
+        if (asset.getAssetType() != null) {
+            tags.addAll(asset.getAssetType().getTags().stream().map(this::toResponse).collect(Collectors.toSet()));
+        }
+
         return new AssetResponse(
             asset.getUuid(),
             asset.getInvId(),
@@ -131,12 +155,13 @@ public class ApiMapper {
             asset.getInspectionIntervalDays(),
             asset.getAssetType() == null ? null : asset.getAssetType().getUuid(),
             asset.getLocation() == null ? null : asset.getLocation().getUuid(),
-            asset.getTags().stream().map(this::toResponse).collect(Collectors.toSet()),
+            tags,
             asset.getFieldValues().stream().map(this::toResponse).toList(),
             asset.getImages().stream().map(this::toResponse).toList(),
             asset.getCreatedAt(),
             asset.getDeletedAt(),
-            asset.isDeleted()
+            asset.isDeleted(),
+            asset.getAreas().stream().map(Area::getUuid).collect(Collectors.toSet())
         );
     }
 

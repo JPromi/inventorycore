@@ -6,7 +6,7 @@ import com.jpromi.inventorycore.enums.PermissionResourceType;
 
 public record GroupPermissionRequest(
     PermissionResourceType resourceType,
-    UUID resourceUuid,
+    UUID areaUuid,
     boolean canView,
     boolean canEdit,
     boolean canInspect,

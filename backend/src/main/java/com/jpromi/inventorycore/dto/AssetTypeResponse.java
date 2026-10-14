@@ -13,5 +13,7 @@ public record AssetTypeResponse(
     OffsetDateTime deletedAt,
     boolean deleted,
     List<AssetFieldDefinitionResponse> fieldDefinitions,
-    List<AssetImageResponse> images
+    List<AssetImageResponse> images,
+    List<TagResponse> tags,
+    List<UUID> areaUuids
 ) {}

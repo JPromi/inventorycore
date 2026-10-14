@@ -26,6 +26,7 @@ import com.jpromi.inventorycore.dto.AuthLoginRequest;
 import com.jpromi.inventorycore.dto.AuthResponse;
 import com.jpromi.inventorycore.entity.User;
 import com.jpromi.inventorycore.repository.AppUserRepository;
+import com.jpromi.inventorycore.service.ApiMapper;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,11 +34,13 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final AppUserRepository userRepository;
+    private final ApiMapper mapper;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
-    public AuthController(AuthenticationManager authenticationManager, AppUserRepository userRepository) {
+    public AuthController(AuthenticationManager authenticationManager, AppUserRepository userRepository, ApiMapper mapper) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
+        this.mapper = mapper;
     }
 
     @PostMapping
@@ -70,17 +73,7 @@ public class AuthController {
                 .role(role)
                 .permissions(user.getGroups().stream()
                     .flatMap(group -> group.getPermissions().stream())
-                    .map(permission -> new com.jpromi.inventorycore.dto.GroupPermissionResponse(
-                        permission.getUuid(),
-                        permission.getResourceType(),
-                        permission.getResourceUuid(),
-                        permission.isCanView(),
-                        permission.isCanEdit(),
-                        permission.isCanInspect(),
-                        permission.isCanDelete(),
-                        permission.isAdmin(),
-                        permission.isCanCreate()
-                    ))
+                    .map(mapper::toResponse)
                     .collect(Collectors.toSet()))
                 .build());
         } catch (BadCredentialsException exception) {
@@ -114,17 +107,7 @@ public class AuthController {
             .role(user.getRole())
             .permissions(user.getGroups().stream()
                 .flatMap(group -> group.getPermissions().stream())
-                .map(permission -> new com.jpromi.inventorycore.dto.GroupPermissionResponse(
-                    permission.getUuid(),
-                    permission.getResourceType(),
-                    permission.getResourceUuid(),
-                    permission.isCanView(),
-                    permission.isCanEdit(),
-                    permission.isCanInspect(),
-                    permission.isCanDelete(),
-                    permission.isAdmin(),
-                    permission.isCanCreate()
-                ))
+                .map(mapper::toResponse)
                 .collect(Collectors.toSet()))
             .build();
     }

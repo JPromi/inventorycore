@@ -15,5 +15,6 @@ public record AssetRequest(
     UUID locationUuid,
     Set<UUID> tagUuids,
     List<AssetFieldValueRequest> fieldValues,
-    List<AssetImageRequest> images
+    List<AssetImageRequest> images,
+    Set<UUID> areaUuids
 ) {}

@@ -3,6 +3,8 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 
 import { filter } from 'rxjs';
 
+import { AreaSwitcher } from '../../components/area-switcher/area-switcher';
+import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
 import { UserEntity } from '../../entities/user.entity';
 import { AuthStateService } from '../../service/auth-state.service';
 import { CommonModule } from '@angular/common';
@@ -17,6 +19,7 @@ import {
   LucideFileText,
   LucideHouse,
   LucideKeyRound,
+  LucideLayers,
   LucideMapPin,
   LucideSettings,
   LucideShapes,
@@ -36,6 +39,7 @@ type NavChild = {
 type NavItem = NavChild & {
   icon?: LucideIcon;
   disabled?: boolean;
+  adminOnly?: boolean;
   children?: NavChild[];
   items?: NavChild[];
 };
@@ -47,6 +51,8 @@ type NavItem = NavChild & {
     CommonModule,
     RouterLink,
     RouterLinkActive,
+    ConfirmDialog,
+    AreaSwitcher,
     LucideChevronDown
   ],
   templateUrl: './main-route.html',
@@ -60,7 +66,6 @@ export class MainRoute implements OnInit {
   protected readonly primaryNavItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: LucideHouse },
     { label: 'Inventar', route: '/assets', icon: LucideBoxes },
-    { label: 'Kategorien', route: '/categories', icon: LucideShapes },
     { label: 'Standorte', route: '/locations', icon: LucideMapPin },
     { label: 'Prüfungen', route: '/reports', icon: LucideClipboardCheck },
     {
@@ -78,7 +83,9 @@ export class MainRoute implements OnInit {
       label: 'Administration',
       icon: LucideUsers,
       disabled: false,
+      adminOnly: true,
       children: [
+        { label: 'Bereiche', route: '/admin/areas', icon: LucideLayers },
         { label: 'Benutzer', route: '/admin/users', icon: LucideUser },
         { label: 'Gruppen', route: '/admin/groups', icon: LucideUsers },
         { label: 'Gruppen Berechtigungen', route: '/admin/group-permissions', icon: LucideShield },
@@ -86,6 +93,11 @@ export class MainRoute implements OnInit {
       ],
     },
   ];
+
+  protected get visibleNavItems(): NavItem[] {
+    const isAdmin = this.user?.role?.toUpperCase() === 'ADMIN';
+    return this.primaryNavItems.filter((item) => !item.adminOnly || isAdmin);
+  }
 
   constructor(
     private readonly authStateService: AuthStateService,

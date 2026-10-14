@@ -4,14 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideImagePlus, LucidePlus, LucideSave, LucideTrash2, type LucideIcon } from '@lucide/angular';
 
+import { MultiSelect } from '../../components/multi-select/multi-select';
+import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
+
 import { PermissionResourceType } from '../../entities/user.entity';
-import { InventoryApiService, InventoryItem, InventoryRequest } from '../../service/inventory-api.service';
+import { AreaService } from '../../service/area.service';
+import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
+import { locationPath, locationWithDescendants } from '../../util/location-utils';
 
 interface FormConfig {
   title: string;
   endpoint: string;
   listRoute: string;
+  detailRoutePrefix?: string;
   resourceType: PermissionResourceType;
   icon: LucideIcon;
   fields: FieldConfig[];
@@ -19,6 +25,9 @@ interface FormConfig {
   images?: boolean;
   autoInvId?: boolean;
   selectAssetType?: boolean;
+  selectLocation?: boolean;
+  selectParentLocation?: boolean;
+  tags?: boolean;
 }
 
 interface FieldConfig {
@@ -30,7 +39,7 @@ interface FieldConfig {
 
 @Component({
   selector: 'app-inventory-form-page',
-  imports: [CommonModule, FormsModule, RouterLink, LucideArrowLeft, LucideImagePlus, LucidePlus, LucideSave, LucideTrash2],
+  imports: [CommonModule, FormsModule, RouterLink, MultiSelect, SearchSelect, LucideArrowLeft, LucideImagePlus, LucidePlus, LucideSave, LucideTrash2],
   templateUrl: './inventory-form-page.html',
   styleUrl: './inventory-form-page.scss',
 })
@@ -42,12 +51,23 @@ export class InventoryFormPage implements OnInit {
   protected error = '';
   protected form: InventoryRequest = this.emptyForm();
   protected assetTypes: InventoryItem[] = [];
+  protected locations: InventoryItem[] = [];
+  protected tags: TagItem[] = [];
+  protected selectedTagUuids: string[] = [];
+  protected lockedTags: TagItem[] = [];
+  protected saving = false;
+  /** Areas the user may change on this object. */
+  protected selectedAreaUuids: string[] = [];
+  /** Assigned areas the user has no rights in; they are kept unchanged. */
+  protected lockedAreaUuids: string[] = [];
+  private originalAreaUuids: string[] = [];
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly api: InventoryApiService,
     protected readonly permissions: PermissionService,
+    private readonly areaService: AreaService,
   ) {}
 
   ngOnInit(): void {
@@ -55,12 +75,23 @@ export class InventoryFormPage implements OnInit {
       this.config = data['inventoryFormConfig'];
       this.uuid = this.route.snapshot.paramMap.get('uuid');
       this.form = this.emptyForm();
+      this.originalAreaUuids = [];
+      this.lockedAreaUuids = [];
+      this.selectedAreaUuids = [];
 
       if (this.uuid) {
         this.load(this.uuid);
+      } else {
+        this.areaService.load().subscribe(() => (this.selectedAreaUuids = this.initialAreas()));
       }
       if (this.config.selectAssetType) {
         this.loadAssetTypes();
+      }
+      if (this.config.tags) {
+        this.loadTags();
+      }
+      if (this.config.selectLocation || this.config.selectParentLocation) {
+        this.loadLocations();
       }
     });
   }
@@ -71,14 +102,54 @@ export class InventoryFormPage implements OnInit {
 
   protected get canSave(): boolean {
     return this.uuid
-      ? this.permissions.can(this.config.resourceType, 'edit', this.uuid)
+      ? this.permissions.can(this.config.resourceType, 'edit', this.originalAreaUuids)
       : this.permissions.can(this.config.resourceType, 'create');
   }
 
+  /** New objects need create rights in the area, existing ones edit rights. */
+  private get areaAction(): 'create' | 'edit' {
+    return this.uuid ? 'edit' : 'create';
+  }
+
+  protected get areaOptions(): SelectOption[] {
+    return this.areaService.areas
+      .filter((area) => this.permissions.canInArea(this.config.resourceType, this.areaAction, area.uuid))
+      .map((area) => ({ value: area.uuid, label: area.name, color: area.color, hint: area.defaultArea ? 'Standardbereich' : undefined }));
+  }
+
+  protected get lockedAreaOptions(): SelectOption[] {
+    return this.lockedAreaUuids.map((uuid) => ({ value: uuid, label: this.areaService.name(uuid) }));
+  }
+
+  /** Preselect the areas from the sidebar filter, otherwise the default area. */
+  private initialAreas(): string[] {
+    const allowed = new Set(this.areaOptions.map((option) => option.value));
+    const fromFilter = this.areaService.selected.filter((uuid) => allowed.has(uuid));
+    if (fromFilter.length) {
+      return fromFilter;
+    }
+    const defaultArea = this.areaService.defaultArea;
+    if (defaultArea && allowed.has(defaultArea.uuid)) {
+      return [defaultArea.uuid];
+    }
+    return this.areaOptions.slice(0, 1).map((option) => option.value);
+  }
+
+  /** Where "back" and "cancel" lead: the detail page when editing, otherwise the list. */
+  protected get backRoute(): string[] {
+    return this.uuid && this.config.detailRoutePrefix ? [this.config.detailRoutePrefix, this.uuid] : [this.config.listRoute];
+  }
+
   protected save(): void {
-    if (!this.canSave) {
+    if (!this.canSave || this.saving) {
       return;
     }
+    if (!this.selectedAreaUuids.length && !this.lockedAreaUuids.length) {
+      this.error = 'Bitte mindestens einen Bereich auswählen.';
+      return;
+    }
+    this.saving = true;
+    this.error = '';
 
     const request = this.normalizeRequest(this.form);
     const save$ = this.uuid
@@ -86,9 +157,13 @@ export class InventoryFormPage implements OnInit {
       : this.api.create(this.config.endpoint, request);
 
     save$.subscribe({
-      next: () => this.router.navigate([this.config.listRoute]),
+      next: (saved) => {
+        this.saving = false;
+        this.router.navigate(this.config.detailRoutePrefix ? [this.config.detailRoutePrefix, saved.uuid] : [this.config.listRoute]);
+      },
       error: () => {
-        this.error = 'Speichern fehlgeschlagen.';
+        this.saving = false;
+        this.error = 'Speichern fehlgeschlagen. Bitte Eingaben prüfen.';
       },
     });
   }
@@ -108,10 +183,21 @@ export class InventoryFormPage implements OnInit {
           inventoryNumber: item.inventoryNumber ?? '',
           inspectionIntervalDays: item.inspectionIntervalDays ?? null,
           assetTypeUuid: item.assetTypeUuid ?? null,
+          locationUuid: item.locationUuid ?? null,
+          parentLocationUuid: item.parentLocationUuid ?? null,
           fieldDefinitions: item.fieldDefinitions ?? [],
           fieldValues: item.fieldValues ?? [],
           images: item.images ?? [],
+          tagUuids: [],
         };
+        this.selectedTagUuids = (item.tags ?? []).map((tag) => tag.uuid);
+        this.originalAreaUuids = item.areaUuids ?? [];
+        this.areaService.load().subscribe(() => {
+          const editable = new Set(this.areaOptions.map((option) => option.value));
+          this.selectedAreaUuids = this.originalAreaUuids.filter((uuid) => editable.has(uuid));
+          this.lockedAreaUuids = this.originalAreaUuids.filter((uuid) => !editable.has(uuid));
+        });
+        this.applySelectedAssetType(false);
         this.loading = false;
       },
       error: () => {
@@ -132,9 +218,12 @@ export class InventoryFormPage implements OnInit {
       inventoryNumber: '',
       inspectionIntervalDays: null,
       assetTypeUuid: null,
+      locationUuid: null,
+      parentLocationUuid: null,
       fieldDefinitions: [],
       fieldValues: [],
       images: [],
+      tagUuids: [],
     };
   }
 
@@ -149,9 +238,13 @@ export class InventoryFormPage implements OnInit {
       inventoryNumber: request.inventoryNumber || null,
       inspectionIntervalDays: request.inspectionIntervalDays ?? null,
       assetTypeUuid: request.assetTypeUuid || null,
+      locationUuid: request.locationUuid || null,
+      parentLocationUuid: request.parentLocationUuid || null,
       fieldDefinitions: request.fieldDefinitions ?? [],
       fieldValues: request.fieldValues ?? [],
       images: request.images?.filter((image) => image.url?.trim()) ?? [],
+      tagUuids: this.config.tags ? this.selectedTagUuids : [],
+      areaUuids: [...new Set([...this.lockedAreaUuids, ...this.selectedAreaUuids])],
     };
   }
 
@@ -164,7 +257,7 @@ export class InventoryFormPage implements OnInit {
   }
 
   protected addCustomField(): void {
-    if (this.config.resourceType === 'CATEGORY') {
+    if (this.config.resourceType === 'ASSET_TYPE') {
       this.form.fieldDefinitions = [
         ...(this.form.fieldDefinitions ?? []),
         {
@@ -192,7 +285,7 @@ export class InventoryFormPage implements OnInit {
   }
 
   protected removeCustomField(index: number): void {
-    if (this.config.resourceType === 'CATEGORY') {
+    if (this.config.resourceType === 'ASSET_TYPE') {
       this.form.fieldDefinitions = (this.form.fieldDefinitions ?? []).filter((_, fieldIndex) => fieldIndex !== index);
       return;
     }
@@ -217,21 +310,73 @@ export class InventoryFormPage implements OnInit {
     this.form.images = (this.form.images ?? []).filter((_, imageIndex) => imageIndex !== index);
   }
 
+  protected get locationOptions(): SelectOption[] {
+    const excluded = this.config.selectParentLocation && this.uuid ? locationWithDescendants(this.locations, this.uuid) : new Set<string>();
+    return this.locations
+      .filter((location) => !excluded.has(location.uuid))
+      .map((location) => ({ value: location.uuid, label: locationPath(this.locations, location), hint: location.address ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get assetTypeOptions(): SelectOption[] {
+    return this.assetTypes.map((type) => ({ value: type.uuid, label: type.name, hint: type.description ?? undefined }));
+  }
+
+  protected get tagOptions(): SelectOption[] {
+    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+  }
+
+  protected get lockedTagOptions(): SelectOption[] {
+    return this.lockedTags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+  }
+
+  protected createTag(name: string): void {
+    this.api.create<TagItem>('tags', { name }).subscribe({
+      next: (tag) => {
+        this.tags = [...this.tags, tag].sort((a, b) => a.name.localeCompare(b.name));
+        this.selectedTagUuids = [...this.selectedTagUuids, tag.uuid];
+      },
+      error: () => {
+        this.error = 'Tag konnte nicht erstellt werden.';
+      },
+    });
+  }
+
   protected selectAssetType(assetTypeUuid: string | null): void {
     this.form.assetTypeUuid = assetTypeUuid;
-    const customFields = (this.form.fieldValues ?? []).filter((field) => field.customAssetField);
+    this.applySelectedAssetType(true);
+  }
+
+  private applySelectedAssetType(resetFields: boolean): void {
+    if (!this.config.selectAssetType) {
+      return;
+    }
+
+    const assetTypeUuid = this.form.assetTypeUuid ?? null;
     const assetType = this.assetTypes.find((type) => type.uuid === assetTypeUuid);
+    const customFields = (this.form.fieldValues ?? []).filter((field) => field.customAssetField);
     if (!assetType) {
       this.form.fieldValues = customFields;
+      this.lockedTags = [];
       return;
     }
 
     this.form.inspectionIntervalDays = assetType.inspectionIntervalDays ?? this.form.inspectionIntervalDays;
+    this.lockedTags = assetType.tags ?? [];
+    const lockedUuids = new Set(this.lockedTags.map((tag) => tag.uuid));
+    this.selectedTagUuids = this.selectedTagUuids.filter((uuid) => !lockedUuids.has(uuid));
+
+    const currentValues = new Map(
+      (this.form.fieldValues ?? [])
+        .filter((field) => !field.customAssetField)
+        .map((field) => [field.fieldKey ?? field.name, field.value ?? '']),
+    );
+
     this.form.fieldValues = [
       ...(assetType.fieldDefinitions ?? []).map((definition) => ({
         fieldKey: definition.fieldKey,
         name: definition.name,
-        value: '',
+        value: resetFields ? '' : currentValues.get(definition.fieldKey ?? definition.name) ?? '',
         customAssetField: false,
       })),
       ...customFields,
@@ -242,9 +387,32 @@ export class InventoryFormPage implements OnInit {
     this.api.list<InventoryItem>('asset-types').subscribe({
       next: (types) => {
         this.assetTypes = types;
+        this.applySelectedAssetType(false);
       },
       error: () => {
         this.error = 'Typen konnten nicht geladen werden.';
+      },
+    });
+  }
+
+  private loadLocations(): void {
+    this.api.list<InventoryItem>('locations').subscribe({
+      next: (locations) => {
+        this.locations = locations;
+      },
+      error: () => {
+        this.error = 'Standorte konnten nicht geladen werden.';
+      },
+    });
+  }
+
+  private loadTags(): void {
+    this.api.list<TagItem>('tags').subscribe({
+      next: (tags) => {
+        this.tags = tags.sort((a, b) => a.name.localeCompare(b.name));
+      },
+      error: () => {
+        this.error = 'Tags konnten nicht geladen werden.';
       },
     });
   }

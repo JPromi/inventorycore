@@ -15,9 +15,16 @@ export interface InventoryItem {
   inventoryNumber?: string | null;
   inspectionIntervalDays?: number | null;
   assetTypeUuid?: string | null;
+  locationUuid?: string | null;
+  parentLocationUuid?: string | null;
   fieldDefinitions?: CustomFieldDefinition[];
   fieldValues?: CustomFieldValue[];
   images?: InventoryImage[];
+  tags?: TagItem[];
+  childLocationUuids?: string[];
+  assetUuids?: string[];
+  createdAt?: string | null;
+  areaUuids?: string[];
 }
 
 export interface InventoryRequest {
@@ -30,9 +37,13 @@ export interface InventoryRequest {
   inventoryNumber?: string | null;
   inspectionIntervalDays?: number | null;
   assetTypeUuid?: string | null;
+  locationUuid?: string | null;
+  parentLocationUuid?: string | null;
   fieldDefinitions?: CustomFieldDefinition[];
   fieldValues?: CustomFieldValue[];
   images?: InventoryImage[];
+  tagUuids?: string[];
+  areaUuids?: string[];
 }
 
 export type AssetFieldType = 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'DATE' | 'DATETIME' | 'URL' | 'EMAIL' | 'SELECT';
@@ -61,6 +72,12 @@ export interface InventoryImage {
   fileName?: string | null;
   contentType?: string | null;
   sortOrder: number;
+}
+
+export interface TagItem {
+  uuid: string;
+  name: string;
+  color?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

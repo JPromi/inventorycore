@@ -20,5 +20,6 @@ public record AssetResponse(
     List<AssetImageResponse> images,
     OffsetDateTime createdAt,
     OffsetDateTime deletedAt,
-    boolean deleted
+    boolean deleted,
+    Set<UUID> areaUuids
 ) {}

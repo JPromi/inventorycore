@@ -1,0 +1,118 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ filteredUsers.length }} von {{ users.length }} Benutzern</p>
+            <h1>
+                <svg lucideUser size="20"></svg>
+                <span>Benutzer</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="primary-action" (click)="create()">
+                <svg lucideUserPlus size="17"></svg>
+                <span>Neuer Benutzer</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" placeholder="Name, Benutzername oder E-Mail suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+        <app-search-select
+            class="filter-select"
+            [options]="groupOptions"
+            [(ngModel)]="groupFilter"
+            placeholder="Alle Gruppen"
+            clearLabel="Alle Gruppen"
+            searchPlaceholder="Gruppe suchen..."
+        />
+        <app-search-select
+            class="filter-select"
+            [options]="statusOptions"
+            [(ngModel)]="statusFilter"
+            placeholder="Alle Status"
+            clearLabel="Alle Status"
+        />
+        @if (hasActiveFilters) {
+            <button type="button" class="secondary-action compact" (click)="resetFilters()">Zurücksetzen</button>
+        }
+    </div>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Benutzer...</p>
+    } @else if (!filteredUsers.length) {
+        <div class="empty-state">Keine Benutzer gefunden.</div>
+    } @else {
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Benutzer</th>
+                        <th>E-Mail</th>
+                        <th>Gruppen</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (user of filteredUsers; track user.uuid) {
+                        <tr class="clickable" (click)="edit(user)">
+                            <td>
+                                <div class="user-cell">
+                                    <span class="avatar">{{ (user.displayName || user.username).charAt(0).toUpperCase() }}</span>
+                                    <span>
+                                        <strong>{{ user.displayName || user.username }}</strong>
+                                        <span class="muted">{{ user.username }}@if (isSelf(user)) { · Du}</span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td>{{ user.email || '—' }}</td>
+                            <td>
+                                <div class="chip-list">
+                                    @for (name of groupNames(user); track name) {
+                                        <span class="chip">{{ name }}</span>
+                                    } @empty {
+                                        <span class="muted">Keine</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="chip-list">
+                                    @if (isAdmin(user)) {
+                                        <span class="badge accent">Admin</span>
+                                    }
+                                    @if (user.enabled) {
+                                        <span class="badge success">Aktiv</span>
+                                    } @else {
+                                        <span class="badge">Deaktiviert</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="actions">
+                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(user)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                                @if (!isSelf(user)) {
+                                    <button type="button" class="icon-button danger" title="Löschen" (click)="remove(user, $event)">
+                                        <svg lucideTrash2 size="15"></svg>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

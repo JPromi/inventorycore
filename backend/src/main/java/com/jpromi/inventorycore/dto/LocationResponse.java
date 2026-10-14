@@ -15,5 +15,6 @@ public record LocationResponse(
     List<LocationImageResponse> images,
     OffsetDateTime createdAt,
     OffsetDateTime deletedAt,
-    boolean deleted
+    boolean deleted,
+    List<UUID> areaUuids
 ) {}

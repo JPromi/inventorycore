@@ -1,0 +1,77 @@
+<button
+    type="button"
+    class="trigger"
+    [class.open]="open"
+    [class.placeholder]="!selected"
+    [disabled]="disabled"
+    (click)="toggle()"
+    (keydown)="onTriggerKeydown($event)"
+    [attr.aria-expanded]="open"
+    aria-haspopup="listbox"
+>
+    @if (selected?.color) {
+        <span class="dot" [style.background]="selected?.color"></span>
+    }
+    <span class="label">{{ selected?.label ?? placeholder }}</span>
+    @if (selected && clearLabel !== null) {
+        <span class="clear" role="button" title="Auswahl entfernen" (click)="clear($event)">
+            <svg lucideX size="14"></svg>
+        </span>
+    }
+    <svg class="chevron" lucideChevronDown size="16"></svg>
+</button>
+
+@if (open) {
+    <div class="panel">
+        <div class="panel-search">
+            <svg lucideSearch size="15"></svg>
+            <input
+                #searchInput
+                type="text"
+                [value]="query"
+                (input)="onQueryChange(searchInput.value)"
+                (keydown)="onKeydown($event)"
+                [placeholder]="searchPlaceholder"
+                aria-label="Optionen durchsuchen"
+            />
+        </div>
+        <ul class="options" role="listbox">
+            @if (clearLabel !== null && !query) {
+                <li>
+                    <button type="button" class="option empty-option" [class.selected]="!value" (click)="select(null)">
+                        <span class="label">{{ clearLabel }}</span>
+                    </button>
+                </li>
+            }
+            @for (option of filtered; track option.value; let index = $index) {
+                <li>
+                    <button
+                        type="button"
+                        class="option"
+                        role="option"
+                        [class.active]="index === activeIndex"
+                        [class.selected]="option.value === value"
+                        [attr.aria-selected]="option.value === value"
+                        (mouseenter)="activeIndex = index"
+                        (click)="select(option.value)"
+                    >
+                        @if (option.color) {
+                            <span class="dot" [style.background]="option.color"></span>
+                        }
+                        <span class="label">
+                            {{ option.label }}
+                            @if (option.hint) {
+                                <small>{{ option.hint }}</small>
+                            }
+                        </span>
+                        @if (option.value === value) {
+                            <svg class="check" lucideCheck size="15"></svg>
+                        }
+                    </button>
+                </li>
+            } @empty {
+                <li class="no-results">{{ emptyText }}</li>
+            }
+        </ul>
+    </div>
+}

@@ -1,0 +1,129 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ areas.length }} Bereiche</p>
+            <h1>
+                <svg lucideLayers size="20"></svg>
+                <span>Bereiche</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="primary-action" (click)="startCreate()" [disabled]="editing === 'new'">
+                <svg lucidePlus size="17"></svg>
+                <span>Neuer Bereich</span>
+            </button>
+        </div>
+    </header>
+
+    <p class="hint intro">
+        Inventar, Standorte und Typen werden Bereichen zugeordnet. Über die Gruppen-Berechtigungen legst du fest,
+        welche Gruppe in welchem Bereich was darf. Alles ohne Zuordnung landet im Standardbereich.
+    </p>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (editing) {
+        <form class="card editor" (ngSubmit)="save()">
+            <div class="card-title">
+                <h2>{{ editing === 'new' ? 'Neuer Bereich' : 'Bereich bearbeiten' }}</h2>
+                <button type="button" class="icon-button" title="Schließen" (click)="cancel()">
+                    <svg lucideX size="16"></svg>
+                </button>
+            </div>
+            <div class="field-grid">
+                <label class="field">
+                    <span>Name *</span>
+                    <input type="text" [(ngModel)]="form.name" name="name" required placeholder="z. B. EDV" />
+                </label>
+                <label class="field">
+                    <span>Beschreibung</span>
+                    <input type="text" [(ngModel)]="form.description" name="description" />
+                </label>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <span class="field-label">Farbe</span>
+                    <div class="colors" role="radiogroup" aria-label="Farbe">
+                        @for (color of colors; track color) {
+                            <button
+                                type="button"
+                                class="swatch"
+                                [class.active]="form.color === color"
+                                [style.background]="color"
+                                [attr.aria-label]="color"
+                                (click)="form.color = color"
+                            ></button>
+                        }
+                    </div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="form.defaultArea" name="defaultArea" [disabled]="editingDefault" />
+                    <span>Standardbereich</span>
+                </label>
+            </div>
+            @if (editingDefault) {
+                <p class="hint">Um den Standard zu wechseln, markiere einen anderen Bereich als Standardbereich.</p>
+            }
+            <div class="editor-actions">
+                <button type="button" class="secondary-action" (click)="cancel()">Abbrechen</button>
+                <button type="submit" class="primary-action" [disabled]="saving">
+                    <svg lucideSave size="16"></svg>
+                    <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+                </button>
+            </div>
+        </form>
+    }
+
+    @if (loading) {
+        <p class="empty">Lade Bereiche...</p>
+    } @else {
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Bereich</th>
+                        <th class="center">Inventar</th>
+                        <th class="center">Standorte</th>
+                        <th class="center">Typen</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (area of areas; track area.uuid) {
+                        <tr class="clickable" (click)="startEdit(area)">
+                            <td>
+                                <div class="area-cell">
+                                    <span class="area-dot" [style.background]="area.color || 'var(--text-subtle)'"></span>
+                                    <span>
+                                        <strong>{{ area.name }}</strong>
+                                        @if (area.defaultArea) {
+                                            <span class="badge accent">Standard</span>
+                                        }
+                                        @if (area.description) {
+                                            <span class="muted description">{{ area.description }}</span>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="center">{{ area.assetCount ?? 0 }}</td>
+                            <td class="center">{{ area.locationCount ?? 0 }}</td>
+                            <td class="center">{{ area.assetTypeCount ?? 0 }}</td>
+                            <td class="actions">
+                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); startEdit(area)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                                @if (!area.defaultArea) {
+                                    <button type="button" class="icon-button danger" title="Löschen" (click)="$event.stopPropagation(); remove(area)">
+                                        <svg lucideTrash2 size="15"></svg>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

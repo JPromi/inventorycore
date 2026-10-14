@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
+import { LucideBoxes, LucideMapPin, LucideShapes, LucideTags } from '@lucide/angular';
 
+import { adminGuard } from './core/guards/admin.guard';
 import { AuthGuard } from './core/guards/auth.guard';
 import { LoginRedirectGuard } from './core/guards/login-redirect.guard';
 import { InventoryFormPage } from './core/pages/inventory-form-page/inventory-form-page';
@@ -7,7 +9,61 @@ import { InventoryPage } from './core/pages/inventory-page/inventory-page';
 import { LoginPage } from './core/pages/login-page/login-page';
 import { PlaceholderPage } from './core/pages/placeholder-page/placeholder-page';
 import { MainRoute } from './core/routes/main-route/main-route';
-import { LucideBoxes, LucideMapPin, LucideShapes, LucideTags } from '@lucide/angular';
+
+const assetFormConfig = {
+  title: 'Asset',
+  endpoint: 'assets',
+  listRoute: '/assets',
+  detailRoutePrefix: '/assets',
+  resourceType: 'ASSET',
+  icon: LucideBoxes,
+  autoInvId: true,
+  selectAssetType: true,
+  selectLocation: true,
+  customFields: true,
+  images: true,
+  tags: true,
+  fields: [
+    { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+    { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
+    { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
+    { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
+  ],
+};
+
+const locationFormConfig = {
+  title: 'Standort',
+  endpoint: 'locations',
+  listRoute: '/locations',
+  detailRoutePrefix: '/locations',
+  resourceType: 'LOCATION',
+  icon: LucideMapPin,
+  selectParentLocation: true,
+  images: true,
+  fields: [
+    { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'address', label: 'Adresse', type: 'text' },
+    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+  ],
+};
+
+const assetTypeFormConfig = {
+  title: 'Typ',
+  endpoint: 'asset-types',
+  listRoute: '/config/types',
+  detailRoutePrefix: '/config/types',
+  resourceType: 'ASSET_TYPE',
+  icon: LucideShapes,
+  customFields: true,
+  images: true,
+  tags: true,
+  fields: [
+    { key: 'name', label: 'Name', type: 'text', required: true },
+    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+    { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
+  ],
+};
 
 export const routes: Routes = [
   {
@@ -20,54 +76,8 @@ export const routes: Routes = [
         pathMatch: 'full',
         redirectTo: 'dashboard',
       },
-      {
-        path: 'assets/new',
-        component: InventoryFormPage,
-        data: {
-          inventoryFormConfig: {
-            title: 'Asset',
-            endpoint: 'assets',
-            listRoute: '/assets',
-            resourceType: 'ASSET',
-            icon: LucideBoxes,
-            autoInvId: true,
-            selectAssetType: true,
-            customFields: true,
-            images: true,
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
-              { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
-            ],
-          },
-        },
-      },
-      {
-        path: 'assets/:uuid/edit',
-        component: InventoryFormPage,
-        data: {
-          inventoryFormConfig: {
-            title: 'Asset',
-            endpoint: 'assets',
-            listRoute: '/assets',
-            resourceType: 'ASSET',
-            icon: LucideBoxes,
-            autoInvId: true,
-            selectAssetType: true,
-            customFields: true,
-            images: true,
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
-              { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
-            ],
-          },
-        },
-      },
+
+      // Inventar
       {
         path: 'assets',
         component: InventoryPage,
@@ -79,17 +89,42 @@ export const routes: Routes = [
             icon: LucideBoxes,
             createRoute: '/assets/new',
             editRoutePrefix: '/assets',
+            detailRoutePrefix: '/assets',
+            filter: {
+              searchFields: ['name', 'description', 'tags'],
+              searchPlaceholder: 'Name, Beschreibung oder Tag suchen...',
+              tags: true,
+              locations: true,
+              assetTypes: true,
+            },
+            fields: assetFormConfig.fields,
+          },
+        },
+      },
+      { path: 'assets/new', component: InventoryFormPage, data: { inventoryFormConfig: assetFormConfig } },
+      { path: 'assets/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: assetFormConfig } },
+      {
+        path: 'assets/:uuid',
+        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        data: {
+          inventoryDetailConfig: {
+            title: 'Asset',
+            endpoint: 'assets',
+            listRoute: '/assets',
+            editRoutePrefix: '/assets',
+            resourceType: 'ASSET',
+            icon: LucideBoxes,
             fields: [
-              { key: 'invId', label: 'Inventar-ID', type: 'text', required: true },
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
-              { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
+              { key: 'serialNumber', label: 'Seriennummer' },
+              { key: 'inventoryNumber', label: 'Inventarnummer' },
+              { key: 'inspectionIntervalDays', label: 'Prüfintervall', suffix: ' Tage' },
+              { key: 'description', label: 'Beschreibung' },
             ],
           },
         },
       },
+
+      // Standorte
       {
         path: 'locations',
         component: InventoryPage,
@@ -99,113 +134,39 @@ export const routes: Routes = [
             endpoint: 'locations',
             resourceType: 'LOCATION',
             icon: LucideMapPin,
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'address', label: 'Adresse', type: 'text' },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-            ],
+            createRoute: '/locations/new',
+            editRoutePrefix: '/locations',
+            detailRoutePrefix: '/locations',
+            filter: {
+              searchFields: ['name', 'address'],
+              searchPlaceholder: 'Name oder Adresse suchen...',
+            },
+            fields: locationFormConfig.fields,
           },
         },
       },
+      { path: 'locations/new', component: InventoryFormPage, data: { inventoryFormConfig: locationFormConfig } },
+      { path: 'locations/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: locationFormConfig } },
       {
-        path: 'categories/new',
-        component: InventoryFormPage,
+        path: 'locations/:uuid',
+        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
         data: {
-          inventoryFormConfig: {
-            title: 'Kategorie',
-            endpoint: 'asset-types',
-            listRoute: '/categories',
-            resourceType: 'CATEGORY',
-            icon: LucideShapes,
-            customFields: true,
-            images: true,
+          inventoryDetailConfig: {
+            title: 'Standort',
+            endpoint: 'locations',
+            listRoute: '/locations',
+            editRoutePrefix: '/locations',
+            resourceType: 'LOCATION',
+            icon: LucideMapPin,
             fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
+              { key: 'address', label: 'Adresse' },
+              { key: 'description', label: 'Beschreibung' },
             ],
           },
         },
       },
-      {
-        path: 'categories/:uuid/edit',
-        component: InventoryFormPage,
-        data: {
-          inventoryFormConfig: {
-            title: 'Kategorie',
-            endpoint: 'asset-types',
-            listRoute: '/categories',
-            resourceType: 'CATEGORY',
-            icon: LucideShapes,
-            customFields: true,
-            images: true,
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
-            ],
-          },
-        },
-      },
-      {
-        path: 'categories',
-        component: InventoryPage,
-        data: {
-          inventoryConfig: {
-            title: 'Kategorien',
-            endpoint: 'asset-types',
-            resourceType: 'CATEGORY',
-            icon: LucideShapes,
-            createRoute: '/categories/new',
-            editRoutePrefix: '/categories',
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
-            ],
-          },
-        },
-      },
-      {
-        path: 'config/types/new',
-        component: InventoryFormPage,
-        data: {
-          inventoryFormConfig: {
-            title: 'Typ',
-            endpoint: 'asset-types',
-            listRoute: '/config/types',
-            resourceType: 'CATEGORY',
-            icon: LucideShapes,
-            customFields: true,
-            images: true,
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
-            ],
-          },
-        },
-      },
-      {
-        path: 'config/types/:uuid/edit',
-        component: InventoryFormPage,
-        data: {
-          inventoryFormConfig: {
-            title: 'Typ',
-            endpoint: 'asset-types',
-            listRoute: '/config/types',
-            resourceType: 'CATEGORY',
-            icon: LucideShapes,
-            customFields: true,
-            images: true,
-            fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
-            ],
-          },
-        },
-      },
+
+      // Konfiguration
       {
         path: 'config/types',
         component: InventoryPage,
@@ -213,14 +174,35 @@ export const routes: Routes = [
           inventoryConfig: {
             title: 'Typen',
             endpoint: 'asset-types',
-            resourceType: 'CATEGORY',
+            resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
             createRoute: '/config/types/new',
             editRoutePrefix: '/config/types',
+            detailRoutePrefix: '/config/types',
+            filter: {
+              searchFields: ['name', 'description', 'tags'],
+              searchPlaceholder: 'Typ oder Tag suchen...',
+            },
+            fields: assetTypeFormConfig.fields,
+          },
+        },
+      },
+      { path: 'config/types/new', component: InventoryFormPage, data: { inventoryFormConfig: assetTypeFormConfig } },
+      { path: 'config/types/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: assetTypeFormConfig } },
+      {
+        path: 'config/types/:uuid',
+        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        data: {
+          inventoryDetailConfig: {
+            title: 'Typ',
+            endpoint: 'asset-types',
+            listRoute: '/config/types',
+            editRoutePrefix: '/config/types',
+            resourceType: 'ASSET_TYPE',
+            icon: LucideShapes,
             fields: [
-              { key: 'name', label: 'Name', type: 'text', required: true },
-              { key: 'description', label: 'Beschreibung', type: 'textarea' },
-              { key: 'inspectionIntervalDays', label: 'Prüfintervall Tage', type: 'number' },
+              { key: 'inspectionIntervalDays', label: 'Prüfintervall', suffix: ' Tage' },
+              { key: 'description', label: 'Beschreibung' },
             ],
           },
         },
@@ -232,8 +214,12 @@ export const routes: Routes = [
           inventoryConfig: {
             title: 'Tags',
             endpoint: 'tags',
-            resourceType: 'CATEGORY',
+            resourceType: 'ASSET_TYPE',
             icon: LucideTags,
+            filter: {
+              searchFields: ['name'],
+              searchPlaceholder: 'Tag suchen...',
+            },
             fields: [
               { key: 'name', label: 'Name', type: 'text', required: true },
               { key: 'color', label: 'Farbe', type: 'color' },
@@ -241,6 +227,27 @@ export const routes: Routes = [
           },
         },
       },
+
+      // Administration
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'users' },
+          {
+            path: 'areas',
+            loadComponent: () => import('./core/pages/admin/areas-page/areas-page').then((m) => m.AreasPage),
+          },
+          { path: 'users', loadComponent: () => import('./core/pages/admin/users-page/users-page').then((m) => m.UsersPage) },
+          { path: 'users/new', loadComponent: () => import('./core/pages/admin/user-form-page/user-form-page').then((m) => m.UserFormPage) },
+          { path: 'users/:uuid/edit', loadComponent: () => import('./core/pages/admin/user-form-page/user-form-page').then((m) => m.UserFormPage) },
+          { path: 'groups', loadComponent: () => import('./core/pages/admin/groups-page/groups-page').then((m) => m.GroupsPage) },
+          { path: 'groups/new', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
+          { path: 'groups/:uuid/edit', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
+          { path: 'group-permissions', loadComponent: () => import('./core/pages/admin/permissions-page/permissions-page').then((m) => m.PermissionsPage) },
+        ],
+      },
+
       {
         path: '**',
         component: PlaceholderPage,
@@ -254,4 +261,3 @@ export const routes: Routes = [
     canActivate: [LoginRedirectGuard],
   },
 ];
-

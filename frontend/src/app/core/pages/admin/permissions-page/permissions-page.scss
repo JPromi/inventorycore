@@ -1,0 +1,75 @@
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.filter-select {
+    flex: 0 1 14rem;
+    min-width: 10rem;
+}
+
+.add-form {
+    margin-bottom: 1rem;
+
+    .editor-actions {
+        align-items: center;
+        margin-top: 1rem;
+    }
+}
+
+.add-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: .9rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+.field-label {
+    color: var(--text-muted);
+    font-size: .85rem;
+    font-weight: 700;
+}
+
+.hint.warn {
+    margin-right: auto;
+    color: var(--accent);
+}
+
+.group-link {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--accent);
+        text-decoration: underline;
+    }
+}
+
+.flag {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.preset {
+    min-width: 9rem;
+    min-height: 2rem;
+    font-size: .82rem;
+}
+
+tr.saving {
+    opacity: .6;
+}
+
+td.actions .icon-button {
+    width: 2rem;
+    height: 2rem;
+}

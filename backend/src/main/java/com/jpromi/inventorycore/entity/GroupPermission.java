@@ -30,7 +30,7 @@ import lombok.Setter;
 @Table(
     name = "group_permissions",
     uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"group_id", "resource_type", "resource_uuid"})
+        @UniqueConstraint(columnNames = {"group_id", "resource_type", "area_id"})
     }
 )
 @Builder
@@ -54,8 +54,10 @@ public class GroupPermission {
     @Enumerated(EnumType.STRING)
     private PermissionResourceType resourceType;
 
-    @Column(name = "resource_uuid")
-    private UUID resourceUuid;
+    /** The area this permission applies to; {@code null} means all areas. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area area;
 
     @Column(nullable = false)
     @Builder.Default

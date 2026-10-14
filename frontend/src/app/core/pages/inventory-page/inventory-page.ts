@@ -1,19 +1,30 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  LucideChevronRight,
+  LucideLayers,
   LucideGrid2X2,
   LucideList,
+  LucideMapPin,
   LucidePencil,
   LucidePlus,
   LucideRefreshCw,
+  LucideSearch,
+  LucideShapes,
   LucideTrash2,
+  LucideX,
   type LucideIcon,
 } from '@lucide/angular';
 
+import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
+import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
-import { InventoryApiService, InventoryItem, InventoryRequest } from '../../service/inventory-api.service';
+import { AreaService } from '../../service/area.service';
+import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
+import { locationPath, locationWithDescendants } from '../../util/location-utils';
 
 type ViewMode = 'grid' | 'list';
 
@@ -25,6 +36,18 @@ interface PageConfig {
   fields: FieldConfig[];
   createRoute?: string;
   editRoutePrefix?: string;
+  detailRoutePrefix?: string;
+  filter?: FilterConfig;
+}
+
+type SearchField = 'name' | 'description' | 'address' | 'invId' | 'serialNumber' | 'inventoryNumber' | 'tags';
+
+interface FilterConfig {
+  searchFields: SearchField[];
+  searchPlaceholder?: string;
+  tags?: boolean;
+  locations?: boolean;
+  assetTypes?: boolean;
 }
 
 interface FieldConfig {
@@ -36,37 +59,120 @@ interface FieldConfig {
 
 @Component({
   selector: 'app-inventory-page',
-  imports: [CommonModule, LucideGrid2X2, LucideList, LucidePencil, LucidePlus, LucideRefreshCw, LucideTrash2],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SearchSelect,
+    LucideChevronRight,
+    LucideLayers,
+    LucideGrid2X2,
+    LucideList,
+    LucideMapPin,
+    LucidePencil,
+    LucidePlus,
+    LucideRefreshCw,
+    LucideSearch,
+    LucideShapes,
+    LucideTrash2,
+    LucideX,
+  ],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.scss',
 })
 export class InventoryPage implements OnInit {
   protected readonly iconInputs = { size: 18 };
+  protected readonly placeholderIconInputs = { size: 22 };
   protected config!: PageConfig;
   protected items: InventoryItem[] = [];
   protected loading = false;
   protected error = '';
   protected viewMode: ViewMode = 'list';
   protected page = 1;
-  protected pageSize = 8;
+  protected pageSize = 12;
+  protected search = '';
+  protected tagFilter: string | null = null;
+  protected locationFilter: string | null = null;
+  protected assetTypeFilter: string | null = null;
+  protected tags: TagItem[] = [];
+  protected locations: InventoryItem[] = [];
+  protected assetTypes: InventoryItem[] = [];
+
+  @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly api: InventoryApiService,
+    private readonly confirmDialog: ConfirmDialogService,
     protected readonly permissions: PermissionService,
+    protected readonly areaService: AreaService,
   ) {}
 
   ngOnInit(): void {
     this.route.data.subscribe((data) => {
       this.config = data['inventoryConfig'];
-      this.page = 1;
+      this.resetFilters();
       this.load();
+      this.loadFilterOptions();
     });
+    this.areaService.selected$.subscribe(() => (this.page = 1));
+  }
+
+  /** "/" focuses the search like in many web apps. */
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement;
+    if (event.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+      event.preventDefault();
+      this.searchInput?.nativeElement.focus();
+    }
+  }
+
+  /** Items of the areas chosen in the sidebar (the backend already removed what the user may not see). */
+  protected get areaItems(): InventoryItem[] {
+    // tags are global and not bound to areas
+    if (this.config.endpoint === 'tags') {
+      return this.items;
+    }
+    return this.items.filter((item) => this.areaService.matchesSelection(item, this.locations));
   }
 
   protected get visibleItems(): InventoryItem[] {
-    return this.permissions.filterVisible(this.items, this.config.resourceType);
+    return this.areaItems.filter((item) => this.matchesFilters(item));
+  }
+
+  protected get totalVisibleCount(): number {
+    return this.areaItems.length;
+  }
+
+  protected get selectedAreaNames(): string[] {
+    return this.areaService.selected.map((uuid) => this.areaService.name(uuid));
+  }
+
+  /** Area names are only interesting when the user works with more than one area. */
+  protected itemAreas(item: InventoryItem): string[] {
+    if (this.areaService.areas.length < 2) {
+      return [];
+    }
+    return (item.areaUuids ?? []).map((uuid) => this.areaService.name(uuid));
+  }
+
+  protected get hasActiveFilters(): boolean {
+    return !!this.search.trim() || !!this.tagFilter || !!this.locationFilter || !!this.assetTypeFilter;
+  }
+
+  protected get tagOptions(): SelectOption[] {
+    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+  }
+
+  protected get locationOptions(): SelectOption[] {
+    return this.locations
+      .map((location) => ({ value: location.uuid, label: locationPath(this.locations, location), hint: location.address ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get assetTypeOptions(): SelectOption[] {
+    return this.assetTypes.map((type) => ({ value: type.uuid, label: type.name }));
   }
 
   protected get pageCount(): number {
@@ -78,12 +184,33 @@ export class InventoryPage implements OnInit {
     return this.visibleItems.slice(start, start + this.pageSize);
   }
 
+  protected onFilterChange(): void {
+    this.page = 1;
+  }
+
+  protected clearSearch(): void {
+    this.search = '';
+    this.onFilterChange();
+    this.searchInput?.nativeElement.focus();
+  }
+
+  protected resetFilters(): void {
+    this.search = '';
+    this.tagFilter = null;
+    this.locationFilter = null;
+    this.assetTypeFilter = null;
+    this.page = 1;
+  }
+
   protected load(): void {
     this.loading = true;
     this.error = '';
     this.api.list(this.config.endpoint).subscribe({
       next: (items) => {
-        this.items = items;
+        this.items = items.sort((a, b) => a.name.localeCompare(b.name));
+        if (this.config.endpoint === 'locations') {
+          this.locations = items;
+        }
         this.page = Math.min(this.page, this.pageCount);
         this.loading = false;
       },
@@ -100,14 +227,28 @@ export class InventoryPage implements OnInit {
     }
   }
 
-  protected startEdit(item: InventoryItem): void {
+  protected open(item: InventoryItem): void {
+    if (this.config.detailRoutePrefix) {
+      this.router.navigate([this.config.detailRoutePrefix, item.uuid]);
+    } else if (this.config.editRoutePrefix && this.permissions.can(this.config.resourceType, 'edit', item.areaUuids ?? [])) {
+      this.startEdit(item);
+    }
+  }
+
+  protected get itemsClickable(): boolean {
+    return !!this.config.detailRoutePrefix || !!this.config.editRoutePrefix;
+  }
+
+  protected startEdit(item: InventoryItem, event?: Event): void {
+    event?.stopPropagation();
     if (this.config.editRoutePrefix) {
       this.router.navigate([this.config.editRoutePrefix, item.uuid, 'edit']);
     }
   }
 
-  protected remove(item: InventoryItem): void {
-    if (!window.confirm(`${item.name} wirklich löschen?`)) {
+  protected async remove(item: InventoryItem, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    if (!(await this.confirmDialog.confirmDelete(item.name))) {
       return;
     }
 
@@ -123,9 +264,18 @@ export class InventoryPage implements OnInit {
     this.page = Math.min(this.pageCount, Math.max(1, page));
   }
 
+  protected thumbnail(item: InventoryItem): string | null {
+    const images = item.images ?? [];
+    return (images.find((image) => image.kind === 'THUMBNAIL') ?? images[0])?.url ?? null;
+  }
+
   protected itemMeta(item: InventoryItem): string {
     if (item.invId) {
       return item.invId;
+    }
+    if (this.config.endpoint === 'locations') {
+      const parent = this.locations.find((location) => location.uuid === item.parentLocationUuid);
+      return [parent ? `in ${locationPath(this.locations, parent)}` : '', item.address ?? ''].filter(Boolean).join(' · ');
     }
     if (item.address) {
       return item.address;
@@ -133,7 +283,76 @@ export class InventoryPage implements OnInit {
     if (item.inspectionIntervalDays) {
       return `Prüfung alle ${item.inspectionIntervalDays} Tage`;
     }
-    return item.uuid;
+    return '';
   }
 
+  protected assetTypeName(item: InventoryItem): string | null {
+    return this.assetTypes.find((type) => type.uuid === item.assetTypeUuid)?.name ?? null;
+  }
+
+  protected locationName(item: InventoryItem): string | null {
+    const location = this.locations.find((entry) => entry.uuid === item.locationUuid);
+    return location ? locationPath(this.locations, location) : null;
+  }
+
+  protected itemTags(item: InventoryItem): TagItem[] {
+    const typeTags = this.assetTypes.find((type) => type.uuid === item.assetTypeUuid)?.tags ?? [];
+    const own = item.tags ?? [];
+    const ownUuids = new Set(own.map((tag) => tag.uuid));
+    return [...own, ...typeTags.filter((tag) => !ownUuids.has(tag.uuid))];
+  }
+
+  private matchesFilters(item: InventoryItem): boolean {
+    const filter = this.config.filter;
+    if (!filter) {
+      return true;
+    }
+
+    const terms = this.search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length) {
+      const haystack = filter.searchFields
+        .flatMap((field) => (field === 'tags' ? this.itemTags(item).map((tag) => tag.name) : [item[field] ?? '']))
+        .join(' ')
+        .toLowerCase();
+      if (!terms.every((term) => haystack.includes(term))) {
+        return false;
+      }
+    }
+
+    if (this.tagFilter && !this.itemTags(item).some((tag) => tag.uuid === this.tagFilter)) {
+      return false;
+    }
+    if (this.locationFilter && !(item.locationUuid && locationWithDescendants(this.locations, this.locationFilter).has(item.locationUuid))) {
+      return false;
+    }
+    if (this.assetTypeFilter && item.assetTypeUuid !== this.assetTypeFilter) {
+      return false;
+    }
+    return true;
+  }
+
+  private loadFilterOptions(): void {
+    const filter = this.config.filter;
+    this.tags = [];
+    this.locations = [];
+    this.assetTypes = [];
+    if (filter?.tags) {
+      this.api.list<TagItem>('tags').subscribe({
+        next: (tags) => (this.tags = tags.sort((a, b) => a.name.localeCompare(b.name))),
+        error: () => (this.tags = []),
+      });
+    }
+    if (filter?.locations) {
+      this.api.list<InventoryItem>('locations').subscribe({
+        next: (locations) => (this.locations = locations),
+        error: () => (this.locations = []),
+      });
+    }
+    if (filter?.assetTypes || filter?.tags) {
+      this.api.list<InventoryItem>('asset-types').subscribe({
+        next: (types) => (this.assetTypes = types.sort((a, b) => a.name.localeCompare(b.name))),
+        error: () => (this.assetTypes = []),
+      });
+    }
+  }
 }
