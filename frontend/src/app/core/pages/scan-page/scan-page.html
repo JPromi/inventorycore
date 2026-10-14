@@ -81,58 +81,79 @@
                             Gesucht wird nach Link, ID, Inventar-ID, Inventarnummer und Seriennummer.
                         </p>
                     </form>
-                } @else {
-                    <div class="card camera-card">
-                        <div class="viewport" [class.flash]="flash" [class.running]="cameraState === 'running'">
-                            <video #video muted playsinline></video>
-                            @if (cameraState === 'running') {
-                                <div class="frame" aria-hidden="true"></div>
+                } @else if (cameraOpen) {
+                    <app-camera-view
+                        title="Scannen"
+                        hint="Barcode oder QR-Code in den Rahmen halten"
+                        [sheetOpen]="sheetOpen"
+                        (code)="onCameraCode($event)"
+                        (closed)="cameraOpen = false"
+                        (sheetClose)="sheetOpen = false"
+                    >
+                        @if (error) {
+                            <p class="sheet-message failure">
+                                <svg lucideCircleAlert size="20"></svg>
+                                <span>{{ error }}</span>
+                            </p>
+                        } @else if (lookingUp && !result) {
+                            <p class="sheet-message">Suche...</p>
+                        } @else if (result) {
+                            @if (!matchCount) {
+                                <p class="sheet-message failure">
+                                    <svg lucideCircleAlert size="20"></svg>
+                                    <span><strong>Nichts gefunden</strong> für <code>{{ result.code }}</code></span>
+                                </p>
                             } @else {
-                                <div class="camera-overlay">
-                                    @switch (cameraState) {
-                                        @case ('starting') {
-                                            <svg lucideCamera size="30"></svg>
-                                            <span>Kamera wird gestartet...</span>
-                                        }
-                                        @case ('error') {
-                                            <svg lucideCircleAlert size="30"></svg>
-                                            <span>{{ cameraError }}</span>
-                                            <button type="button" class="secondary-action compact" (click)="startCamera(null)">Erneut versuchen</button>
-                                        }
-                                        @default {
-                                            <svg lucideCameraOff size="30"></svg>
-                                            <span>Kamera ist aus</span>
-                                            <button type="button" class="primary-action compact" (click)="startCamera()">Kamera starten</button>
-                                        }
+                                <p class="sheet-title">
+                                    {{ matchCount > 1 ? matchCount + ' Treffer – bitte auswählen' : 'Gefunden ' + matchText(result) }}
+                                </p>
+                                <div class="sheet-hits">
+                                    @for (asset of result.assets; track asset.uuid) {
+                                        <a class="sheet-hit" [routerLink]="['/assets', asset.uuid]">
+                                            <span class="thumb">
+                                                @if (thumbnail(asset); as url) {
+                                                    <img [src]="url" alt="" />
+                                                } @else {
+                                                    <svg lucideBoxes size="26"></svg>
+                                                }
+                                            </span>
+                                            <span class="info">
+                                                <strong>{{ asset.name }}</strong>
+                                                @for (line of assetLines(asset); track $index) {
+                                                    <small>{{ line }}</small>
+                                                }
+                                            </span>
+                                            <svg class="go" lucideChevronRight size="20"></svg>
+                                        </a>
+                                    }
+                                    @for (location of result.locations; track location.uuid) {
+                                        <a class="sheet-hit" [routerLink]="['/locations', location.uuid]">
+                                            <span class="thumb">
+                                                @if (thumbnail(location); as url) {
+                                                    <img [src]="url" alt="" />
+                                                } @else {
+                                                    <svg lucideMapPin size="26"></svg>
+                                                }
+                                            </span>
+                                            <span class="info">
+                                                <strong>{{ locationName(location.uuid) ?? location.name }}</strong>
+                                                <small>Standort · {{ location.assetUuids?.length ?? 0 }} Assets</small>
+                                            </span>
+                                            <svg class="go" lucideChevronRight size="20"></svg>
+                                        </a>
                                     }
                                 </div>
                             }
-                        </div>
-                        <div class="camera-actions">
-                            @if (cameras.length > 1) {
-                                <select [ngModel]="cameraId" (ngModelChange)="switchCamera($event)" aria-label="Kamera wählen">
-                                    @for (camera of cameras; track camera.deviceId) {
-                                        <option [value]="camera.deviceId">{{ camera.label }}</option>
-                                    }
-                                </select>
-                            }
-                            @if (torchSupported && cameraState === 'running') {
-                                <button type="button" class="icon-button" [title]="torchOn ? 'Licht aus' : 'Licht an'" (click)="toggleTorch()">
-                                    @if (torchOn) {
-                                        <svg lucideZapOff size="17"></svg>
-                                    } @else {
-                                        <svg lucideZap size="17"></svg>
-                                    }
-                                </button>
-                            }
-                            <span class="spacer"></span>
-                            @if (cameraState === 'running') {
-                                <button type="button" class="secondary-action compact" (click)="stopCamera()">
-                                    <svg lucideCameraOff size="16"></svg>
-                                    <span>Stoppen</span>
-                                </button>
-                            }
-                        </div>
+                        }
+                    </app-camera-view>
+                } @else {
+                    <div class="card camera-off">
+                        <svg lucideCameraOff size="30"></svg>
+                        <span>Kamera ist aus</span>
+                        <button type="button" class="primary-action" (click)="openCamera()">
+                            <svg lucideCamera size="17"></svg>
+                            <span>Kamera starten</span>
+                        </button>
                     </div>
                 }
 

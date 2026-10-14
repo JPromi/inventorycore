@@ -28,25 +28,32 @@ import com.jpromi.inventorycore.dto.InspectionFilter;
 import com.jpromi.inventorycore.dto.InspectionItemResponse;
 import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemValueResponse;
+import com.jpromi.inventorycore.dto.InspectionPhotoRequest;
+import com.jpromi.inventorycore.dto.InspectionPhotoResponse;
 import com.jpromi.inventorycore.dto.InspectionScanResponse;
 import com.jpromi.inventorycore.dto.InspectionSummaryResponse;
 import com.jpromi.inventorycore.dto.InspectionTypeRequest;
 import com.jpromi.inventorycore.dto.InspectionTypeResponse;
 import com.jpromi.inventorycore.entity.Area;
 import com.jpromi.inventorycore.entity.Asset;
+import com.jpromi.inventorycore.entity.AssetImage;
 import com.jpromi.inventorycore.entity.AssetType;
 import com.jpromi.inventorycore.entity.Inspection;
 import com.jpromi.inventorycore.entity.InspectionFieldDefinition;
 import com.jpromi.inventorycore.entity.InspectionItem;
+import com.jpromi.inventorycore.entity.InspectionItemPhoto;
 import com.jpromi.inventorycore.entity.InspectionItemValue;
 import com.jpromi.inventorycore.entity.InspectionType;
 import com.jpromi.inventorycore.entity.Location;
+import com.jpromi.inventorycore.entity.StoredFile;
 import com.jpromi.inventorycore.entity.Tag;
 import com.jpromi.inventorycore.entity.User;
 import com.jpromi.inventorycore.enums.AssetFieldType;
+import com.jpromi.inventorycore.enums.ImageKind;
 import com.jpromi.inventorycore.enums.InspectionCheckMethod;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
 import com.jpromi.inventorycore.enums.InspectionMode;
+import com.jpromi.inventorycore.enums.InspectionPhotoTarget;
 import com.jpromi.inventorycore.enums.InspectionStatus;
 import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
@@ -58,6 +65,7 @@ import com.jpromi.inventorycore.repository.InspectionItemRepository;
 import com.jpromi.inventorycore.repository.InspectionRepository;
 import com.jpromi.inventorycore.repository.InspectionTypeRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
+import com.jpromi.inventorycore.repository.StoredFileRepository;
 import com.jpromi.inventorycore.repository.TagRepository;
 
 /**
@@ -81,6 +89,7 @@ public class InspectionService {
     private final InspectionItemRepository itemRepository;
     private final AssetInspectionScheduleRepository scheduleRepository;
     private final InspectionScheduleService scheduleService;
+    private final StoredFileRepository fileRepository;
 
     public InspectionService(
         InspectionTypeRepository typeRepository,
@@ -93,7 +102,8 @@ public class InspectionService {
         ScanResolver scanResolver,
         InspectionItemRepository itemRepository,
         AssetInspectionScheduleRepository scheduleRepository,
-        InspectionScheduleService scheduleService
+        InspectionScheduleService scheduleService,
+        StoredFileRepository fileRepository
     ) {
         this.typeRepository = typeRepository;
         this.inspectionRepository = inspectionRepository;
@@ -106,6 +116,7 @@ public class InspectionService {
         this.itemRepository = itemRepository;
         this.scheduleRepository = scheduleRepository;
         this.scheduleService = scheduleService;
+        this.fileRepository = fileRepository;
     }
 
     // ---- inspection types ----
@@ -408,6 +419,64 @@ public class InspectionService {
         inspection.getItems().add(item);
         inspectionRepository.save(inspection);
         return toResponse(item, locations);
+    }
+
+    /**
+     * Photo of an asset during the inspection: either kept in the protocol (at the item) or added
+     * to the asset's images, which needs the right to edit the asset. Returns the item afterwards.
+     */
+    @Transactional
+    public InspectionItemResponse addPhoto(AccessContext access, User user, UUID uuid, UUID itemUuid, InspectionPhotoRequest request) {
+        requireInspect(access);
+        Inspection inspection = openInspection(uuid);
+        InspectionItem item = itemOr404(inspection, itemUuid);
+        if (request.fileUuid() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kein Bild angegeben.");
+        }
+        StoredFile file = fileRepository.findByUuid(request.fileUuid())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bild nicht gefunden."));
+
+        if (request.target() == InspectionPhotoTarget.ASSET) {
+            Asset asset = item.getAsset();
+            if (asset == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zu einem unbekannten Code gibt es kein Asset.");
+            }
+            if (!access.can(PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung, dieses Asset zu bearbeiten.");
+            }
+            // the first image becomes the cover
+            asset.getImages().add(AssetImage.builder()
+                .asset(asset)
+                .kind(asset.getImages().isEmpty() ? ImageKind.THUMBNAIL : ImageKind.GALLERY)
+                .file(file)
+                .fileName(file.getOriginalName())
+                .contentType(file.getContentType())
+                .sortOrder(asset.getImages().size())
+                .build());
+            assetRepository.save(asset);
+            return toResponse(item, locationsById());
+        }
+
+        item.getPhotos().add(InspectionItemPhoto.builder()
+            .item(item)
+            .file(file)
+            .takenByUuid(user.getUuid())
+            .takenByName(displayName(user))
+            .build());
+        inspectionRepository.save(inspection);
+        return toResponse(item, locationsById());
+    }
+
+    @Transactional
+    public InspectionItemResponse removePhoto(AccessContext access, UUID uuid, UUID itemUuid, UUID photoUuid) {
+        requireInspect(access);
+        Inspection inspection = openInspection(uuid);
+        InspectionItem item = itemOr404(inspection, itemUuid);
+        if (!item.getPhotos().removeIf(photo -> photo.getUuid().equals(photoUuid))) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden");
+        }
+        inspectionRepository.save(inspection);
+        return toResponse(item, locationsById());
     }
 
     private static Set<InspectionItemStatus> allowedStatus(InspectionMode mode) {
@@ -717,6 +786,15 @@ public class InspectionService {
             item.getNote(),
             item.getValues().stream()
                 .map(value -> new InspectionItemValueResponse(value.getFieldUuid(), value.getFieldName(), value.getFieldType(), value.getValue()))
+                .toList(),
+            item.getPhotos().stream()
+                .map(photo -> new InspectionPhotoResponse(
+                    photo.getUuid(),
+                    photo.getFile().getUuid(),
+                    ApiMapper.fileUrl(photo.getFile(), false),
+                    ApiMapper.fileUrl(photo.getFile(), true),
+                    photo.getTakenAt(),
+                    photo.getTakenByName()))
                 .toList()
         );
     }

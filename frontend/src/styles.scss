@@ -104,6 +104,11 @@ body {
     }
 }
 
+// full-screen camera (app-camera-view) on phones and tablets: the page behind stays put
+body.camera-open .page {
+    overflow: hidden;
+}
+
 // ---- shared page building blocks (admin, overview and detail pages) ----
 
 .page {

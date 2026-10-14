@@ -1,10 +1,11 @@
-import { Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
   LucideBoxes,
   LucideCamera,
   LucideCameraOff,
+  LucideChevronRight,
   LucideCircleAlert,
   LucideCornerDownLeft,
   LucideExternalLink,
@@ -15,20 +16,18 @@ import {
   LucideTrash2,
   LucideVolume2,
   LucideVolumeX,
-  LucideZap,
-  LucideZapOff,
 } from '@lucide/angular';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { CameraDevice, CameraScanner } from '../../scan/camera-scanner';
+import { CameraView } from '../../components/camera-view/camera-view';
+import { CameraScanner } from '../../scan/camera-scanner';
 import { scanFeedback } from '../../scan/scan-feedback';
 import { InventoryApiService, InventoryItem } from '../../service/inventory-api.service';
 import { ScanResult, ScanService } from '../../service/scan.service';
 import { locationPath } from '../../util/location-utils';
 
 type InputMode = 'camera' | 'scanner';
-type CameraState = 'idle' | 'starting' | 'running' | 'error';
 
 interface HistoryEntry {
   code: string;
@@ -50,11 +49,13 @@ const STORAGE_KEY = 'inventorycore.scan';
 @Component({
   selector: 'app-scan-page',
   imports: [
+    CameraView,
     FormsModule,
     RouterLink,
     LucideBoxes,
     LucideCamera,
     LucideCameraOff,
+    LucideChevronRight,
     LucideCircleAlert,
     LucideCornerDownLeft,
     LucideExternalLink,
@@ -65,14 +66,12 @@ const STORAGE_KEY = 'inventorycore.scan';
     LucideTrash2,
     LucideVolume2,
     LucideVolumeX,
-    LucideZap,
-    LucideZapOff,
-  ],
+      ],
   templateUrl: './scan-page.html',
   styleUrl: './scan-page.scss',
 })
-export class ScanPage implements OnInit, OnDestroy {
-  @ViewChild('video') private videoRef?: ElementRef<HTMLVideoElement>;
+export class ScanPage implements OnInit {
+  @ViewChild(CameraView) private camera?: CameraView;
   @ViewChild('scanInput') private scanInputRef?: ElementRef<HTMLInputElement>;
 
   protected mode: InputMode = 'scanner';
@@ -85,18 +84,13 @@ export class ScanPage implements OnInit, OnDestroy {
   protected error = '';
   protected history: HistoryEntry[] = [];
 
-  protected cameraState: CameraState = 'idle';
-  protected cameraError = '';
-  protected cameras: CameraDevice[] = [];
-  protected cameraId: string | null = null;
-  protected torchSupported = false;
-  protected torchOn = false;
-  /** Short highlight of the camera frame after a successful read. */
-  protected flash = false;
+  /** Camera mode: the camera is running (full screen on phones and tablets). */
+  protected cameraOpen = false;
+  /** Result popup over the full-screen camera. */
+  protected sheetOpen = false;
 
   protected readonly cameraAvailable = CameraScanner.available;
 
-  private scanner: CameraScanner | null = null;
   private lastCode = '';
   private lastCodeAt = 0;
   private locations: InventoryItem[] = [];
@@ -106,7 +100,6 @@ export class ScanPage implements OnInit, OnDestroy {
     private readonly scanService: ScanService,
     private readonly api: InventoryApiService,
     private readonly router: Router,
-    private readonly zone: NgZone,
   ) {}
 
   ngOnInit(): void {
@@ -120,11 +113,8 @@ export class ScanPage implements OnInit, OnDestroy {
       this.types = types;
     });
     // wait for the view, the video element is created by the template
-    setTimeout(() => (this.mode === 'camera' ? this.startCamera() : this.focusInput()));
-  }
-
-  ngOnDestroy(): void {
-    this.scanner?.stop();
+    this.cameraOpen = this.mode === 'camera';
+    setTimeout(() => this.focusInput());
   }
 
   // ---- mode & settings ----
@@ -135,10 +125,9 @@ export class ScanPage implements OnInit, OnDestroy {
     }
     this.mode = mode;
     this.saveSettings();
-    if (mode === 'camera') {
-      setTimeout(() => this.startCamera());
-    } else {
-      this.stopCamera();
+    this.cameraOpen = mode === 'camera';
+    this.sheetOpen = false;
+    if (mode === 'scanner') {
       setTimeout(() => this.focusInput());
     }
   }
@@ -182,68 +171,17 @@ export class ScanPage implements OnInit, OnDestroy {
 
   // ---- camera ----
 
-  protected async startCamera(deviceId: string | null = this.cameraId): Promise<void> {
-    const video = this.videoRef?.nativeElement;
-    if (!video || !this.cameraAvailable) {
+  protected openCamera(): void {
+    this.sheetOpen = false;
+    this.cameraOpen = true;
+  }
+
+  protected onCameraCode(code: string): void {
+    // the label is still in front of the camera while its result is shown
+    if (this.sheetOpen && code.trim() === this.lastCode) {
       return;
     }
-    this.scanner?.stop();
-    this.cameraState = 'starting';
-    this.cameraError = '';
-    this.torchOn = false;
-    this.scanner = new CameraScanner(video, (code) => this.zone.run(() => this.handleCode(code, false)));
-    try {
-      await this.scanner.start(deviceId);
-      this.cameraState = 'running';
-      this.cameraId = this.scanner.activeDeviceId ?? deviceId;
-      this.torchSupported = this.scanner.torchSupported;
-      // labels of the cameras are only known after the permission was granted
-      this.cameras = await CameraScanner.devices();
-    } catch (error) {
-      // the remembered camera may be gone (e.g. unplugged): try the default one
-      if (deviceId && (error as { name?: string })?.name === 'OverconstrainedError') {
-        this.cameraId = null;
-        this.saveSettings();
-        return this.startCamera(null);
-      }
-      this.cameraState = 'error';
-      this.cameraError = this.describeCameraError(error);
-    }
-  }
-
-  protected stopCamera(): void {
-    this.scanner?.stop();
-    this.scanner = null;
-    this.cameraState = 'idle';
-    this.torchOn = false;
-  }
-
-  protected switchCamera(deviceId: string): void {
-    this.cameraId = deviceId;
-    this.saveSettings();
-    this.startCamera(deviceId);
-  }
-
-  protected async toggleTorch(): Promise<void> {
-    try {
-      await this.scanner?.setTorch(!this.torchOn);
-      this.torchOn = !this.torchOn;
-    } catch {
-      this.torchSupported = false;
-    }
-  }
-
-  /** Free the camera while the tab is in the background. */
-  @HostListener('document:visibilitychange')
-  protected onVisibilityChange(): void {
-    if (this.mode !== 'camera') {
-      return;
-    }
-    if (document.hidden) {
-      this.stopCamera();
-    } else if (this.cameraState === 'idle') {
-      this.startCamera();
-    }
+    this.handleCode(code, false);
   }
 
   // ---- result ----
@@ -264,6 +202,11 @@ export class ScanPage implements OnInit, OnDestroy {
 
   protected typeName(item: InventoryItem): string | null {
     return this.types.find((type) => type.uuid === item.assetTypeUuid)?.name ?? null;
+  }
+
+  /** Inventory id, type and location for the result popup. */
+  protected assetLines(asset: InventoryItem): string[] {
+    return [asset.invId, this.typeName(asset), this.locationName(asset.locationUuid)].filter((line): line is string => !!line);
   }
 
   protected locationName(uuid: string | null | undefined): string | null {
@@ -307,6 +250,7 @@ export class ScanPage implements OnInit, OnDestroy {
         const found = this.matchCount > 0;
         this.feedback(found);
         this.addHistory(result);
+        this.sheetOpen = true;
         if (found && this.autoOpen && this.matchCount === 1) {
           const route = this.routeOf(result);
           if (route) {
@@ -319,6 +263,7 @@ export class ScanPage implements OnInit, OnDestroy {
       error: () => {
         this.lookingUp = false;
         this.error = 'Abfrage fehlgeschlagen. Ist die Verbindung zum Server da?';
+        this.sheetOpen = true;
         this.feedback(false);
         this.focusInput();
       },
@@ -343,8 +288,7 @@ export class ScanPage implements OnInit, OnDestroy {
 
   private feedback(success: boolean): void {
     if (success) {
-      this.flash = true;
-      setTimeout(() => (this.flash = false), 400);
+      this.camera?.flash();
     }
     scanFeedback(success ? 'success' : 'error', this.sound);
   }
@@ -355,29 +299,12 @@ export class ScanPage implements OnInit, OnDestroy {
     }
   }
 
-  private describeCameraError(error: unknown): string {
-    const name = (error as { name?: string })?.name;
-    switch (name) {
-      case 'NotAllowedError':
-      case 'SecurityError':
-        return 'Kein Zugriff auf die Kamera. Bitte den Zugriff im Browser erlauben (Schloss-Symbol neben der Adresse).';
-      case 'NotFoundError':
-      case 'OverconstrainedError':
-        return 'Keine passende Kamera gefunden.';
-      case 'NotReadableError':
-        return 'Die Kamera wird gerade von einem anderen Programm verwendet.';
-      default:
-        return 'Die Kamera konnte nicht gestartet werden.';
-    }
-  }
-
   private restoreSettings(): void {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
       this.mode = saved.mode === 'camera' && this.cameraAvailable ? 'camera' : 'scanner';
       this.autoOpen = saved.autoOpen === true;
       this.sound = saved.sound !== false;
-      this.cameraId = typeof saved.cameraId === 'string' ? saved.cameraId : null;
     } catch {
       // defaults
     }
@@ -387,7 +314,7 @@ export class ScanPage implements OnInit, OnDestroy {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ mode: this.mode, autoOpen: this.autoOpen, sound: this.sound, cameraId: this.cameraId }),
+        JSON.stringify({ mode: this.mode, autoOpen: this.autoOpen, sound: this.sound }),
       );
     } catch {
       // not important enough to show an error

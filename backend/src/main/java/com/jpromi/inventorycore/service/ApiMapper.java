@@ -204,7 +204,7 @@ public class ApiMapper {
         return file == null ? externalUrl : fileUrl(file, thumbnail);
     }
 
-    private static String fileUrl(StoredFile file, boolean thumbnail) {
+    public static String fileUrl(StoredFile file, boolean thumbnail) {
         return "/api/files/" + file.getUuid() + (thumbnail && file.isHasThumbnail() ? "?variant=thumb" : "");
     }
 }

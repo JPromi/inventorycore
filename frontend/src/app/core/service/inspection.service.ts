@@ -181,7 +181,21 @@ export interface InspectionItem {
   checkedByName: string | null;
   note: string | null;
   values: InspectionItemValue[];
+  photos: InspectionPhoto[];
 }
+
+/** Photo in the protocol of an asset. */
+export interface InspectionPhoto {
+  uuid: string;
+  fileUuid: string;
+  url: string;
+  thumbnailUrl: string;
+  takenAt: string;
+  takenByName: string | null;
+}
+
+/** INSPECTION: into the protocol, ASSET: into the asset's images. */
+export type InspectionPhotoTarget = 'INSPECTION' | 'ASSET';
 
 export interface InspectionDetail {
   summary: InspectionSummary;
@@ -332,6 +346,14 @@ export class InspectionService {
 
   updateItem(uuid: string, itemUuid: string, update: InspectionItemUpdate): Observable<InspectionItem> {
     return this.http.patch<InspectionItem>(`${this.apiUrl}/inspections/${uuid}/items/${itemUuid}`, update, this.options);
+  }
+
+  addPhoto(uuid: string, itemUuid: string, fileUuid: string, target: InspectionPhotoTarget): Observable<InspectionItem> {
+    return this.http.post<InspectionItem>(`${this.apiUrl}/inspections/${uuid}/items/${itemUuid}/photos`, { fileUuid, target }, this.options);
+  }
+
+  removePhoto(uuid: string, itemUuid: string, photoUuid: string): Observable<InspectionItem> {
+    return this.http.delete<InspectionItem>(`${this.apiUrl}/inspections/${uuid}/items/${itemUuid}/photos/${photoUuid}`, this.options);
   }
 
   removeItem(uuid: string, itemUuid: string): Observable<void> {

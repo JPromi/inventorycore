@@ -142,17 +142,63 @@
                     }
 
                     @if (cameraOn) {
-                        <div class="camera">
-                            <video #video muted playsinline></video>
-                            @if (cameraError) {
-                                <p class="camera-error">{{ cameraError }}</p>
-                            } @else {
-                                <div class="frame" aria-hidden="true"></div>
+                        <app-camera-view
+                            class="camera"
+                            [title]="isCheck ? 'Gerät prüfen' : 'Inventur'"
+                            [hint]="isCheck ? 'Code des Geräts in den Rahmen halten' : 'Code des Assets in den Rahmen halten'"
+                            [sheetOpen]="sheetOpen"
+                            (code)="onCameraCode($event)"
+                            (closed)="cameraOn = false"
+                            (sheetClose)="sheetOpen = false"
+                            [photoMode]="!!photoTarget"
+                            [photoHint]="photoTarget?.target === 'ASSET' ? 'Foto für die Bilder des Assets' : 'Foto für das Prüfprotokoll'"
+                            (photo)="onCameraPhoto($event)"
+                            (photoCancel)="photoTarget = null; sheetOpen = true"
+                        >
+                            @if (error) {
+                                <div class="scan-result">
+                                    <svg lucideCircleAlert size="20"></svg>
+                                    <span>{{ error }}</span>
+                                </div>
+                            } @else if (lastScan; as scan) {
+                                <ng-container *ngTemplateOutlet="scanMessage; context: { $implicit: scan }" />
+                                @if (sheetItem; as item) {
+                                    <div class="sheet-item">
+                                        <div>
+                                            <strong>{{ item.assetName }}</strong>
+                                            <span class="meta">{{ itemMeta(item) }}</span>
+                                        </div>
+                                        <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
+                                            <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
+                                                <svg lucideCheck size="18"></svg>
+                                                <span>{{ goodLabel }}</span>
+                                            </button>
+                                            <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
+                                                <svg lucideX size="18"></svg>
+                                                <span>{{ badLabel }}</span>
+                                            </button>
+                                        </div>
+                                        <app-inspection-item-editor
+                                            [item]="item"
+                                            [fields]="fieldsFor(item)"
+                                            [liveCamera]="true"
+                                            [photoStatus]="photoStatus[item.uuid]"
+                                            (valueChange)="setValue(item, $event.field, $event.value, $event.debounce)"
+                                            (noteChange)="saveNote(item, $event)"
+                                            (photoRemove)="removePhoto(item, $event)"
+                                            (photoRequest)="photoTarget = { itemUuid: item.uuid, target: $event }; sheetOpen = false"
+                                        />
+                                    </div>
+                                }
                             }
-                        </div>
+                        </app-camera-view>
                     }
 
                     @if (lastScan; as scan) {
+                        <ng-container *ngTemplateOutlet="scanMessage; context: { $implicit: scan }" />
+                    }
+
+                    <ng-template #scanMessage let-scan>
                         <div
                             class="scan-result"
                             [class.success]="scan.outcome === 'CHECKED' || scan.outcome === 'ADDED' || scan.outcome === 'OPENED'"
@@ -182,7 +228,7 @@
                             }
                             <span>{{ scan.message }}</span>
                         </div>
-                    }
+                    </ng-template>
                 </section>
 
                 @if (unexpectedItems.length) {
@@ -276,10 +322,13 @@
                                         </span>
                                     }
                                 </div>
-                                @if (fieldsFor(item).length) {
+                                @if (item.assetUuid) {
                                     <button type="button" class="fields-toggle" [class.open]="expanded.has(item.uuid)" (click)="toggleExpanded(item)">
                                         <span [class.incomplete]="item.status !== 'PENDING' && missingRequired(item)">
-                                            {{ filledCount(item) }}/{{ fieldsFor(item).length }} Felder
+                                            {{ fieldsFor(item).length ? filledCount(item) + '/' + fieldsFor(item).length + ' Felder' : 'Details' }}
+                                            @if (item.photos.length) {
+                                                · {{ item.photos.length }} {{ item.photos.length === 1 ? 'Foto' : 'Fotos' }}
+                                            }
                                         </span>
                                         <svg lucideChevronDown size="15"></svg>
                                     </button>
@@ -302,71 +351,16 @@
                             </div>
 
                             @if (expanded.has(item.uuid)) {
-                                <div class="item-fields">
-                                    @for (field of fieldsFor(item); track field.uuid) {
-                                        <div class="check-field" [class.wide]="field.fieldType === 'TEXT'">
-                                            <span class="check-label">
-                                                {{ field.name }}
-                                                @if (field.required) {
-                                                    <span class="required">*</span>
-                                                }
-                                                @if (field.assetTypeName) {
-                                                    <span class="scope">{{ field.assetTypeName }}</span>
-                                                }
-                                            </span>
-                                            @switch (field.fieldType) {
-                                                @case ('BOOLEAN') {
-                                                    <div class="yes-no">
-                                                        <button
-                                                            type="button"
-                                                            class="yes"
-                                                            [class.active]="value(item, field) === 'true'"
-                                                            (click)="setValue(item, field, value(item, field) === 'true' ? '' : 'true')"
-                                                        >
-                                                            Ja
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="no"
-                                                            [class.active]="value(item, field) === 'false'"
-                                                            (click)="setValue(item, field, value(item, field) === 'false' ? '' : 'false')"
-                                                        >
-                                                            Nein
-                                                        </button>
-                                                    </div>
-                                                }
-                                                @case ('SELECT') {
-                                                    <select [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event)">
-                                                        <option value="">—</option>
-                                                        @for (option of options(field); track option) {
-                                                            <option [value]="option">{{ option }}</option>
-                                                        }
-                                                    </select>
-                                                }
-                                                @case ('NUMBER') {
-                                                    <input type="number" [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event?.toString() ?? '', true)" />
-                                                }
-                                                @case ('DATE') {
-                                                    <input type="date" [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event)" />
-                                                }
-                                                @case ('DATETIME') {
-                                                    <input type="datetime-local" [ngModel]="value(item, field)" (ngModelChange)="setValue(item, field, $event)" />
-                                                }
-                                                @default {
-                                                    <input
-                                                        [type]="field.fieldType === 'EMAIL' ? 'email' : field.fieldType === 'URL' ? 'url' : 'text'"
-                                                        [ngModel]="value(item, field)"
-                                                        (ngModelChange)="setValue(item, field, $event, true)"
-                                                    />
-                                                }
-                                            }
-                                        </div>
-                                    }
-                                    <label class="check-field wide">
-                                        <span class="check-label">Notiz</span>
-                                        <input type="text" [ngModel]="item.note ?? ''" #note (blur)="saveNote(item, note.value)" placeholder="Optional" />
-                                    </label>
-                                </div>
+                                <app-inspection-item-editor
+                                    class="item-fields"
+                                    [item]="item"
+                                    [fields]="fieldsFor(item)"
+                                    [photoStatus]="photoStatus[item.uuid]"
+                                    (valueChange)="setValue(item, $event.field, $event.value, $event.debounce)"
+                                    (noteChange)="saveNote(item, $event)"
+                                    (photoRemove)="removePhoto(item, $event)"
+                                    (photoFile)="uploadPhoto(item, $event.file, $event.target)"
+                                />
                             }
                         </article>
                     }
@@ -511,7 +505,16 @@
                 <tbody>
                     @for (item of items; track item.uuid) {
                         <tr>
-                            <td>{{ item.assetName }}</td>
+                            <td>
+                                {{ item.assetName }}
+                                @if (item.photos.length) {
+                                    <span class="report-photos">
+                                        @for (photo of item.photos; track photo.uuid) {
+                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" alt="Foto" /></a>
+                                        }
+                                    </span>
+                                }
+                            </td>
                             <td class="mono">{{ item.invId || '—' }}</td>
                             <td>{{ item.assetTypeName || '—' }}</td>
                             <td>{{ item.locationName || '—' }}</td>
@@ -553,6 +556,13 @@
                                 {{ item.assetName }}
                                 @if (item.note) {
                                     <span class="note">Notiz: {{ item.note }}</span>
+                                }
+                                @if (item.photos.length) {
+                                    <span class="report-photos">
+                                        @for (photo of item.photos; track photo.uuid) {
+                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" alt="Foto" /></a>
+                                        }
+                                    </span>
                                 }
                             </td>
                             <td class="mono">{{ item.invId || '—' }}</td>

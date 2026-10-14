@@ -207,117 +207,98 @@ kbd {
 
 // ---- camera ----
 
-.camera-card {
+.camera-off {
+    min-height: 12rem;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: .75rem;
-    padding: .75rem;
+    border-style: dashed;
+    color: var(--text-muted);
+}
 
-    @include bp.phone {
-        padding: .5rem;
+// result popup over the full-screen camera
+.sheet-title {
+    margin: 0 2.5rem .6rem 0;
+    color: var(--text-muted);
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.sheet-message {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-right: 2.5rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+
+    &.failure {
+        color: var(--accent);
     }
 }
 
-.viewport {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
+.sheet-hits {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.sheet-hit {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: .5rem;
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--media-background);
-    transition: box-shadow .15s;
+    color: var(--text);
+    text-decoration: none;
 
-    video {
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
+    &:active {
+        background: var(--surface-hover);
     }
 
-    &.flash {
-        box-shadow: 0 0 0 4px var(--success);
-
-        .frame::before {
-            border-color: var(--success);
-        }
-    }
-
-    .frame {
-        position: absolute;
-        inset: 18% 15%;
-        border-radius: var(--radius-lg);
-        box-shadow: 0 0 0 100vmax var(--scrim);
-        pointer-events: none;
-
-        // corner marks
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border: 3px solid var(--white);
-            border-radius: var(--radius-lg);
-            mask: linear-gradient(var(--black) 0 0) top left / 1.6rem 1.6rem no-repeat,
-                linear-gradient(var(--black) 0 0) top right / 1.6rem 1.6rem no-repeat,
-                linear-gradient(var(--black) 0 0) bottom left / 1.6rem 1.6rem no-repeat,
-                linear-gradient(var(--black) 0 0) bottom right / 1.6rem 1.6rem no-repeat;
-        }
-
-        // scan line
-        &::after {
-            inset: 50% 6% auto;
-            height: 2px;
-            border: 0;
-            border-radius: 0;
-            background: color-mix(in srgb, var(--accent) 85%, transparent);
-            mask: none;
-            animation: sweep 2s ease-in-out infinite;
-        }
-    }
-
-    .camera-overlay {
-        position: absolute;
-        inset: 0;
+    .thumb {
+        width: 4.5rem;
+        height: 4.5rem;
+        flex-shrink: 0;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: .75rem;
-        padding: 1.5rem;
-        color: var(--media-text);
-        text-align: center;
-        font-size: .9rem;
-    }
-}
+        overflow: hidden;
+        border-radius: var(--radius-sm);
+        background: var(--surface-active);
+        color: var(--text-subtle);
 
-.camera-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .5rem;
-
-    select {
-        max-width: 100%;
-        min-height: 2.25rem;
-
-        @include bp.phone {
-            flex: 1 1 100%;
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
     }
 
-    .spacer {
+    .info {
         flex: 1;
-    }
-}
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: .1rem;
 
-@keyframes sweep {
-    0%,
-    100% {
-        top: 12%;
+        strong {
+            font-size: 1.05rem;
+            overflow-wrap: anywhere;
+        }
+
+        small {
+            color: var(--text-muted);
+            font-size: .82rem;
+        }
     }
 
-    50% {
-        top: 88%;
+    .go {
+        flex-shrink: 0;
+        color: var(--text-subtle);
     }
 }
 

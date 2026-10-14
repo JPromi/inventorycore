@@ -27,6 +27,7 @@ import com.jpromi.inventorycore.dto.InspectionFilter;
 import com.jpromi.inventorycore.dto.InspectionFixedDateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemResponse;
 import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
+import com.jpromi.inventorycore.dto.InspectionPhotoRequest;
 import com.jpromi.inventorycore.dto.InspectionScanRequest;
 import com.jpromi.inventorycore.dto.InspectionScanResponse;
 import com.jpromi.inventorycore.dto.InspectionSummaryResponse;
@@ -131,6 +132,26 @@ public class InspectionController {
     @PostMapping("/inspections/{uuid}/items")
     public InspectionItemResponse addItem(@PathVariable UUID uuid, @RequestBody InspectionAddItemRequest request, Authentication authentication) {
         return service.addItem(permissionService.context(authentication), uuid, request.assetUuid());
+    }
+
+    @PostMapping("/inspections/{uuid}/items/{itemUuid}/photos")
+    public InspectionItemResponse addPhoto(
+        @PathVariable UUID uuid,
+        @PathVariable UUID itemUuid,
+        @RequestBody InspectionPhotoRequest request,
+        Authentication authentication
+    ) {
+        return service.addPhoto(permissionService.context(authentication), permissionService.currentUser(authentication), uuid, itemUuid, request);
+    }
+
+    @DeleteMapping("/inspections/{uuid}/items/{itemUuid}/photos/{photoUuid}")
+    public InspectionItemResponse removePhoto(
+        @PathVariable UUID uuid,
+        @PathVariable UUID itemUuid,
+        @PathVariable UUID photoUuid,
+        Authentication authentication
+    ) {
+        return service.removePhoto(permissionService.context(authentication), uuid, itemUuid, photoUuid);
     }
 
     // ---- recurring inspections ----

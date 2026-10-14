@@ -105,6 +105,33 @@ export class CameraScanner {
     await track?.applyConstraints({ advanced: [{ torch: on } as MediaTrackConstraintSet] });
   }
 
+  /**
+   * Photo from the running camera. Uses the full sensor resolution where the browser can
+   * (ImageCapture, mostly Chrome on Android), otherwise the current video frame.
+   */
+  async takePhoto(): Promise<Blob> {
+    const track = this.stream?.getVideoTracks()[0];
+    if (!track) {
+      throw new Error('camera not running');
+    }
+    const ImageCaptureClass = (globalThis as unknown as { ImageCapture?: new (track: MediaStreamTrack) => { takePhoto(): Promise<Blob> } })
+      .ImageCapture;
+    if (ImageCaptureClass) {
+      try {
+        return await new ImageCaptureClass(track).takePhoto();
+      } catch {
+        // some cameras do not support it: use the video frame
+      }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = this.video.videoWidth;
+    canvas.height = this.video.videoHeight;
+    canvas.getContext('2d')?.drawImage(this.video, 0, 0);
+    return new Promise((resolve, reject) =>
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('no image'))), 'image/jpeg', 0.92),
+    );
+  }
+
   /** Id of the camera that is actually in use (after starting with facingMode). */
   get activeDeviceId(): string | null {
     return this.stream?.getVideoTracks()[0]?.getSettings().deviceId ?? null;

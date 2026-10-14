@@ -93,6 +93,11 @@ public class InspectionItem {
     @Builder.Default
     private List<InspectionItemValue> values = new ArrayList<>();
 
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    @Builder.Default
+    private List<InspectionItemPhoto> photos = new ArrayList<>();
+
     @PrePersist
     void ensureUuid() {
         if (uuid == null) {

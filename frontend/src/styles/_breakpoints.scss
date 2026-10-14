@@ -32,3 +32,10 @@ $laptop: 1100px;
         @content;
     }
 }
+
+/// Everything wider than a phone (tablets and up).
+@mixin above-phone {
+    @media (min-width: $phone + 1px) {
+        @content;
+    }
+}

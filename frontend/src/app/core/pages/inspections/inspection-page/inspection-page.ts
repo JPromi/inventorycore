@@ -1,6 +1,7 @@
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpEventType } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   LucideArrowLeft,
@@ -22,10 +23,12 @@ import {
 } from '@lucide/angular';
 
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
+import { CameraView } from '../../../components/camera-view/camera-view';
+import { InspectionItemEditor } from '../inspection-item-editor/inspection-item-editor';
 import { CameraScanner } from '../../../scan/camera-scanner';
 import { scanFeedback } from '../../../scan/scan-feedback';
 import {
@@ -33,11 +36,14 @@ import {
   InspectionField,
   InspectionItem,
   InspectionItemStatus,
+  InspectionPhoto,
+  InspectionPhotoTarget,
   InspectionScanResponse,
   InspectionService,
   fieldOptions,
   formatCheckValue,
 } from '../../../service/inspection.service';
+import { FileApiService } from '../../../service/file-api.service';
 import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import { PermissionService } from '../../../service/permission.service';
 
@@ -53,6 +59,8 @@ const DUPLICATE_WINDOW_MS = 2500;
 @Component({
   selector: 'app-inspection-page',
   imports: [
+    CameraView,
+    InspectionItemEditor,
     DatePipe,
     FormsModule,
     NgTemplateOutlet,
@@ -80,7 +88,7 @@ const DUPLICATE_WINDOW_MS = 2500;
 })
 export class InspectionPage implements OnInit, OnDestroy {
   @ViewChild('scanInput') private scanInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('video') private video?: ElementRef<HTMLVideoElement>;
+  @ViewChild(CameraView) private camera?: CameraView;
 
   protected readonly formatValue = formatCheckValue;
   protected readonly options = fieldOptions;
@@ -95,7 +103,12 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected scanning = false;
   protected lastScan: InspectionScanResponse | null = null;
   protected cameraOn = false;
-  protected cameraError = '';
+  /** Result popup over the full-screen camera. */
+  protected sheetOpen = false;
+  /** The full-screen camera takes a photo for this item instead of scanning. */
+  protected photoTarget: { itemUuid: string; target: InspectionPhotoTarget } | null = null;
+  /** Upload state or result of the last photo per item. */
+  protected photoStatus: Record<string, string> = {};
 
   protected itemFilter: ItemFilter = 'ALL';
   protected search = '';
@@ -112,7 +125,6 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected comment = '';
   protected submitting = false;
 
-  private scanner: CameraScanner | null = null;
   private lastCode = '';
   private lastCodeAt = 0;
   /** Text values wait a moment before they are saved; completing sends them first. */
@@ -124,8 +136,8 @@ export class InspectionPage implements OnInit, OnDestroy {
     private readonly api: InspectionService,
     private readonly permissions: PermissionService,
     private readonly confirmDialog: ConfirmDialogService,
-    private readonly zone: NgZone,
     private readonly inventory: InventoryApiService,
+    private readonly files: FileApiService,
   ) {}
 
   ngOnInit(): void {
@@ -134,7 +146,6 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.scanner?.stop();
     this.flushSaves().subscribe();
   }
 
@@ -286,28 +297,97 @@ export class InspectionPage implements OnInit, OnDestroy {
     this.scanInput?.nativeElement.focus();
   }
 
-  protected async toggleCamera(): Promise<void> {
-    if (this.cameraOn) {
-      this.scanner?.stop();
-      this.scanner = null;
-      this.cameraOn = false;
+  protected toggleCamera(): void {
+    this.cameraOn = !this.cameraOn;
+    this.sheetOpen = false;
+    this.photoTarget = null;
+  }
+
+  protected onCameraCode(code: string): void {
+    if (this.photoTarget) {
       return;
     }
-    this.cameraOn = true;
-    this.cameraError = '';
-    // the video element appears with cameraOn
-    setTimeout(async () => {
-      const video = this.video?.nativeElement;
-      if (!video) {
-        return;
-      }
-      this.scanner = new CameraScanner(video, (code) => this.zone.run(() => this.scan(code, false)));
-      try {
-        await this.scanner.start();
-      } catch {
-        this.cameraError = 'Kamera konnte nicht gestartet werden. Ist der Zugriff erlaubt?';
-      }
+    // the label is still in front of the camera while its result is shown
+    if (this.sheetOpen && code.trim() === this.lastCode) {
+      return;
+    }
+    this.scan(code, false);
+  }
+
+  /** The scanned item of the popup, as it is in the list now (status may have changed since). */
+  protected get sheetItem(): InspectionItem | null {
+    const uuid = this.lastScan?.item?.uuid;
+    const item = uuid ? this.detail?.items.find((entry) => entry.uuid === uuid) : null;
+    return item?.expected ? item : null;
+  }
+
+  // ---- photos ----
+
+  protected onCameraPhoto(blob: Blob): void {
+    const target = this.photoTarget;
+    this.photoTarget = null;
+    this.sheetOpen = true;
+    const item = target && this.detail?.items.find((entry) => entry.uuid === target.itemUuid);
+    if (item) {
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+      this.uploadPhoto(item, new File([blob], `pruefung-${stamp}.jpg`, { type: blob.type || 'image/jpeg' }), target.target);
+    }
+  }
+
+  /** Uploads the image and puts it into the protocol or into the asset's images. */
+  protected uploadPhoto(item: InspectionItem, file: File, target: InspectionPhotoTarget): void {
+    this.photoStatus[item.uuid] = 'Foto wird hochgeladen...';
+    this.files
+      .uploadImage(file)
+      .pipe(
+        filter((event) => event.type === HttpEventType.Response),
+        map((event) => event.body!),
+        switchMap((stored) => this.api.addPhoto(this.uuid, item.uuid, stored.uuid, target)),
+      )
+      .subscribe({
+        next: (updated) => {
+          this.mergeItem(updated);
+          this.showPhotoStatus(item.uuid, target === 'ASSET' ? 'Foto in die Bilder des Assets übernommen.' : 'Foto zur Prüfung gespeichert.');
+        },
+        error: (error) => {
+          if (error?.status === 409) {
+            this.handleError(error, '');
+            return;
+          }
+          this.showPhotoStatus(item.uuid, error?.error?.message ?? 'Foto konnte nicht gespeichert werden.');
+        },
+      });
+  }
+
+  protected async removePhoto(item: InspectionItem, photo: InspectionPhoto): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Foto entfernen?',
+      message: 'Das Foto wird aus dem Prüfprotokoll entfernt.',
+      confirmLabel: 'Entfernen',
+      danger: true,
     });
+    if (!confirmed) {
+      return;
+    }
+    this.api.removePhoto(this.uuid, item.uuid, photo.uuid).subscribe({
+      next: (updated) => this.mergeItem(updated),
+      error: (error) => this.handleError(error, 'Foto konnte nicht entfernt werden.'),
+    });
+  }
+
+  /** Takes the new photos and status, keeps values that are typed but not yet saved. */
+  private mergeItem(updated: InspectionItem): void {
+    const current = this.detail?.items.find((entry) => entry.uuid === updated.uuid);
+    this.replaceItem(current ? { ...updated, values: current.values, note: current.note } : updated);
+  }
+
+  private showPhotoStatus(itemUuid: string, message: string): void {
+    this.photoStatus[itemUuid] = message;
+    setTimeout(() => {
+      if (this.photoStatus[itemUuid] === message) {
+        delete this.photoStatus[itemUuid];
+      }
+    }, 5000);
   }
 
   private scan(raw: string, allowRepeat: boolean): void {
@@ -326,13 +406,18 @@ export class InspectionPage implements OnInit, OnDestroy {
     this.api.scan(this.uuid, code).subscribe({
       next: (response) => {
         this.scanning = false;
+        this.error = '';
         this.lastScan = response;
+        this.sheetOpen = true;
         if (response.item) {
           this.replaceItem(response.item);
         }
         const warning = ['UNEXPECTED', 'UNKNOWN', 'ADDED_OTHER_TYPE'].includes(response.outcome);
         const success = ['CHECKED', 'ADDED', 'OPENED'].includes(response.outcome);
         scanFeedback(success ? 'success' : warning ? 'warning' : 'error');
+        if (success) {
+          this.camera?.flash();
+        }
         if (response.item && response.item.expected) {
           this.focusItem(response.item);
         }
@@ -454,7 +539,6 @@ export class InspectionPage implements OnInit, OnDestroy {
         next: (detail) => {
           this.submitting = false;
           this.completing = false;
-          this.scanner?.stop();
           this.cameraOn = false;
           this.detail = detail;
         },
@@ -572,6 +656,7 @@ export class InspectionPage implements OnInit, OnDestroy {
       return;
     }
     this.error = message;
+    this.sheetOpen = true;
     scanFeedback('error');
   }
 }

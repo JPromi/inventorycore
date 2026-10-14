@@ -24,5 +24,6 @@ public record InspectionItemResponse(
     OffsetDateTime checkedAt,
     String checkedByName,
     String note,
-    List<InspectionItemValueResponse> values
+    List<InspectionItemValueResponse> values,
+    List<InspectionPhotoResponse> photos
 ) {}
