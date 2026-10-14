@@ -73,7 +73,7 @@
                             }
                         </select>
                         <button type="button" class="secondary-action" [disabled]="!quickAreaUuid" (click)="grantArea()">
-                            Für Inventar, Standorte &amp; Typen setzen
+                            Für alle Objektarten setzen
                         </button>
                     </div>
 
@@ -113,8 +113,9 @@
                                                     name="type{{ index }}"
                                                     aria-label="Objektart"
                                                 >
+                                                    <option [ngValue]="null">Alle Objektarten</option>
                                                     @for (type of resourceTypes; track type[0]) {
-                                                        <option [value]="type[0]">{{ type[1] }}</option>
+                                                        <option [ngValue]="type[0]">{{ type[1] }}</option>
                                                     }
                                                 </select>
                                             </td>

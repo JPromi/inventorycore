@@ -81,23 +81,21 @@ export class GroupFormPage implements OnInit {
     if (!this.quickAreaUuid) {
       return;
     }
-    for (const [type] of this.resourceTypes) {
-      let permission = this.permissions.find((entry) => entry.resourceType === type && entry.areaUuid === this.quickAreaUuid);
-      if (!permission) {
-        permission = this.emptyPermission(type, this.quickAreaUuid);
-        this.permissions = [...this.permissions, permission];
-      }
-      applyPreset(permission, this.quickPreset);
+    let permission = this.permissions.find((entry) => entry.resourceType === null && entry.areaUuid === this.quickAreaUuid);
+    if (!permission) {
+      permission = this.emptyPermission(null, this.quickAreaUuid);
+      this.permissions = [...this.permissions, permission];
     }
+    applyPreset(permission, this.quickPreset);
     this.quickAreaUuid = null;
   }
 
   protected addPermission(): void {
     const defaultArea = this.areas.find((area) => area.defaultArea)?.uuid ?? null;
-    this.permissions = [...this.permissions, this.emptyPermission('ASSET', defaultArea)];
+    this.permissions = [...this.permissions, this.emptyPermission(null, defaultArea)];
   }
 
-  private emptyPermission(type: PermissionResourceType, areaUuid: string | null): AdminPermissionRequest {
+  private emptyPermission(type: PermissionResourceType | null, areaUuid: string | null): AdminPermissionRequest {
     const permission: AdminPermissionRequest = {
       resourceType: type,
       areaUuid,
@@ -211,7 +209,7 @@ export class GroupFormPage implements OnInit {
             this.readOnlyName = group.sourceProvider !== 'LOCAL';
             this.permissions = group.permissions
               .map(({ uuid: _uuid, ...permission }) => ({ ...permission }))
-              .sort((a, b) => this.areaSortKey(a.areaUuid).localeCompare(this.areaSortKey(b.areaUuid)) || a.resourceType.localeCompare(b.resourceType));
+              .sort((a, b) => this.areaSortKey(a.areaUuid).localeCompare(this.areaSortKey(b.areaUuid)) || (a.resourceType ?? '').localeCompare(b.resourceType ?? ''));
             this.memberUuids = users.filter((user) => user.groupUuids.includes(group.uuid)).map((user) => user.uuid);
             this.originalMemberUuids = [...this.memberUuids];
           }

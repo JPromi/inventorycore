@@ -17,6 +17,7 @@ import {
   PermissionFlag,
   RESOURCE_TYPE_LABELS,
   applyPreset,
+  resourceTypeLabel,
 } from '../../../service/admin-api.service';
 import { AreaItem } from '../../../service/area.service';
 
@@ -25,8 +26,8 @@ interface PermissionRow {
   permission: AdminPermission;
 }
 
-/** Filter value for permissions that apply to all areas (a real area uuid is never this). */
-const ALL_AREAS = '__all__';
+/** Select value for "all areas" / "all kinds" (a real uuid or type is never this). */
+const ALL = '__all__';
 
 @Component({
   selector: 'app-permissions-page',
@@ -37,8 +38,11 @@ const ALL_AREAS = '__all__';
 export class PermissionsPage implements OnInit {
   protected readonly flags = PERMISSION_FLAGS;
   protected readonly presets = PERMISSION_PRESETS;
-  protected readonly typeLabels = RESOURCE_TYPE_LABELS;
-  protected readonly typeOptions: SelectOption[] = Object.entries(RESOURCE_TYPE_LABELS).map(([value, label]) => ({ value, label }));
+  protected readonly typeLabel = resourceTypeLabel;
+  protected readonly typeOptions: SelectOption[] = [
+    { value: ALL, label: 'Alle Objektarten' },
+    ...Object.entries(RESOURCE_TYPE_LABELS).map(([value, label]) => ({ value, label })),
+  ];
   protected groups: AdminGroup[] = [];
   protected areas: AreaItem[] = [];
   protected loading = false;
@@ -50,7 +54,7 @@ export class PermissionsPage implements OnInit {
 
   protected showAddForm = false;
   protected newGroupUuid: string | null = null;
-  protected newType: PermissionResourceType = 'ASSET';
+  protected newType: string = ALL;
   protected newAreaUuid: string | null = null;
   protected newPreset = 'read';
 
@@ -72,20 +76,20 @@ export class PermissionsPage implements OnInit {
   }
 
   protected get areaFilterOptions(): SelectOption[] {
-    return [{ value: ALL_AREAS, label: 'Gilt für alle Bereiche' }, ...this.areaOptions];
+    return [{ value: ALL, label: 'Gilt für alle Bereiche' }, ...this.areaOptions];
   }
 
   protected get rows(): PermissionRow[] {
     return this.groups
       .filter((group) => !this.groupFilter || group.uuid === this.groupFilter)
       .flatMap((group) => group.permissions.map((permission) => ({ group, permission })))
-      .filter((row) => !this.typeFilter || row.permission.resourceType === this.typeFilter)
-      .filter((row) => !this.areaFilter || (row.permission.areaUuid ?? ALL_AREAS) === this.areaFilter)
+      .filter((row) => !this.typeFilter || (row.permission.resourceType ?? ALL) === this.typeFilter)
+      .filter((row) => !this.areaFilter || (row.permission.areaUuid ?? ALL) === this.areaFilter)
       .sort(
         (a, b) =>
           a.group.name.localeCompare(b.group.name) ||
           this.areaName(a.permission.areaUuid).localeCompare(this.areaName(b.permission.areaUuid)) ||
-          a.permission.resourceType.localeCompare(b.permission.resourceType),
+          (a.permission.resourceType ?? '').localeCompare(b.permission.resourceType ?? ''),
       );
   }
 
@@ -125,7 +129,7 @@ export class PermissionsPage implements OnInit {
   protected async remove(row: PermissionRow): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
       title: 'Berechtigung entfernen?',
-      message: `Gruppe „${row.group.name}“ verliert den Zugriff auf ${this.typeLabels[row.permission.resourceType]} in „${this.areaName(row.permission.areaUuid)}“.`,
+      message: `Gruppe „${row.group.name}“ verliert den Zugriff auf ${this.typeLabel(row.permission.resourceType)} in „${this.areaName(row.permission.areaUuid)}“.`,
       confirmLabel: 'Entfernen',
       danger: true,
     });
@@ -143,19 +147,23 @@ export class PermissionsPage implements OnInit {
   protected openAddForm(): void {
     this.showAddForm = true;
     this.newGroupUuid = this.groupFilter;
-    this.newType = (this.typeFilter as PermissionResourceType) ?? 'ASSET';
-    this.newAreaUuid = this.areaFilter && this.areaFilter !== ALL_AREAS ? this.areaFilter : null;
+    this.newType = this.typeFilter ?? ALL;
+    this.newAreaUuid = this.areaFilter && this.areaFilter !== ALL ? this.areaFilter : null;
     this.newPreset = 'read';
   }
 
   protected changeNewType(type: string | null): void {
-    this.newType = (type as PermissionResourceType) ?? 'ASSET';
+    this.newType = type ?? ALL;
+  }
+
+  private get newResourceType(): PermissionResourceType | null {
+    return this.newType === ALL ? null : (this.newType as PermissionResourceType);
   }
 
   protected get newPermissionExists(): boolean {
     const group = this.groups.find((entry) => entry.uuid === this.newGroupUuid);
     return !!group?.permissions.some(
-      (permission) => permission.resourceType === this.newType && (permission.areaUuid ?? null) === this.newAreaUuid,
+      (permission) => permission.resourceType === this.newResourceType && (permission.areaUuid ?? null) === this.newAreaUuid,
     );
   }
 
@@ -165,7 +173,7 @@ export class PermissionsPage implements OnInit {
       return;
     }
     const request: AdminPermissionRequest = {
-      resourceType: this.newType,
+      resourceType: this.newResourceType,
       areaUuid: this.newAreaUuid,
       canView: false,
       canCreate: false,

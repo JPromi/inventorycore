@@ -59,6 +59,17 @@
                     <kbd>/</kbd>
                 }
             </div>
+            @if (filter.areas && areaOptions.length > 1) {
+                <app-search-select
+                    class="filter-select"
+                    [options]="areaOptions"
+                    [(ngModel)]="areaFilter"
+                    (ngModelChange)="onFilterChange()"
+                    placeholder="Alle Bereiche"
+                    clearLabel="Alle Bereiche"
+                    searchPlaceholder="Bereich suchen..."
+                />
+            }
             @if (filter.tags) {
                 <app-search-select
                     class="filter-select"

@@ -36,6 +36,9 @@ public class SchemaMigration implements CommandLineRunner {
             log.info("Renamed {} CATEGORY permissions to ASSET_TYPE", renamed);
         }
 
+        // a permission without resource type applies to all kinds of objects
+        jdbc.execute("alter table group_permissions alter column resource_type drop not null");
+
         // permissions on single objects were replaced by permissions per area
         if (columnExists("group_permissions", "resource_uuid")) {
             int removed = jdbc.update("delete from group_permissions where resource_uuid is not null");

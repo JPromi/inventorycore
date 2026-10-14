@@ -48,6 +48,7 @@ interface FilterConfig {
   tags?: boolean;
   locations?: boolean;
   assetTypes?: boolean;
+  areas?: boolean;
 }
 
 interface FieldConfig {
@@ -93,6 +94,7 @@ export class InventoryPage implements OnInit {
   protected tagFilter: string | null = null;
   protected locationFilter: string | null = null;
   protected assetTypeFilter: string | null = null;
+  protected areaFilter: string | null = null;
   protected tags: TagItem[] = [];
   protected locations: InventoryItem[] = [];
   protected assetTypes: InventoryItem[] = [];
@@ -158,7 +160,7 @@ export class InventoryPage implements OnInit {
   }
 
   protected get hasActiveFilters(): boolean {
-    return !!this.search.trim() || !!this.tagFilter || !!this.locationFilter || !!this.assetTypeFilter;
+    return !!this.search.trim() || !!this.tagFilter || !!this.locationFilter || !!this.assetTypeFilter || !!this.areaFilter;
   }
 
   protected get tagOptions(): SelectOption[] {
@@ -169,6 +171,14 @@ export class InventoryPage implements OnInit {
     return this.locations
       .map((location) => ({ value: location.uuid, label: locationPath(this.locations, location), hint: location.address ?? undefined }))
       .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  /** Only areas inside the sidebar selection (if any) make sense as filter. */
+  protected get areaOptions(): SelectOption[] {
+    const selected = this.areaService.selected;
+    return this.areaService.areas
+      .filter((area) => !selected.length || selected.includes(area.uuid))
+      .map((area) => ({ value: area.uuid, label: area.name, color: area.color }));
   }
 
   protected get assetTypeOptions(): SelectOption[] {
@@ -199,6 +209,7 @@ export class InventoryPage implements OnInit {
     this.tagFilter = null;
     this.locationFilter = null;
     this.assetTypeFilter = null;
+    this.areaFilter = null;
     this.page = 1;
   }
 
@@ -326,6 +337,9 @@ export class InventoryPage implements OnInit {
       return false;
     }
     if (this.assetTypeFilter && item.assetTypeUuid !== this.assetTypeFilter) {
+      return false;
+    }
+    if (this.areaFilter && !this.areaService.matchesAreas(item, [this.areaFilter], this.locations)) {
       return false;
     }
     return true;

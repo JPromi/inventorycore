@@ -93,6 +93,7 @@ export const routes: Routes = [
             filter: {
               searchFields: ['name', 'description', 'tags'],
               searchPlaceholder: 'Name, Beschreibung oder Tag suchen...',
+              areas: true,
               tags: true,
               locations: true,
               assetTypes: true,
@@ -140,6 +141,7 @@ export const routes: Routes = [
             filter: {
               searchFields: ['name', 'address'],
               searchPlaceholder: 'Name oder Adresse suchen...',
+              areas: true,
             },
             fields: locationFormConfig.fields,
           },
@@ -182,6 +184,7 @@ export const routes: Routes = [
             filter: {
               searchFields: ['name', 'description', 'tags'],
               searchPlaceholder: 'Typ oder Tag suchen...',
+              areas: true,
             },
             fields: assetTypeFormConfig.fields,
           },

@@ -131,7 +131,13 @@
                                     <span class="badge accent">Alle Bereiche</span>
                                 }
                             </td>
-                            <td>{{ typeLabels[row.permission.resourceType] }}</td>
+                            <td>
+                                @if (row.permission.resourceType) {
+                                    {{ typeLabel(row.permission.resourceType) }}
+                                } @else {
+                                    <span class="badge accent">Alle Objektarten</span>
+                                }
+                            </td>
                             @for (flag of flags; track flag.key) {
                                 <td class="center">
                                     <input

@@ -39,7 +39,8 @@ export interface AdminGroupRequest {
 }
 
 export interface AdminPermissionRequest {
-  resourceType: PermissionResourceType;
+  /** null = all kinds of objects */
+  resourceType: PermissionResourceType | null;
   areaUuid: string | null;
   canView: boolean;
   canCreate: boolean;
@@ -58,6 +59,10 @@ export interface AdminAreaRequest {
   description: string | null;
   color: string | null;
   defaultArea: boolean;
+}
+
+export function resourceTypeLabel(type: PermissionResourceType | null): string {
+  return type ? RESOURCE_TYPE_LABELS[type] : 'Alle Objektarten';
 }
 
 export const RESOURCE_TYPE_LABELS: Record<PermissionResourceType, string> = {

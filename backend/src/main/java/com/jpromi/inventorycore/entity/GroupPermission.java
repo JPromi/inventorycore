@@ -50,7 +50,7 @@ public class GroupPermission {
     @JoinColumn(name = "group_id", nullable = false)
     private Group group;
 
-    @Column(nullable = false)
+    /** The kind of object this permission applies to; {@code null} means all kinds. */
     @Enumerated(EnumType.STRING)
     private PermissionResourceType resourceType;
 

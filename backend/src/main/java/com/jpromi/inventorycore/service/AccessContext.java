@@ -20,6 +20,7 @@ import com.jpromi.inventorycore.enums.PermissionResourceType;
  * <p>Rules:
  * <ul>
  *   <li>A permission applies to one area, or to all areas when its area is {@code null}.</li>
+ *   <li>A permission applies to one kind of object, or to all kinds when its resource type is {@code null}.</li>
  *   <li>An object is accessible when the action is allowed in at least one of its areas.</li>
  *   <li>Viewing is inherited: whoever may view a location also sees its sub-locations and all assets in them.</li>
  *   <li>Users with the ADMIN role may do everything.</li>
@@ -46,7 +47,7 @@ public class AccessContext {
             return true;
         }
         return permissions.stream()
-            .filter(permission -> permission.getResourceType() == type && allows(permission, action))
+            .filter(permission -> appliesTo(permission, type) && allows(permission, action))
             .anyMatch(permission -> permission.getArea() == null || areas.stream().anyMatch(area -> sameArea(area, permission.getArea())));
     }
 
@@ -57,7 +58,7 @@ public class AccessContext {
 
     /** Allowed in any area at all. */
     public boolean canAnywhere(PermissionResourceType type, PermissionAction action) {
-        return admin || permissions.stream().anyMatch(permission -> permission.getResourceType() == type && allows(permission, action));
+        return admin || permissions.stream().anyMatch(permission -> appliesTo(permission, type) && allows(permission, action));
     }
 
     /** True when the user has at least one permission (of any kind) for this area or for all areas. */
@@ -89,6 +90,10 @@ public class AccessContext {
 
     public boolean canViewAssetType(AssetType type) {
         return can(PermissionResourceType.ASSET_TYPE, PermissionAction.VIEW, type.getAreas());
+    }
+
+    private static boolean appliesTo(GroupPermission permission, PermissionResourceType type) {
+        return permission.getResourceType() == null || permission.getResourceType() == type;
     }
 
     private boolean allows(GroupPermission permission, PermissionAction action) {

@@ -9,7 +9,8 @@ export type PermissionAction = 'view' | 'create' | 'edit' | 'delete' | 'inspect'
  * Mirrors the backend rules for showing/hiding UI actions. The backend stays the authority:
  * lists only contain visible objects and every change is checked again there.
  *
- * A permission applies to one area or, without area, to all areas.
+ * A permission applies to one area or, without area, to all areas, and to one kind of
+ * object or, without resource type, to all kinds.
  */
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
@@ -43,7 +44,8 @@ export class PermissionService {
       return [];
     }
     return user.permissions.filter(
-      (permission) => permission.resourceType === resourceType && (permission.admin || this.hasAction(permission, action)),
+      (permission) =>
+        (!permission.resourceType || permission.resourceType === resourceType) && (permission.admin || this.hasAction(permission, action)),
     );
   }
 

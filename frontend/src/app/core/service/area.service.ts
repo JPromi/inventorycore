@@ -79,10 +79,11 @@ export class AreaService {
    * belonging to an area when one of their (parent) locations is in it, like the view permission.
    */
   matchesSelection(item: InventoryItem, locations: InventoryItem[] = []): boolean {
-    const selected = this.selected;
-    if (!selected.length) {
-      return true;
-    }
+    return !this.selected.length || this.matchesAreas(item, this.selected, locations);
+  }
+
+  /** Same rule as {@link matchesSelection}, for an explicit list of areas. */
+  matchesAreas(item: InventoryItem, selected: string[], locations: InventoryItem[] = []): boolean {
     const inSelection = (entry: InventoryItem) => (entry.areaUuids ?? []).some((uuid) => selected.includes(uuid));
     if (inSelection(item)) {
       return true;
