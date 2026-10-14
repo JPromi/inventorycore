@@ -380,9 +380,10 @@ label.field {
         pointer-events: none;
     }
 
-    input {
+    // same specificity as the generic `.page :is(input:not(...))` rule above, so this one wins
+    input:not([type='checkbox']):not([type='radio']) {
         min-height: 2.6rem;
-        padding: 0 2.4rem 0 2.4rem;
+        padding: 0 2.4rem 0 2.6rem;
         border-radius: 999px;
         box-shadow: var(--shadow-sm);
         font-size: .95rem;
