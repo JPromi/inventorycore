@@ -262,6 +262,10 @@ export const routes: Routes = [
             path: 'oidc',
             loadComponent: () => import('./core/pages/admin/oidc-settings-page/oidc-settings-page').then((m) => m.OidcSettingsPage),
           },
+          {
+            path: 'logs',
+            loadComponent: () => import('./core/pages/admin/audit-log-page/audit-log-page').then((m) => m.AuditLogPage),
+          },
         ],
       },
 

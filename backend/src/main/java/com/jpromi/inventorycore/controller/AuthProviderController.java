@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jpromi.inventorycore.dto.AuditDetail;
 import com.jpromi.inventorycore.dto.LdapSettingsDto;
 import com.jpromi.inventorycore.dto.OidcSettingsDto;
 import com.jpromi.inventorycore.entity.LdapSettings;
@@ -17,6 +18,9 @@ import com.jpromi.inventorycore.ldap.LdapService;
 import com.jpromi.inventorycore.oidc.DynamicClientRegistrationRepository;
 import com.jpromi.inventorycore.repository.LdapSettingsRepository;
 import com.jpromi.inventorycore.repository.OidcSettingsRepository;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.service.AuditService;
 
 /** Configuration of the external identity providers (admin only via /api/admin/**). */
 @RestController
@@ -29,17 +33,20 @@ public class AuthProviderController {
     private final OidcSettingsRepository oidcRepository;
     private final LdapService ldapService;
     private final DynamicClientRegistrationRepository clientRegistrations;
+    private final AuditService audit;
 
     public AuthProviderController(
         LdapSettingsRepository ldapRepository,
         OidcSettingsRepository oidcRepository,
         LdapService ldapService,
-        DynamicClientRegistrationRepository clientRegistrations
+        DynamicClientRegistrationRepository clientRegistrations,
+        AuditService audit
     ) {
         this.ldapRepository = ldapRepository;
         this.oidcRepository = oidcRepository;
         this.ldapService = ldapService;
         this.clientRegistrations = clientRegistrations;
+        this.audit = audit;
     }
 
     // ---- LDAP ----
@@ -53,8 +60,17 @@ public class AuthProviderController {
     @Transactional
     public LdapSettingsDto saveLdap(@RequestBody LdapSettingsDto request) {
         LdapSettings settings = ldapRepository.load();
+        LdapSettingsDto before = toDto(settings);
         apply(settings, request);
-        return toDto(ldapRepository.save(settings));
+        LdapSettingsDto after = toDto(ldapRepository.save(settings));
+        java.util.List<AuditDetail> changes = new java.util.ArrayList<>(audit.diff(before, after));
+        if (request.bindPassword() != null && !request.bindPassword().isBlank()) {
+            changes.add(AuditDetail.event("BIND_PASSWORD_CHANGED"));
+        }
+        if (!changes.isEmpty()) {
+            audit.log(AuditAction.UPDATE, AuditObjectType.SETTINGS, null, "LDAP", changes);
+        }
+        return after;
     }
 
     /** Tests the values from the form, even if they are not saved yet. */
@@ -69,7 +85,18 @@ public class AuthProviderController {
 
     @PostMapping("/ldap/sync")
     public LdapService.SyncResult syncLdap() {
-        return ldapService.sync();
+        LdapService.SyncResult result = ldapService.sync();
+        audit.log(AuditAction.SYNC, AuditObjectType.SETTINGS, null, "LDAP", AuditDetail.event("LDAP_SYNC",
+            "success", result.success(),
+            "usersCreated", result.usersCreated(),
+            "usersUpdated", result.usersUpdated(),
+            "usersDisabled", result.usersDisabled(),
+            "usersSkipped", result.usersSkipped(),
+            "groupsCreated", result.groupsCreated(),
+            "groupsUpdated", result.groupsUpdated(),
+            // the error text comes from the directory server / Java and is passed on as is
+            "error", result.success() ? null : result.message()));
+        return result;
     }
 
     // ---- OIDC ----
@@ -83,8 +110,16 @@ public class AuthProviderController {
     @Transactional
     public OidcSettingsDto saveOidc(@RequestBody OidcSettingsDto request) {
         OidcSettings settings = oidcRepository.load();
+        OidcSettingsDto before = toDto(settings);
         apply(settings, request);
         OidcSettings saved = oidcRepository.save(settings);
+        java.util.List<AuditDetail> changes = new java.util.ArrayList<>(audit.diff(before, toDto(saved)));
+        if (request.clientSecret() != null && !request.clientSecret().isBlank()) {
+            changes.add(AuditDetail.event("CLIENT_SECRET_CHANGED"));
+        }
+        if (!changes.isEmpty()) {
+            audit.log(AuditAction.UPDATE, AuditObjectType.SETTINGS, null, "OIDC", changes);
+        }
         clientRegistrations.invalidate();
         return toDto(saved);
     }

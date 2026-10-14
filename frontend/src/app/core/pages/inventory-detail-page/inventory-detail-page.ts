@@ -20,6 +20,7 @@ import { catchError } from 'rxjs/operators';
 
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
+import { AuditHistory } from '../../components/audit-history/audit-history';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
 import {
@@ -77,6 +78,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
 @Component({
   selector: 'app-inventory-detail-page',
   imports: [
+    AuditHistory,
     CommonModule,
     FormsModule,
     RouterLink,

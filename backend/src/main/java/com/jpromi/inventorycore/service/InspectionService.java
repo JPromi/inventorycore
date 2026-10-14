@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.jpromi.inventorycore.dto.AuditDetail;
 import com.jpromi.inventorycore.dto.AssetInspectionResponse;
 import com.jpromi.inventorycore.dto.InspectionCounts;
 import com.jpromi.inventorycore.dto.InspectionCreateRequest;
@@ -49,6 +50,8 @@ import com.jpromi.inventorycore.entity.StoredFile;
 import com.jpromi.inventorycore.entity.Tag;
 import com.jpromi.inventorycore.entity.User;
 import com.jpromi.inventorycore.enums.AssetFieldType;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
 import com.jpromi.inventorycore.enums.ImageKind;
 import com.jpromi.inventorycore.enums.InspectionCheckMethod;
 import com.jpromi.inventorycore.enums.InspectionItemStatus;
@@ -90,6 +93,7 @@ public class InspectionService {
     private final AssetInspectionScheduleRepository scheduleRepository;
     private final InspectionScheduleService scheduleService;
     private final StoredFileRepository fileRepository;
+    private final AuditService audit;
 
     public InspectionService(
         InspectionTypeRepository typeRepository,
@@ -103,7 +107,8 @@ public class InspectionService {
         InspectionItemRepository itemRepository,
         AssetInspectionScheduleRepository scheduleRepository,
         InspectionScheduleService scheduleService,
-        StoredFileRepository fileRepository
+        StoredFileRepository fileRepository,
+        AuditService audit
     ) {
         this.typeRepository = typeRepository;
         this.inspectionRepository = inspectionRepository;
@@ -117,6 +122,7 @@ public class InspectionService {
         this.scheduleRepository = scheduleRepository;
         this.scheduleService = scheduleService;
         this.fileRepository = fileRepository;
+        this.audit = audit;
     }
 
     // ---- inspection types ----
@@ -147,17 +153,22 @@ public class InspectionService {
         applyType(type, request);
         // only for areas the user manages; without areas (= all) only with a right for all areas
         requireAreas(canManage(access, type, PermissionAction.CREATE) || canManage(access, type, PermissionAction.EDIT));
-        return toResponse(typeRepository.save(type), access);
+        InspectionTypeResponse created = toResponse(typeRepository.save(type), access);
+        audit.log(AuditAction.CREATE, AuditObjectType.INSPECTION_TYPE, created.uuid(), created.name());
+        return created;
     }
 
     @Transactional
     public InspectionTypeResponse updateType(AccessContext access, UUID uuid, InspectionTypeRequest request) {
         InspectionType type = typeOr404(uuid);
         require(canManage(access, type, PermissionAction.EDIT));
+        InspectionTypeResponse before = toResponse(type, access);
         applyType(type, request);
         // also for the new areas (rolls back the changes otherwise)
         requireAreas(canManage(access, type, PermissionAction.EDIT));
-        return toResponse(typeRepository.save(type), access);
+        InspectionTypeResponse after = toResponse(typeRepository.save(type), access);
+        audit.logChanges(AuditObjectType.INSPECTION_TYPE, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @Transactional
@@ -167,6 +178,7 @@ public class InspectionService {
         inspectionRepository.detachType(type);
         scheduleRepository.deleteByInspectionType(type);
         typeRepository.delete(type);
+        audit.log(AuditAction.DELETE, AuditObjectType.INSPECTION_TYPE, type.getUuid(), type.getName());
     }
 
     private void applyType(InspectionType type, InspectionTypeRequest request) {
@@ -303,11 +315,34 @@ public class InspectionService {
         assets.stream()
             .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
             .forEach(asset -> inspection.getItems().add(newItem(inspection, asset, true, locations)));
-        return toDetail(inspectionRepository.save(inspection));
+        InspectionDetailResponse created = toDetail(inspectionRepository.save(inspection));
+        audit.log(AuditAction.CREATE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(
+            "INSPECTION_STARTED",
+            "inspectionType", type.getName(),
+            "mode", type.getMode().name(),
+            "expected", assets.size(),
+            "location", filter.locationUuid() == null ? null : locationRepository.findByUuid(filter.locationUuid()).map(Location::getName).orElse(null),
+            "includeSubLocations", filter.locationUuid() == null ? null : filter.includeSubLocations(),
+            "tags", nameList(filter.tagUuids(), uuid -> tagRepository.findByUuid(uuid).map(Tag::getName)),
+            "assetTypes", nameList(filter.assetTypeUuids(), uuid -> assetTypeRepository.findByUuid(uuid).map(AssetType::getName)),
+            "areas", nameList(filter.areaUuids(), uuid -> areaRepository.findByUuid(uuid).map(Area::getName)),
+            "onlyDue", onlyDue ? true : null));
+        return created;
     }
 
     @Transactional
     public InspectionScanResponse scan(AccessContext access, User user, UUID uuid, String code) {
+        InspectionScanResponse response = scanCode(access, user, uuid, code);
+        InspectionItemResponse item = response.item();
+        if (item != null && item.assetUuid() != null) {
+            String title = inspectionRepository.findByUuid(uuid).map(Inspection::getTitle).orElse("?");
+            audit.log(AuditAction.SCAN, AuditObjectType.ASSET, item.assetUuid(), item.assetName(),
+                AuditDetail.event("INSPECTION_SCAN", "inspection", title, "inspectionUuid", uuid.toString(), "outcome", response.outcome()));
+        }
+        return response;
+    }
+
+    private InspectionScanResponse scanCode(AccessContext access, User user, UUID uuid, String code) {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
         ScanResolver.Resolution resolution = scanResolver.resolve(access, code);
@@ -404,6 +439,10 @@ public class InspectionService {
             } else {
                 check(item, request.status(), InspectionCheckMethod.MANUAL, user);
             }
+            if (item.getAsset() != null) {
+                audit.log(AuditAction.INSPECT, AuditObjectType.ASSET, item.getAsset().getUuid(), item.getAssetName(), AuditDetail.event(
+                    "INSPECTION_RESULT", "inspection", inspection.getTitle(), "inspectionUuid", uuid.toString(), "status", request.status().name()));
+            }
         }
         if (request.note() != null) {
             item.setNote(blankToNull(request.note()));
@@ -442,6 +481,8 @@ public class InspectionService {
         InspectionItem item = newItem(inspection, asset, true, locations);
         inspection.getItems().add(item);
         inspectionRepository.save(inspection);
+        audit.log(AuditAction.INSPECT, AuditObjectType.ASSET, asset.getUuid(), asset.getName(), AuditDetail.event(
+            "INSPECTION_ITEM_ADDED", "inspection", inspection.getTitle(), "inspectionUuid", uuid.toString()));
         return toResponse(item, locations);
     }
 
@@ -478,6 +519,8 @@ public class InspectionService {
                 .sortOrder(asset.getImages().size())
                 .build());
             assetRepository.save(asset);
+            audit.log(AuditAction.PHOTO, AuditObjectType.ASSET, asset.getUuid(), asset.getName(), AuditDetail.event(
+                "PHOTO_ADDED", "target", "ASSET", "inspection", inspection.getTitle(), "inspectionUuid", uuid.toString(), "fileUuid", file.getUuid().toString()));
             return toResponse(item, locationsById());
         }
 
@@ -488,6 +531,10 @@ public class InspectionService {
             .takenByName(displayName(user))
             .build());
         inspectionRepository.save(inspection);
+        if (item.getAsset() != null) {
+            audit.log(AuditAction.PHOTO, AuditObjectType.ASSET, item.getAsset().getUuid(), item.getAssetName(), AuditDetail.event(
+                "PHOTO_ADDED", "target", "INSPECTION", "inspection", inspection.getTitle(), "inspectionUuid", uuid.toString(), "fileUuid", file.getUuid().toString()));
+        }
         return toResponse(item, locationsById());
     }
 
@@ -535,7 +582,20 @@ public class InspectionService {
         inspection.setCompletedAt(OffsetDateTime.now());
         inspection.setCompletedByUuid(user.getUuid());
         inspection.setCompletedByName(displayName(user));
-        return toDetail(inspectionRepository.save(inspection));
+        InspectionDetailResponse completed = toDetail(inspectionRepository.save(inspection));
+        InspectionCounts counts = completed.summary().counts();
+        audit.log(AuditAction.COMPLETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(
+            "INSPECTION_COMPLETED",
+            "mode", inspection.getMode().name(),
+            "expected", counts.expected(),
+            "present", counts.present(),
+            "missing", counts.missing(),
+            "passed", counts.passed(),
+            "failed", counts.failed(),
+            "pending", counts.pending(),
+            "unexpected", counts.unexpected(),
+            "comment", inspection.getComment()));
+        return completed;
     }
 
     @Transactional
@@ -544,6 +604,8 @@ public class InspectionService {
         // a completed protocol is a record; only admins may remove it
         require(inspection.isCompleted() ? access.isAdmin() : access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.INSPECT));
         inspectionRepository.delete(inspection);
+        audit.log(AuditAction.DELETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(),
+            AuditDetail.event("INSPECTION_DELETED", "completed", inspection.isCompleted()));
     }
 
     /** History for the asset detail page: all inspections the asset was part of or found in. */
@@ -946,6 +1008,14 @@ public class InspectionService {
 
     private static String displayName(User user) {
         return user.getDisplayName() == null || user.getDisplayName().isBlank() ? user.getUsername() : user.getDisplayName();
+    }
+
+    /** Names of the referenced objects for a log entry; null when there are none. */
+    private static List<String> nameList(List<UUID> uuids, java.util.function.Function<UUID, java.util.Optional<String>> lookup) {
+        if (uuids == null || uuids.isEmpty()) {
+            return null;
+        }
+        return uuids.stream().map(lookup).flatMap(java.util.Optional::stream).sorted().toList();
     }
 
     private static String blankToNull(String value) {

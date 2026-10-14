@@ -20,6 +20,7 @@ import {
   LucideClipboardList,
   LucideDownload,
   LucideFileText,
+  LucideHistory,
   LucideHouse,
   LucideKeyRound,
   LucideLayers,
@@ -105,6 +106,7 @@ export class MainRoute implements OnInit {
         { label: 'Gruppen Berechtigungen', route: '/admin/group-permissions', icon: LucideShield },
         { label: 'LDAP', route: '/admin/ldap', icon: LucideNetwork },
         { label: 'OIDC', route: '/admin/oidc', icon: LucideKeyRound },
+        { label: 'Protokoll', route: '/admin/logs', icon: LucideHistory },
       ],
     },
   ];

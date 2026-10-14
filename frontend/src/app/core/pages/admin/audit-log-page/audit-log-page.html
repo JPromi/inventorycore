@@ -1,0 +1,77 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ total }} Einträge</p>
+            <h1>
+                <svg lucideHistory size="20"></svg>
+                <span>Protokoll</span>
+            </h1>
+        </div>
+    </header>
+
+    <p class="hint intro">
+        Wer wann was mit welchem Objekt gemacht hat: Anlegen, Bearbeiten (mit alten und neuen Werten), Löschen, Scans,
+        Prüfergebnisse und Fotos. Den Verlauf eines einzelnen Assets oder Standorts gibt es auch auf dessen Detailseite.
+    </p>
+
+    <app-filter-bar class="toolbar" [activeCount]="activeFilterCount" [canReset]="hasActiveFilters" (reset)="resetFilters()">
+        <div class="search-box" filterSearch>
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input
+                type="text"
+                [(ngModel)]="search"
+                (ngModelChange)="onSearch()"
+                placeholder="Objekt, Benutzer oder Wert suchen..."
+                aria-label="Suchen"
+            />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="search = ''; reload()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+        <app-search-select
+            class="filter-select"
+            [options]="typeOptions"
+            [(ngModel)]="objectType"
+            (ngModelChange)="reload()"
+            placeholder="Alle Objekte"
+            clearLabel="Alle Objekte"
+        />
+        <app-search-select
+            class="filter-select"
+            [options]="actionOptions"
+            [(ngModel)]="action"
+            (ngModelChange)="reload()"
+            placeholder="Alle Aktionen"
+            clearLabel="Alle Aktionen"
+        />
+        <label class="date-filter">
+            <span>Von</span>
+            <input type="date" [(ngModel)]="from" (ngModelChange)="reload()" aria-label="Von Datum" />
+        </label>
+        <label class="date-filter">
+            <span>Bis</span>
+            <input type="date" [(ngModel)]="to" (ngModelChange)="reload()" aria-label="Bis Datum" />
+        </label>
+    </app-filter-bar>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading && !entries.length) {
+        <p class="empty">Lade Protokoll...</p>
+    } @else if (!entries.length) {
+        <div class="empty-state">{{ hasActiveFilters ? 'Keine Einträge passen zum Filter.' : 'Noch keine Einträge.' }}</div>
+    } @else {
+        <section class="card log">
+            <app-audit-timeline [entries]="entries" [showObject]="true" />
+            @if (entries.length < total) {
+                <button type="button" class="secondary-action more" [disabled]="loading" (click)="loadMore()">
+                    {{ loading ? 'Lädt...' : 'Ältere anzeigen (' + (total - entries.length) + ' weitere)' }}
+                </button>
+            }
+        </section>
+    }
+</section>

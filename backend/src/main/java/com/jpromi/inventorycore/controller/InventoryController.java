@@ -56,6 +56,9 @@ import com.jpromi.inventorycore.repository.StoredFileRepository;
 import com.jpromi.inventorycore.repository.TagRepository;
 import com.jpromi.inventorycore.service.AccessContext;
 import com.jpromi.inventorycore.service.ApiMapper;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.service.AuditService;
 import com.jpromi.inventorycore.service.PermissionService;
 
 import static com.jpromi.inventorycore.service.PermissionService.require;
@@ -72,6 +75,7 @@ public class InventoryController {
     private final StoredFileRepository fileRepository;
     private final PermissionService permissionService;
     private final ApiMapper mapper;
+    private final AuditService audit;
 
     public InventoryController(
         AssetRepository assetRepository,
@@ -81,7 +85,8 @@ public class InventoryController {
         AreaRepository areaRepository,
         StoredFileRepository fileRepository,
         PermissionService permissionService,
-        ApiMapper mapper
+        ApiMapper mapper,
+        AuditService audit
     ) {
         this.assetRepository = assetRepository;
         this.assetTypeRepository = assetTypeRepository;
@@ -91,6 +96,7 @@ public class InventoryController {
         this.fileRepository = fileRepository;
         this.permissionService = permissionService;
         this.mapper = mapper;
+        this.audit = audit;
     }
 
     // ---- locations ----
@@ -118,7 +124,9 @@ public class InventoryController {
         Location location = Location.builder().build();
         applyLocation(access, location, request);
         location.setAreas(areas);
-        return mapper.toResponse(locationRepository.save(location));
+        LocationResponse created = mapper.toResponse(locationRepository.save(location));
+        audit.log(AuditAction.CREATE, AuditObjectType.LOCATION, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/locations/{uuid}")
@@ -126,11 +134,14 @@ public class InventoryController {
         AccessContext access = permissionService.context(authentication);
         Location location = locationOr404(uuid);
         require(access, PermissionResourceType.LOCATION, PermissionAction.EDIT, location.getAreas());
+        LocationResponse before = mapper.toResponse(location);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.LOCATION, location.getAreas(), areas);
         applyLocation(access, location, request);
         location.setAreas(areas);
-        return mapper.toResponse(locationRepository.save(location));
+        LocationResponse after = mapper.toResponse(locationRepository.save(location));
+        audit.logChanges(AuditObjectType.LOCATION, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @DeleteMapping("/locations/{uuid}")
@@ -142,6 +153,7 @@ public class InventoryController {
         location.setDeleted(true);
         location.setDeletedAt(OffsetDateTime.now());
         locationRepository.save(location);
+        audit.log(AuditAction.DELETE, AuditObjectType.LOCATION, location.getUuid(), location.getName());
     }
 
     // ---- asset types ----
@@ -169,7 +181,9 @@ public class InventoryController {
         AssetType type = AssetType.builder().build();
         applyAssetType(type, request);
         type.setAreas(areas);
-        return mapper.toResponse(assetTypeRepository.save(type));
+        AssetTypeResponse created = mapper.toResponse(assetTypeRepository.save(type));
+        audit.log(AuditAction.CREATE, AuditObjectType.ASSET_TYPE, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/asset-types/{uuid}")
@@ -177,11 +191,14 @@ public class InventoryController {
         AccessContext access = permissionService.context(authentication);
         AssetType type = assetTypeOr404(uuid);
         require(access, PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT, type.getAreas());
+        AssetTypeResponse before = mapper.toResponse(type);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.ASSET_TYPE, type.getAreas(), areas);
         applyAssetType(type, request);
         type.setAreas(areas);
-        return mapper.toResponse(assetTypeRepository.save(type));
+        AssetTypeResponse after = mapper.toResponse(assetTypeRepository.save(type));
+        audit.logChanges(AuditObjectType.ASSET_TYPE, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @DeleteMapping("/asset-types/{uuid}")
@@ -193,6 +210,7 @@ public class InventoryController {
         type.setDeleted(true);
         type.setDeletedAt(OffsetDateTime.now());
         assetTypeRepository.save(type);
+        audit.log(AuditAction.DELETE, AuditObjectType.ASSET_TYPE, type.getUuid(), type.getName());
     }
 
     // ---- tags (global, not bound to areas) ----
@@ -213,7 +231,9 @@ public class InventoryController {
             || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.CREATE)
             || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.EDIT));
         Tag tag = Tag.builder().name(request.name()).color(request.color()).build();
-        return mapper.toResponse(tagRepository.save(tag));
+        TagResponse created = mapper.toResponse(tagRepository.save(tag));
+        audit.log(AuditAction.CREATE, AuditObjectType.TAG, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/tags/{uuid}")
@@ -221,9 +241,12 @@ public class InventoryController {
         AccessContext access = permissionService.context(authentication);
         require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
         Tag tag = tagOr404(uuid);
+        TagResponse before = mapper.toResponse(tag);
         tag.setName(request.name());
         tag.setColor(request.color());
-        return mapper.toResponse(tagRepository.save(tag));
+        TagResponse after = mapper.toResponse(tagRepository.save(tag));
+        audit.logChanges(AuditObjectType.TAG, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @DeleteMapping("/tags/{uuid}")
@@ -236,6 +259,7 @@ public class InventoryController {
         tagRepository.detachFromAssets(tag.getId());
         tagRepository.detachFromAssetTypes(tag.getId());
         tagRepository.delete(tag);
+        audit.log(AuditAction.DELETE, AuditObjectType.TAG, tag.getUuid(), tag.getName());
     }
 
     // ---- assets ----
@@ -263,7 +287,9 @@ public class InventoryController {
         Asset asset = Asset.builder().build();
         applyAsset(access, asset, request);
         asset.setAreas(areas);
-        return mapper.toResponse(assetRepository.save(asset));
+        AssetResponse created = mapper.toResponse(assetRepository.save(asset));
+        audit.log(AuditAction.CREATE, AuditObjectType.ASSET, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/assets/{uuid}")
@@ -271,11 +297,14 @@ public class InventoryController {
         AccessContext access = permissionService.context(authentication);
         Asset asset = assetOr404(uuid);
         require(access, PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas());
+        AssetResponse before = mapper.toResponse(asset);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.ASSET, asset.getAreas(), areas);
         applyAsset(access, asset, request);
         asset.setAreas(areas);
-        return mapper.toResponse(assetRepository.save(asset));
+        AssetResponse after = mapper.toResponse(assetRepository.save(asset));
+        audit.logChanges(AuditObjectType.ASSET, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @DeleteMapping("/assets/{uuid}")
@@ -287,6 +316,7 @@ public class InventoryController {
         asset.setDeleted(true);
         asset.setDeletedAt(OffsetDateTime.now());
         assetRepository.save(asset);
+        audit.log(AuditAction.DELETE, AuditObjectType.ASSET, asset.getUuid(), asset.getName());
     }
 
     // ---- areas & access helpers ----

@@ -28,6 +28,9 @@ import com.jpromi.inventorycore.enums.PermissionResourceType;
 import com.jpromi.inventorycore.repository.AreaRepository;
 import com.jpromi.inventorycore.repository.LabelTemplateRepository;
 import com.jpromi.inventorycore.service.AccessContext;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.service.AuditService;
 import com.jpromi.inventorycore.service.PermissionService;
 
 import static com.jpromi.inventorycore.service.PermissionService.require;
@@ -47,10 +50,18 @@ public class LabelTemplateController {
     private final AreaRepository areaRepository;
     private final PermissionService permissionService;
 
-    public LabelTemplateController(LabelTemplateRepository templateRepository, AreaRepository areaRepository, PermissionService permissionService) {
+    private final AuditService audit;
+
+    public LabelTemplateController(
+        LabelTemplateRepository templateRepository,
+        AreaRepository areaRepository,
+        PermissionService permissionService,
+        AuditService audit
+    ) {
         this.templateRepository = templateRepository;
         this.areaRepository = areaRepository;
         this.permissionService = permissionService;
+        this.audit = audit;
     }
 
     @GetMapping
@@ -82,7 +93,9 @@ public class LabelTemplateController {
         require(access, CONFIG, PermissionAction.CREATE, Set.of(area));
         LabelTemplate template = LabelTemplate.builder().area(area).build();
         apply(template, request);
-        return toResponse(templateRepository.save(template));
+        LabelTemplateResponse created = toResponse(templateRepository.save(template));
+        audit.log(AuditAction.CREATE, AuditObjectType.LABEL_TEMPLATE, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/{uuid}")
@@ -91,6 +104,7 @@ public class LabelTemplateController {
         AccessContext access = permissionService.context(authentication);
         LabelTemplate template = templateOr404(uuid);
         require(access, CONFIG, PermissionAction.EDIT, Set.of(template.getArea()));
+        LabelTemplateResponse before = toResponse(template);
         Area area = areaOr400(request.areaUuid());
         if (!area.getId().equals(template.getArea().getId())) {
             // moving a template needs rights in the target area, too
@@ -99,7 +113,9 @@ public class LabelTemplateController {
             template.setArea(area);
         }
         apply(template, request);
-        return toResponse(templateRepository.save(template));
+        LabelTemplateResponse after = toResponse(templateRepository.save(template));
+        audit.logChanges(AuditObjectType.LABEL_TEMPLATE, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @DeleteMapping("/{uuid}")
@@ -109,6 +125,7 @@ public class LabelTemplateController {
         LabelTemplate template = templateOr404(uuid);
         require(access, CONFIG, PermissionAction.DELETE, Set.of(template.getArea()));
         templateRepository.delete(template);
+        audit.log(AuditAction.DELETE, AuditObjectType.LABEL_TEMPLATE, template.getUuid(), template.getName());
     }
 
     private boolean isVisible(AccessContext access, LabelTemplate template) {

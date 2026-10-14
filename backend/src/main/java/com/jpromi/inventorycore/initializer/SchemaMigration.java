@@ -34,6 +34,13 @@ public class SchemaMigration implements CommandLineRunner {
 
         // enum check constraints created by Hibernate do not know newly added values
         jdbc.execute("alter table if exists inspection_items drop constraint if exists inspection_items_status_check");
+        jdbc.execute("alter table if exists audit_logs drop constraint if exists audit_logs_action_check");
+        jdbc.execute("alter table if exists audit_logs drop constraint if exists audit_logs_object_type_check");
+
+        // activity log details became a JSON list (Hibernate does not change the type of existing columns)
+        if (columnExists("audit_logs", "details")) {
+            jdbc.execute("alter table audit_logs alter column details type text");
+        }
 
         if (!tableExists("group_permissions")) {
             return;

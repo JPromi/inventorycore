@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.jpromi.inventorycore.dto.AuditDetail;
 import com.jpromi.inventorycore.dto.AreaRequest;
 import com.jpromi.inventorycore.dto.AreaResponse;
 import com.jpromi.inventorycore.dto.GroupPermissionRequest;
@@ -43,6 +44,9 @@ import com.jpromi.inventorycore.repository.LocationRepository;
 import com.jpromi.inventorycore.repository.GroupPermissionRepository;
 import com.jpromi.inventorycore.repository.GroupRepository;
 import com.jpromi.inventorycore.service.ApiMapper;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.service.AuditService;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -58,6 +62,7 @@ public class AdminController {
     private final LabelTemplateRepository labelTemplateRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApiMapper mapper;
+    private final AuditService audit;
 
     public AdminController(
         AppUserRepository userRepository,
@@ -69,7 +74,8 @@ public class AdminController {
         AssetTypeRepository assetTypeRepository,
         LabelTemplateRepository labelTemplateRepository,
         PasswordEncoder passwordEncoder,
-        ApiMapper mapper
+        ApiMapper mapper,
+        AuditService audit
     ) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -81,6 +87,7 @@ public class AdminController {
         this.labelTemplateRepository = labelTemplateRepository;
         this.passwordEncoder = passwordEncoder;
         this.mapper = mapper;
+        this.audit = audit;
     }
 
     // ---- areas ----
@@ -99,7 +106,9 @@ public class AdminController {
     public AreaResponse createArea(@RequestBody AreaRequest request) {
         Area area = Area.builder().build();
         applyArea(area, request);
-        return toAreaResponse(areaRepository.save(area));
+        AreaResponse created = toAreaResponse(areaRepository.save(area));
+        audit.log(AuditAction.CREATE, AuditObjectType.AREA, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/areas/{uuid}")
@@ -109,8 +118,11 @@ public class AdminController {
         if (area.isDefaultArea() && !request.defaultArea()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose another default area instead");
         }
+        AreaResponse before = toAreaResponse(area);
         applyArea(area, request);
-        return toAreaResponse(areaRepository.save(area));
+        AreaResponse after = toAreaResponse(areaRepository.save(area));
+        audit.logChanges(AuditObjectType.AREA, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     /**
@@ -138,6 +150,8 @@ public class AdminController {
         permissionRepository.findByArea(area).forEach(permission -> permission.getGroup().getPermissions().remove(permission));
         permissionRepository.flush();
         areaRepository.delete(area);
+        audit.log(AuditAction.DELETE, AuditObjectType.AREA, area.getUuid(), area.getName(),
+            AuditDetail.event("OBJECTS_MOVED_TO_DEFAULT_AREA", "defaultArea", defaultArea.getName()));
     }
 
     @GetMapping("/users")
@@ -158,12 +172,15 @@ public class AdminController {
             .sourceProvider(Provider.LOCAL)
             .groups(resolveGroups(request))
             .build();
-        return mapper.toResponse(userRepository.save(user));
+        UserResponse created = mapper.toResponse(userRepository.save(user));
+        audit.log(AuditAction.CREATE, AuditObjectType.USER, created.uuid(), created.username());
+        return created;
     }
 
     @PatchMapping("/users/{uuid}")
     public UserResponse updateUser(@PathVariable UUID uuid, @RequestBody UserRequest request) {
         User user = user(uuid);
+        UserResponse before = mapper.toResponse(user);
         user.setUsername(request.username());
         user.setDisplayName(request.displayName());
         user.setEmail(request.email());
@@ -173,7 +190,15 @@ public class AdminController {
             user.setPassword(passwordEncoder.encode(request.password()));
         }
         user.setGroups(resolveGroups(request));
-        return mapper.toResponse(userRepository.save(user));
+        UserResponse after = mapper.toResponse(userRepository.save(user));
+        List<AuditDetail> changes = new java.util.ArrayList<>(audit.diff(before, after));
+        if (request.password() != null && !request.password().isBlank()) {
+            changes.add(AuditDetail.event("PASSWORD_CHANGED"));
+        }
+        if (!changes.isEmpty()) {
+            audit.log(AuditAction.UPDATE, AuditObjectType.USER, after.uuid(), after.username(), changes);
+        }
+        return after;
     }
 
     @DeleteMapping("/users/{uuid}")
@@ -184,6 +209,7 @@ public class AdminController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot delete your own user");
         }
         userRepository.delete(user);
+        audit.log(AuditAction.DELETE, AuditObjectType.USER, user.getUuid(), user.getUsername());
     }
 
     @GetMapping("/groups")
@@ -200,13 +226,16 @@ public class AdminController {
             .adminGroup(request.adminGroup())
             .build();
         applyPermissions(group, request);
-        return mapper.toResponse(groupRepository.save(group));
+        GroupResponse created = mapper.toResponse(groupRepository.save(group));
+        audit.log(AuditAction.CREATE, AuditObjectType.GROUP, created.uuid(), created.name());
+        return created;
     }
 
     @PatchMapping("/groups/{uuid}")
     @Transactional
     public GroupResponse updateGroup(@PathVariable UUID uuid, @RequestBody GroupRequest request) {
         Group group = group(uuid);
+        GroupResponse before = mapper.toResponse(group);
         // names of LDAP / OIDC groups are managed by the provider
         if (group.getSourceProvider() == Provider.LOCAL) {
             group.setName(request.name());
@@ -216,7 +245,9 @@ public class AdminController {
         // delete old permissions before inserting new ones, otherwise the unique constraint fails
         groupRepository.flush();
         applyPermissions(group, request);
-        return mapper.toResponse(groupRepository.save(group));
+        GroupResponse after = mapper.toResponse(groupRepository.save(group));
+        audit.logChanges(AuditObjectType.GROUP, after.uuid(), after.name(), before, after);
+        return after;
     }
 
     @DeleteMapping("/groups/{uuid}")
@@ -227,6 +258,7 @@ public class AdminController {
         group.getUsers().forEach(user -> user.getGroups().remove(group));
         group.getUsers().clear();
         groupRepository.delete(group);
+        audit.log(AuditAction.DELETE, AuditObjectType.GROUP, group.getUuid(), group.getName());
     }
 
     @PostMapping("/groups/{groupUuid}/permissions")
@@ -236,15 +268,24 @@ public class AdminController {
         GroupPermission permission = permission(group, request);
         group.getPermissions().add(permission);
         groupRepository.save(group);
-        return mapper.toResponse(permission);
+        GroupPermissionResponse created = mapper.toResponse(permission);
+        audit.log(AuditAction.CREATE, AuditObjectType.PERMISSION, group.getUuid(), group.getName(),
+            AuditDetail.listChange("permissions", List.of(audit.permission(created)), List.of()));
+        return created;
     }
 
     @PatchMapping("/permissions/{uuid}")
     public GroupPermissionResponse updatePermission(@PathVariable UUID uuid, @RequestBody GroupPermissionRequest request) {
         GroupPermission permission = permissionRepository.findByUuid(uuid)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Permission not found"));
+        GroupPermissionResponse before = mapper.toResponse(permission);
         applyPermission(permission, request);
-        return mapper.toResponse(permissionRepository.save(permission));
+        GroupPermissionResponse after = mapper.toResponse(permissionRepository.save(permission));
+        if (!before.equals(after)) {
+            audit.log(AuditAction.UPDATE, AuditObjectType.PERMISSION, permission.getGroup().getUuid(), permission.getGroup().getName(),
+                AuditDetail.change("permissions", audit.permission(before), audit.permission(after)));
+        }
+        return after;
     }
 
     @DeleteMapping("/permissions/{uuid}")
@@ -252,7 +293,10 @@ public class AdminController {
     public void deletePermission(@PathVariable UUID uuid) {
         GroupPermission permission = permissionRepository.findByUuid(uuid)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Permission not found"));
+        AuditDetail.Permission removed = audit.permission(mapper.toResponse(permission));
         permissionRepository.delete(permission);
+        audit.log(AuditAction.DELETE, AuditObjectType.PERMISSION, permission.getGroup().getUuid(), permission.getGroup().getName(),
+            AuditDetail.listChange("permissions", List.of(), List.of(removed)));
     }
 
     private void applyArea(Area area, AreaRequest request) {

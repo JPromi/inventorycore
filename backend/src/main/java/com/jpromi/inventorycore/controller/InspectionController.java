@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jpromi.inventorycore.dto.AuditDetail;
 import com.jpromi.inventorycore.dto.AssetInspectionResponse;
 import com.jpromi.inventorycore.dto.InspectionAddItemRequest;
 import com.jpromi.inventorycore.dto.InspectionCompleteRequest;
@@ -35,6 +36,9 @@ import com.jpromi.inventorycore.dto.InspectionTypeRequest;
 import com.jpromi.inventorycore.dto.InspectionTypeResponse;
 import com.jpromi.inventorycore.service.InspectionScheduleService;
 import com.jpromi.inventorycore.service.InspectionService;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.service.AuditService;
 import com.jpromi.inventorycore.service.PermissionService;
 
 @RestController
@@ -44,11 +48,18 @@ public class InspectionController {
     private final InspectionService service;
     private final PermissionService permissionService;
     private final InspectionScheduleService scheduleService;
+    private final AuditService audit;
 
-    public InspectionController(InspectionService service, PermissionService permissionService, InspectionScheduleService scheduleService) {
+    public InspectionController(
+        InspectionService service,
+        PermissionService permissionService,
+        InspectionScheduleService scheduleService,
+        AuditService audit
+    ) {
         this.service = service;
         this.permissionService = permissionService;
         this.scheduleService = scheduleService;
+        this.audit = audit;
     }
 
     // ---- types ----
@@ -173,8 +184,13 @@ public class InspectionController {
         @RequestBody InspectionFixedDateRequest request,
         Authentication authentication
     ) {
-        return scheduleService.setFixedDate(
+        InspectionDueResponse due = scheduleService.setFixedDate(
             permissionService.context(authentication), permissionService.currentUser(authentication), uuid, typeUuid, request.fixedDueDate());
+        audit.log(AuditAction.UPDATE, AuditObjectType.ASSET, due.assetUuid(), due.assetName(), AuditDetail.event(
+            request.fixedDueDate() == null ? "FIXED_DUE_DATE_REMOVED" : "FIXED_DUE_DATE_SET",
+            "inspectionType", due.inspectionTypeName(),
+            "date", request.fixedDueDate() == null ? null : request.fixedDueDate().toString()));
+        return due;
     }
 
     @DeleteMapping("/inspections/{uuid}/items/{itemUuid}")

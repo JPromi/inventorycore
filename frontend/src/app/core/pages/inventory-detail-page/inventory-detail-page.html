@@ -284,6 +284,10 @@
                             }
                         </section>
                     }
+
+                    @if (config.endpoint === 'assets' || config.endpoint === 'locations') {
+                        <app-audit-history [endpoint]="config.endpoint" [uuid]="item.uuid" />
+                    }
                 </div>
 
                 <aside class="stack">
