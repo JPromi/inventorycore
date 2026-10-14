@@ -66,6 +66,12 @@ const assetTypeFormConfig = {
 };
 
 export const routes: Routes = [
+  // must stay before the main route, whose '**' child would otherwise catch '/login'
+  {
+    path: 'login',
+    component: LoginPage,
+    canActivate: [LoginRedirectGuard],
+  },
   {
     path: '',
     component: MainRoute,
@@ -271,10 +277,5 @@ export const routes: Routes = [
         data: { title: 'Placeholder' },
       },
     ],
-  },
-  {
-    path: 'login',
-    component: LoginPage,
-    canActivate: [LoginRedirectGuard],
   },
 ];

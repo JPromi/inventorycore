@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, Router, UrlTree } from '@angular/router';
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { AuthService } from '../service/auth.service';
 
+/** Logged in users do not need the login page. */
 @Injectable({ providedIn: 'root' })
 export class LoginRedirectGuard implements CanActivate {
   constructor(
@@ -11,23 +12,14 @@ export class LoginRedirectGuard implements CanActivate {
     private readonly router: Router,
   ) {}
 
-  canActivate(): Observable<boolean> {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      this.router.navigate(['/']);
-      return of(false);
+  canActivate(): Observable<boolean | UrlTree> {
+    if (this.authService.getCurrentUser()) {
+      return of(this.router.createUrlTree(['/']));
     }
 
     return this.authService.me().pipe(
-      map((user) => {
-        if (user) {
-          this.router.navigate(['/']);
-          return false;
-        }
-
-        return true;
-      }),
-      catchError(() => of(true))
+      map((user) => (user ? this.router.createUrlTree(['/']) : true)),
+      catchError(() => of(true)),
     );
   }
 }

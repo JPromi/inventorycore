@@ -1,23 +1,90 @@
 <section class="login-page">
-  <div class="login-card">
-    <p class="eyebrow">InventoryCore</p>
-    <h1>Anmeldung</h1>
+    <aside class="brand">
+        <div class="brand-logo">
+            <span class="logo-icon"><svg lucideBoxes size="22"></svg></span>
+            <span>InventoryCore</span>
+        </div>
 
-    <form class="login-form" (submit)="$event.preventDefault(); loginWithLocal()">
-      <label>
-        <span>Benutzername</span>
-        <input type="text" [(ngModel)]="username" name="username" placeholder="admin" />
-      </label>
+        <div class="brand-text">
+            <h2>Inventar, Standorte und Prüfungen an einem Ort.</h2>
+            <ul>
+                <li><svg lucideBoxes size="18"></svg><span>Geräte und Assets mit eigenen Feldern verwalten</span></li>
+                <li><svg lucideMapPin size="18"></svg><span>Standorte verschachtelt abbilden</span></li>
+                <li><svg lucideLayers size="18"></svg><span>Zugriff pro Bereich und Gruppe steuern</span></li>
+                <li><svg lucideQrCode size="18"></svg><span>Labels mit QR- und Barcodes drucken</span></li>
+            </ul>
+        </div>
 
-      <label>
-        <span>Passwort</span>
-        <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" />
-      </label>
+        <p class="brand-footer">© {{ year }} InventoryCore</p>
+    </aside>
 
-      <button type="submit" class="login-button primary">
-        Anmelden
-      </button>
-    </form>
-  </div>
+    <main class="form-side">
+        <div class="login-card">
+            <div class="mobile-logo">
+                <span class="logo-icon"><svg lucideBoxes size="20"></svg></span>
+                <span>InventoryCore</span>
+            </div>
+
+            <h1>Willkommen zurück</h1>
+            <p class="subtitle">Melde dich mit deinem Konto an.</p>
+
+            @if (error) {
+                <p class="error" role="alert">{{ error }}</p>
+            }
+
+            <form class="login-form" (ngSubmit)="loginWithLocal()">
+                <label class="field">
+                    <span>Benutzername</span>
+                    <span class="input-wrap">
+                        <svg class="input-icon" lucideUser size="17"></svg>
+                        <input
+                            type="text"
+                            [(ngModel)]="username"
+                            name="username"
+                            autocomplete="username"
+                            autofocus
+                            [disabled]="loading"
+                        />
+                    </span>
+                </label>
+
+                <label class="field">
+                    <span>Passwort</span>
+                    <span class="input-wrap">
+                        <svg class="input-icon" lucideLock size="17"></svg>
+                        <input
+                            [type]="showPassword ? 'text' : 'password'"
+                            [(ngModel)]="password"
+                            name="password"
+                            autocomplete="current-password"
+                            [disabled]="loading"
+                        />
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            [title]="showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'"
+                            [attr.aria-label]="showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'"
+                            (click)="showPassword = !showPassword"
+                        >
+                            @if (showPassword) {
+                                <svg lucideEyeOff size="17"></svg>
+                            } @else {
+                                <svg lucideEye size="17"></svg>
+                            }
+                        </button>
+                    </span>
+                </label>
+
+                <button type="submit" class="login-button" [disabled]="loading">
+                    @if (loading) {
+                        <svg class="spin" lucideLoaderCircle size="18"></svg>
+                        <span>Anmelden...</span>
+                    } @else {
+                        <svg lucideLogIn size="18"></svg>
+                        <span>Anmelden</span>
+                    }
+                </button>
+            </form>
+        </div>
+    </main>
 </section>
-
