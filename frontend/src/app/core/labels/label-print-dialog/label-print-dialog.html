@@ -1,0 +1,87 @@
+<div class="backdrop" (click)="close()">
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Label drucken" (click)="$event.stopPropagation()">
+        <header>
+            <h2>
+                <svg lucidePrinter size="18"></svg>
+                <span>{{ assets.length > 1 ? assets.length + ' Labels drucken' : 'Label drucken' }}</span>
+            </h2>
+            <button type="button" class="close" title="Schließen" (click)="close()">
+                <svg lucideX size="16"></svg>
+            </button>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="hint">Lade Vorlagen...</p>
+        } @else if (!templates.length) {
+            <p class="hint">
+                Es gibt noch keine Label-Vorlagen.
+                <a routerLink="/config/labels/new" (click)="close()">Vorlage anlegen</a>
+            </p>
+        } @else {
+            <div class="controls">
+                <div class="field grow">
+                    <span>Vorlage</span>
+                    <app-search-select
+                        [options]="options"
+                        [ngModel]="templateUuid"
+                        (ngModelChange)="select($event)"
+                        placeholder="Vorlage wählen"
+                        searchPlaceholder="Vorlage suchen..."
+                    />
+                </div>
+                <label class="field copies">
+                    <span>{{ assets.length > 1 ? 'Anzahl je Asset' : 'Anzahl' }}</span>
+                    <input type="number" min="1" max="100" [(ngModel)]="copies" />
+                </label>
+            </div>
+
+            <div class="preview">
+                @if (template; as current) {
+                    <app-label-renderer
+                        [style.zoom]="zoom"
+                        [widthMm]="current.widthMm"
+                        [heightMm]="current.heightMm"
+                        [elements]="elements"
+                        [context]="contexts[index]"
+                    />
+                }
+            </div>
+            @if (assets.length > 1) {
+                <div class="pager">
+                    <button type="button" title="Vorheriges Asset" aria-label="Vorheriges Asset" [disabled]="index === 0" (click)="index = index - 1">
+                        <svg lucideChevronLeft size="16"></svg>
+                    </button>
+                    <span>{{ assets[index].name }} · {{ index + 1 }} / {{ assets.length }}</span>
+                    <button type="button" title="Nächstes Asset" aria-label="Nächstes Asset" [disabled]="index === assets.length - 1" (click)="index = index + 1">
+                        <svg lucideChevronRight size="16"></svg>
+                    </button>
+                </div>
+            }
+            @if (template; as current) {
+                <div class="print-source" aria-hidden="true">
+                    @for (context of contexts; track $index) {
+                        <app-label-renderer #printLabel [widthMm]="current.widthMm" [heightMm]="current.heightMm" [elements]="elements" [context]="context" />
+                    }
+                </div>
+                <p class="hint">
+                    @if (assets.length > 1) {
+                        {{ total }} Labels insgesamt.
+                    }
+                    {{ current.widthMm }} × {{ current.heightMm }} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.
+                </p>
+            }
+        }
+
+        <footer>
+            <button type="button" class="secondary" (click)="close()">Abbrechen</button>
+            <button type="button" class="primary" [disabled]="!template" (click)="print()">
+                <svg lucidePrinter size="16"></svg>
+                <span>Drucken</span>
+            </button>
+        </footer>
+    </div>
+</div>

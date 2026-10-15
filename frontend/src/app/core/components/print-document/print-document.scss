@@ -1,0 +1,200 @@
+// No view encapsulation (the pages are built in code): every selector stays under
+// .print-document or .print-settings.
+
+// ---- the printed sheet: black on white, gray only for secondary text and lines ----
+.print-document {
+    display: none;
+    color: var(--text);
+    font-size: 9.5pt;
+    line-height: 1.4;
+
+    // laid out off screen while the content is split into pages
+    &.paginating {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: -10000px;
+    }
+
+    &.active {
+        @media print {
+            display: block;
+        }
+    }
+
+    .print-source {
+        display: none;
+    }
+
+    // one sheet of paper; the padding is the page margin
+    .print-page {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        break-after: page;
+
+        &:last-child {
+            break-after: auto;
+        }
+    }
+
+    .print-page-content {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .print-page-header,
+    .print-page-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 6mm;
+        flex-shrink: 0;
+        color: var(--text-muted);
+        font-size: 7.5pt;
+    }
+
+    .print-page-header {
+        margin-bottom: 5mm;
+        padding-bottom: 2mm;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .print-page-footer {
+        margin-top: 4mm;
+        padding-top: 2mm;
+        border-top: 1px solid var(--border);
+    }
+
+    .doc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6mm;
+        padding-bottom: 4mm;
+        border-bottom: 1px solid var(--border-strong);
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 4mm;
+        }
+
+        .logo {
+            display: block;
+            max-width: 45mm;
+            max-height: 14mm;
+            object-fit: contain;
+        }
+
+        .brand-name {
+            font-size: 12pt;
+            font-weight: 700;
+        }
+
+        .kind {
+            color: var(--text-muted);
+            font-size: 9pt;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+    }
+
+    .doc-title {
+        margin: 7mm 0 5mm;
+        font-size: 22pt;
+        font-weight: 700;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+
+    .doc-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(42mm, 1fr));
+        gap: 3mm 6mm;
+        margin-bottom: 7mm;
+        padding: 3.5mm 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        break-inside: avoid;
+
+        dt {
+            color: var(--text-muted);
+            font-size: 7.5pt;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        dd {
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    .doc-signatures {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(55mm, 1fr));
+        gap: 12mm;
+        padding-top: 16mm;
+        break-inside: avoid;
+
+        .signature {
+            display: flex;
+            flex-direction: column;
+            gap: 1mm;
+        }
+
+        .line {
+            height: 12mm;
+            border-bottom: 1px solid var(--text);
+        }
+
+        .caption {
+            font-weight: 600;
+        }
+
+        .hint-text {
+            color: var(--text-muted);
+            font-size: 8pt;
+        }
+    }
+}
+
+// ---- print settings dialog ----
+.print-settings {
+    // like the global label.field, for fields around app-search-select
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        min-width: 0;
+        color: var(--text-muted);
+        font-size: .85rem;
+        font-weight: 700;
+    }
+
+    .dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+
+        h2 {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: 1.1rem;
+        }
+    }
+
+    .options {
+        display: flex;
+        flex-direction: column;
+
+        &:empty {
+            display: none;
+        }
+    }
+}

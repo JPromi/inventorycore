@@ -1,0 +1,57 @@
+<ol class="timeline">
+    @for (log of entries; track log.uuid) {
+        <li class="entry" [attr.data-action]="log.action">
+            <span class="icon" aria-hidden="true">
+                @switch (log.action) {
+                    @case ('CREATE') {
+                        <svg lucidePlus size="15"></svg>
+                    }
+                    @case ('UPDATE') {
+                        <svg lucidePencil size="14"></svg>
+                    }
+                    @case ('DELETE') {
+                        <svg lucideTrash2 size="14"></svg>
+                    }
+                    @case ('SCAN') {
+                        <svg lucideScanBarcode size="15"></svg>
+                    }
+                    @case ('INSPECT') {
+                        <svg lucideClipboardCheck size="15"></svg>
+                    }
+                    @case ('PHOTO') {
+                        <svg lucideCamera size="15"></svg>
+                    }
+                    @case ('COMPLETE') {
+                        <svg lucideLock size="14"></svg>
+                    }
+                    @default {
+                        <svg lucideRefreshCw size="14"></svg>
+                    }
+                }
+            </span>
+            <div class="body">
+                <div class="head">
+                    <strong>{{ actionLabel(log.action) }}</strong>
+                    @if (showObject) {
+                        <span class="object">
+                            {{ typeLabel(log.objectType) }}
+                            @if (route(log); as link) {
+                                <a [routerLink]="link">{{ log.objectName }}</a>
+                            } @else {
+                                <span class="name">{{ log.objectName }}</span>
+                            }
+                        </span>
+                    }
+                </div>
+                @if (lines(log); as detailLines) {
+                    <ul class="details">
+                        @for (line of detailLines; track $index) {
+                            <li>{{ line }}</li>
+                        }
+                    </ul>
+                }
+                <small class="meta">{{ log.userName ?? 'System' }} · {{ log.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</small>
+            </div>
+        </li>
+    }
+</ol>

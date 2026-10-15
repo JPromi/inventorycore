@@ -1,0 +1,118 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Prüfungsvorlage' : 'Prüfungsvorlagen' }} }</p>
+            <h1>
+                <svg lucideClipboardList size="20"></svg>
+                <span>Prüfungsvorlagen</span>
+            </h1>
+        </div>
+        @if (canEdit) {
+            <div class="header-actions">
+                <a class="primary-action" routerLink="/config/inspection-templates/new">
+                    <svg lucidePlus size="17"></svg>
+                    <span>Neue Prüfungsvorlage</span>
+                </a>
+            </div>
+        }
+    </header>
+
+    <p class="hint intro">
+        Eine Prüfungsvorlage legt fest, was bei jedem Asset geprüft wird: Felder für alle Assets
+        und zusätzliche Felder nur für bestimmte Typen, z. B. „Bildschirm funktioniert“ bei Laptops.
+    </p>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Vorlage oder Typ suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="visibleTypes" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" deleteWarning="Bestehende Prüfprotokolle bleiben erhalten." />
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (list.error && !visibleTypes.length) {
+        <p class="error">Prüfungsvorlagen konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
+        <p class="empty">Lade Prüfungsvorlagen...</p>
+    } @else if (!visibleTypes.length) {
+        <div class="empty-state">
+            {{ search.trim() ? 'Keine Prüfungsvorlage gefunden.' : 'Keine Prüfungsvorlage – eventuell ist links ein anderer Bereich gewählt, sonst zuerst eine anlegen.' }}
+        </div>
+    } @else {
+        <div class="type-grid">
+            @for (type of visibleTypes; track type.uuid) {
+                <article class="card type-card" [appSelectableRow]="selection" [selectionItem]="type" [class.is-selected]="selection.isSelected(type)" [class.clickable]="type.editable" (click)="type.editable && edit(type)">
+                    <app-selection-checkbox [selection]="selection" [item]="type" />
+                    <span class="stripe" [style.background]="type.color || 'var(--border-strong)'"></span>
+                    <div class="type-head">
+                        <h2>{{ type.name }}</h2>
+                        <div class="actions">
+                            @if (type.editable) {
+                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(type)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                            }
+                            @if (type.deletable) {
+                                <button type="button" class="icon-button danger" title="Löschen" (click)="remove(type, $event)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="chip-list">
+                        <span class="badge">{{ type.mode === 'CHECK' ? 'Einzelprüfung' : 'Inventur' }}</span>
+                        @if (type.checkFunction) {
+                            <span class="badge">mit Funktionsprüfung</span>
+                        }
+                        @if (type.intervalValue) {
+                            <span class="badge accent">{{ intervalText(type.intervalValue, type.intervalUnit) }}</span>
+                        }
+                        <span class="badge">{{ type.assetTypeNames.length ? type.assetTypeNames.join(', ') : 'Alle Assets' }}</span>
+                        <span class="badge">{{ type.areaNames.length ? 'Bereich ' + type.areaNames.join(', ') : 'Alle Bereiche' }}</span>
+                        @if (!type.usable) {
+                            <span class="badge warn" title="Dir fehlt das Recht „Prüfen“ in diesem Bereich">Kein Prüfrecht</span>
+                        }
+                    </div>
+                    @if (type.description) {
+                        <p class="description">{{ type.description }}</p>
+                    }
+                    <dl>
+                        <div>
+                            <dt>Felder für alle</dt>
+                            <dd>{{ generalFieldCount(type) }}</dd>
+                        </div>
+                        <div>
+                            <dt>Prüfungen</dt>
+                            <dd>{{ type.inspectionCount }}</dd>
+                        </div>
+                    </dl>
+                    @if (typeFieldSummary(type).length) {
+                        <div class="chip-list">
+                            @for (entry of typeFieldSummary(type); track entry) {
+                                <span class="chip">{{ entry }}</span>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Einträge...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+            }
+        </div>
+    }
+</section>

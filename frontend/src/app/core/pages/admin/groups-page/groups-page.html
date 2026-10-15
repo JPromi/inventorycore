@@ -1,0 +1,116 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Gruppe' : 'Gruppen' }} }</p>
+            <h1>
+                <svg lucideUsers size="20"></svg>
+                <span>Gruppen</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="primary-action" (click)="create()">
+                <svg lucidePlus size="17"></svg>
+                <span>Neue Gruppe</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Gruppe oder Mitglied suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="groups" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" />
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (list.error && !groups.length) {
+        <p class="error">Gruppen konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
+        <p class="empty">Lade Gruppen...</p>
+    } @else if (!groups.length) {
+        <div class="empty-state">Keine Gruppen gefunden.</div>
+    } @else {
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        @if (selection.active) { <th class="selection-column"></th> }
+                        <th>Gruppe</th>
+                        <th>Mitglieder</th>
+                        <th>Bereiche</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (group of groups; track group.uuid) {
+                        <tr class="clickable" [appSelectableRow]="selection" [selectionItem]="group" [class.is-selected]="selection.isSelected(group)" (click)="edit(group)">
+                            @if (selection.active) { <td><app-selection-checkbox [selection]="selection" [item]="group" /></td> }
+                            <td>
+                                <strong>{{ group.name }}</strong>
+                                @if (group.adminGroup) {
+                                    <span class="badge accent provider">Admin</span>
+                                }
+                                @if (group.sourceProvider !== 'LOCAL') {
+                                    <span class="badge provider">{{ group.sourceProvider }}</span>
+                                }
+                            </td>
+                            <td>
+                                @if (group.memberCount) {
+                                    <div class="avatars">
+                                        @for (user of members(group).slice(0, 5); track user.uuid) {
+                                            <span class="avatar" [title]="user.displayName || user.username">
+                                                @if (user.profileImageUrl) {
+                                                    <img [src]="user.profileImageUrl" alt="" referrerpolicy="no-referrer" (error)="user.profileImageUrl = null" />
+                                                } @else {
+                                                    {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
+                                                }
+                                            </span>
+                                        }
+                                        <span class="muted count">{{ group.memberCount }}</span>
+                                    </div>
+                                } @else {
+                                    <span class="muted">Keine</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="chip-list">
+                                    @for (area of permissionAreas(group); track area.name) {
+                                        <span class="chip"><span class="dot" [style.background]="area.color || null"></span>{{ area.name }}</span>
+                                    } @empty {
+                                        <span class="muted">Keine Berechtigungen</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="actions">
+                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(group)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                                <button type="button" class="icon-button danger" title="Löschen" (click)="remove(group, $event)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Gruppen...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+            }
+        </div>
+    }
+</section>

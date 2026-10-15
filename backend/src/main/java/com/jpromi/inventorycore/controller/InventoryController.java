@@ -1,0 +1,623 @@
+package com.jpromi.inventorycore.controller;
+
+import java.time.OffsetDateTime;
+import java.text.Normalizer;
+import java.util.Locale;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.jpromi.inventorycore.dto.AssetFieldDefinitionRequest;
+import com.jpromi.inventorycore.dto.AssetFieldValueRequest;
+import com.jpromi.inventorycore.dto.AssetImageRequest;
+import com.jpromi.inventorycore.dto.AssetRequest;
+import com.jpromi.inventorycore.dto.AssetResponse;
+import com.jpromi.inventorycore.dto.AssetTypeRequest;
+import com.jpromi.inventorycore.dto.AssetTypeResponse;
+import com.jpromi.inventorycore.dto.LocationImageRequest;
+import com.jpromi.inventorycore.dto.LocationRequest;
+import com.jpromi.inventorycore.dto.LocationResponse;
+import com.jpromi.inventorycore.dto.TagRequest;
+import com.jpromi.inventorycore.dto.TagResponse;
+import com.jpromi.inventorycore.entity.Area;
+import com.jpromi.inventorycore.entity.Asset;
+import com.jpromi.inventorycore.entity.AssetFieldDefinition;
+import com.jpromi.inventorycore.entity.AssetFieldValue;
+import com.jpromi.inventorycore.entity.AssetImage;
+import com.jpromi.inventorycore.entity.AssetType;
+import com.jpromi.inventorycore.entity.AssetTypeImage;
+import com.jpromi.inventorycore.entity.Location;
+import com.jpromi.inventorycore.entity.LocationImage;
+import com.jpromi.inventorycore.entity.StoredFile;
+import com.jpromi.inventorycore.entity.Tag;
+import com.jpromi.inventorycore.enums.PermissionAction;
+import com.jpromi.inventorycore.enums.PermissionResourceType;
+import com.jpromi.inventorycore.repository.AreaRepository;
+import com.jpromi.inventorycore.repository.AssetRepository;
+import com.jpromi.inventorycore.repository.AssetTypeRepository;
+import com.jpromi.inventorycore.repository.LocationRepository;
+import com.jpromi.inventorycore.repository.StoredFileRepository;
+import com.jpromi.inventorycore.repository.TagRepository;
+import com.jpromi.inventorycore.service.AccessContext;
+import com.jpromi.inventorycore.service.ApiMapper;
+import com.jpromi.inventorycore.enums.AuditAction;
+import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.service.AuditService;
+import com.jpromi.inventorycore.service.GeocodingService;
+import com.jpromi.inventorycore.service.PermissionService;
+
+import static com.jpromi.inventorycore.service.PermissionService.require;
+
+@RestController
+@RequestMapping("/api")
+public class InventoryController {
+
+    private final AssetRepository assetRepository;
+    private final AssetTypeRepository assetTypeRepository;
+    private final LocationRepository locationRepository;
+    private final TagRepository tagRepository;
+    private final AreaRepository areaRepository;
+    private final StoredFileRepository fileRepository;
+    private final PermissionService permissionService;
+    private final ApiMapper mapper;
+    private final AuditService audit;
+    private final com.jpromi.inventorycore.service.AssetHierarchyService hierarchy;
+    private final com.jpromi.inventorycore.service.FileAccess fileAccess;
+
+    public InventoryController(
+        AssetRepository assetRepository,
+        AssetTypeRepository assetTypeRepository,
+        LocationRepository locationRepository,
+        TagRepository tagRepository,
+        AreaRepository areaRepository,
+        StoredFileRepository fileRepository,
+        PermissionService permissionService,
+        ApiMapper mapper,
+        AuditService audit,
+        com.jpromi.inventorycore.service.AssetHierarchyService hierarchy,
+        com.jpromi.inventorycore.service.FileAccess fileAccess
+    ) {
+        this.fileAccess = fileAccess;
+        this.assetRepository = assetRepository;
+        this.assetTypeRepository = assetTypeRepository;
+        this.locationRepository = locationRepository;
+        this.tagRepository = tagRepository;
+        this.areaRepository = areaRepository;
+        this.fileRepository = fileRepository;
+        this.permissionService = permissionService;
+        this.mapper = mapper;
+        this.audit = audit;
+        this.hierarchy = hierarchy;
+    }
+
+    // ---- locations ----
+
+    @GetMapping("/locations")
+    public List<LocationResponse> locations(Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        return locationRepository.findByDeletedFalse().stream().filter(access::canViewLocation).map(mapper::toResponse).toList();
+    }
+
+    @GetMapping("/locations/{uuid}")
+    public LocationResponse location(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Location location = locationOr404(uuid);
+        requireVisible(access.canViewLocation(location));
+        return mapper.toResponse(location);
+    }
+
+    @PostMapping("/locations")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LocationResponse createLocation(@RequestBody LocationRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        require(access.canInAll(PermissionResourceType.LOCATION, PermissionAction.CREATE, areas));
+        Location location = Location.builder().build();
+        applyLocation(access, location, request);
+        location.setAreas(areas);
+        LocationResponse created = mapper.toResponse(locationRepository.save(location));
+        audit.log(AuditAction.CREATE, AuditObjectType.LOCATION, created.uuid(), created.name());
+        return created;
+    }
+
+    @PatchMapping("/locations/{uuid}")
+    public LocationResponse updateLocation(@PathVariable UUID uuid, @RequestBody LocationRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Location location = locationOr404(uuid);
+        require(access, PermissionResourceType.LOCATION, PermissionAction.EDIT, location.getAreas());
+        LocationResponse before = mapper.toResponse(location);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        requireAreaChange(access, PermissionResourceType.LOCATION, location.getAreas(), areas);
+        applyLocation(access, location, request);
+        location.setAreas(areas);
+        LocationResponse after = mapper.toResponse(locationRepository.save(location));
+        audit.logChanges(AuditObjectType.LOCATION, after.uuid(), after.name(), before, after);
+        return after;
+    }
+
+    @DeleteMapping("/locations/{uuid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLocation(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Location location = locationOr404(uuid);
+        require(access, PermissionResourceType.LOCATION, PermissionAction.DELETE, location.getAreas());
+        location.setDeleted(true);
+        location.setDeletedAt(OffsetDateTime.now());
+        locationRepository.save(location);
+        audit.log(AuditAction.DELETE, AuditObjectType.LOCATION, location.getUuid(), location.getName());
+    }
+
+    // ---- asset types ----
+
+    @GetMapping("/asset-types")
+    public List<AssetTypeResponse> assetTypes(Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        return assetTypeRepository.findByDeletedFalse().stream().filter(access::canViewAssetType).map(mapper::toResponse).toList();
+    }
+
+    @GetMapping("/asset-types/{uuid}")
+    public AssetTypeResponse assetType(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        AssetType type = assetTypeOr404(uuid);
+        requireVisible(access.canViewAssetType(type));
+        return mapper.toResponse(type);
+    }
+
+    @PostMapping("/asset-types")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AssetTypeResponse createAssetType(@RequestBody AssetTypeRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        require(access.canInAll(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE, areas));
+        AssetType type = AssetType.builder().build();
+        applyAssetType(type, request);
+        type.setAreas(areas);
+        AssetTypeResponse created = mapper.toResponse(assetTypeRepository.save(type));
+        audit.log(AuditAction.CREATE, AuditObjectType.ASSET_TYPE, created.uuid(), created.name());
+        return created;
+    }
+
+    @PatchMapping("/asset-types/{uuid}")
+    public AssetTypeResponse updateAssetType(@PathVariable UUID uuid, @RequestBody AssetTypeRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        AssetType type = assetTypeOr404(uuid);
+        require(access, PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT, type.getAreas());
+        AssetTypeResponse before = mapper.toResponse(type);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        requireAreaChange(access, PermissionResourceType.ASSET_TYPE, type.getAreas(), areas);
+        applyAssetType(type, request);
+        type.setAreas(areas);
+        AssetTypeResponse after = mapper.toResponse(assetTypeRepository.save(type));
+        audit.logChanges(AuditObjectType.ASSET_TYPE, after.uuid(), after.name(), before, after);
+        return after;
+    }
+
+    @DeleteMapping("/asset-types/{uuid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAssetType(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        AssetType type = assetTypeOr404(uuid);
+        require(access, PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE, type.getAreas());
+        type.setDeleted(true);
+        type.setDeletedAt(OffsetDateTime.now());
+        assetTypeRepository.save(type);
+        audit.log(AuditAction.DELETE, AuditObjectType.ASSET_TYPE, type.getUuid(), type.getName());
+    }
+
+    // ---- tags (global, not bound to areas) ----
+
+    @GetMapping("/tags")
+    public List<TagResponse> tags(Authentication authentication) {
+        permissionService.context(authentication);
+        return tagRepository.findAll().stream().map(mapper::toResponse).toList();
+    }
+
+    @PostMapping("/tags")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TagResponse createTag(@RequestBody TagRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        // anyone who maintains assets or types may create new tags while tagging
+        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE)
+            || access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT)
+            || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.CREATE)
+            || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.EDIT));
+        Tag tag = Tag.builder().name(request.name()).color(request.color()).build();
+        TagResponse created = mapper.toResponse(tagRepository.save(tag));
+        audit.log(AuditAction.CREATE, AuditObjectType.TAG, created.uuid(), created.name());
+        return created;
+    }
+
+    @PatchMapping("/tags/{uuid}")
+    public TagResponse updateTag(@PathVariable UUID uuid, @RequestBody TagRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        // tags are global: renaming one changes it in every area
+        require(access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
+        Tag tag = tagOr404(uuid);
+        TagResponse before = mapper.toResponse(tag);
+        tag.setName(request.name());
+        tag.setColor(request.color());
+        TagResponse after = mapper.toResponse(tagRepository.save(tag));
+        audit.logChanges(AuditObjectType.TAG, after.uuid(), after.name(), before, after);
+        return after;
+    }
+
+    @DeleteMapping("/tags/{uuid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
+    public void deleteTag(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        // tags are global: deleting one removes it in every area
+        require(access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
+        Tag tag = tagOr404(uuid);
+        // a recurring inspection limited to this one tag would otherwise suddenly apply to all assets
+        List<String> limited = tagRepository.recurringInspectionsOnlyWith(tag.getId());
+        if (!limited.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Der Tag begrenzt die wiederkehrende Prüfung „"
+                + String.join("“, „", limited) + "“. Bitte dort zuerst einen anderen Tag wählen.");
+        }
+        tagRepository.detachFromAssets(tag.getId());
+        tagRepository.detachFromAssetTypes(tag.getId());
+        tagRepository.detachFromInspectionTypes(tag.getId());
+        tagRepository.detachFromRecurringInspections(tag.getId());
+        tagRepository.delete(tag);
+        audit.log(AuditAction.DELETE, AuditObjectType.TAG, tag.getUuid(), tag.getName());
+    }
+
+    // ---- assets ----
+
+    @GetMapping("/assets")
+    public List<AssetResponse> assets(Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        return assetRepository.findByDeletedFalse().stream().filter(access::canViewAsset).map(mapper::toResponse).toList();
+    }
+
+    @GetMapping("/assets/{uuid}")
+    public AssetResponse asset(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Asset asset = assetOr404(uuid);
+        requireVisible(access.canViewAsset(asset));
+        return mapper.toResponse(asset);
+    }
+
+    @PostMapping("/assets")
+    @Transactional
+    @ResponseStatus(HttpStatus.CREATED)
+    public AssetResponse createAsset(@RequestBody AssetRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        require(access.canInAll(PermissionResourceType.ASSET, PermissionAction.CREATE, areas));
+        Asset asset = Asset.builder().build();
+        applyAsset(access, asset, request);
+        asset.setAreas(areas);
+        AssetResponse created = mapper.toResponse(assetRepository.save(asset));
+        audit.log(AuditAction.CREATE, AuditObjectType.ASSET, created.uuid(), created.name());
+        return created;
+    }
+
+    @PatchMapping("/assets/{uuid}")
+    @Transactional
+    public AssetResponse updateAsset(@PathVariable UUID uuid, @RequestBody AssetRequest request, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Asset asset = assetOr404(uuid);
+        require(access, PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas());
+        AssetResponse before = mapper.toResponse(asset);
+        Set<Area> areas = resolveAreas(request.areaUuids());
+        requireAreaChange(access, PermissionResourceType.ASSET, asset.getAreas(), areas);
+        applyAsset(access, asset, request);
+        asset.setAreas(areas);
+        AssetResponse after = mapper.toResponse(assetRepository.save(asset));
+        audit.logChanges(AuditObjectType.ASSET, after.uuid(), after.name(), before, after);
+        return after;
+    }
+
+    @DeleteMapping("/assets/{uuid}")
+    @Transactional
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAsset(@PathVariable UUID uuid, Authentication authentication) {
+        AccessContext access = permissionService.context(authentication);
+        Asset asset = assetOr404(uuid);
+        require(access, PermissionResourceType.ASSET, PermissionAction.DELETE, asset.getAreas());
+        hierarchy.requireNoChildren(asset);
+        asset.setDeleted(true);
+        asset.setDeletedAt(OffsetDateTime.now());
+        assetRepository.save(asset);
+        audit.log(AuditAction.DELETE, AuditObjectType.ASSET, asset.getUuid(), asset.getName());
+    }
+
+    // ---- areas & access helpers ----
+
+    /** Requested areas, or the default area when none were chosen. */
+    private Set<Area> resolveAreas(Set<UUID> areaUuids) {
+        Set<Area> areas = new HashSet<>();
+        if (areaUuids != null) {
+            areaUuids.forEach(areaUuid -> areas.add(areaRepository.findByUuid(areaUuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Area not found"))));
+        }
+        if (areas.isEmpty()) {
+            areas.add(areaRepository.findFirstByDefaultAreaTrue()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No default area configured")));
+        }
+        return areas;
+    }
+
+    /** Areas that are added or removed need edit rights in exactly those areas. */
+    private void requireAreaChange(AccessContext access, PermissionResourceType type, Set<Area> before, Set<Area> after) {
+        Set<Long> beforeIds = before.stream().map(Area::getId).collect(Collectors.toSet());
+        Set<Long> afterIds = after.stream().map(Area::getId).collect(Collectors.toSet());
+        Set<Area> changed = new HashSet<>();
+        before.stream().filter(area -> !afterIds.contains(area.getId())).forEach(changed::add);
+        after.stream().filter(area -> !beforeIds.contains(area.getId())).forEach(changed::add);
+        require(access.canInAll(type, PermissionAction.EDIT, changed));
+    }
+
+    /** Hidden objects are reported as missing so their existence is not leaked. */
+    private void requireVisible(boolean visible) {
+        if (!visible) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found");
+        }
+    }
+
+    private void applyLocation(AccessContext access, Location location, LocationRequest request) {
+        location.setName(request.name());
+        location.setDescription(request.description());
+        location.setLocationType(request.locationType() == null
+            ? com.jpromi.inventorycore.enums.LocationType.OTHER : request.locationType());
+        location.setStreet(trimToNull(request.street()));
+        location.setPostalCode(trimToNull(request.postalCode()));
+        location.setCity(trimToNull(request.city()));
+        location.setCountry(trimToNull(request.country()));
+        String formatted = GeocodingService.formatAddress(location.getStreet(), location.getPostalCode(), location.getCity(), location.getCountry());
+        location.setAddress(formatted != null ? formatted : trimToNull(request.address()));
+        GeocodingService.requireValidCoordinates(request.latitude(), request.longitude());
+        location.setLatitude(request.latitude());
+        location.setLongitude(request.longitude());
+        Location parent = request.parentLocationUuid() == null ? null : locationOr404(request.parentLocationUuid());
+        if (parent != null && parent != location.getParentLocation()) {
+            requireVisible(access.canViewLocation(parent));
+        }
+        for (Location current = parent; current != null; current = current.getParentLocation()) {
+            if (current == location) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Location cannot be its own parent");
+            }
+        }
+        location.setParentLocation(parent);
+        java.util.Set<UUID> attached = attachedFiles(location.getImages().stream().map(LocationImage::getFile));
+        location.getImages().clear();
+        if (request.images() != null) {
+            request.images().stream().filter(InventoryController::hasSource)
+                .forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest, attached)));
+        }
+    }
+
+    private static String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void applyAssetType(AssetType type, AssetTypeRequest request) {
+        type.setName(request.name());
+        type.setDescription(request.description());
+        type.setInspectionIntervalDays(request.inspectionIntervalDays());
+        type.getFieldDefinitions().clear();
+        if (request.fieldDefinitions() != null) {
+            request.fieldDefinitions().forEach(fieldRequest -> type.getFieldDefinitions().add(fieldDefinition(type, fieldRequest)));
+        }
+        java.util.Set<UUID> attached = attachedFiles(type.getImages().stream().map(AssetTypeImage::getFile));
+        type.getImages().clear();
+        if (request.images() != null) {
+            request.images().stream().filter(InventoryController::hasSource)
+                .forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest, attached)));
+        }
+        type.setTags(new HashSet<>());
+        if (request.tagUuids() != null) {
+            request.tagUuids().forEach(tagUuid -> type.getTags().add(tagOr404(tagUuid)));
+        }
+    }
+
+    private void applyAsset(AccessContext access, Asset asset, AssetRequest request) {
+        hierarchy.assign(access, asset, request.parentAssetUuid(), request.parentAssetNote());
+        asset.setInspectionPolicy(request.inspectionPolicy() == null
+            ? com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD : request.inspectionPolicy());
+        if (request.invId() != null && !request.invId().isBlank()) {
+            // the inventory id is also a scan code: it must not point to another asset
+            // (its inventory id, serial number or inventory number), or scans would hit the wrong asset
+            boolean taken = assetRepository.findByScanCode(request.invId().trim()).stream()
+                .anyMatch(other -> !other.getId().equals(asset.getId()));
+            if (taken && !request.invId().equals(asset.getInvId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Die Inventar-ID wird schon von einem anderen Asset verwendet.");
+            }
+            asset.setInvId(request.invId());
+        } else if (asset.getInvId() == null || asset.getInvId().isBlank()) {
+            asset.setInvId(generateInvId());
+        }
+        asset.setName(request.name());
+        asset.setDescription(request.description());
+        asset.setSerialNumber(request.serialNumber());
+        asset.setInventoryNumber(request.inventoryNumber());
+        asset.setInspectionIntervalDays(request.inspectionIntervalDays());
+
+        // newly referenced type / location must be visible to the user
+        AssetType type = request.assetTypeUuid() == null ? null : assetTypeOr404(request.assetTypeUuid());
+        if (type != null && type != asset.getAssetType()) {
+            requireVisible(access.canViewAssetType(type));
+        }
+        asset.setAssetType(type);
+        Location location = request.locationUuid() == null ? null : locationOr404(request.locationUuid());
+        if (location != null && location != asset.getLocation()) {
+            requireVisible(access.canViewLocation(location));
+        }
+        asset.setLocation(location);
+
+        asset.setTags(new HashSet<>());
+        if (request.tagUuids() != null) {
+            request.tagUuids().forEach(tagUuid -> asset.getTags().add(tagOr404(tagUuid)));
+        }
+        asset.getFieldValues().clear();
+        if (request.fieldValues() != null) {
+            request.fieldValues().forEach(fieldRequest -> asset.getFieldValues().add(fieldValue(asset, fieldRequest)));
+        }
+        java.util.Set<UUID> attached = attachedFiles(asset.getImages().stream().map(AssetImage::getFile));
+        asset.getImages().clear();
+        if (request.images() != null) {
+            request.images().stream().filter(InventoryController::hasSource)
+                .forEach(imageRequest -> asset.getImages().add(assetImage(asset, imageRequest, attached)));
+        }
+    }
+
+    private AssetFieldDefinition fieldDefinition(AssetType type, AssetFieldDefinitionRequest request) {
+        return AssetFieldDefinition.builder()
+            .assetType(type)
+            .name(request.name())
+            .fieldKey(resolveFieldKey(request.fieldKey(), request.name()))
+            .fieldType(request.fieldType())
+            .optionsJson(request.optionsJson())
+            .required(request.required())
+            .typeField(request.typeField())
+            .sortOrder(request.sortOrder())
+            .build();
+    }
+
+    private AssetFieldValue fieldValue(Asset asset, AssetFieldValueRequest request) {
+        return AssetFieldValue.builder()
+            .asset(asset)
+            .fieldKey(resolveFieldKey(request.fieldKey(), request.name()))
+            .name(request.name())
+            .value(request.value())
+            .customAssetField(request.customAssetField())
+            .build();
+    }
+
+    private AssetImage assetImage(Asset asset, AssetImageRequest request, java.util.Set<UUID> attached) {
+        StoredFile file = file(request.fileUuid(), attached);
+        return AssetImage.builder()
+            .asset(asset)
+            .kind(request.kind())
+            .file(file)
+            .url(file == null ? webUrl(request.url()) : null)
+            .fileName(request.fileName())
+            .contentType(request.contentType())
+            .sortOrder(request.sortOrder())
+            .build();
+    }
+
+    private LocationImage locationImage(Location location, LocationImageRequest request, java.util.Set<UUID> attached) {
+        StoredFile file = file(request.fileUuid(), attached);
+        return LocationImage.builder()
+            .location(location)
+            .kind(request.kind())
+            .file(file)
+            .url(file == null ? webUrl(request.url()) : null)
+            .fileName(request.fileName())
+            .contentType(request.contentType())
+            .sortOrder(request.sortOrder())
+            .build();
+    }
+
+    private AssetTypeImage assetTypeImage(AssetType assetType, AssetImageRequest request, java.util.Set<UUID> attached) {
+        StoredFile file = file(request.fileUuid(), attached);
+        return AssetTypeImage.builder()
+            .assetType(assetType)
+            .kind(request.kind())
+            .file(file)
+            .url(file == null ? webUrl(request.url()) : null)
+            .fileName(request.fileName())
+            .contentType(request.contentType())
+            .sortOrder(request.sortOrder())
+            .build();
+    }
+
+    private StoredFile file(UUID uuid, java.util.Set<UUID> attached) {
+        return uuid == null ? null : fileAccess.attachable(uuid, attached);
+    }
+
+    /** External image addresses must be http(s) (no javascript:, data: or file: links). */
+    private static String webUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        String value = url.trim();
+        String lower = value.toLowerCase(java.util.Locale.ROOT);
+        if (!lower.startsWith("https://") && !lower.startsWith("http://") && !value.startsWith("/")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bild-Links müssen mit http:// oder https:// beginnen.");
+        }
+        return value;
+    }
+
+    /** Files already attached to the object being saved (they may stay). */
+    private static java.util.Set<UUID> attachedFiles(java.util.stream.Stream<StoredFile> files) {
+        return files.filter(java.util.Objects::nonNull).map(StoredFile::getUuid).collect(java.util.stream.Collectors.toSet());
+    }
+
+    /** An image needs an uploaded file or an external url. */
+    private static boolean hasSource(AssetImageRequest request) {
+        return request.fileUuid() != null || (request.url() != null && !request.url().isBlank());
+    }
+
+    private static boolean hasSource(LocationImageRequest request) {
+        return request.fileUuid() != null || (request.url() != null && !request.url().isBlank());
+    }
+
+    private String generateInvId() {
+        String invId;
+        do {
+            invId = "INV-" + java.time.LocalDate.now().getYear() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        } while (assetRepository.existsByInvId(invId));
+        return invId;
+    }
+
+    private String resolveFieldKey(String fieldKey, String name) {
+        if (fieldKey != null && !fieldKey.isBlank()) {
+            return normalizeKey(fieldKey);
+        }
+        return normalizeKey(name);
+    }
+
+    private String normalizeKey(String value) {
+        if (value == null || value.isBlank()) {
+            return "field";
+        }
+
+        String normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}", "")
+            .toLowerCase(Locale.ROOT)
+            .replace("ß", "ss")
+            .replaceAll("[^a-z0-9]+", "_")
+            .replaceAll("^_+|_+$", "");
+
+        return normalized.isBlank() ? "field" : normalized;
+    }
+
+    private Asset assetOr404(UUID uuid) {
+        return assetRepository.findByUuid(uuid).filter(asset -> !asset.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not found"));
+    }
+
+    private AssetType assetTypeOr404(UUID uuid) {
+        return assetTypeRepository.findByUuid(uuid).filter(type -> !type.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset type not found"));
+    }
+
+    private Location locationOr404(UUID uuid) {
+        return locationRepository.findByUuid(uuid).filter(location -> !location.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location not found"));
+    }
+
+    private Tag tagOr404(UUID uuid) {
+        return tagRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tag not found"));
+    }
+}

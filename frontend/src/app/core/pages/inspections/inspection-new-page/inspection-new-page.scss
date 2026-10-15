@@ -1,0 +1,111 @@
+@use 'breakpoints' as bp;
+
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.card {
+    > h2 {
+        margin-bottom: .5rem;
+    }
+
+    > .hint {
+        margin-bottom: .85rem;
+        color: var(--text-muted);
+        font-size: .82rem;
+    }
+}
+
+.fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+
+    @include bp.phone {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .field {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+
+        > span {
+            color: var(--text-muted);
+            font-size: .8rem;
+            font-weight: 700;
+        }
+
+        .hint {
+            color: var(--text-subtle);
+            font-size: .78rem;
+        }
+
+        .toggle {
+            min-height: 1.8rem;
+            font-size: .82rem;
+            font-weight: 500;
+        }
+    }
+}
+
+.due-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.5rem;
+
+    .due-days {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .5rem;
+        color: var(--text-muted);
+        font-size: .88rem;
+
+        input {
+            width: 4.5rem;
+        }
+    }
+}
+
+// stays visible at the bottom while scrolling through the filters
+.start-bar {
+    position: sticky;
+    bottom: calc(.75rem + env(safe-area-inset-bottom));
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem 1rem;
+    box-shadow: var(--shadow-md);
+
+    .preview {
+        display: flex;
+        align-items: baseline;
+        gap: .4rem;
+
+        strong {
+            font-size: 1.5rem;
+        }
+
+        span {
+            color: var(--text-muted);
+        }
+    }
+
+    @include bp.phone {
+        .primary-action {
+            flex: 1 1 auto;
+        }
+    }
+}
+
+.empty-state a {
+    margin-left: .25rem;
+    color: var(--accent);
+    font-weight: 700;
+}

@@ -1,0 +1,290 @@
+@use 'breakpoints' as bp;
+
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+// ---- header ----
+
+.view-switch {
+    display: inline-flex;
+    padding: .15rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+
+    button {
+        width: 2rem;
+        height: 1.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: var(--radius-xs);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+
+        &.active {
+            background: var(--surface-active);
+            color: var(--text);
+        }
+
+        @include bp.phone {
+            width: 2.5rem;
+            height: 2.3rem;
+        }
+    }
+
+}
+
+// the header actions stretch on phones; the switch keeps its size
+.header-actions .view-switch {
+    flex: 0 0 auto;
+}
+
+// ---- toolbar ----
+
+.toolbar {
+    .search-box kbd {
+        position: absolute;
+        right: .7rem;
+        padding: 0 .4rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xs);
+        color: var(--text-subtle);
+        font-family: inherit;
+        font-size: .75rem;
+        pointer-events: none;
+
+        // no hardware keyboard on touch devices
+        @include bp.touch {
+            display: none;
+        }
+    }
+
+    .filter-select {
+        flex: 0 1 13rem;
+        min-width: min(100%, 10rem);
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+}
+
+// ---- items ----
+
+.items {
+    &.grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+        gap: .75rem;
+
+        .item {
+            flex-direction: column;
+            align-items: stretch;
+            position: relative;
+            > app-selection-checkbox {
+                position: absolute;
+                top: calc(var(--inventory-item-padding) + var(--selection-image-inset));
+                left: calc(var(--inventory-item-padding) + var(--selection-image-inset));
+                z-index: 1;
+            }
+        }
+
+        .thumb {
+            width: 100%;
+            height: 8rem;
+        }
+
+        .item-actions {
+            justify-content: flex-end;
+        }
+    }
+
+    &.list {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+}
+
+.item {
+    --inventory-item-padding: .75rem;
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: var(--inventory-item-padding);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color .15s, box-shadow .15s;
+
+    &.clickable {
+        cursor: pointer;
+
+        &:hover {
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-sm);
+        }
+    }
+
+    @include bp.phone {
+        gap: .65rem;
+        --inventory-item-padding: .65rem;
+    }
+
+    .thumb {
+        width: 3.5rem;
+        height: 3.5rem;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: var(--radius-sm);
+        background: var(--surface-active);
+        color: var(--text-subtle);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @include bp.phone {
+            width: 3rem;
+            height: 3rem;
+        }
+    }
+
+    .tag-color {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+        border-radius: 50%;
+    }
+}
+
+.item-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+
+    strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        // long names wrap on phones instead of being cut off
+        @include bp.phone {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    .meta {
+        color: var(--text-muted);
+        font-size: .82rem;
+        overflow-wrap: anywhere;
+    }
+
+    p {
+        overflow: hidden;
+        color: var(--text-muted);
+        font-size: .85rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem .8rem;
+        color: var(--text-muted);
+        font-size: .8rem;
+
+        span {
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+            min-width: 0;
+        }
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .3rem;
+        margin-top: .25rem;
+    }
+
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .05rem .5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        background: var(--surface-active);
+        font-size: .74rem;
+        font-weight: 600;
+
+        .dot {
+            width: .45rem;
+            height: .45rem;
+            border-radius: 50%;
+            background: var(--text-subtle);
+        }
+    }
+
+    .due-badge {
+        margin-left: .4rem;
+        padding: .05rem .45rem;
+        border-radius: var(--radius-pill);
+        background: var(--warning-soft);
+        color: var(--warning);
+        font-size: .7rem;
+        font-weight: 700;
+        vertical-align: middle;
+        white-space: nowrap;
+
+        &.overdue {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+    }
+}
+
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+
+    .icon-button {
+        width: 2rem;
+        height: 2rem;
+
+        @include bp.phone {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+    }
+
+    .open-indicator {
+        color: var(--text-subtle);
+
+        // the whole row is tappable; the space goes to the text
+        @include bp.phone {
+            display: none;
+        }
+    }
+}

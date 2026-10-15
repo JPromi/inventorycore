@@ -1,0 +1,136 @@
+@use 'breakpoints' as bp;
+
+:host {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+    gap: .75rem 1rem;
+}
+
+.check-field {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+
+    &.wide {
+        grid-column: 1 / -1;
+    }
+}
+
+.check-label {
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+
+    .required {
+        color: var(--accent);
+    }
+
+    .scope {
+        margin-left: .3rem;
+        padding: 0 .35rem;
+        border-radius: var(--radius-xs);
+        background: var(--surface-active);
+        font-weight: 600;
+    }
+}
+
+%small-button {
+    padding: .4rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.yes-no {
+    display: inline-flex;
+    gap: .3rem;
+
+    button {
+        @extend %small-button;
+        min-width: 4rem;
+
+        @include bp.phone {
+            min-height: 2.6rem;
+            flex: 1;
+        }
+    }
+
+    .yes {
+        --tone: var(--success);
+    }
+
+    .no {
+        --tone: var(--accent);
+    }
+
+    .active {
+        border-color: var(--tone);
+        background: var(--tone);
+        color: var(--on-accent);
+    }
+}
+
+// ---- photos ----
+
+.photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.photo {
+    position: relative;
+
+    img {
+        width: 4.5rem;
+        height: 4.5rem;
+        display: block;
+        border-radius: var(--radius-sm);
+        object-fit: cover;
+        background: var(--surface-active);
+    }
+
+    .remove {
+        position: absolute;
+        top: -.4rem;
+        right: -.4rem;
+        width: 1.6rem;
+        height: 1.6rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--surface);
+        border-radius: var(--radius-pill);
+        background: var(--text);
+        color: var(--surface);
+        cursor: pointer;
+    }
+}
+
+.add {
+    @extend %small-button;
+    width: 4.5rem;
+    height: 4.5rem;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .2rem;
+    padding: .3rem;
+    border-style: dashed;
+    color: var(--text-muted);
+    font-size: .7rem;
+    line-height: 1.1;
+
+    &:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+}
+
+.photo-status {
+    color: var(--text-muted);
+    font-size: .8rem;
+}

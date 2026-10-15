@@ -1,0 +1,38 @@
+<div class="selection-bar">
+    <button type="button" class="secondary-action" [attr.aria-pressed]="active" [disabled]="disabled || busy" (click)="toggleMode()">
+        @if (active) { <svg lucideX size="16"></svg><span>Auswahl beenden</span> }
+        @else { <svg lucideListChecks size="16"></svg><span>Auswählen</span> }
+    </button>
+    @if (active) {
+    <label class="select-page"><span class="selection-control">
+        <input type="checkbox" class="selection-checkbox" [checked]="allSelected" [indeterminate]="partlySelected"
+            [disabled]="disabled || busy || !currentPage.length" (change)="togglePage($event)" aria-label="Alle geladenen auswählen" title="Alle geladenen Einträge auswählen" />
+        <span class="selection-mark" aria-hidden="true">
+            @if (allSelected) { <svg lucideCheck size="14"></svg> }
+            @else if (partlySelected) { <svg lucideMinus size="14"></svg> }
+        </span>
+        </span>
+        <span>{{ selected.size }} ausgewählt</span></label>
+    <button #trigger type="button" class="primary-action" [disabled]="disabled || busy || !selected.size"
+        [attr.aria-expanded]="open" aria-haspopup="menu" (click)="showMenu()" (keydown.arrowdown)="$event.preventDefault(); showMenu()">
+        <span>{{ busy ? 'Löscht...' : 'Aktionen' }}</span><svg lucideChevronDown size="16"></svg>
+    </button>
+    @if (selected.size) {
+        <button type="button" class="icon-button" title="Auswahl aufheben" aria-label="Auswahl aufheben" (click)="clear()" [disabled]="busy"><svg lucideX size="16"></svg></button>
+    }
+@if (open) {
+    <div #menu class="action-menu" role="menu" [appDropdownPosition]="trigger">
+        @for (action of actions; track action.label) {
+            <button type="button" role="menuitem" (click)="run(action)">
+                <ng-container *ngComponentOutlet="action.icon; inputs: actionIconInputs"></ng-container><span>{{ action.label }}</span>
+            </button>
+        }
+        <button type="button" role="menuitem" class="danger" [disabled]="!deletable" (click)="remove()"
+            [title]="deletable ? 'Ausgewählte Einträge löschen' : 'Nicht alle ausgewählten Einträge dürfen gelöscht werden'">
+            <svg lucideTrash2 size="16"></svg><span>Löschen</span>
+        </button>
+    </div>
+}
+    }
+</div>
+@if (error) { <p class="error" role="alert">{{ error }}</p> }

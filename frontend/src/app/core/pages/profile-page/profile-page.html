@@ -1,0 +1,29 @@
+@if (state.currentUser$ | async; as user) {
+    <section>
+        <h1>Mein Profil</h1>
+        <div class="identity">
+            <div class="avatar">
+                @if (user.profileImageUrl && !imageFailed) {
+                    <img [src]="user.profileImageUrl" alt="Profilbild" referrerpolicy="no-referrer" (error)="imageFailed = true" />
+                } @else {
+                    {{ user.displayName.charAt(0).toUpperCase() }}
+                }
+            </div>
+            <div><h2>{{ user.displayName }}</h2><p>{{ user.username }}</p></div>
+        </div>
+        <h2>Profilbild</h2>
+        @if (user.authProvider === 'LOCAL') {
+            <input #uploadInput type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff" hidden (change)="upload($event)" />
+            <div class="actions">
+                <button type="button" [disabled]="busy" (click)="uploadInput.click()"><svg lucideUpload size="18"></svg>Bild hochladen</button>
+                @if (user.profileImageUrl) {
+                    <button type="button" [disabled]="busy" (click)="remove()"><svg lucideTrash2 size="18"></svg>Entfernen</button>
+                }
+            </div>
+        } @else {
+            <p>Dein Profilbild wird von {{ user.authProvider }} verwaltet.</p>
+        }
+        @if (busy) { <p role="status">Wird gespeichert...</p> }
+        @if (error) { <p class="error" role="alert">{{ error }}</p> }
+    </section>
+}

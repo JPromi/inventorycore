@@ -1,0 +1,427 @@
+<section class="page">
+    <div class="page-shell">
+        <a class="back-link" [routerLink]="config.listRoute">
+            <svg lucideArrowLeft size="16"></svg>
+            <span>Zurück zur Übersicht</span>
+        </a>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="empty">Lade Daten...</p>
+        } @else if (item) {
+            <header class="page-header">
+                <div class="title">
+                    <span class="title-icon">
+                        <ng-container *ngComponentOutlet="icon; inputs: iconInputs"></ng-container>
+                    </span>
+                    <div>
+                        <p class="eyebrow">
+                            {{ config.title }}
+                            @if (item.invId) {
+                                · <span class="mono">{{ item.invId }}</span>
+                            }
+                        </p>
+                        <h1>{{ item.name }}</h1>
+                        @if (locationChain.length) {
+                            <nav class="breadcrumb" aria-label="Standort">
+                                <svg lucideMapPin size="14"></svg>
+                                @for (location of locationChain; track location.uuid; let last = $last) {
+                                    <a [routerLink]="['/locations', location.uuid]">{{ location.name }}</a>
+                                    @if (!last) {
+                                        <svg lucideChevronRight size="13"></svg>
+                                    }
+                                }
+                            </nav>
+                        }
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    @if (config.endpoint === 'assets') {
+                        <button type="button" class="secondary-action" (click)="printSheet()">
+                            <svg lucideFileText size="16"></svg>
+                            <span>Drucken</span>
+                        </button>
+                        <button type="button" class="secondary-action" (click)="showPrintDialog = true">
+                            <svg lucidePrinter size="16"></svg>
+                            <span>Label drucken</span>
+                        </button>
+                    }
+                    @if (canDelete) {
+                        <button type="button" class="danger-action" (click)="remove()">
+                            <svg lucideTrash2 size="16"></svg>
+                            <span>Löschen</span>
+                        </button>
+                    }
+                    @if (canEdit) {
+                        <button type="button" class="primary-action" (click)="edit()">
+                            <svg lucidePencil size="16"></svg>
+                            <span>Bearbeiten</span>
+                        </button>
+                    }
+                </div>
+            </header>
+
+            <div class="layout">
+                <div class="stack">
+                    <section class="card">
+                        <h2>Details</h2>
+                        <dl class="details">
+                            @for (field of config.fields; track field.key) {
+                                <div [class.wide]="field.key === 'description'">
+                                    <dt>{{ field.label }}</dt>
+                                    <dd [class.missing]="!fieldValue(field)">{{ fieldValue(field) ?? '—' }}</dd>
+                                </div>
+                            }
+                            @for (field of customFields; track $index) {
+                                <div>
+                                    <dt>{{ field.name }}</dt>
+                                    <dd [class.missing]="!field.value">
+                                        @if (field.fieldType === 'URL' && field.value) {
+                                            <a class="inline-link" [href]="field.value" target="_blank" rel="noopener">{{ field.value }}</a>
+                                        } @else {
+                                            {{ formatCustomValue(field.value, field.fieldType) }}
+                                        }
+                                    </dd>
+                                </div>
+                            }
+                            @if (locationType; as type) {
+                                <div>
+                                    <dt>Art</dt>
+                                    <dd>{{ type.label }}</dd>
+                                </div>
+                            }
+                            @if (config.endpoint === 'assets') {
+                                <div>
+                                    <dt>Typ</dt>
+                                    <dd>
+                                        @if (assetType) {
+                                            <a class="inline-link" [routerLink]="['/config/types', assetType.uuid]">
+                                                <svg lucideShapes size="14"></svg>{{ assetType.name }}
+                                            </a>
+                                        } @else {
+                                            <span class="missing">—</span>
+                                        }
+                                    </dd>
+                                </div>
+                            }
+                            <div>
+                                <dt>Bereiche</dt>
+                                <dd>
+                                    <span class="chip-list">
+                                        @for (area of areas; track $index) {
+                                            <span class="chip"><span class="dot" [style.background]="area.color || null"></span>{{ area.name }}</span>
+                                        }
+                                    </span>
+                                </dd>
+                            </div>
+                            @if (item.createdAt) {
+                                <div>
+                                    <dt>Erstellt am</dt>
+                                    <dd>{{ item.createdAt | date: 'dd.MM.yyyy HH:mm' }}</dd>
+                                </div>
+                            }
+                        </dl>
+                    </section>
+
+                    @if (config.endpoint !== 'locations') {
+                        <section class="card">
+                            <h2>Tags</h2>
+                            @if (ownTags.length || inheritedTags.length) {
+                                <div class="chip-list">
+                                    @for (tag of ownTags; track tag.uuid) {
+                                        <span class="chip"><span class="dot" [style.background]="tag.color || null"></span>{{ tag.name }}</span>
+                                    }
+                                    @for (tag of inheritedTags; track tag.uuid) {
+                                        <span class="chip inherited" title="Vom Typ übernommen">
+                                            <span class="dot" [style.background]="tag.color || null"></span>{{ tag.name }}
+                                            <small>Typ</small>
+                                        </span>
+                                    }
+                                </div>
+                            } @else {
+                                <p class="hint">Keine Tags vergeben.</p>
+                            }
+                        </section>
+                    }
+
+                    @if (config.endpoint === 'asset-types') {
+                        <section class="card">
+                            <h2>Felddefinitionen</h2>
+                            @if (item.fieldDefinitions?.length) {
+                                <div class="data-table-wrap flat">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Typ</th>
+                                                <th>Pflichtfeld</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (field of item.fieldDefinitions; track $index) {
+                                                <tr>
+                                                    <td>{{ field.name }}</td>
+                                                    <td>{{ fieldTypeLabels[field.fieldType] ?? field.fieldType }}</td>
+                                                    <td>
+                                                        @if (field.required) {
+                                                            <span class="badge accent">Pflicht</span>
+                                                        } @else {
+                                                            <span class="muted">optional</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            } @else {
+                                <p class="hint">Keine Felder definiert.</p>
+                            }
+                        </section>
+                    }
+
+                    @if (config.endpoint === 'locations') {
+                        <section class="card">
+                            <div class="card-title">
+                                <h2>Unter-Standorte</h2>
+                                <span class="badge">{{ childLocations.length }}</span>
+                            </div>
+                            @if (childLocations.length) {
+                                <ul class="link-list">
+                                    @for (location of childLocations; track location.uuid) {
+                                        <li>
+                                            <a [routerLink]="['/locations', location.uuid]">
+                                                <svg lucideMapPin size="16"></svg>
+                                                <span>
+                                                    {{ location.name }}
+                                                    @if (location.hint) {
+                                                        <small>{{ location.hint }}</small>
+                                                    }
+                                                </span>
+                                                <svg class="chevron" lucideChevronRight size="16"></svg>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            } @else {
+                                <p class="hint">Keine Unter-Standorte.</p>
+                            }
+                        </section>
+                    }
+
+                    @if (config.endpoint !== 'assets' && permissions.can('ASSET', 'view')) {
+                        <section class="card">
+                            <div class="card-title">
+                                <h2>{{ config.endpoint === 'locations' ? 'Assets an diesem Standort' : 'Assets dieses Typs' }}</h2>
+                                <span class="badge">{{ linkedAssets.length }}</span>
+                            </div>
+                            @if (linkedAssets.length) {
+                                <ul class="link-list">
+                                    @for (asset of linkedAssets; track asset.uuid) {
+                                        <li>
+                                            <a [routerLink]="['/assets', asset.uuid]">
+                                                <svg lucideBoxes size="16"></svg>
+                                                <span>
+                                                    {{ asset.name }}
+                                                    @if (asset.hint) {
+                                                        <small>{{ asset.hint }}</small>
+                                                    }
+                                                </span>
+                                                <svg class="chevron" lucideChevronRight size="16"></svg>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            } @else {
+                                <p class="hint">Keine Assets zugeordnet.</p>
+                            }
+                        </section>
+                    }
+
+                    @if (config.endpoint === 'assets') {
+                        <section class="card">
+                            <div class="card-title">
+                                <h2>Asset-Verknüpfungen</h2>
+                                @if (permissions.can('ASSET', 'create')) {
+                                    <a class="secondary-action" routerLink="/assets/new" [queryParams]="{ parentAssetUuid: item.uuid }">
+                                        <svg lucidePlus size="16"></svg><span>Untergeordnetes Asset</span>
+                                    </a>
+                                }
+                            </div>
+                            @if (item.parentAssetUuid) {
+                                <h3>Übergeordnetes Asset</h3>
+                                <ul class="link-list">
+                                    <li>
+                                        @if (parentAsset; as parent) {
+                                            <a [routerLink]="['/assets', parent.uuid]">
+                                                <svg lucideBoxes size="16"></svg>
+                                                <span>{{ parent.name }}<small>{{ parent.invId }}</small>
+                                                    @if (item.parentAssetNote) { <small>{{ item.parentAssetNote }}</small> }
+                                                </span>
+                                                <svg lucideChevronRight size="15"></svg>
+                                            </a>
+                                        } @else {
+                                            <span class="hint">Übergeordnetes Asset nicht verfügbar.</span>
+                                        }
+                                    </li>
+                                </ul>
+                            }
+                            <h3>Untergeordnete Assets</h3>
+                            @if (childAssets.length) {
+                                <ul class="link-list">
+                                    @for (child of childAssets; track child.uuid) {
+                                        <li><a [routerLink]="['/assets', child.uuid]">
+                                            <svg lucideBoxes size="16"></svg>
+                                            <span>{{ child.name }}<small>{{ child.invId }}</small>
+                                                @if (child.parentAssetNote) { <small>{{ child.parentAssetNote }}</small> }
+                                            </span>
+                                            <svg lucideChevronRight size="15"></svg>
+                                        </a></li>
+                                    }
+                                </ul>
+                            } @else {
+                                <p class="hint">Keine untergeordneten Assets.</p>
+                            }
+                        </section>
+                    }
+
+                    @if (canSeeInspections) {
+                        <section class="card">
+                            <div class="card-title">
+                                <h2>Prüfungen</h2>
+                                <span class="hint">{{ inspections.length }}</span>
+                            </div>
+                            @if (inspections.length) {
+                                <app-asset-inspection-list [entries]="inspections.slice(0, 3)" />
+                                @if (inspections.length > 3) {
+                                    <a class="secondary-action compact show-all" [routerLink]="['/assets', item.uuid, 'inspections']">
+                                        <span>Alle Prüfungen anzeigen ({{ inspections.length }})</span>
+                                        <svg lucideChevronRight size="15"></svg>
+                                    </a>
+                                }
+                            } @else {
+                                <p class="hint">Dieses Asset war noch in keiner Prüfung.</p>
+                            }
+                        </section>
+                    }
+
+                    @if (config.endpoint === 'assets' || config.endpoint === 'locations') {
+                        <app-audit-history
+                            [endpoint]="config.endpoint"
+                            [uuid]="item.uuid"
+                            [limit]="3"
+                            [moreLink]="['/', config.endpoint, item.uuid, 'history']"
+                        />
+                    }
+                </div>
+
+                <aside class="stack">
+                    @if (schedules.length) {
+                        <section class="card schedules">
+                            <h2><svg lucideCalendarClock size="16"></svg> Prüftermine</h2>
+                            @for (entry of schedules; track entry.inspectionTypeUuid) {
+                                <div class="schedule" [class]="'schedule ' + entry.state.toLowerCase()">
+                                    <div class="schedule-head">
+                                        <span class="dot" [style.background]="entry.inspectionTypeColor || null"></span>
+                                        <strong>{{ entry.inspectionTypeName }}</strong>
+                                        <small>{{ intervalText(entry.intervalValue, entry.intervalUnit) }}</small>
+                                    </div>
+                                    <p class="due">
+                                        {{ dueText(entry.daysUntilDue) }} · {{ entry.nextDueDate | date: 'dd.MM.yyyy' }}
+                                        @if (entry.fixedDueDate) {
+                                            <small>(festes Datum)</small>
+                                        }
+                                    </p>
+                                    <p class="last">
+                                        @if (entry.lastCheckedAt) {
+                                            Zuletzt {{ entry.lastCheckedAt | date: 'dd.MM.yyyy' }} von {{ entry.lastCheckedByName }}
+                                            @if (entry.lastResult === 'FAILED') {
+                                                – <span class="defect">Mangel</span>
+                                            }
+                                        } @else {
+                                            Noch nie geprüft
+                                        }
+                                    </p>
+                                    @if (canPlanInspections) {
+                                        @if (editingSchedule === entry.inspectionTypeUuid) {
+                                            <div class="fixed-date">
+                                                <input type="date" [(ngModel)]="fixedDateInput" aria-label="Nächste Prüfung am" />
+                                                <button type="button" class="primary-action compact" [disabled]="!fixedDateInput" (click)="saveFixedDate(entry, fixedDateInput)">
+                                                    Setzen
+                                                </button>
+                                                <button type="button" class="icon-button" title="Abbrechen" (click)="editingSchedule = null">✕</button>
+                                            </div>
+                                        } @else {
+                                            <div class="schedule-actions">
+                                                <button type="button" class="link-button" (click)="editSchedule(entry)">
+                                                    {{ entry.fixedDueDate ? 'Datum ändern' : 'Festes Datum setzen' }}
+                                                </button>
+                                                @if (entry.fixedDueDate) {
+                                                    <button type="button" class="link-button" (click)="saveFixedDate(entry, null)">Wieder Intervall verwenden</button>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </section>
+                    }
+
+                    <section class="card gallery">
+                        <div class="main-image">
+                            @if (activeImage) {
+                                <a [href]="activeImage.url" target="_blank" rel="noopener" title="In Originalgröße öffnen">
+                                    <img [src]="activeImage.url" [alt]="activeImage.fileName || item.name" />
+                                </a>
+                            } @else {
+                                <div class="no-image">
+                                    <ng-container *ngComponentOutlet="icon; inputs: placeholderIconInputs"></ng-container>
+                                    <span>Kein Bild</span>
+                                </div>
+                            }
+                        </div>
+                        @if (images.length > 1) {
+                            <div class="thumbs">
+                                @for (image of images; track $index) {
+                                    <button type="button" [class.active]="image === activeImage" (click)="activeImage = image" [title]="image.fileName || ''">
+                                        <img [src]="image.thumbnailUrl || image.url" [alt]="image.fileName || item.name" loading="lazy" />
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </section>
+
+                    @if (config.endpoint === 'locations' && item.latitude != null && item.longitude != null) {
+                        <section class="card">
+                            <h2>Karte</h2>
+                            <app-location-map [latitude]="item.latitude" [longitude]="item.longitude" [title]="item.name" />
+                        </section>
+                    }
+                </aside>
+            </div>
+        }
+    </div>
+</section>
+
+@if (item && config.endpoint === 'assets') {
+    <app-asset-print
+        [asset]="item"
+        [details]="printDetails"
+        [typeName]="assetType?.name ?? null"
+        [locationPath]="locationText"
+        [areaNames]="areaNames"
+        [images]="images"
+        [inspections]="inspections"
+        [schedules]="schedules"
+        [parent]="parentAsset"
+        [children]="childAssets"
+    />
+}
+
+@if (showPrintDialog && item) {
+    <app-label-print-dialog [assets]="[item]" [locations]="locations" [assetTypes]="assetTypes" (closed)="showPrintDialog = false" />
+}

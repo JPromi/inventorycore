@@ -1,0 +1,13 @@
+:host { display: block; margin-block: .75rem; }
+.selection-bar { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; min-height: 2.6rem; }
+.select-page { display: inline-flex; align-items: center; gap: .65rem; font-size: .85rem; color: var(--text-muted); cursor: pointer; }
+.action-menu { padding: .3rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); }
+/* grow with the widest entry instead of sticking to the trigger width */
+.action-menu.dropdown-panel { width: max-content; min-width: var(--dropdown-reference-width, 0px); max-width: var(--dropdown-available-width, calc(100vw - 2 * var(--dropdown-viewport-padding))); }
+.action-menu svg { width: var(--menu-icon-size); height: var(--menu-icon-size); flex-shrink: 0; }
+.action-menu button { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 2.5rem; padding: .5rem .7rem; border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--text); cursor: pointer; font-size: .9rem; text-align: left; white-space: nowrap; }
+.action-menu button:hover:not(:disabled) { background: var(--surface-hover); }
+.action-menu button.danger { color: var(--accent); }
+.action-menu button.danger:hover:not(:disabled) { background: var(--accent-soft); }
+.action-menu button:disabled { color: var(--text-subtle); cursor: not-allowed; }
+.error { margin-top: .5rem; overflow-wrap: anywhere; }

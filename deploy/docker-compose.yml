@@ -1,0 +1,49 @@
+# InventoryCore with its PostgreSQL database, using the image built by GitHub Actions.
+# This folder needs nothing else from the repository; copy it to the server and run:
+#   cp .env.example .env            (change the default passwords, choose the image tag)
+#   docker compose up -d
+# Update:  docker compose pull && docker compose up -d
+# If the GitHub package is private, log in first: docker login ghcr.io (token with read:packages).
+# The app listens on port 8080 (APP_PORT); put an HTTPS reverse proxy in front of it in production.
+# Back up both volumes together: db-data (PostgreSQL) and files (uploaded images).
+name: inventorycore
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-inventorycore}
+      POSTGRES_USER: ${DB_USER:-inventorycore}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-inventorycore}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    image: ghcr.io/jpromi/inventorycore:${INVENTORYCORE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-inventorycore}
+      DB_USER: ${DB_USER:-inventorycore}
+      DB_PASSWORD: ${DB_PASSWORD:-inventorycore}
+      DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME:-inv}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-core}
+      NOMINATIM_EMAIL: ${NOMINATIM_EMAIL:-}
+      TZ: ${TZ:-Europe/Vienna}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - files:/app/data
+
+volumes:
+  db-data:
+  files:

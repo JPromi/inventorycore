@@ -1,0 +1,216 @@
+@use 'breakpoints' as bp;
+
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.card {
+    > h2,
+    .card-title h2 {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        margin-bottom: .75rem;
+    }
+}
+
+.field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+
+    > span,
+    .field-label {
+        color: var(--text-muted);
+        font-size: .8rem;
+        font-weight: 700;
+    }
+}
+
+// ---- general ----
+
+.general {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .85rem 1rem;
+
+    .wide {
+        grid-column: 1 / -1;
+    }
+
+    @include bp.phone {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.mode-choice {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem;
+
+    .mode {
+        display: flex;
+        align-items: flex-start;
+        gap: .7rem;
+        padding: .8rem .9rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-muted);
+        cursor: pointer;
+
+        input {
+            display: none;
+        }
+
+        span {
+            display: flex;
+            flex-direction: column;
+            gap: .2rem;
+        }
+
+        strong {
+            color: var(--text);
+        }
+
+        small {
+            font-size: .8rem;
+            line-height: 1.45;
+        }
+
+        &.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+    }
+
+    @include bp.phone {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.interval {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: .35rem 0;
+
+    input:not([type='checkbox']) {
+        width: 5rem;
+    }
+
+    select {
+        width: auto;
+    }
+}
+
+// ---- check fields ----
+
+.field-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 11rem auto auto;
+    align-items: end;
+    gap: .6rem;
+    padding: .6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+
+    .order {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+
+        .icon-button {
+            width: 1.6rem;
+            height: 1.3rem;
+        }
+    }
+
+    .required {
+        min-height: 2.35rem;
+    }
+
+    .options {
+        grid-column: 2 / -1;
+    }
+
+    // stacked; order buttons side by side and big enough to tap
+    @include bp.phone {
+        grid-template-columns: minmax(0, 1fr);
+
+        .order {
+            flex-direction: row;
+
+            .icon-button {
+                width: 2.5rem;
+                height: 2.25rem;
+            }
+        }
+
+        .options {
+            grid-column: auto;
+        }
+    }
+}
+
+.add {
+    margin-top: .75rem;
+}
+
+.add-type {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    border-style: dashed;
+
+    h2 {
+        margin-bottom: .2rem;
+    }
+
+    app-search-select {
+        min-width: min(100%, 16rem);
+
+        @include bp.phone {
+            flex: 1 1 100%;
+        }
+    }
+}
+
+// sticky save bar; layout comes from the global .editor-actions
+.editor-actions {
+    position: sticky;
+    bottom: 0;
+    padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--background) 70%, transparent);
+}
+
+// "Funktion prüfen" below the inventory / single check choice
+.function-check {
+    align-items: flex-start;
+    margin-top: .85rem;
+
+    > span {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+    }
+
+    small {
+        color: var(--text-muted);
+        font-size: .8rem;
+    }
+}
