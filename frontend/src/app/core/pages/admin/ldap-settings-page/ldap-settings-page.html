@@ -185,9 +185,23 @@
                         </label>
                         <label class="field wide">
                             <span>Gruppen-Filter</span>
-                            <input type="text" class="mono" [(ngModel)]="settings.groupFilter" name="groupFilter" />
+                            <textarea class="mono" [(ngModel)]="settings.groupFilter" (ngModelChange)="groupFilterEdited()" name="groupFilter" rows="3"></textarea>
                             <small>Beispiel nur bestimmte Gruppen: (&amp;(objectClass=group)(cn=INV-*))</small>
                         </label>
+                        @if (availableGroups.length || selectedGroups.length) {
+                            <div class="field wide">
+                                <span>Gruppen auswaehlen</span>
+                                <app-multi-select
+                                    [options]="groupOptions"
+                                    [ngModel]="selectedGroups"
+                                    (ngModelChange)="selectGroups($event)"
+                                    name="selectedGroupNames"
+                                    placeholder="Gruppen auswaehlen..."
+                                    emptyText="Keine weiteren Gruppen"
+                                    aria-label="Zu synchronisierende Gruppen"
+                                />
+                            </div>
+                        }
                         <label class="field">
                             <span>Attribut Gruppenname</span>
                             <input type="text" [(ngModel)]="settings.groupNameAttribute" name="groupNameAttribute" />
@@ -206,6 +220,20 @@
 
                 <section class="card">
                     <h2>Anmeldung &amp; Synchronisation</h2>
+                    <div class="sync-interval">
+                        <label class="field">
+                            <span>Sync-Intervall</span>
+                            <input type="number" min="1" [max]="maxSyncInterval" step="1" required [(ngModel)]="settings.syncIntervalValue" name="syncIntervalValue" />
+                        </label>
+                        <label class="field">
+                            <span>Einheit</span>
+                            <select [(ngModel)]="settings.syncIntervalUnit" name="syncIntervalUnit">
+                                <option value="MINUTES">Minuten</option>
+                                <option value="HOURS">Stunden</option>
+                                <option value="DAYS">Tage</option>
+                            </select>
+                        </label>
+                    </div>
                     <div class="options">
                         <label class="toggle option">
                             <input type="checkbox" [(ngModel)]="settings.loginEnabled" name="loginEnabled" />

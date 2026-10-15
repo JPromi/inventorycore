@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { LucideCircleCheck, LucideCircleX, LucideFolderSync, LucideNetwork, LucidePlugZap, LucideSave } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { MultiSelect } from '../../../components/multi-select/multi-select';
+import { SelectOption } from '../../../components/search-select/search-select';
 import { AdminApiService, LdapSettings, LdapSyncResult, LdapTestResult } from '../../../service/admin-api.service';
 
 type LdapPreset = 'ad' | 'openldap' | 'ucs';
 
 @Component({
   selector: 'app-ldap-settings-page',
-  imports: [DatePipe, FormsModule, LucideCircleCheck, LucideCircleX, LucideFolderSync, LucideNetwork, LucidePlugZap, LucideSave],
+  imports: [DatePipe, FormsModule, MultiSelect, LucideCircleCheck, LucideCircleX, LucideFolderSync, LucideNetwork, LucidePlugZap, LucideSave],
   templateUrl: './ldap-settings-page.html',
   styleUrl: './ldap-settings-page.scss',
 })
@@ -26,6 +28,43 @@ export class LdapSettingsPage implements OnInit {
   protected syncResult: LdapSyncResult | null = null;
   /** Sync works on the stored settings, so it needs a save first. */
   protected dirty = false;
+  protected availableGroups: string[] = [];
+  protected selectedGroups: string[] = [];
+  private groupFilterBase: string | null = null;
+
+  protected get maxSyncInterval(): number {
+    return this.settings?.syncIntervalUnit === 'MINUTES' ? 525600
+      : this.settings?.syncIntervalUnit === 'DAYS' ? 365 : 8760;
+  }
+
+  protected get groupOptions(): SelectOption[] {
+    return [...new Set([...this.availableGroups, ...this.selectedGroups])]
+      .sort((a, b) => a.localeCompare(b))
+      .map((name) => ({ value: name, label: name }));
+  }
+
+  protected selectGroups(names: string[]): void {
+    const settings = this.settings;
+    if (!settings) return;
+    const attribute = settings.groupNameAttribute ?? '';
+    if (!/^[a-zA-Z][a-zA-Z0-9-]*$/.test(attribute)) {
+      this.error = 'Ungueltiges Attribut fuer Gruppennamen.';
+      return;
+    }
+    this.groupFilterBase ??= settings.groupFilter ?? '(objectClass=*)';
+    this.selectedGroups = [...names];
+    const escape = (value: string) => value.replace(/[\\*()\x00]/g,
+      (character) => '\\' + character.charCodeAt(0).toString(16).padStart(2, '0'));
+    const choices = [...names].sort().map((name) => `(${attribute}=${escape(name)})`).join('');
+    settings.groupFilter = names.length ? `(&${this.groupFilterBase}(|${choices}))` : this.groupFilterBase;
+    this.changed();
+  }
+
+  protected groupFilterEdited(): void {
+    this.selectedGroups = [];
+    this.groupFilterBase = null;
+    this.changed();
+  }
 
   constructor(
     private readonly api: AdminApiService,
@@ -93,10 +132,19 @@ export class LdapSettingsPage implements OnInit {
       });
     }
     this.changed();
+    this.availableGroups = [];
+    this.selectedGroups = [];
+    this.groupFilterBase = null;
+    this.testResult = null;
   }
 
   protected save(): void {
     if (!this.settings || this.saving) {
+      return;
+    }
+    if (!Number.isInteger(this.settings.syncIntervalValue)
+      || this.settings.syncIntervalValue < 1 || this.settings.syncIntervalValue > this.maxSyncInterval) {
+      this.error = 'Das Sync-Intervall muss mindestens eine Einheit und maximal 365 Tage betragen.';
       return;
     }
     this.saving = true;
@@ -124,6 +172,7 @@ export class LdapSettingsPage implements OnInit {
     this.api.testLdap(this.settings).subscribe({
       next: (result) => {
         this.testResult = result;
+        this.availableGroups = result.success ? result.availableGroups ?? [] : [];
         this.testing = false;
       },
       error: () => {
@@ -139,9 +188,10 @@ export class LdapSettingsPage implements OnInit {
     }
     const confirmed = await this.confirmDialog.confirm({
       title: 'Jetzt synchronisieren?',
-      message: this.settings.disableMissingUsers
+      message: (this.settings.disableMissingUsers
         ? 'Benutzer und Gruppen werden aus LDAP importiert. LDAP-Benutzer, die nicht mehr gefunden werden, werden deaktiviert.'
-        : 'Benutzer und Gruppen werden aus LDAP importiert und aktualisiert.',
+        : 'Benutzer und Gruppen werden aus LDAP importiert und aktualisiert.')
+        + ' Nicht mehr gefundene LDAP-Gruppen werden mit ihren Zuordnungen und Berechtigungen geloescht.',
       confirmLabel: 'Synchronisieren',
     });
     if (!confirmed) {
@@ -168,6 +218,7 @@ export class LdapSettingsPage implements OnInit {
           usersSkipped: 0,
           groupsCreated: 0,
           groupsUpdated: 0,
+          groupsDeleted: 0,
         };
         this.syncing = false;
       },

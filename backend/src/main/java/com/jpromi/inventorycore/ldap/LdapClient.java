@@ -98,6 +98,15 @@ public final class LdapClient {
 
     /** Subtree search with paging, so Active Directory returns more than 1000 entries. */
     public static List<Entry> search(LdapContext context, String base, String filter, String... attributes) throws NamingException {
+        return search(context, base, filter, false, attributes);
+    }
+
+    /** Reads all local result pages; missing sync entries must be verified by DN before deletion. */
+    public static List<Entry> searchComplete(LdapContext context, String base, String filter, String... attributes) throws NamingException {
+        return search(context, base, filter, true, attributes);
+    }
+
+    private static List<Entry> search(LdapContext context, String base, String filter, boolean requireComplete, String... attributes) throws NamingException {
         SearchControls controls = new SearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         controls.setReturningAttributes(attributes);
@@ -114,8 +123,14 @@ public final class LdapClient {
                         entries.add(new Entry(result.getNameInNamespace(), read(result.getAttributes())));
                     }
                 } catch (PartialResultException exception) {
+                    if (requireComplete && !"Unprocessed Continuation Reference(s)".equals(exception.getExplanation())) {
+                        throw exception;
+                    }
                     // AD/Samba append referrals to other partitions (DomainDnsZones, ...) when searching
                     // from the domain root; with referrals ignored JNDI reports them at the end. Not an error.
+                }
+                finally {
+                    results.close();
                 }
                 cookie = null;
                 Control[] responseControls = context.getResponseControls();
@@ -133,6 +148,28 @@ public final class LdapClient {
             context.setRequestControls(null);
         }
         return entries;
+    }
+
+    /** Verifies one known object without traversing referrals in other directory partitions. */
+    public static Entry findObject(LdapContext context, String dn, String filter, String... attributes) throws NamingException {
+        SearchControls controls = new SearchControls();
+        controls.setSearchScope(SearchControls.OBJECT_SCOPE);
+        controls.setReturningAttributes(attributes);
+        NamingEnumeration<SearchResult> results = null;
+        try {
+            results = context.search(dn, filter, controls);
+            if (!results.hasMore()) {
+                return null;
+            }
+            SearchResult result = results.next();
+            return new Entry(dn, read(result.getAttributes()));
+        } catch (NameNotFoundException exception) {
+            return null;
+        } finally {
+            if (results != null) {
+                results.close();
+            }
+        }
     }
 
     /** Readable error message for the admin UI. */

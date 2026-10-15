@@ -70,6 +70,40 @@ public class LdapSettings {
     @Column(nullable = false)
     private boolean disableMissingUsers = true;
 
+    // Preserve existing values in the original column; their unit defaults to HOURS.
+    @Column(name = "sync_interval_hours", nullable = false, columnDefinition = "integer default 6")
+    private int syncIntervalValue = 6;
+
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(16) default 'HOURS'")
+    private com.jpromi.inventorycore.enums.LdapSyncIntervalUnit syncIntervalUnit =
+        com.jpromi.inventorycore.enums.LdapSyncIntervalUnit.HOURS;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean restrictGroups = false;
+
+    @jakarta.persistence.ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
+    @jakarta.persistence.CollectionTable(name = "ldap_selected_groups", joinColumns = @jakarta.persistence.JoinColumn(name = "settings_id"))
+    @Column(name = "group_name", length = 1000)
+    private java.util.Set<String> selectedGroupNames = new java.util.LinkedHashSet<>();
+
+    public String effectiveGroupFilter() {
+        if (!restrictGroups) {
+            return groupFilter;
+        }
+        if (selectedGroupNames.isEmpty()) {
+            return "(!(objectClass=*))";
+        }
+        String attribute = groupNameAttribute;
+        if (attribute == null || !attribute.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
+            throw new IllegalArgumentException("Ungueltiges Attribut fuer Gruppennamen.");
+        }
+        String choices = selectedGroupNames.stream().sorted()
+            .map(name -> "(" + attribute + "=" + org.springframework.ldap.support.LdapEncoder.filterEncode(name) + ")")
+            .collect(java.util.stream.Collectors.joining());
+        return "(&" + groupFilter + "(|" + choices + "))";
+    }
+
     private OffsetDateTime lastSyncAt;
 
     @Column(length = 2000)

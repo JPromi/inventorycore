@@ -73,6 +73,13 @@
 }
 
 .card {
+    .sync-interval {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: .75rem;
+        max-width: 20rem;
+        margin-bottom: 1rem;
+    }
     .card-title {
         @include bp.phone {
             flex-wrap: wrap;

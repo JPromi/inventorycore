@@ -26,5 +26,7 @@ public record LdapSettingsDto(
     boolean loginEnabled,
     boolean disableMissingUsers,
     OffsetDateTime lastSyncAt,
-    String lastSyncResult
+    String lastSyncResult,
+    @com.fasterxml.jackson.annotation.JsonAlias("syncIntervalHours") Integer syncIntervalValue,
+    com.jpromi.inventorycore.enums.LdapSyncIntervalUnit syncIntervalUnit
 ) {}

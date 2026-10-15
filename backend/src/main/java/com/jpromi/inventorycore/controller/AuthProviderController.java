@@ -94,6 +94,7 @@ public class AuthProviderController {
             "usersSkipped", result.usersSkipped(),
             "groupsCreated", result.groupsCreated(),
             "groupsUpdated", result.groupsUpdated(),
+            "groupsDeleted", result.groupsDeleted(),
             // the error text comes from the directory server / Java and is passed on as is
             "error", result.success() ? null : result.message()));
         return result;
@@ -168,6 +169,18 @@ public class AuthProviderController {
         settings.setGroupMemberAttribute(trim(request.groupMemberAttribute()));
         settings.setLoginEnabled(request.loginEnabled());
         settings.setDisableMissingUsers(request.disableMissingUsers());
+        var unit = request.syncIntervalUnit() == null
+            ? com.jpromi.inventorycore.enums.LdapSyncIntervalUnit.HOURS : request.syncIntervalUnit();
+        int interval = request.syncIntervalValue() == null ? 6 : request.syncIntervalValue();
+        if (interval < 1 || interval > unit.maxValue()) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                "Das Sync-Intervall muss mindestens eine Einheit und maximal 365 Tage betragen.");
+        }
+        settings.setSyncIntervalValue(interval);
+        settings.setSyncIntervalUnit(unit);
+        // Legacy group selections are folded into the editable filter returned by toDto.
+        settings.setRestrictGroups(false);
+        settings.getSelectedGroupNames().clear();
     }
 
     private static LdapSettingsDto toDto(LdapSettings settings) {
@@ -185,13 +198,15 @@ public class AuthProviderController {
             settings.getDisplayNameAttribute(),
             settings.getEmailAttribute(),
             settings.getGroupSearchBase(),
-            settings.getGroupFilter(),
+            settings.effectiveGroupFilter(),
             settings.getGroupNameAttribute(),
             settings.getGroupMemberAttribute(),
             settings.isLoginEnabled(),
             settings.isDisableMissingUsers(),
             settings.getLastSyncAt(),
-            settings.getLastSyncResult()
+            settings.getLastSyncResult(),
+            settings.getSyncIntervalValue(),
+            settings.getSyncIntervalUnit()
         );
     }
 

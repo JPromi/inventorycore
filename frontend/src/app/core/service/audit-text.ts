@@ -181,7 +181,7 @@ function eventLines(code: string, params: Record<string, unknown>): string[] {
       return params['success']
         ? [
             `Benutzer: ${p('usersCreated')} angelegt, ${p('usersUpdated')} aktualisiert, ${p('usersDisabled')} deaktiviert, ${p('usersSkipped')} übersprungen`,
-            `Gruppen: ${p('groupsCreated')} angelegt, ${p('groupsUpdated')} aktualisiert`,
+            `Gruppen: ${p('groupsCreated')} angelegt, ${p('groupsUpdated')} aktualisiert, ${params['groupsDeleted'] ?? 0} geloescht`,
           ]
         : [`Fehler: ${p('error')}`];
     case 'TEXT':

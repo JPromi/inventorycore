@@ -70,6 +70,8 @@ export interface LdapSettings {
   groupMemberAttribute: string | null;
   loginEnabled: boolean;
   disableMissingUsers: boolean;
+  syncIntervalValue: number;
+  syncIntervalUnit: 'MINUTES' | 'HOURS' | 'DAYS';
   lastSyncAt?: string | null;
   lastSyncResult?: string | null;
 }
@@ -81,6 +83,8 @@ export interface LdapTestResult {
   groupCount: number | null;
   sampleUsers: string[];
   sampleGroups: string[];
+  availableGroups?: string[];
+  effectiveGroupFilter?: string | null;
 }
 
 export interface LdapSyncResult {
@@ -92,6 +96,7 @@ export interface LdapSyncResult {
   usersSkipped: number;
   groupsCreated: number;
   groupsUpdated: number;
+  groupsDeleted: number;
 }
 
 export interface OidcSettings {

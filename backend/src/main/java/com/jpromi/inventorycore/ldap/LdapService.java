@@ -37,8 +37,15 @@ public class LdapService {
         Integer userCount,
         Integer groupCount,
         List<String> sampleUsers,
-        List<String> sampleGroups
-    ) {}
+        List<String> sampleGroups,
+        List<String> availableGroups,
+        String effectiveGroupFilter
+    ) {
+        public TestResult(boolean success, String message, Integer userCount, Integer groupCount,
+            List<String> sampleUsers, List<String> sampleGroups) {
+            this(success, message, userCount, groupCount, sampleUsers, sampleGroups, List.of(), null);
+        }
+    }
 
     public record SyncResult(
         boolean success,
@@ -48,7 +55,8 @@ public class LdapService {
         int usersDisabled,
         int usersSkipped,
         int groupsCreated,
-        int groupsUpdated
+        int groupsUpdated,
+        int groupsDeleted
     ) {}
 
     private final LdapSettingsRepository settingsRepository;
@@ -75,13 +83,18 @@ public class LdapService {
             context = LdapClient.connect(settings);
             List<LdapClient.Entry> users = LdapClient.search(context, userBase(settings), settings.getUserFilter(), settings.getUsernameAttribute());
             List<LdapClient.Entry> groups = LdapClient.search(context, groupBase(settings), settings.getGroupFilter(), settings.getGroupNameAttribute());
+            List<LdapClient.Entry> matchingGroups = settings.isRestrictGroups()
+                ? LdapClient.search(context, groupBase(settings), settings.effectiveGroupFilter(), settings.getGroupNameAttribute())
+                : groups;
             return new TestResult(
                 true,
                 "Verbindung erfolgreich.",
                 users.size(),
-                groups.size(),
+                matchingGroups.size(),
                 users.stream().map(entry -> entry.first(settings.getUsernameAttribute())).filter(Objects::nonNull).sorted().limit(SAMPLE_SIZE).toList(),
-                groups.stream().map(entry -> entry.first(settings.getGroupNameAttribute())).filter(Objects::nonNull).sorted().limit(SAMPLE_SIZE).toList()
+                matchingGroups.stream().map(entry -> entry.first(settings.getGroupNameAttribute())).filter(Objects::nonNull).sorted().limit(SAMPLE_SIZE).toList(),
+                groups.stream().map(entry -> entry.first(settings.getGroupNameAttribute())).filter(Objects::nonNull).distinct().sorted().toList(),
+                settings.effectiveGroupFilter()
             );
         } catch (NamingException exception) {
             return new TestResult(false, LdapClient.describe(exception), null, null, List.of(), List.of());
@@ -95,10 +108,10 @@ public class LdapService {
      * accounts with the same name are left alone and reported as skipped.
      */
     @Transactional
-    public SyncResult sync() {
+    public synchronized SyncResult sync() {
         LdapSettings settings = settingsRepository.load();
         if (!settings.isEnabled() || isBlank(settings.getUrl())) {
-            return new SyncResult(false, "LDAP ist nicht aktiviert.", 0, 0, 0, 0, 0, 0);
+            return new SyncResult(false, "LDAP ist nicht aktiviert.", 0, 0, 0, 0, 0, 0, 0);
         }
 
         LdapContext context = null;
@@ -106,10 +119,31 @@ public class LdapService {
             context = LdapClient.connect(settings);
             List<LdapClient.Entry> userEntries = LdapClient.search(context, userBase(settings), settings.getUserFilter(),
                 settings.getUsernameAttribute(), settings.getDisplayNameAttribute(), settings.getEmailAttribute(), "thumbnailPhoto", "jpegPhoto");
-            List<LdapClient.Entry> groupEntries = LdapClient.search(context, groupBase(settings), settings.getGroupFilter(),
-                settings.getGroupNameAttribute(), settings.getGroupMemberAttribute());
+            List<LdapClient.Entry> groupEntries = new java.util.ArrayList<>(LdapClient.searchComplete(context, groupBase(settings), settings.effectiveGroupFilter(),
+                settings.getGroupNameAttribute(), settings.getGroupMemberAttribute()));
+            List<Group> existingGroups = groupRepository.findAll();
+            Set<javax.naming.ldap.LdapName> foundDns = new HashSet<>();
+            for (LdapClient.Entry entry : groupEntries) {
+                foundDns.add(new javax.naming.ldap.LdapName(entry.dn()));
+            }
+            var searchBase = new javax.naming.ldap.LdapName(groupBase(settings));
+            for (Group group : existingGroups) {
+                if (group.getSourceProvider() != Provider.LDAP || isBlank(group.getExternalId())) {
+                    continue;
+                }
+                var dn = new javax.naming.ldap.LdapName(group.getExternalId());
+                if (!dn.startsWith(searchBase) || foundDns.contains(dn)) {
+                    continue;
+                }
+                LdapClient.Entry verified = LdapClient.findObject(context, group.getExternalId(), settings.effectiveGroupFilter(),
+                    settings.getGroupNameAttribute(), settings.getGroupMemberAttribute());
+                if (verified != null) {
+                    groupEntries.add(verified);
+                    foundDns.add(dn);
+                }
+            }
 
-            SyncResult result = apply(settings, userEntries, groupEntries);
+            SyncResult result = apply(settings, userEntries, groupEntries, existingGroups);
             if (settingsRepository.existsById(LdapSettings.SINGLETON_ID)) {
                 settings.setLastSyncAt(OffsetDateTime.now());
                 settings.setLastSyncResult(result.message());
@@ -118,7 +152,7 @@ public class LdapService {
             log.info("LDAP sync: {}", result.message());
             return result;
         } catch (NamingException exception) {
-            return new SyncResult(false, LdapClient.describe(exception), 0, 0, 0, 0, 0, 0);
+            return new SyncResult(false, LdapClient.describe(exception), 0, 0, 0, 0, 0, 0, 0);
         } finally {
             close(context);
         }
@@ -133,7 +167,7 @@ public class LdapService {
         return LdapClient.verifyPassword(settings, user.getExternalId(), password);
     }
 
-    private SyncResult apply(LdapSettings settings, List<LdapClient.Entry> userEntries, List<LdapClient.Entry> groupEntries) {
+    private SyncResult apply(LdapSettings settings, List<LdapClient.Entry> userEntries, List<LdapClient.Entry> groupEntries, List<Group> existingGroups) {
         List<User> allUsers = userRepository.findAll();
         Map<String, User> usersByName = new HashMap<>();
         Map<String, User> ldapUsersByDn = new HashMap<>();
@@ -220,8 +254,10 @@ public class LdapService {
         // groups
         Map<String, Group> ldapGroupsByDn = new HashMap<>();
         Map<String, Group> ldapGroupsByName = new HashMap<>();
-        for (Group group : groupRepository.findAll()) {
+        Set<Group> existingLdapGroups = new HashSet<>();
+        for (Group group : existingGroups) {
             if (group.getSourceProvider() == Provider.LDAP) {
+                existingLdapGroups.add(group);
                 if (group.getExternalId() != null) {
                     ldapGroupsByDn.put(lower(group.getExternalId()), group);
                 }
@@ -231,15 +267,22 @@ public class LdapService {
 
         int groupsCreated = 0;
         int groupsUpdated = 0;
+        Set<java.util.UUID> seenGroupUuids = new HashSet<>();
         Map<User, Set<Group>> memberships = new HashMap<>();
         seen.forEach(user -> memberships.put(user, new HashSet<>()));
 
         for (LdapClient.Entry entry : groupEntries) {
+            Group group = ldapGroupsByDn.get(lower(entry.dn()));
+            if (group != null) {
+                seenGroupUuids.add(group.getUuid());
+            }
             String name = entry.first(settings.getGroupNameAttribute());
             if (isBlank(name)) {
                 continue;
             }
-            Group group = ldapGroupsByDn.getOrDefault(lower(entry.dn()), ldapGroupsByName.get(lower(name)));
+            if (group == null) {
+                group = ldapGroupsByName.get(lower(name));
+            }
             if (group == null) {
                 group = Group.builder().name(name).sourceProvider(Provider.LDAP).externalId(entry.dn()).build();
                 groupsCreated++;
@@ -249,6 +292,7 @@ public class LdapService {
                 groupsUpdated++;
             }
             group = groupRepository.save(group);
+            seenGroupUuids.add(group.getUuid());
 
             for (String member : entry.all(settings.getGroupMemberAttribute())) {
                 // "member" holds DNs, "memberUid" (posixGroup) holds user names
@@ -266,11 +310,25 @@ public class LdapService {
         });
         userRepository.saveAll(memberships.keySet());
 
+        Set<Group> missingGroups = existingLdapGroups.stream()
+            .filter(group -> !seenGroupUuids.contains(group.getUuid()))
+            .collect(java.util.stream.Collectors.toSet());
+        if (!missingGroups.isEmpty()) {
+            // Remove owning-side links for every account, including disabled and external users.
+            List<User> affectedUsers = allUsers.stream()
+                .filter(user -> user.getGroups().removeAll(missingGroups)).toList();
+            userRepository.saveAll(affectedUsers);
+            missingGroups.forEach(group -> group.getUsers().clear());
+            // Group permissions are removed by the entity's cascade.
+            groupRepository.deleteAll(missingGroups);
+        }
+
         String message = String.format(
             "%d Benutzer gefunden (%d neu, %d aktualisiert, %d deaktiviert, %d übersprungen), %d Gruppen (%d neu).",
             userEntries.size(), created, updated, disabled, skipped, groupEntries.size(), groupsCreated
         );
-        return new SyncResult(true, message, created, updated, disabled, skipped, groupsCreated, groupsUpdated);
+        message += " " + missingGroups.size() + " LDAP-Gruppen geloescht.";
+        return new SyncResult(true, message, created, updated, disabled, skipped, groupsCreated, groupsUpdated, missingGroups.size());
     }
 
     private static String userBase(LdapSettings settings) {
