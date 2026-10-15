@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemValueResponse;
 import com.jpromi.inventorycore.dto.InspectionPhotoRequest;
 import com.jpromi.inventorycore.dto.InspectionPhotoResponse;
+import com.jpromi.inventorycore.dto.InspectionScanCandidate;
 import com.jpromi.inventorycore.dto.InspectionScanResponse;
 import com.jpromi.inventorycore.dto.InspectionSummaryResponse;
 import com.jpromi.inventorycore.dto.InspectionTypeRequest;
@@ -431,7 +433,13 @@ public class InspectionService {
 
     @Transactional
     public InspectionScanResponse scan(AccessContext access, User user, UUID uuid, String code) {
-        InspectionScanResponse response = scanCode(access, user, uuid, code);
+        return scan(access, user, uuid, code, null);
+    }
+
+    /** {@code chosenAsset}: the user's choice after an AMBIGUOUS answer, or null. */
+    @Transactional
+    public InspectionScanResponse scan(AccessContext access, User user, UUID uuid, String code, UUID chosenAsset) {
+        InspectionScanResponse response = scanCode(access, user, uuid, code, chosenAsset);
         InspectionItemResponse item = response.item();
         if (item != null && item.assetUuid() != null) {
             String title = inspectionRepository.findByUuid(uuid).map(Inspection::getTitle).orElse("?");
@@ -441,11 +449,35 @@ public class InspectionService {
         return response;
     }
 
-    private InspectionScanResponse scanCode(AccessContext access, User user, UUID uuid, String code) {
+    private InspectionScanResponse scanCode(AccessContext access, User user, UUID uuid, String code, UUID chosenAsset) {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
-        ScanResolver.Resolution resolution = scanResolver.resolve(access, code);
+        ScanResolver.Resolution resolved = scanResolver.resolve(access, code);
         Map<Long, Location> locations = locationsById();
+
+        // several assets share the code (e.g. the same serial number): nothing is recorded until the user picks one
+        if (chosenAsset != null) {
+            List<Asset> chosen = resolved.assets().stream().filter(asset -> asset.getUuid().equals(chosenAsset)).toList();
+            if (chosen.isEmpty()) {
+                return new InspectionScanResponse("IGNORED", "Das gewählte Asset passt nicht zu diesem Code.", null);
+            }
+            resolved = new ScanResolver.Resolution(resolved.code(), resolved.matchedBy(), chosen, List.of());
+        } else if (resolved.assets().size() > 1) {
+            String scanned = resolved.code();
+            List<InspectionScanCandidate> candidates = resolved.assets().stream()
+                .sorted(Comparator.comparing(Asset::getName, String.CASE_INSENSITIVE_ORDER))
+                .map(asset -> new InspectionScanCandidate(
+                    asset.getUuid(),
+                    asset.getName(),
+                    asset.getInvId(),
+                    asset.getAssetType() == null ? null : asset.getAssetType().getName(),
+                    asset.getLocation() == null ? null : locationPath(asset.getLocation(), locations),
+                    matchedField(asset, scanned),
+                    inspection.getItems().stream().anyMatch(item -> item.getAsset() != null && item.getAsset().getId().equals(asset.getId()))))
+                .toList();
+            return new InspectionScanResponse("AMBIGUOUS", candidates.size() + " Assets passen zu „" + scanned + "“. Welches ist es?", null, candidates);
+        }
+        ScanResolver.Resolution resolution = resolved;
 
         if (resolution.assets().isEmpty()) {
             if (!resolution.locations().isEmpty()) {
@@ -530,6 +562,17 @@ public class InspectionService {
         inspectionRepository.save(inspection);
         String home = foreign.getLocationName() == null ? "keinem Standort zugeordnet" : "gehört zu " + foreign.getLocationName();
         return new InspectionScanResponse("UNEXPECTED", "Fremder Gegenstand: " + asset.getName() + " (" + home + ").", toResponse(foreign, locations));
+    }
+
+    /** Which field of the asset the scanned code matched (the resolver compares case-insensitively). */
+    private static String matchedField(Asset asset, String code) {
+        if (code.equalsIgnoreCase(asset.getInvId())) {
+            return "INV_ID";
+        }
+        if (code.equalsIgnoreCase(asset.getInventoryNumber())) {
+            return "INVENTORY_NUMBER";
+        }
+        return code.equalsIgnoreCase(asset.getSerialNumber()) ? "SERIAL_NUMBER" : null;
     }
 
     @Transactional

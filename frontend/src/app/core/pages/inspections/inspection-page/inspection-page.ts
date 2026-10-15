@@ -42,6 +42,7 @@ import {
   InspectionItemStatus,
   InspectionPhoto,
   InspectionPhotoTarget,
+  InspectionScanCandidate,
   InspectionScanResponse,
   InspectionService,
   fieldOptions,
@@ -111,6 +112,8 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected code = '';
   protected scanning = false;
   protected lastScan: InspectionScanResponse | null = null;
+  /** The code of an AMBIGUOUS answer; scanned again together with the asset the user picks. */
+  private ambiguousCode = '';
   protected cameraOn = false;
   /** Result popup over the full-screen camera. */
   protected sheetOpen = false;
@@ -497,27 +500,57 @@ export class InspectionPage implements OnInit, OnDestroy {
     this.scanning = true;
 
     this.api.scan(this.uuid, code).subscribe({
-      next: (response) => {
-        this.scanning = false;
-        this.error = '';
-        this.lastScan = response;
-        this.sheetOpen = true;
-        if (response.item) {
-          this.replaceItem(response.item);
-        }
-        const warning = ['UNEXPECTED', 'UNKNOWN', 'ADDED_OTHER_TYPE'].includes(response.outcome);
-        const success = ['CHECKED', 'ADDED', 'OPENED'].includes(response.outcome);
-        scanFeedback(success ? 'success' : warning ? 'warning' : 'error');
-        if (success) {
-          this.camera?.flash();
-        }
-        if (response.item && response.item.expected) {
-          this.focusItem(response.item);
-        }
-        this.scanInput?.nativeElement.focus();
-      },
+      next: (response) => this.showScan(code, response),
       error: (error) => this.handleError(error, 'Scan konnte nicht verarbeitet werden.'),
     });
+  }
+
+  /** Several assets matched the code (e.g. the same serial number): record the one the user picked. */
+  protected choose(candidate: InspectionScanCandidate): void {
+    const code = this.ambiguousCode;
+    if (!code || this.scanning || !this.open) {
+      return;
+    }
+    this.scanning = true;
+    this.api.scan(this.uuid, code, candidate.uuid).subscribe({
+      next: (response) => this.showScan(code, response),
+      error: (error) => this.handleError(error, 'Scan konnte nicht verarbeitet werden.'),
+    });
+  }
+
+  /** Why and where, e.g. "Seriennummer · INV-2026-0012 · Notebook · Lager". */
+  protected candidateMeta(candidate: InspectionScanCandidate): string {
+    const matched = { INV_ID: 'Inventar-ID', INVENTORY_NUMBER: 'Inventarnummer', SERIAL_NUMBER: 'Seriennummer' } as const;
+    return [
+      candidate.matchedBy ? `passt über ${matched[candidate.matchedBy]}` : null,
+      candidate.invId,
+      candidate.assetTypeName,
+      candidate.locationName,
+    ].filter((part) => !!part).join(' · ');
+  }
+
+  private showScan(code: string, response: InspectionScanResponse): void {
+    this.scanning = false;
+    this.error = '';
+    this.lastScan = response;
+    this.ambiguousCode = response.outcome === 'AMBIGUOUS' ? code : '';
+    this.sheetOpen = true;
+    if (response.item) {
+      this.replaceItem(response.item);
+    }
+    const warning = ['UNEXPECTED', 'UNKNOWN', 'ADDED_OTHER_TYPE', 'AMBIGUOUS'].includes(response.outcome);
+    const success = ['CHECKED', 'ADDED', 'OPENED'].includes(response.outcome);
+    scanFeedback(success ? 'success' : warning ? 'warning' : 'error');
+    if (success) {
+      this.camera?.flash();
+    }
+    if (response.item && response.item.expected) {
+      this.focusItem(response.item);
+    }
+    // while choosing, the focus stays on the choice (a hardware scanner still works through the document listener)
+    if (response.outcome !== 'AMBIGUOUS') {
+      this.scanInput?.nativeElement.focus();
+    }
   }
 
   // ---- checking by hand ----

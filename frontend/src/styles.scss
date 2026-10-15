@@ -760,6 +760,48 @@ app-selection-checkbox.selection-hidden { display: none; }
     font-size: .85rem;
 }
 
+// several assets match a scanned code (e.g. the same serial number): the user picks one (inspection scan)
+.scan-choices {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    margin-top: .5rem;
+}
+
+.scan-choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    padding: .6rem .8rem;
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: var(--surface-hover);
+    }
+
+    strong,
+    small {
+        display: block;
+    }
+
+    small {
+        color: var(--text-muted);
+    }
+
+    .in-inspection {
+        flex-shrink: 0;
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--success);
+    }
+}
+
 // compact table for reports and protocols (prints well)
 .report-table {
     width: 100%;

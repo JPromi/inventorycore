@@ -18,7 +18,9 @@ export type InspectionScanOutcome =
   | 'IGNORED'
   | 'OPENED'
   | 'ADDED'
-  | 'ADDED_OTHER_TYPE';
+  | 'ADDED_OTHER_TYPE'
+  /** several assets match the code: nothing recorded, the user picks one of the candidates */
+  | 'AMBIGUOUS';
 /** INVENTORY: fixed list from filters, present/missing. CHECK: devices are checked one by one. */
 export type InspectionMode = 'INVENTORY' | 'CHECK';
 /** Function check in an inventory: the asset is there and works / is broken. */
@@ -252,10 +254,23 @@ export interface InspectionDetail {
   items: InspectionItem[];
 }
 
+/** One of several assets a scanned code matches. */
+export interface InspectionScanCandidate {
+  uuid: string;
+  name: string;
+  invId: string | null;
+  assetTypeName: string | null;
+  locationName: string | null;
+  matchedBy: 'INV_ID' | 'INVENTORY_NUMBER' | 'SERIAL_NUMBER' | null;
+  /** on this inspection's list */
+  inInspection: boolean;
+}
+
 export interface InspectionScanResponse {
   outcome: InspectionScanOutcome;
   message: string;
   item: InspectionItem | null;
+  candidates?: InspectionScanCandidate[];
 }
 
 /** One inspection an asset appeared in, with the result for that asset. */
@@ -410,8 +425,9 @@ export class InspectionService {
     return this.http.delete<void>(`${this.apiUrl}/inspections/${uuid}`, this.options);
   }
 
-  scan(uuid: string, code: string): Observable<InspectionScanResponse> {
-    return this.http.post<InspectionScanResponse>(`${this.apiUrl}/inspections/${uuid}/scan`, { code }, this.options);
+  /** `assetUuid`: the user's choice after an AMBIGUOUS answer. */
+  scan(uuid: string, code: string, assetUuid?: string): Observable<InspectionScanResponse> {
+    return this.http.post<InspectionScanResponse>(`${this.apiUrl}/inspections/${uuid}/scan`, { code, assetUuid: assetUuid ?? null }, this.options);
   }
 
   updateItem(uuid: string, itemUuid: string, update: InspectionItemUpdate): Observable<InspectionItem> {

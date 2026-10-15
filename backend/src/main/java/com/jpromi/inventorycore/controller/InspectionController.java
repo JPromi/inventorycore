@@ -176,7 +176,7 @@ public class InspectionController {
 
     @PostMapping("/inspections/{uuid}/scan")
     public InspectionScanResponse scan(@PathVariable UUID uuid, @RequestBody InspectionScanRequest request, Authentication authentication) {
-        return service.scan(permissionService.context(authentication), permissionService.currentUser(authentication), uuid, request.code());
+        return service.scan(permissionService.context(authentication), permissionService.currentUser(authentication), uuid, request.code(), request.assetUuid());
     }
 
     @PatchMapping("/inspections/{uuid}/items/{itemUuid}")

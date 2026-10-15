@@ -105,7 +105,7 @@
                                 </p>
                             } @else {
                                 <p class="sheet-title">
-                                    {{ matchCount > 1 ? matchCount + ' Treffer – bitte auswählen' : 'Gefunden ' + matchText(result) }}
+                                    {{ matchCount > 1 ? matchCount + ' Treffer – bitte auswählen' : 'Gefunden ' + matchText(result, result.assets[0]) }}
                                 </p>
                                 <div class="sheet-hits">
                                     @for (asset of result.assets; track asset.uuid) {
@@ -218,7 +218,7 @@
                                 }
                             </a>
                             <div class="result-body">
-                                <p class="eyebrow">Asset · gefunden {{ matchText(result) }}</p>
+                                <p class="eyebrow">Asset · gefunden {{ matchText(result, asset) }}</p>
                                 <h2>{{ asset.name }}</h2>
                                 <dl>
                                     @if (asset.invId) {

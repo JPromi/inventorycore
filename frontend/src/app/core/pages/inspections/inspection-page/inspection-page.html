@@ -226,7 +226,7 @@
                         <div
                             class="scan-result"
                             [class.success]="scan.outcome === 'CHECKED' || scan.outcome === 'ADDED' || scan.outcome === 'OPENED'"
-                            [class.warning]="scan.outcome === 'UNEXPECTED' || scan.outcome === 'UNKNOWN' || scan.outcome === 'ADDED_OTHER_TYPE'"
+                            [class.warning]="scan.outcome === 'UNEXPECTED' || scan.outcome === 'UNKNOWN' || scan.outcome === 'ADDED_OTHER_TYPE' || scan.outcome === 'AMBIGUOUS'"
                             [class.neutral]="scan.outcome === 'ALREADY_CHECKED' || scan.outcome === 'IGNORED'"
                             role="status"
                         >
@@ -238,6 +238,9 @@
                                     <svg lucideTriangleAlert size="20"></svg>
                                 }
                                 @case ('ADDED_OTHER_TYPE') {
+                                    <svg lucideTriangleAlert size="20"></svg>
+                                }
+                                @case ('AMBIGUOUS') {
                                     <svg lucideTriangleAlert size="20"></svg>
                                 }
                                 @case ('ALREADY_CHECKED') {
@@ -252,6 +255,21 @@
                             }
                             <span>{{ scan.message }}</span>
                         </div>
+                        @if (scan.outcome === 'AMBIGUOUS') {
+                            <div class="scan-choices" role="group" aria-label="Asset auswählen">
+                                @for (candidate of scan.candidates ?? []; track candidate.uuid) {
+                                    <button type="button" class="scan-choice" [disabled]="scanning" (click)="choose(candidate)">
+                                        <span>
+                                            <strong>{{ candidate.name }}</strong>
+                                            <small>{{ candidateMeta(candidate) }}</small>
+                                        </span>
+                                        @if (candidate.inInspection) {
+                                            <span class="in-inspection">In dieser Prüfung</span>
+                                        }
+                                    </button>
+                                }
+                            </div>
+                        }
                     </ng-template>
                 </section>
 

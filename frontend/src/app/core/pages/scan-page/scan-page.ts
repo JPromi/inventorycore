@@ -204,9 +204,10 @@ export class ScanPage implements OnInit {
     return this.types.find((type) => type.uuid === item.assetTypeUuid)?.name ?? null;
   }
 
-  /** Inventory id, type and location for the result popup. */
+  /** Inventory id, type and location for the result popup; with several hits also the field that matched. */
   protected assetLines(asset: InventoryItem): string[] {
-    return [asset.invId, this.typeName(asset), this.locationName(asset.locationUuid)].filter((line): line is string => !!line);
+    const matched = this.result && this.matchCount > 1 ? 'Gefunden ' + this.matchText(this.result, asset) : null;
+    return [matched, asset.invId, this.typeName(asset), this.locationName(asset.locationUuid)].filter((line): line is string => !!line);
   }
 
   protected locationName(uuid: string | null | undefined): string | null {
@@ -214,15 +215,25 @@ export class ScanPage implements OnInit {
     return location ? locationPath(this.locations, location) : null;
   }
 
-  protected matchText(result: ScanResult): string {
+  /** How the code was understood; with an asset, the field that matched (several assets can share a serial number). */
+  protected matchText(result: ScanResult, asset?: InventoryItem): string {
     switch (result.matchedBy) {
       case 'LINK':
         return 'über den Link im Code';
       case 'UUID':
         return 'über die ID';
-      default:
-        return 'über Inventar-ID, Inventarnummer oder Seriennummer';
     }
+    const code = result.code.toLowerCase();
+    if (asset?.invId?.toLowerCase() === code) {
+      return 'über die Inventar-ID';
+    }
+    if (asset?.inventoryNumber?.toLowerCase() === code) {
+      return 'über die Inventarnummer';
+    }
+    if (asset?.serialNumber?.toLowerCase() === code) {
+      return 'über die Seriennummer';
+    }
+    return 'über Inventar-ID, Inventarnummer oder Seriennummer';
   }
 
   protected clearHistory(): void {
