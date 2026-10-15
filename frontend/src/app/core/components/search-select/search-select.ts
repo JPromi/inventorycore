@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener, Input, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LucideCheck, LucideChevronDown, LucideSearch, LucideX } from '@lucide/angular';
+import { DropdownPosition } from '../dropdown-position.directive';
 
 export interface SelectOption {
   value: string;
@@ -11,7 +12,7 @@ export interface SelectOption {
 
 @Component({
   selector: 'app-search-select',
-  imports: [LucideCheck, LucideChevronDown, LucideSearch, LucideX],
+  imports: [DropdownPosition, LucideCheck, LucideChevronDown, LucideSearch, LucideX],
   templateUrl: './search-select.html',
   styleUrl: './search-select.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => SearchSelect), multi: true }],

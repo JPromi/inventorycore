@@ -2,6 +2,7 @@
     @if (areas.length > 1) {
         @let selected = (areaService.selected$ | async) ?? [];
         <button
+            #dropdownTrigger
             type="button"
             class="trigger"
             [class.filtered]="selected.length"
@@ -18,7 +19,7 @@
         </button>
 
         @if (open) {
-            <div class="panel" role="menu">
+            <div class="panel" role="menu" [appDropdownPosition]="dropdownTrigger" dropdownPlacement="top-start">
                 <button type="button" class="option" [class.selected]="!selected.length" (click)="selectAll()">
                     <span class="check">
                         @if (!selected.length) {

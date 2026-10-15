@@ -3,6 +3,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LucideBan, LucideCheck, LucideChevronDown } from '@lucide/angular';
 
 import { Hsv, hexToHsv, hsvToHex, normalizeHex, readableTextColor } from './color-utils';
+import { DropdownPosition } from '../dropdown-position.directive';
 
 /** Palette shown above the custom picker; same tones as the areas. */
 export const PRESET_COLORS = [
@@ -19,7 +20,7 @@ type DragTarget = 'area' | 'hue';
  */
 @Component({
   selector: 'app-color-picker',
-  imports: [LucideBan, LucideCheck, LucideChevronDown],
+  imports: [DropdownPosition, LucideBan, LucideCheck, LucideChevronDown],
   templateUrl: './color-picker.html',
   styleUrl: './color-picker.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => ColorPicker), multi: true }],

@@ -1,4 +1,4 @@
-<div class="control" [class.open]="open" [class.disabled]="disabled" (click)="focusInput()">
+<div #dropdownTrigger class="control" [class.open]="open" [class.disabled]="disabled" (click)="focusInput()">
     @for (option of lockedOptions; track option.value) {
         <span class="chip locked" [title]="lockedHint">
             @if (option.color) {
@@ -34,7 +34,7 @@
 </div>
 
 @if (open) {
-    <div class="panel">
+    <div class="panel" [appDropdownPosition]="dropdownTrigger">
         <ul class="options" role="listbox">
             @for (option of available; track option.value; let index = $index) {
                 <li>

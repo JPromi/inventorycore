@@ -120,11 +120,8 @@
 }
 
 .panel {
-    position: absolute;
-    z-index: 50;
-    top: calc(100% + .3rem);
-    left: 0;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -132,6 +129,7 @@
     box-shadow: var(--shadow-md);
 
     .options {
+        min-height: 0;
         max-height: min(15rem, 50vh);
         overflow-y: auto;
         padding: .3rem;

@@ -3,10 +3,11 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LucideLock, LucidePlus, LucideX } from '@lucide/angular';
 
 import { SelectOption } from '../search-select/search-select';
+import { DropdownPosition } from '../dropdown-position.directive';
 
 @Component({
   selector: 'app-multi-select',
-  imports: [LucideLock, LucidePlus, LucideX],
+  imports: [DropdownPosition, LucideLock, LucidePlus, LucideX],
   templateUrl: './multi-select.html',
   styleUrl: './multi-select.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => MultiSelect), multi: true }],

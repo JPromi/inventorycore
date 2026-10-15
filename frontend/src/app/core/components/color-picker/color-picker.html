@@ -1,4 +1,5 @@
 <button
+    #dropdownTrigger
     type="button"
     class="trigger"
     [class.compact]="compact"
@@ -16,7 +17,7 @@
 </button>
 
 @if (open) {
-    <div class="popover" role="dialog" [attr.aria-label]="label">
+    <div class="popover" role="dialog" [attr.aria-label]="label" [appDropdownPosition]="dropdownTrigger">
         <div class="presets">
             @if (allowEmpty) {
                 <button type="button" class="preset none" [class.active]="!value" title="Keine Farbe" (click)="choose(null)">

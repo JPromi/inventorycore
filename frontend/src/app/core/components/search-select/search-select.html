@@ -1,4 +1,5 @@
 <button
+    #dropdownTrigger
     type="button"
     class="trigger"
     [class.open]="open"
@@ -22,7 +23,7 @@
 </button>
 
 @if (open) {
-    <div class="panel">
+    <div class="panel" [appDropdownPosition]="dropdownTrigger">
         <div class="panel-search">
             <svg lucideSearch size="15"></svg>
             <input

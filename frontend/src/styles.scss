@@ -87,6 +87,11 @@ body {
     // layout
     --nav-width: 15.25rem;
     --page-padding: 1.5rem;
+    --dropdown-gap: 5px;
+    --dropdown-viewport-padding: 8px;
+    --dropdown-max-height: 24rem;
+    --dropdown-select-min-width: 16rem;
+    --dropdown-color-width: 15.5rem;
 
     @include bp.phone {
         --page-padding: 1rem;
@@ -120,6 +125,15 @@ body {
         background-position: right .6rem center;
         cursor: pointer;
     }
+}
+
+[appDropdownPosition] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: min(max(var(--dropdown-reference-width, 0px), var(--dropdown-min-width, 0px)), var(--dropdown-available-width, calc(100vw - 2 * var(--dropdown-viewport-padding))));
+    max-height: min(var(--dropdown-max-height), var(--dropdown-available-height, 100dvh));
+    overscroll-behavior: contain;
 }
 
 // full-screen camera (app-camera-view) on phones and tablets: the page behind stays put

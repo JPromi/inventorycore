@@ -3,6 +3,7 @@ import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { LucideCheck, LucideChevronsUpDown, LucideLayers } from '@lucide/angular';
 
 import { AreaItem, AreaService } from '../../service/area.service';
+import { DropdownPosition } from '../dropdown-position.directive';
 
 /**
  * Global area filter in the sidebar. Narrows all overviews to the chosen areas;
@@ -10,7 +11,7 @@ import { AreaItem, AreaService } from '../../service/area.service';
  */
 @Component({
   selector: 'app-area-switcher',
-  imports: [AsyncPipe, LucideCheck, LucideChevronsUpDown, LucideLayers],
+  imports: [DropdownPosition, AsyncPipe, LucideCheck, LucideChevronsUpDown, LucideLayers],
   templateUrl: './area-switcher.html',
   styleUrl: './area-switcher.scss',
 })
