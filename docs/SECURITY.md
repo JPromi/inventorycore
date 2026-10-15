@@ -18,6 +18,10 @@ Permissions support view, create, edit, inspect, delete, and admin actions for `
 
 Frontend guards and permission-based action visibility improve UX, but backend checks remain authoritative. File and profile-image delivery currently require authentication rather than a per-file inventory ownership check; do not describe them as object-permission protected.
 
+## External Map Services
+
+The backend calls Nominatim (default `https://nominatim.openstreetmap.org`, `app.geocoding.*`) only for the location form's address/coordinate lookups, which require location create or edit rights. Requests carry the configured User-Agent/e-mail, are throttled to one per second per instance, and repeated lookups are cached in memory. Location addresses typed by users are therefore sent to that service. Maps are drawn in the app with Leaflet; the browser loads map tiles directly from `https://tile.openstreetmap.org` (the OSM tile usage policy applies, and viewers' IP addresses reach that server). A Content Security Policy added in front of the app must allow that host in `img-src`.
+
 ## LDAP Synchronization
 
 The persisted interval defaults to six hours and accepts minutes, hours, or days. A scheduled poll checks whether sync is due. The configured group filter determines synchronized groups; missing LDAP groups are deleted with memberships and permissions. Local and OIDC groups remain intact.

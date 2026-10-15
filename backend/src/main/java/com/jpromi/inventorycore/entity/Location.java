@@ -51,7 +51,21 @@ public class Location {
     @Column(length = 2000)
     private String description;
 
+    /** Formatted from street, postal code, city and country; free text for older locations. */
     private String address;
+
+    private String street;
+
+    private String postalCode;
+
+    private String city;
+
+    private String country;
+
+    /** WGS 84; both set or both null */
+    private Double latitude;
+
+    private Double longitude;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_location_id")

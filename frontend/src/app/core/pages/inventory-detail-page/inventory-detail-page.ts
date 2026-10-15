@@ -23,6 +23,7 @@ import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-di
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { AssetInspectionList } from '../../components/asset-inspection-list/asset-inspection-list';
 import { AuditHistory } from '../../components/audit-history/audit-history';
+import { LocationMap } from '../../components/location-map/location-map';
 import { AssetPrint, AssetPrintDetail } from './asset-print/asset-print';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
@@ -89,6 +90,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     FormsModule,
     RouterLink,
     LabelPrintDialog,
+    LocationMap,
     LucideArrowLeft,
     LucideBoxes,
     LucideCalendarClock,

@@ -143,6 +143,50 @@
                     }
                 </section>
 
+                @if (config.coordinates) {
+                    <section class="form-section">
+                        <div class="section-title">
+                            <h2>Position</h2>
+                            <span class="hint">Adresse und Koordinaten für die Karte in der Standort-Ansicht.</span>
+                        </div>
+                        <div class="field-grid">
+                            <label class="wide">
+                                <span>Straße und Hausnummer</span>
+                                <input type="text" [(ngModel)]="form.street" name="street" autocomplete="address-line1" />
+                            </label>
+                            <label>
+                                <span>PLZ</span>
+                                <input type="text" [(ngModel)]="form.postalCode" name="postalCode" autocomplete="postal-code" />
+                            </label>
+                            <label>
+                                <span>Ort</span>
+                                <input type="text" [(ngModel)]="form.city" name="city" autocomplete="address-level2" />
+                            </label>
+                            <label>
+                                <span>Land</span>
+                                <input type="text" [(ngModel)]="form.country" name="country" autocomplete="country-name" />
+                            </label>
+                            <label>
+                                <span>Breitengrad</span>
+                                <input type="number" step="any" min="-90" max="90" [(ngModel)]="form.latitude" name="latitude" placeholder="z. B. 48.208493" />
+                            </label>
+                            <label>
+                                <span>Längengrad</span>
+                                <input type="number" step="any" min="-180" max="180" [(ngModel)]="form.longitude" name="longitude" placeholder="z. B. 16.373149" />
+                            </label>
+                        </div>
+                        @if (legacyAddress) {
+                            <p class="hint">Die bisherige Adresse „{{ legacyAddress }}“ steht in „Straße und Hausnummer“ – bitte auf die Felder aufteilen oder „Koordinaten ermitteln“ und danach „Adresse ermitteln“ verwenden.</p>
+                        }
+                        <app-location-lookup
+                            [position]="form"
+                            [coordinatesError]="coordinatesError"
+                            (coordinatesFound)="applyCoordinates($event)"
+                            (addressFound)="applyAddress($event)"
+                        />
+                    </section>
+                }
+
                 @if (config.customFields) {
                     <section class="form-section">
                         <div class="section-title">
@@ -244,7 +288,7 @@
                         <button
                             type="button"
                             class="secondary-action"
-                            [disabled]="!canSave || saving || uploading"
+                            [disabled]="!canSave || saving || uploading || !!coordinatesError"
                             (click)="save(true)"
                             title="Speichern und direkt einen weiteren Eintrag mit denselben Vorgaben anlegen"
                         >
@@ -252,7 +296,7 @@
                             <span>Erstellen &amp; neu</span>
                         </button>
                     }
-                    <button type="submit" class="primary-action" [disabled]="!canSave || saving || uploading">
+                    <button type="submit" class="primary-action" [disabled]="!canSave || saving || uploading || !!coordinatesError">
                         <svg lucideSave size="18"></svg>
                         <span>{{ saving ? 'Speichert...' : uploading ? 'Lädt Bilder...' : uuid ? 'Speichern' : 'Erstellen' }}</span>
                     </button>

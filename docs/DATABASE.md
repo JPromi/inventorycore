@@ -10,7 +10,7 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | --- | --- |
 | Assets | Optional type and location, direct tags, areas, field values, and image records; `invId` is a separate string generated when omitted |
 | Asset types | Custom field definitions, tags, areas, image records, and related assets |
-| Locations | Optional parent, child locations, assets, areas, and images |
+| Locations | Optional parent, child locations, assets, areas, images, address parts (`street`, `postal_code`, `city`, `country`) with the formatted `address`, and nullable `latitude` / `longitude` |
 | Users and groups | Many-to-many membership; group permissions apply to a resource type and optional area |
 | Inspections | Types/field definitions, runs/items, item values/photos, and per-asset schedule data |
 | Labels | One owning area and a layout stored as JSON text with millimeter dimensions |
@@ -22,6 +22,8 @@ Type tags are merged into asset responses at read time. Asset-specific field val
 Assets can also reference one parent asset through `parent_asset_id`. The optional `parentAssetNote` belongs to this relationship (for example, a component's RAM slot), not the asset description. Hierarchy assignment rejects self-links/cycles and requires visibility of a newly selected parent. Type, location, areas, and permissions remain independent; children are not cascade-deleted. A live parent cannot be deleted until its active children are detached or moved.
 
 `inspectionPolicy` defaults to `STANDARD` for new and existing assets. `MANUAL` assets remain individually expected without scan confirmation; `EXCLUDED` assets are omitted from new runs and recurring due dates. Inspection items snapshot the policy, parent UUID, and link note. Existing protocols keep their original snapshots; older items without hierarchy metadata remain flat. Hierarchy display groups only items within the run. Templates optionally widen the initial selection with `includeChildAssets` (non-null, default false); descendants bypass selection filters but never authorization or inspection exclusions. Default tag filters are stored in the owning `inspection_type_default_tags` join table and detached when tags are deleted. Existing templates start with no default tags and child inclusion disabled.
+
+Location address parts and coordinates are nullable columns added by Hibernate `update`; no migration step is needed. Locations created before the split keep their free-text `address` with empty parts; the edit form offers it in the street field until the user saves the split address.
 
 ## Deletion and Transactions
 

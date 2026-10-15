@@ -11,6 +11,14 @@ export interface InventoryItem {
   description?: string | null;
   invId?: string | null;
   address?: string | null;
+  /** locations: parts of the address; `address` is formatted from them */
+  street?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  country?: string | null;
+  /** WGS 84, locations only; both set or both null */
+  latitude?: number | null;
+  longitude?: number | null;
   color?: string | null;
   serialNumber?: string | null;
   inventoryNumber?: string | null;
@@ -38,6 +46,14 @@ export interface InventoryRequest {
   name: string;
   description?: string | null;
   address?: string | null;
+  /** locations: parts of the address; `address` is formatted from them */
+  street?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  country?: string | null;
+  /** WGS 84, locations only; both set or both null */
+  latitude?: number | null;
+  longitude?: number | null;
   color?: string | null;
   serialNumber?: string | null;
   inventoryNumber?: string | null;

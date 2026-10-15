@@ -5,11 +5,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2, type LucideIcon } from '@lucide/angular';
 
 import { ImageUpload } from '../../components/image-upload/image-upload';
+import { LocationLookup } from '../../components/location-lookup/location-lookup';
 import { MultiSelect } from '../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
+import { GeocodingResult } from '../../service/geocoding.service';
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
@@ -28,6 +30,8 @@ interface FormConfig {
   selectAssetType?: boolean;
   selectLocation?: boolean;
   selectParentLocation?: boolean;
+  /** address parts and latitude/longitude with lookups (locations) */
+  coordinates?: boolean;
   tags?: boolean;
 }
 
@@ -40,7 +44,7 @@ interface FieldConfig {
 
 @Component({
   selector: 'app-inventory-form-page',
-  imports: [CommonModule, FormsModule, RouterLink, ImageUpload, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUpload, LocationLookup, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2],
   templateUrl: './inventory-form-page.html',
   styleUrl: './inventory-form-page.scss',
 })
@@ -67,6 +71,8 @@ export class InventoryFormPage implements OnInit {
   protected lastCreated: { uuid: string; name: string } | null = null;
   /** Images are still uploading; saving waits for them. */
   protected uploading = false;
+  /** Free-text address of an older location, moved into the street field for splitting up. */
+  protected legacyAddress = '';
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -82,6 +88,7 @@ export class InventoryFormPage implements OnInit {
       this.config = data['inventoryFormConfig'];
       this.uuid = this.route.snapshot.paramMap.get('uuid');
       this.form = this.emptyForm();
+      this.legacyAddress = '';
       if (this.config.endpoint === 'assets') {
         this.api.list<InventoryItem>('assets').subscribe({
           next: (assets) => (this.assets = assets),
@@ -157,7 +164,7 @@ export class InventoryFormPage implements OnInit {
 
   /** `createAnother` keeps the context (areas, location, type, ...) and opens an empty form again. */
   protected save(createAnother = false): void {
-    if (!this.canSave || this.saving || this.uploading) {
+    if (!this.canSave || this.saving || this.uploading || this.coordinatesError) {
       return;
     }
     if (!this.selectedAreaUuids.length && !this.lockedAreaUuids.length) {
@@ -198,6 +205,12 @@ export class InventoryFormPage implements OnInit {
     this.form = {
       ...this.emptyForm(),
       address: previous.address,
+      street: previous.street,
+      postalCode: previous.postalCode,
+      city: previous.city,
+      country: previous.country,
+      latitude: previous.latitude,
+      longitude: previous.longitude,
       inspectionIntervalDays: previous.inspectionIntervalDays,
       assetTypeUuid: previous.assetTypeUuid,
       locationUuid: previous.locationUuid,
@@ -228,6 +241,12 @@ export class InventoryFormPage implements OnInit {
           name: item.name,
           description: item.description ?? '',
           address: item.address ?? '',
+          street: item.street ?? '',
+          postalCode: item.postalCode ?? '',
+          city: item.city ?? '',
+          country: item.country ?? '',
+          latitude: item.latitude ?? null,
+          longitude: item.longitude ?? null,
           color: item.color ?? '',
           serialNumber: item.serialNumber ?? '',
           inventoryNumber: item.inventoryNumber ?? '',
@@ -243,6 +262,10 @@ export class InventoryFormPage implements OnInit {
           images: item.images ?? [],
           tagUuids: [],
         };
+        if (this.config.coordinates && item.address && !item.street && !item.postalCode && !item.city && !item.country) {
+          this.legacyAddress = item.address;
+          this.form.street = item.address;
+        }
         this.selectedTagUuids = (item.tags ?? []).map((tag) => tag.uuid);
         this.originalAreaUuids = item.areaUuids ?? [];
         this.areaService.load().subscribe(() => {
@@ -266,6 +289,12 @@ export class InventoryFormPage implements OnInit {
       name: '',
       description: '',
       address: '',
+      street: '',
+      postalCode: '',
+      city: '',
+      country: '',
+      latitude: null,
+      longitude: null,
       color: '',
       serialNumber: '',
       inventoryNumber: '',
@@ -288,7 +317,14 @@ export class InventoryFormPage implements OnInit {
       ...request,
       invId: request.invId || undefined,
       description: request.description || null,
-      address: request.address || null,
+      // locations: the backend formats the address from its parts
+      address: this.config.coordinates ? null : request.address || null,
+      street: this.config.coordinates ? request.street?.trim() || null : undefined,
+      postalCode: this.config.coordinates ? request.postalCode?.trim() || null : undefined,
+      city: this.config.coordinates ? request.city?.trim() || null : undefined,
+      country: this.config.coordinates ? request.country?.trim() || null : undefined,
+      latitude: this.config.coordinates ? (request.latitude ?? null) : undefined,
+      longitude: this.config.coordinates ? (request.longitude ?? null) : undefined,
       color: request.color || null,
       serialNumber: request.serialNumber || null,
       inventoryNumber: request.inventoryNumber || null,
@@ -304,6 +340,29 @@ export class InventoryFormPage implements OnInit {
       tagUuids: this.config.tags ? this.selectedTagUuids : [],
       areaUuids: [...new Set([...this.lockedAreaUuids, ...this.selectedAreaUuids])],
     };
+  }
+
+  /** Coordinates must be both set or both empty and within the WGS 84 range. */
+  protected get coordinatesError(): string {
+    const { latitude, longitude } = this.form;
+    if (!this.config.coordinates || (latitude == null && longitude == null)) return '';
+    if (latitude == null || longitude == null) return 'Bitte Breiten- und Längengrad angeben.';
+    if (latitude < -90 || latitude > 90) return 'Der Breitengrad muss zwischen -90 und 90 liegen.';
+    if (longitude < -180 || longitude > 180) return 'Der Längengrad muss zwischen -180 und 180 liegen.';
+    return '';
+  }
+
+  protected applyCoordinates(match: GeocodingResult): void {
+    this.form.latitude = Number(match.latitude.toFixed(7));
+    this.form.longitude = Number(match.longitude.toFixed(7));
+  }
+
+  protected applyAddress(match: GeocodingResult): void {
+    this.form.street = match.street ?? '';
+    this.form.postalCode = match.postalCode ?? '';
+    this.form.city = match.city ?? '';
+    this.form.country = match.country ?? '';
+    this.legacyAddress = '';
   }
 
   protected get generalFields(): FieldConfig[] {

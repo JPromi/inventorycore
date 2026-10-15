@@ -388,6 +388,13 @@
                             </div>
                         }
                     </section>
+
+                    @if (config.endpoint === 'locations' && item.latitude != null && item.longitude != null) {
+                        <section class="card">
+                            <h2>Karte</h2>
+                            <app-location-map [latitude]="item.latitude" [longitude]="item.longitude" [title]="item.name" />
+                        </section>
+                    }
                 </aside>
             </div>
         }

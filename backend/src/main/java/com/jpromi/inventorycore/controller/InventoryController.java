@@ -59,6 +59,7 @@ import com.jpromi.inventorycore.service.ApiMapper;
 import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
 import com.jpromi.inventorycore.service.AuditService;
+import com.jpromi.inventorycore.service.GeocodingService;
 import com.jpromi.inventorycore.service.PermissionService;
 
 import static com.jpromi.inventorycore.service.PermissionService.require;
@@ -364,7 +365,15 @@ public class InventoryController {
     private void applyLocation(AccessContext access, Location location, LocationRequest request) {
         location.setName(request.name());
         location.setDescription(request.description());
-        location.setAddress(request.address());
+        location.setStreet(trimToNull(request.street()));
+        location.setPostalCode(trimToNull(request.postalCode()));
+        location.setCity(trimToNull(request.city()));
+        location.setCountry(trimToNull(request.country()));
+        String formatted = GeocodingService.formatAddress(location.getStreet(), location.getPostalCode(), location.getCity(), location.getCountry());
+        location.setAddress(formatted != null ? formatted : trimToNull(request.address()));
+        GeocodingService.requireValidCoordinates(request.latitude(), request.longitude());
+        location.setLatitude(request.latitude());
+        location.setLongitude(request.longitude());
         Location parent = request.parentLocationUuid() == null ? null : locationOr404(request.parentLocationUuid());
         if (parent != null && parent != location.getParentLocation()) {
             requireVisible(access.canViewLocation(parent));
@@ -380,6 +389,10 @@ public class InventoryController {
             request.images().stream().filter(InventoryController::hasSource)
                 .forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest)));
         }
+    }
+
+    private static String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private void applyAssetType(AssetType type, AssetTypeRequest request) {
