@@ -52,6 +52,7 @@ export class InventoryFormPage implements OnInit {
   protected error = '';
   protected form: InventoryRequest = this.emptyForm();
   protected assetTypes: InventoryItem[] = [];
+  protected assets: InventoryItem[] = [];
   protected locations: InventoryItem[] = [];
   protected tags: TagItem[] = [];
   protected selectedTagUuids: string[] = [];
@@ -81,6 +82,13 @@ export class InventoryFormPage implements OnInit {
       this.config = data['inventoryFormConfig'];
       this.uuid = this.route.snapshot.paramMap.get('uuid');
       this.form = this.emptyForm();
+      if (this.config.endpoint === 'assets') {
+        this.api.list<InventoryItem>('assets').subscribe({
+          next: (assets) => (this.assets = assets),
+          error: () => (this.error = 'Assets konnten nicht geladen werden.'),
+        });
+        if (!this.uuid) this.form.parentAssetUuid = this.route.snapshot.queryParamMap.get('parentAssetUuid');
+      }
       this.originalAreaUuids = [];
       this.lockedAreaUuids = [];
       this.selectedAreaUuids = [];
@@ -227,6 +235,8 @@ export class InventoryFormPage implements OnInit {
           assetTypeUuid: item.assetTypeUuid ?? null,
           locationUuid: item.locationUuid ?? null,
           parentLocationUuid: item.parentLocationUuid ?? null,
+          parentAssetUuid: item.parentAssetUuid ?? null,
+          parentAssetNote: item.parentAssetNote ?? '',
           fieldDefinitions: item.fieldDefinitions ?? [],
           fieldValues: item.fieldValues ?? [],
           images: item.images ?? [],
@@ -262,6 +272,8 @@ export class InventoryFormPage implements OnInit {
       assetTypeUuid: null,
       locationUuid: null,
       parentLocationUuid: null,
+      parentAssetUuid: null,
+      parentAssetNote: '',
       fieldDefinitions: [],
       fieldValues: [],
       images: [],
@@ -282,6 +294,8 @@ export class InventoryFormPage implements OnInit {
       assetTypeUuid: request.assetTypeUuid || null,
       locationUuid: request.locationUuid || null,
       parentLocationUuid: request.parentLocationUuid || null,
+      parentAssetUuid: request.parentAssetUuid || null,
+      parentAssetNote: request.parentAssetUuid ? request.parentAssetNote?.trim() || null : null,
       fieldDefinitions: request.fieldDefinitions ?? [],
       fieldValues: request.fieldValues ?? [],
       images: request.images?.filter((image) => image.fileUuid || image.url?.trim()) ?? [],
@@ -340,6 +354,21 @@ export class InventoryFormPage implements OnInit {
     return this.locations
       .filter((location) => !excluded.has(location.uuid))
       .map((location) => ({ value: location.uuid, label: locationPath(this.locations, location), hint: location.address ?? undefined }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get parentAssetOptions(): SelectOption[] {
+    const byUuid = new Map(this.assets.map((asset) => [asset.uuid, asset]));
+    return this.assets.filter((asset) => {
+      const visited = new Set<string>();
+      let current: InventoryItem | undefined = asset;
+      while (current) {
+        if (current.uuid === this.uuid || visited.has(current.uuid)) return false;
+        visited.add(current.uuid);
+        current = current.parentAssetUuid ? byUuid.get(current.parentAssetUuid) : undefined;
+      }
+      return true;
+    }).map((asset) => ({ value: asset.uuid, label: asset.name, hint: asset.invId ?? undefined }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 

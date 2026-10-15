@@ -9,6 +9,7 @@ import {
   LucideChevronRight,
   LucideMapPin,
   LucidePencil,
+  LucidePlus,
   LucidePrinter,
   LucideShapes,
   LucideTrash2,
@@ -90,6 +91,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     LucideChevronRight,
     LucideMapPin,
     LucidePencil,
+    LucidePlus,
     LucidePrinter,
     LucideShapes,
     LucideTrash2,
@@ -185,6 +187,15 @@ export class InventoryDetailPage implements OnInit {
 
   protected get assetType(): InventoryItem | null {
     return this.assetTypes.find((type) => type.uuid === this.item?.assetTypeUuid) ?? null;
+  }
+
+  protected get parentAsset(): InventoryItem | null {
+    return this.assets.find((asset) => asset.uuid === this.item?.parentAssetUuid) ?? null;
+  }
+
+  protected get childAssets(): InventoryItem[] {
+    return this.assets.filter((asset) => asset.parentAssetUuid === this.item?.uuid)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /** Location chain from the root down, used as breadcrumb. */
@@ -292,8 +303,9 @@ export class InventoryDetailPage implements OnInit {
     }
     this.api.delete(this.config.endpoint, this.item.uuid).subscribe({
       next: () => this.router.navigate([this.config.listRoute]),
-      error: () => {
-        this.error = 'Löschen fehlgeschlagen.';
+      error: (error) => {
+        this.error = this.config.endpoint === 'assets' && error.status === 409
+          ? 'Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.' : 'Löschen fehlgeschlagen.';
       },
     });
   }
@@ -311,7 +323,7 @@ export class InventoryDetailPage implements OnInit {
     this.error = '';
     this.item = null;
 
-    const needsAssets = this.config.endpoint !== 'assets' && this.permissions.can('ASSET', 'view');
+    const needsAssets = this.config.endpoint === 'assets' || this.permissions.can('ASSET', 'view');
     const optional = <T>(endpoint: string, wanted: boolean) =>
       wanted ? this.api.list<InventoryItem>(endpoint).pipe(catchError(() => of([] as T[]))) : of([] as T[]);
 

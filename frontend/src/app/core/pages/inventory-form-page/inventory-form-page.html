@@ -51,6 +51,22 @@
                             />
                         </label>
                     }
+                    @if (config.endpoint === 'assets') {
+                        <div class="asset-link-fields">
+                            <label>
+                                <span>Übergeordnetes Asset</span>
+                                <app-search-select [options]="parentAssetOptions" [(ngModel)]="form.parentAssetUuid"
+                                    name="parentAssetUuid" placeholder="Asset auswählen" clearLabel="Kein übergeordnetes Asset"
+                                    searchPlaceholder="Asset suchen..." />
+                            </label>
+                            @if (form.parentAssetUuid) {
+                                <label>
+                                    <span>Verknüpfungsbeschreibung</span>
+                                    <input type="text" [(ngModel)]="form.parentAssetNote" name="parentAssetNote" maxlength="1000" placeholder="z. B. RAM Slot 1" />
+                                </label>
+                            }
+                        </div>
+                    }
                     <div class="area-select">
                         <label for="areas">Bereiche</label>
                         <app-multi-select

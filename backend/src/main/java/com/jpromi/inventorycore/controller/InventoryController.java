@@ -76,6 +76,7 @@ public class InventoryController {
     private final PermissionService permissionService;
     private final ApiMapper mapper;
     private final AuditService audit;
+    private final com.jpromi.inventorycore.service.AssetHierarchyService hierarchy;
 
     public InventoryController(
         AssetRepository assetRepository,
@@ -86,7 +87,8 @@ public class InventoryController {
         StoredFileRepository fileRepository,
         PermissionService permissionService,
         ApiMapper mapper,
-        AuditService audit
+        AuditService audit,
+        com.jpromi.inventorycore.service.AssetHierarchyService hierarchy
     ) {
         this.assetRepository = assetRepository;
         this.assetTypeRepository = assetTypeRepository;
@@ -97,6 +99,7 @@ public class InventoryController {
         this.permissionService = permissionService;
         this.mapper = mapper;
         this.audit = audit;
+        this.hierarchy = hierarchy;
     }
 
     // ---- locations ----
@@ -279,6 +282,7 @@ public class InventoryController {
     }
 
     @PostMapping("/assets")
+    @Transactional
     @ResponseStatus(HttpStatus.CREATED)
     public AssetResponse createAsset(@RequestBody AssetRequest request, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
@@ -293,6 +297,7 @@ public class InventoryController {
     }
 
     @PatchMapping("/assets/{uuid}")
+    @Transactional
     public AssetResponse updateAsset(@PathVariable UUID uuid, @RequestBody AssetRequest request, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
         Asset asset = assetOr404(uuid);
@@ -308,11 +313,13 @@ public class InventoryController {
     }
 
     @DeleteMapping("/assets/{uuid}")
+    @Transactional
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAsset(@PathVariable UUID uuid, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
         Asset asset = assetOr404(uuid);
         require(access, PermissionResourceType.ASSET, PermissionAction.DELETE, asset.getAreas());
+        hierarchy.requireNoChildren(asset);
         asset.setDeleted(true);
         asset.setDeletedAt(OffsetDateTime.now());
         assetRepository.save(asset);
@@ -393,6 +400,7 @@ public class InventoryController {
     }
 
     private void applyAsset(AccessContext access, Asset asset, AssetRequest request) {
+        hierarchy.assign(access, asset, request.parentAssetUuid(), request.parentAssetNote());
         if (request.invId() != null && !request.invId().isBlank()) {
             asset.setInvId(request.invId());
         } else if (asset.getInvId() == null || asset.getInvId().isBlank()) {

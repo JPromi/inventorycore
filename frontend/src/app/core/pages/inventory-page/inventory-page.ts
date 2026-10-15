@@ -303,8 +303,9 @@ export class InventoryPage implements OnInit {
 
     this.api.delete(this.config.endpoint, item.uuid).subscribe({
       next: () => this.load(),
-      error: () => {
-        this.error = 'Löschen fehlgeschlagen.';
+      error: (error) => {
+        this.error = this.config.endpoint === 'assets' && error.status === 409
+          ? 'Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.' : 'Löschen fehlgeschlagen.';
       },
     });
   }

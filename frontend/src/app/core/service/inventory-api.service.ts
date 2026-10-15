@@ -17,6 +17,8 @@ export interface InventoryItem {
   assetTypeUuid?: string | null;
   locationUuid?: string | null;
   parentLocationUuid?: string | null;
+  parentAssetUuid?: string | null;
+  parentAssetNote?: string | null;
   fieldDefinitions?: CustomFieldDefinition[];
   fieldValues?: CustomFieldValue[];
   images?: InventoryImage[];
@@ -28,6 +30,8 @@ export interface InventoryItem {
 }
 
 export interface InventoryRequest {
+  parentAssetUuid?: string | null;
+  parentAssetNote?: string | null;
   invId?: string;
   name: string;
   description?: string | null;

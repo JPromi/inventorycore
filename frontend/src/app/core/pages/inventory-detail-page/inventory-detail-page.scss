@@ -149,6 +149,12 @@
 }
 
 // link lists (sub-locations, assets)
+h3 {
+    font-size: .9rem;
+    color: var(--text-muted);
+    margin: .75rem 0 .25rem;
+}
+
 .link-list {
     display: flex;
     flex-direction: column;

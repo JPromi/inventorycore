@@ -16,5 +16,7 @@ public record AssetRequest(
     Set<UUID> tagUuids,
     List<AssetFieldValueRequest> fieldValues,
     List<AssetImageRequest> images,
-    Set<UUID> areaUuids
+    Set<UUID> areaUuids,
+    UUID parentAssetUuid,
+    String parentAssetNote
 ) {}

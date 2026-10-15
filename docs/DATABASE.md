@@ -17,6 +17,8 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 
 Type tags are merged into asset responses at read time. Asset-specific field values and type field definitions are distinct. Avoid copying inherited tags into the direct asset association just to make the frontend display them.
 
+Assets can also reference one parent asset through `parent_asset_id`. The optional `parentAssetNote` belongs to this relationship (for example, a component's RAM slot), not the asset description. Hierarchy assignment rejects self-links/cycles and requires visibility of a newly selected parent. Type, location, areas, and permissions remain independent; children are not cascade-deleted. A live parent cannot be deleted until its active children are detached or moved.
+
 ## Deletion and Transactions
 
 Assets, locations, and asset types use `deleted` / `deletedAt` soft deletion in inventory handlers. Groups and tags are physically deleted after detaching associations. Group permissions cascade with their group. Do not assume all entities share one deletion policy.

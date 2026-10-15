@@ -21,5 +21,7 @@ public record AssetResponse(
     OffsetDateTime createdAt,
     OffsetDateTime deletedAt,
     boolean deleted,
-    Set<UUID> areaUuids
+    Set<UUID> areaUuids,
+    UUID parentAssetUuid,
+    String parentAssetNote
 ) {}

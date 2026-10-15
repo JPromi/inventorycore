@@ -232,6 +232,53 @@
                         </section>
                     }
 
+                    @if (config.endpoint === 'assets') {
+                        <section class="card">
+                            <div class="card-title">
+                                <h2>Asset-Verknüpfungen</h2>
+                                @if (permissions.can('ASSET', 'create')) {
+                                    <a class="secondary-action" routerLink="/assets/new" [queryParams]="{ parentAssetUuid: item.uuid }">
+                                        <svg lucidePlus size="16"></svg><span>Untergeordnetes Asset</span>
+                                    </a>
+                                }
+                            </div>
+                            @if (item.parentAssetUuid) {
+                                <h3>Übergeordnetes Asset</h3>
+                                <ul class="link-list">
+                                    <li>
+                                        @if (parentAsset; as parent) {
+                                            <a [routerLink]="['/assets', parent.uuid]">
+                                                <svg lucideBoxes size="16"></svg>
+                                                <span>{{ parent.name }}<small>{{ parent.invId }}</small>
+                                                    @if (item.parentAssetNote) { <small>{{ item.parentAssetNote }}</small> }
+                                                </span>
+                                                <svg lucideChevronRight size="15"></svg>
+                                            </a>
+                                        } @else {
+                                            <span class="hint">Übergeordnetes Asset nicht verfügbar.</span>
+                                        }
+                                    </li>
+                                </ul>
+                            }
+                            <h3>Untergeordnete Assets</h3>
+                            @if (childAssets.length) {
+                                <ul class="link-list">
+                                    @for (child of childAssets; track child.uuid) {
+                                        <li><a [routerLink]="['/assets', child.uuid]">
+                                            <svg lucideBoxes size="16"></svg>
+                                            <span>{{ child.name }}<small>{{ child.invId }}</small>
+                                                @if (child.parentAssetNote) { <small>{{ child.parentAssetNote }}</small> }
+                                            </span>
+                                            <svg lucideChevronRight size="15"></svg>
+                                        </a></li>
+                                    }
+                                </ul>
+                            } @else {
+                                <p class="hint">Keine untergeordneten Assets.</p>
+                            }
+                        </section>
+                    }
+
                     @if (canSeeInspections) {
                         <section class="card">
                             <div class="card-title">

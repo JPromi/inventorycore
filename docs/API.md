@@ -44,3 +44,5 @@ Image upload uses `multipart/form-data` with a `file` part. File content support
 Handlers use `ResponseStatusException` and explicit statuses such as 201, 204, 400, 401, 403, and 404. There is no uniform project-wide error envelope; file upload has a local handler exposing a `message`. Preserve the actual response shape rather than assuming every error includes readable text.
 
 No generated OpenAPI specification or API collection is currently checked in. Controllers and DTOs remain the authoritative route and payload definitions.
+
+Asset form requests/responses include nullable `parentAssetUuid` and `parentAssetNote` (up to 1000 characters). A null parent detaches the asset and clears its link note. The existing asset create/update routes handle these fields; no separate relationship endpoint is required. Parent deletion returns 409 while live children exist. Related asset names and child lists in the UI come from the authorized asset list, so hierarchy links do not grant additional visibility.

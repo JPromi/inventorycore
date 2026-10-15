@@ -92,7 +92,7 @@ class AuditServiceTest {
             .mapToObj(index -> new AssetImageResponse(UUID.randomUUID(), ImageKind.GALLERY, null, "/x" + index, null, null, null, index, null))
             .toList();
         return new AssetResponse(UUID.randomUUID(), "INV-1", name, null, serial, null, null, null, location, tags, fields, imageList,
-            null, null, false, Set.of());
+            null, null, false, Set.of(), null, null);
     }
 
     private static AssetFieldValueResponse field(String name, String value) {

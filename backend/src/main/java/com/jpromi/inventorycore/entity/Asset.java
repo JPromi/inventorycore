@@ -66,6 +66,17 @@ public class Asset {
     @JoinColumn(name = "location_id")
     private Location location;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_asset_id")
+    private Asset parentAsset;
+
+    @Column(length = 1000)
+    private String parentAssetNote;
+
+    @OneToMany(mappedBy = "parentAsset")
+    @Builder.Default
+    private List<Asset> childAssets = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(
         name = "asset_tags",

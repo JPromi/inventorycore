@@ -25,6 +25,7 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     @Query("select e from Asset e where e.areas is empty")
     List<Asset> findWithoutArea();
     boolean existsByInvId(String invId);
+    boolean existsByParentAssetAndDeletedFalse(Asset parentAsset);
 
     /** Assets whose inventory id, inventory number or serial number equals the scanned code (ignoring case). */
     @Query("""
