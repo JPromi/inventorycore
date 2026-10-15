@@ -15,6 +15,7 @@ import { GeocodingResult } from '../../service/geocoding.service';
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
+import { LOCATION_TYPES, locationTypeInfo } from '../../util/location-types';
 
 interface FormConfig {
   title: string;
@@ -30,6 +31,8 @@ interface FormConfig {
   selectAssetType?: boolean;
   selectLocation?: boolean;
   selectParentLocation?: boolean;
+  /** fixed location kind (Gebäude, Regal, ...) */
+  locationType?: boolean;
   /** address parts and latitude/longitude with lookups (locations) */
   coordinates?: boolean;
   tags?: boolean;
@@ -50,6 +53,7 @@ interface FieldConfig {
 })
 export class InventoryFormPage implements OnInit {
   protected readonly iconInputs = { size: 20 };
+  protected readonly locationTypeOptions: SelectOption[] = LOCATION_TYPES.map((type) => ({ value: type.value, label: type.label, hint: type.hint }));
   protected config!: FormConfig;
   protected uuid: string | null = null;
   protected loading = false;
@@ -116,6 +120,11 @@ export class InventoryFormPage implements OnInit {
         this.loadLocations();
       }
     });
+  }
+
+  /** Locations show the icon of their kind. */
+  protected get headerIcon(): LucideIcon {
+    return this.config.locationType ? locationTypeInfo(this.form.locationType).icon : this.config.icon;
   }
 
   protected get title(): string {
@@ -205,6 +214,7 @@ export class InventoryFormPage implements OnInit {
     this.form = {
       ...this.emptyForm(),
       address: previous.address,
+      locationType: previous.locationType,
       street: previous.street,
       postalCode: previous.postalCode,
       city: previous.city,
@@ -241,6 +251,7 @@ export class InventoryFormPage implements OnInit {
           name: item.name,
           description: item.description ?? '',
           address: item.address ?? '',
+          locationType: item.locationType ?? 'OTHER',
           street: item.street ?? '',
           postalCode: item.postalCode ?? '',
           city: item.city ?? '',
@@ -289,6 +300,7 @@ export class InventoryFormPage implements OnInit {
       name: '',
       description: '',
       address: '',
+      locationType: 'OTHER',
       street: '',
       postalCode: '',
       city: '',
@@ -317,6 +329,7 @@ export class InventoryFormPage implements OnInit {
       ...request,
       invId: request.invId || undefined,
       description: request.description || null,
+      locationType: this.config.locationType ? request.locationType ?? 'OTHER' : undefined,
       // locations: the backend formats the address from its parts
       address: this.config.coordinates ? null : request.address || null,
       street: this.config.coordinates ? request.street?.trim() || null : undefined,

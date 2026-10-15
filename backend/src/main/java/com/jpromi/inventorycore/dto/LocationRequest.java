@@ -7,6 +7,7 @@ import java.util.UUID;
 public record LocationRequest(
     String name,
     String description,
+    com.jpromi.inventorycore.enums.LocationType locationType,
     /** only used when all address parts are empty (older clients) */
     String address,
     String street,

@@ -8,6 +8,7 @@ public record LocationResponse(
     UUID uuid,
     String name,
     String description,
+    com.jpromi.inventorycore.enums.LocationType locationType,
     String address,
     String street,
     String postalCode,

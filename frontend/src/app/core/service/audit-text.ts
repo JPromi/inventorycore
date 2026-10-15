@@ -1,3 +1,4 @@
+import { LOCATION_TYPES } from '../util/location-types';
 import { AuditDetail, AuditPermission } from './audit.service';
 
 /*
@@ -23,6 +24,7 @@ const FIELD_LABELS: Record<string, string> = {
   areaUuids: 'Bereiche',
   areaUuid: 'Bereich',
   address: 'Adresse',
+  locationType: 'Art',
   street: 'Straße',
   postalCode: 'PLZ',
   city: 'Ort',
@@ -100,6 +102,7 @@ const VALUES: Record<string, string> = {
   YEARS: 'Jahre',
   ADMIN: 'Admin',
   USER: 'Benutzer',
+  ...Object.fromEntries(LOCATION_TYPES.map((type) => [type.value, type.label])),
 };
 
 const RESOURCES: Record<string, string> = { ASSET: 'Assets', LOCATION: 'Standorte', ASSET_TYPE: 'Typen' };

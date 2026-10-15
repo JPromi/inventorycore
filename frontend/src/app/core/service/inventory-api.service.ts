@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import type { LocationType } from '../util/location-types';
 
 export interface InventoryItem {
   inspectionPolicy?: AssetInspectionPolicy;
@@ -11,6 +12,8 @@ export interface InventoryItem {
   description?: string | null;
   invId?: string | null;
   address?: string | null;
+  /** locations: fixed kind, decides the icon */
+  locationType?: LocationType | null;
   /** locations: parts of the address; `address` is formatted from them */
   street?: string | null;
   postalCode?: string | null;
@@ -46,6 +49,8 @@ export interface InventoryRequest {
   name: string;
   description?: string | null;
   address?: string | null;
+  /** locations: fixed kind, decides the icon */
+  locationType?: LocationType | null;
   /** locations: parts of the address; `address` is formatted from them */
   street?: string | null;
   postalCode?: string | null;

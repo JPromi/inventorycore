@@ -46,6 +46,7 @@ import {
 } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
+import { locationTypeInfo, LocationTypeInfo } from '../../util/location-types';
 
 interface DetailConfig {
   title: string;
@@ -179,6 +180,15 @@ export class InventoryDetailPage implements OnInit {
       },
       error: () => (this.error = 'Prüftermin konnte nicht gespeichert werden.'),
     });
+  }
+
+  /** Locations show the icon and name of their kind. */
+  protected get locationType(): LocationTypeInfo | null {
+    return this.config.endpoint === 'locations' && this.item ? locationTypeInfo(this.item.locationType) : null;
+  }
+
+  protected get icon(): LucideIcon {
+    return this.locationType?.icon ?? this.config.icon;
   }
 
   protected get canEdit(): boolean {

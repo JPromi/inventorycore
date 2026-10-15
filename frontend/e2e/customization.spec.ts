@@ -85,8 +85,9 @@ for (const width of [1280, 390]) {
     expect(elements.some((item: any) => item.useBrandColor && item.content.includes('{brandName}'))).toBe(true);
     await page.goto('/assets/asset');
     await page.getByRole('button', { name: 'Label drucken', exact: true }).click();
-    await expect(page.locator('app-label-print-dialog .label img')).toBeVisible();
-    await page.getByRole('button', { name: 'Drucken', exact: true }).click();
+    // the preview; the dialog also renders hidden copies for printing
+    await expect(page.locator('app-label-print-dialog .preview .label img')).toBeVisible();
+    await page.locator('app-label-print-dialog').getByRole('button', { name: 'Drucken', exact: true }).click();
     await expect(page.locator('body')).toHaveAttribute('data-print-loaded', 'true');
   });
 }

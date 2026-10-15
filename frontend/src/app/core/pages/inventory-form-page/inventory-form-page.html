@@ -4,7 +4,7 @@
             <div>
                 <p>{{ config.title }}</p>
                 <h1>
-                    <ng-container *ngComponentOutlet="config.icon; inputs: iconInputs"></ng-container>
+                    <ng-container *ngComponentOutlet="headerIcon; inputs: iconInputs"></ng-container>
                     <span>{{ title }}</span>
                 </h1>
             </div>
@@ -36,6 +36,18 @@
                     <h2>Allgemein</h2>
                     @if (config.autoInvId && !uuid) {
                         <p class="hint">Die Inventar-ID wird beim Speichern automatisch generiert.</p>
+                    }
+                    @if (config.locationType) {
+                        <label class="type-select">
+                            <span>Art</span>
+                            <app-search-select
+                                [options]="locationTypeOptions"
+                                [(ngModel)]="form.locationType"
+                                name="locationType"
+                                placeholder="Art wählen"
+                                searchPlaceholder="Art suchen..."
+                            />
+                        </label>
                     }
                     @if (config.selectAssetType) {
                         <label class="type-select">

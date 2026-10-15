@@ -51,6 +51,11 @@ public class Location {
     @Column(length = 2000)
     private String description;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(16) default 'OTHER'")
+    @Builder.Default
+    private com.jpromi.inventorycore.enums.LocationType locationType = com.jpromi.inventorycore.enums.LocationType.OTHER;
+
     /** Formatted from street, postal code, city and country; free text for older locations. */
     private String address;
 

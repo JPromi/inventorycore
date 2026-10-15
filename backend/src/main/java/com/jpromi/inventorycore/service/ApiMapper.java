@@ -128,6 +128,7 @@ public class ApiMapper {
             location.getUuid(),
             location.getName(),
             location.getDescription(),
+            location.getLocationType() == null ? com.jpromi.inventorycore.enums.LocationType.OTHER : location.getLocationType(),
             location.getAddress(),
             location.getStreet(),
             location.getPostalCode(),

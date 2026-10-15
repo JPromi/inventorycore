@@ -30,6 +30,7 @@ import { InspectionDue, InspectionService, dueText } from '../../service/inspect
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
+import { locationTypeInfo } from '../../util/location-types';
 import { Observable } from 'rxjs';
 
 type ViewMode = 'grid' | 'list';
@@ -339,13 +340,19 @@ export class InventoryPage implements OnInit {
     return cover?.thumbnailUrl || cover?.url || null;
   }
 
+  /** Placeholder without picture: locations show the icon of their kind. */
+  protected itemIcon(item: InventoryItem): LucideIcon {
+    return this.config.endpoint === 'locations' ? locationTypeInfo(item.locationType).icon : this.config.icon;
+  }
+
   protected itemMeta(item: InventoryItem): string {
     if (item.invId) {
       return item.invId;
     }
     if (this.config.endpoint === 'locations') {
       const parent = this.locations.find((location) => location.uuid === item.parentLocationUuid);
-      return [parent ? `in ${locationPath(this.locations, parent)}` : '', item.address ?? ''].filter(Boolean).join(' · ');
+      const type = item.locationType && item.locationType !== 'OTHER' ? locationTypeInfo(item.locationType).label : '';
+      return [type, parent ? `in ${locationPath(this.locations, parent)}` : '', item.address ?? ''].filter(Boolean).join(' · ');
     }
     if (item.address) {
       return item.address;

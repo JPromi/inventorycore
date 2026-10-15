@@ -365,6 +365,8 @@ public class InventoryController {
     private void applyLocation(AccessContext access, Location location, LocationRequest request) {
         location.setName(request.name());
         location.setDescription(request.description());
+        location.setLocationType(request.locationType() == null
+            ? com.jpromi.inventorycore.enums.LocationType.OTHER : request.locationType());
         location.setStreet(trimToNull(request.street()));
         location.setPostalCode(trimToNull(request.postalCode()));
         location.setCity(trimToNull(request.city()));

@@ -40,6 +40,7 @@ const locationFormConfig = {
   resourceType: 'LOCATION',
   icon: LucideMapPin,
   selectParentLocation: true,
+  locationType: true,
   coordinates: true,
   images: true,
   fields: [

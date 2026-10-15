@@ -146,7 +146,7 @@
                             @if (thumbnail(item); as url) {
                                 <img [src]="url" [alt]="item.name" loading="lazy" />
                             } @else {
-                                <ng-container *ngComponentOutlet="config.icon; inputs: placeholderIconInputs"></ng-container>
+                                <ng-container *ngComponentOutlet="itemIcon(item); inputs: placeholderIconInputs"></ng-container>
                             }
                         </div>
                     } @else {

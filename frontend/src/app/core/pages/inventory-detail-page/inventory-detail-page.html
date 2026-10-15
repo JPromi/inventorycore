@@ -15,7 +15,7 @@
             <header class="page-header">
                 <div class="title">
                     <span class="title-icon">
-                        <ng-container *ngComponentOutlet="config.icon; inputs: iconInputs"></ng-container>
+                        <ng-container *ngComponentOutlet="icon; inputs: iconInputs"></ng-container>
                     </span>
                     <div>
                         <p class="eyebrow">
@@ -86,6 +86,12 @@
                                             {{ formatCustomValue(field.value, field.fieldType) }}
                                         }
                                     </dd>
+                                </div>
+                            }
+                            @if (locationType; as type) {
+                                <div>
+                                    <dt>Art</dt>
+                                    <dd>{{ type.label }}</dd>
                                 </div>
                             }
                             @if (config.endpoint === 'assets') {
@@ -373,7 +379,7 @@
                                 </a>
                             } @else {
                                 <div class="no-image">
-                                    <ng-container *ngComponentOutlet="config.icon; inputs: placeholderIconInputs"></ng-container>
+                                    <ng-container *ngComponentOutlet="icon; inputs: placeholderIconInputs"></ng-container>
                                     <span>Kein Bild</span>
                                 </div>
                             }

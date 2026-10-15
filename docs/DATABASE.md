@@ -23,7 +23,7 @@ Assets can also reference one parent asset through `parent_asset_id`. The option
 
 `inspectionPolicy` defaults to `STANDARD` for new and existing assets. `MANUAL` assets remain individually expected without scan confirmation; `EXCLUDED` assets are omitted from new runs and recurring due dates. Inspection items snapshot the policy, parent UUID, and link note. Existing protocols keep their original snapshots; older items without hierarchy metadata remain flat. Hierarchy display groups only items within the run. Templates optionally widen the initial selection with `includeChildAssets` (non-null, default false); descendants bypass selection filters but never authorization or inspection exclusions. Default tag filters are stored in the owning `inspection_type_default_tags` join table and detached when tags are deleted. Existing templates start with no default tags and child inclusion disabled.
 
-Location address parts and coordinates are nullable columns added by Hibernate `update`; no migration step is needed. Locations created before the split keep their free-text `address` with empty parts; the edit form offers it in the street field until the user saves the split address.
+Location address parts and coordinates are nullable columns added by Hibernate `update`; no migration step is needed. `locations.location_type` is `varchar(16) default 'OTHER'` declared through `columnDefinition`, so existing rows become `OTHER` and Hibernate creates no enum check constraint; new enum values can be appended without a migration. Locations created before the split keep their free-text `address` with empty parts; the edit form offers it in the street field until the user saves the split address.
 
 ## Deletion and Transactions
 
