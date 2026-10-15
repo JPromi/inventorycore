@@ -24,6 +24,19 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
     const parentSelect = page.locator('app-search-select[name="parentAssetUuid"]');
     await expect(parentSelect).toContainText('Computer');
     await expect(page.locator('input[name="parentAssetNote"]')).toHaveValue('RAM Slot 1');
+    const actions = page.locator('.sticky-editor-actions');
+    await page.locator('.form-page').evaluate(element => { element.scrollTop = element.scrollHeight / 2; });
+    const footer = await actions.evaluate(element => {
+      const extension = getComputedStyle(element, '::after');
+      const container = element.closest('.form-page')!;
+      return { bottom: element.getBoundingClientRect().bottom + parseFloat(extension.height),
+        viewportBottom: container.getBoundingClientRect().bottom,
+        background: extension.backgroundColor, expected: getComputedStyle(container).getPropertyValue('--background').trim() };
+    });
+    expect(footer.bottom).toBeGreaterThanOrEqual(footer.viewportBottom - 1);
+    expect(footer.background).not.toBe('rgba(0, 0, 0, 0)');
+    await page.screenshot({ path: test.info().outputPath('sticky-actions.png') });
+    await parentSelect.scrollIntoViewIfNeeded();
     await parentSelect.locator('.trigger').click();
     await expect(parentSelect.getByRole('option', { name: /^RAM/ })).toHaveCount(0);
     await expect(parentSelect.getByRole('option', { name: /^Chip/ })).toHaveCount(0);
