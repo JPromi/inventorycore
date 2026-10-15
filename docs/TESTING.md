@@ -39,4 +39,6 @@ Playwright reads [playwright.config.ts](../frontend/playwright.config.ts), uses 
 
 [The current regression suite](../frontend/e2e/zone-updates.spec.ts) mocks API responses and verifies LDAP loading, connection results, sync success/error after confirmation, and user-list refresh after deletion without a follow-up click. These tests do not contact a real backend or identity provider.
 
+Dropdown regression tests also cover viewport-edge positioning, list scrolling, and selection for search, multi-select, area, and color panels at desktop and mobile sizes.
+
 For async UI changes, assert the final DOM after delayed responses without injecting an extra click or manual change-detection call. For permissions and persistence changes, prioritize backend checks. Documentation-only changes need link/command validation, not a database-backed application restart.

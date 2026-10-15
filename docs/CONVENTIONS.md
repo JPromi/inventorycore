@@ -13,6 +13,8 @@ Always source reusable presentation values from SCSS. The shared theme is define
 
 Use Lucide components from `@lucide/angular`. Navigation icon choices belong in navigation configuration, not a template if/else chain. Preserve the existing compact administrative UI and responsive navigation.
 
+Dropdown panels use the shared `DropdownPosition` directive with Floating UI and the browser popover top layer. Reuse it for anchored menus so clipping containers, viewport edges, scrolling, and resizing are handled consistently. Shared sizing and spacing tokens remain in SCSS.
+
 ## Language and Encoding
 
 Write project documentation and technical identifiers in English. German user-facing text must use correct German characters: **ä, ö, ü, Ä, Ö, Ü, and ß**. Save text as UTF-8. For example, use “Prüfungen”, “löschen”, “größer”, and “Straße”, not “Pruefungen”, “loeschen”, “groesser”, or “Strasse”. Do not use ASCII-only spelling merely to simplify file editing.

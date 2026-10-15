@@ -1,7 +1,7 @@
 import { AfterViewInit, Directive, ElementRef, Input, NgZone, OnDestroy } from '@angular/core';
 import { autoUpdate, computePosition, flip, offset, shift, size, type Placement } from '@floating-ui/dom';
 
-@Directive({ selector: '[appDropdownPosition]' })
+@Directive({ selector: '[appDropdownPosition]', host: { class: 'dropdown-panel' } })
 export class DropdownPosition implements AfterViewInit, OnDestroy {
   @Input({ required: true }) appDropdownPosition!: HTMLElement;
   @Input() dropdownPlacement: Placement = 'bottom-start';
