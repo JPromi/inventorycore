@@ -5,8 +5,8 @@ const defaults = { brandName: 'Testfirma', brandColor: '#0f766e', loginTitle: 'F
   privacyUrl: 'https://example.org/privacy', websiteUrl: 'https://example.org', supportUrl: null,
   logoUrl: '/api/customization/logo?v=test' };
 
-async function mockApi(page: Page, authenticated: boolean) {
-  let settings = { ...defaults };
+async function mockApi(page: Page, authenticated: boolean, color = defaults.brandColor) {
+  let settings = { ...defaults, brandColor: color };
   let savedLabel: any;
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
@@ -88,5 +88,30 @@ for (const width of [1280, 390]) {
     await expect(page.locator('app-label-print-dialog .label img')).toBeVisible();
     await page.getByRole('button', { name: 'Drucken', exact: true }).click();
     await expect(page.locator('body')).toHaveAttribute('data-print-loaded', 'true');
+  });
+}
+
+for (const colors of [
+  { brand: '#101010', normal: 'rgb(255, 255, 255)', hover: 'rgb(255, 255, 255)' },
+  { brand: '#f5e55a', normal: 'rgb(0, 0, 0)', hover: 'rgb(0, 0, 0)' },
+  { brand: '#808080', normal: 'rgb(0, 0, 0)', hover: 'rgb(255, 255, 255)' },
+]) {
+  test(`brand button text contrast including hover (${colors.brand})`, async ({ page }) => {
+    await mockApi(page, false, colors.brand);
+    await page.goto('/login');
+    const button = page.locator('.login-button');
+    await expect(button).toHaveCSS('color', colors.normal);
+    await expect(button.locator('svg')).toHaveCSS('color', colors.normal);
+    await button.hover();
+    await expect(button).toHaveCSS('color', colors.hover);
+    await expect(button.locator('svg')).toHaveCSS('color', colors.hover);
+
+    await page.unroute('**/api/**');
+    await mockApi(page, true, colors.brand);
+    await page.goto('/admin/customization');
+    const save = page.getByRole('button', { name: 'Speichern', exact: true });
+    await expect(save).toHaveCSS('color', colors.normal);
+    await save.hover();
+    await expect(save).toHaveCSS('color', colors.hover);
   });
 }

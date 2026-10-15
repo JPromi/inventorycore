@@ -305,6 +305,7 @@ h1, .subtitle { overflow-wrap: anywhere; }
 
     &:hover:not(:disabled) {
         background: var(--accent-hover);
+        color: var(--on-accent-hover);
     }
 
     &:disabled {

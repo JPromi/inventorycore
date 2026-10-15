@@ -46,10 +46,12 @@ body {
 
     // brand
     --accent: var(--brand-color, #b62f2f);
-    --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
+    --brand-hover-strength: 85%;
+    --accent-hover: color-mix(in srgb, var(--accent) var(--brand-hover-strength), var(--black));
     --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
     /** text and icons on top of accent, success or other strong colors */
     --on-accent: var(--brand-on-color, #ffffff);
+    --on-accent-hover: var(--brand-on-hover-color, var(--on-accent));
 
     // states
     --success: #15803d;
@@ -268,6 +270,7 @@ body.camera-open .page {
 
     &:hover:not(:disabled) {
         background: var(--accent-hover);
+        color: var(--on-accent-hover);
     }
 }
 

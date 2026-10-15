@@ -189,6 +189,7 @@
 
                 &:hover:not(:disabled) {
                     background: var(--accent-hover);
+                    color: var(--on-accent-hover);
                 }
             }
 

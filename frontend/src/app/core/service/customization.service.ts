@@ -62,16 +62,25 @@ export class CustomizationService {
     const color = this.settings.brandColor;
     if (color && /^#[0-9a-f]{6}$/i.test(color)) {
       style.setProperty('--brand-color', color);
-      const [r, g, b] = [1, 3, 5].map(index => {
-        const channel = parseInt(color.slice(index, index + 2), 16) / 255;
-        return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-      });
-      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      style.setProperty('--brand-on-color', luminance > 0.179 ? 'var(--black)' : 'var(--white)');
+      style.setProperty('--brand-on-color', this.textColor(color));
+      const hoverStrength = parseFloat(getComputedStyle(this.document.body).getPropertyValue('--brand-hover-strength')) / 100;
+      style.setProperty('--brand-on-hover-color', this.textColor(color, hoverStrength));
     } else {
       style.removeProperty('--brand-color');
       style.removeProperty('--brand-on-color');
+      style.removeProperty('--brand-on-hover-color');
     }
     this.document.title = this.brandName;
+  }
+
+  private textColor(color: string, strength = 1): string {
+    const [r, g, b] = [1, 3, 5].map(index => {
+      const channel = parseInt(color.slice(index, index + 2), 16) / 255 * strength;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const whiteContrast = 1.05 / (luminance + 0.05);
+    const blackContrast = (luminance + 0.05) / 0.05;
+    return blackContrast > whiteContrast ? 'var(--black)' : 'var(--white)';
   }
 }
