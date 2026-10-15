@@ -3,6 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { renderBarcode } from '../barcode';
 import { LabelContext, LabelElement, resolveContent } from '../label.model';
+import { CustomizationService } from '../../service/customization.service';
 
 type DragMode = 'move' | 'resize';
 
@@ -42,7 +43,7 @@ export class LabelRenderer {
   private readonly pending = new Set<string>();
   private drag: DragState | null = null;
 
-  constructor(private readonly sanitizer: DomSanitizer) {}
+  constructor(private readonly sanitizer: DomSanitizer, protected readonly customization: CustomizationService) {}
 
   /** The rendered label element (used for printing). */
   get nativeLabel(): HTMLElement {
@@ -50,7 +51,7 @@ export class LabelRenderer {
   }
 
   protected text(element: LabelElement): string {
-    return resolveContent(element.content, this.context);
+    return resolveContent(element.content, { ...this.customization.labelContext, ...this.context });
   }
 
   protected barcode(element: LabelElement): { svg: SafeHtml | null; error: string | null } | null {

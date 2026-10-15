@@ -45,11 +45,11 @@ body {
     --text-subtle: #94a3b8;
 
     // brand
-    --accent: #b62f2f;
-    --accent-hover: #9d2828;
-    --accent-soft: rgba(182, 47, 47, .12);
+    --accent: var(--brand-color, #b62f2f);
+    --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
+    --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
     /** text and icons on top of accent, success or other strong colors */
-    --on-accent: #ffffff;
+    --on-accent: var(--brand-on-color, #ffffff);
 
     // states
     --success: #15803d;

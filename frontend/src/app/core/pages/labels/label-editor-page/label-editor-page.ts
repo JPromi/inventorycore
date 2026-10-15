@@ -6,6 +6,7 @@ import {
   LucideChevronDown,
   LucideChevronUp,
   LucideCopy,
+  LucideImage,
   LucideQrCode,
   LucideSave,
   LucideSquare,
@@ -37,6 +38,7 @@ import {
 import { AreaService } from '../../../service/area.service';
 import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import { PermissionService } from '../../../service/permission.service';
+import { CustomizationService } from '../../../service/customization.service';
 
 const MM_TO_PX = 96 / 25.4;
 
@@ -51,6 +53,7 @@ const MM_TO_PX = 96 / 25.4;
     LucideChevronDown,
     LucideChevronUp,
     LucideCopy,
+    LucideImage,
     LucideQrCode,
     LucideSave,
     LucideSquare,
@@ -93,6 +96,7 @@ export class LabelEditorPage implements OnInit {
     private readonly confirmDialog: ConfirmDialogService,
     private readonly areaService: AreaService,
     private readonly permissions: PermissionService,
+    protected readonly customization: CustomizationService,
   ) {}
 
   ngOnInit(): void {
@@ -193,6 +197,20 @@ export class LabelEditorPage implements OnInit {
       case 'box':
         element = { ...base, x: 0.5, y: 0.5, width: this.widthMm - 1, height: this.heightMm - 1, borderWidth: 0.3 };
         break;
+      case 'logo':
+        element = { ...base, width: Math.max(1, Math.min(20, this.widthMm - 4)), height: Math.max(1, Math.min(10, this.heightMm - 4)) };
+        placement: for (let y = 2; y <= this.heightMm - element.height; y++) {
+          for (let x = 2; x <= this.widthMm - element.width; x++) {
+            if (this.elements.filter(existing => existing.type !== 'box').every(existing =>
+              x + element.width < existing.x || x > existing.x + existing.width
+              || y + element.height < existing.y || y > existing.y + existing.height)) {
+              element.x = x;
+              element.y = y;
+              break placement;
+            }
+          }
+        }
+        break;
     }
     this.elements = [...this.elements, element];
     this.selectedId = element.id;
@@ -240,7 +258,7 @@ export class LabelEditorPage implements OnInit {
   }
 
   protected insertPlaceholder(key: string): void {
-    if (this.selected && this.selected.type !== 'box') {
+    if (this.selected && (this.selected.type === 'text' || this.selected.type === 'barcode')) {
       this.selected.content = `${this.selected.content ?? ''}{${key}}`;
     }
   }
@@ -253,6 +271,8 @@ export class LabelEditorPage implements OnInit {
         return `${SYMBOLOGIES.find((entry) => entry.id === element.symbology)?.label ?? 'Code'}: ${element.content ?? ''}`;
       case 'box':
         return 'Rahmen';
+      case 'logo':
+        return 'Logo';
     }
   }
 

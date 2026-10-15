@@ -2,7 +2,7 @@
  * Prints a rendered label through a hidden iframe whose page size equals the label size,
  * so label printers (Brother, Dymo, Zebra, ...) get exactly one label per page.
  */
-export function printLabel(label: HTMLElement, widthMm: number, heightMm: number, copies = 1): void {
+export async function printLabel(label: HTMLElement, widthMm: number, heightMm: number, copies = 1): Promise<void> {
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
@@ -40,6 +40,14 @@ export function printLabel(label: HTMLElement, widthMm: number, heightMm: number
 <body>${pages}</body>
 </html>`);
   doc.close();
+
+  // Wait for the branding logo to load in the print document, not just in the preview.
+  try {
+    await Promise.all(Array.from(doc.images).map(image => image.decode()));
+  } catch {
+    iframe.remove();
+    throw new Error('Das Logo konnte für den Druck nicht geladen werden.');
+  }
 
   const cleanup = () => setTimeout(() => iframe.remove(), 500);
   win.addEventListener('afterprint', cleanup, { once: true });

@@ -10,6 +10,8 @@ Local users may upload/remove their profile image. LDAP and OIDC users are rejec
 
 ## Authorization
 
+Only `GET /api/customization` and `GET /api/customization/logo` are anonymous branding endpoints. All mutations use `/api/admin/customization/**` and require `ROLE_ADMIN`. No provider credentials or internal settings are exposed through public customization. Legal/contact URLs are restricted to HTTP(S); uploaded logos are decoded/reencoded raster images, not executable SVG or HTML. Pixel dimensions are checked before full decoding, and uploads are limited to 5 MB.
+
 The request filter requires `ROLE_ADMIN` for `/api/admin/**`. A user is an admin through its role or membership in an admin-marked group; session authorities are established at login. Other domain operations use `PermissionService` and `AccessContext` to evaluate current group permissions. Do not assume every existing admin session is immediately revoked when group membership changes.
 
 Permissions support view, create, edit, inspect, delete, and admin actions for `ASSET`, `LOCATION`, or `ASSET_TYPE`. A null resource type or area broadens the grant to all types or areas. An object may be accessible through any of its areas. View access to a location extends to descendant locations and their assets; this does not automatically grant mutation rights.

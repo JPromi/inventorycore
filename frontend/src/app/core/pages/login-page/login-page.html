@@ -1,8 +1,9 @@
 <section class="login-page">
     <aside class="brand">
         <div class="brand-logo">
-            <span class="logo-icon"><svg lucideBoxes size="22"></svg></span>
-            <span>InventoryCore</span>
+            @if (customization.settings.logoUrl) { <img class="custom-logo" [src]="customization.settings.logoUrl" alt="" /> }
+            @else { <span class="logo-icon"><svg lucideBoxes size="22"></svg></span> }
+            <span>{{ customization.brandName }}</span>
         </div>
 
         <div class="brand-text">
@@ -15,18 +16,19 @@
             </ul>
         </div>
 
-        <p class="brand-footer">© {{ year }} InventoryCore</p>
+        <p class="brand-footer">© {{ year }} {{ customization.brandName }}</p>
     </aside>
 
     <main class="form-side">
         <div class="login-card">
             <div class="mobile-logo">
-                <span class="logo-icon"><svg lucideBoxes size="20"></svg></span>
-                <span>InventoryCore</span>
+                @if (customization.settings.logoUrl) { <img class="custom-logo" [src]="customization.settings.logoUrl" alt="" /> }
+                @else { <span class="logo-icon"><svg lucideBoxes size="20"></svg></span> }
+                <span>{{ customization.brandName }}</span>
             </div>
 
-            <h1>Willkommen zurück</h1>
-            <p class="subtitle">Melde dich mit deinem Konto an.</p>
+            <h1>{{ customization.settings.loginTitle || 'Willkommen zurück' }}</h1>
+            <p class="subtitle">{{ customization.settings.loginMessage || 'Melde dich mit deinem Konto an.' }}</p>
 
             @if (error) {
                 <p class="error" role="alert">{{ error }}</p>
@@ -93,6 +95,12 @@
                     <span>Mit {{ providers?.oidcLabel }} anmelden</span>
                 </button>
             }
+            <footer class="legal-links">
+                @if (customization.settings.imprintUrl) { <a [href]="customization.settings.imprintUrl" target="_blank" rel="noopener noreferrer">Impressum</a> }
+                @if (customization.settings.privacyUrl) { <a [href]="customization.settings.privacyUrl" target="_blank" rel="noopener noreferrer">Datenschutz</a> }
+                @if (customization.settings.websiteUrl) { <a [href]="customization.settings.websiteUrl" target="_blank" rel="noopener noreferrer">Website</a> }
+                @if (customization.settings.supportUrl) { <a [href]="customization.settings.supportUrl" target="_blank" rel="noopener noreferrer">Support</a> }
+            </footer>
         </div>
     </main>
 </section>

@@ -12,8 +12,8 @@
 <nav [class.open]="menuOpen">
     <header>
         <a class="brand" routerLink="/dashboard">
-            <img src="icons/icon.svg" alt="" width="28" height="28" />
-            <span>InventoryCore</span>
+            <img [src]="customization.settings.logoUrl || 'icons/icon.svg'" alt="" width="28" height="28" />
+            <span>{{ customization.brandName }}</span>
         </a>
         <button type="button" class="menu-close" aria-label="Menü schließen" (click)="menuOpen = false">
             <svg lucideX size="20"></svg>

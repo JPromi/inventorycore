@@ -327,3 +327,6 @@ main {
     align-items: center;
     justify-content: center;
 }
+
+.brand img { object-fit: contain; flex-shrink: 0; }
+.brand span { overflow-wrap: anywhere; min-width: 0; }

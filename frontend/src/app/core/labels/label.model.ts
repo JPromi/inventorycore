@@ -1,7 +1,7 @@
 import { InventoryItem } from '../service/inventory-api.service';
 import { locationPath } from '../util/location-utils';
 
-export type LabelElementType = 'text' | 'barcode' | 'box';
+export type LabelElementType = 'text' | 'barcode' | 'box' | 'logo';
 
 /** One element on a label. Positions and sizes are in millimeters from the top left corner. */
 export interface LabelElement {
@@ -25,6 +25,7 @@ export interface LabelElement {
   showText?: boolean;
   // box
   borderWidth?: number;
+  useBrandColor?: boolean;
 }
 
 export interface LabelTemplate {
@@ -78,6 +79,14 @@ export interface Placeholder {
 }
 
 export const PLACEHOLDERS: Placeholder[] = [
+  { key: 'brandName', label: 'Markenname' },
+  { key: 'brandColor', label: 'Markenfarbe' },
+  { key: 'website', label: 'Website' },
+  { key: 'imprint', label: 'Impressum' },
+  { key: 'privacy', label: 'Datenschutz' },
+  { key: 'support', label: 'Support' },
+  { key: 'loginTitle', label: 'Login-Titel' },
+  { key: 'loginMessage', label: 'Login-Text' },
   { key: 'name', label: 'Name' },
   { key: 'invId', label: 'Inventar-ID' },
   { key: 'serialNumber', label: 'Seriennummer' },

@@ -2,6 +2,8 @@
 
 ## Persistence Model
 
+`customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields. Label templates reference the current branding logically through their JSON elements/placeholders; logo bytes are not copied into label records.
+
 PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities generally have a generated numeric primary key for joins and a separate unique UUID for API use. LDAP/OIDC settings are singleton records with a fixed ID rather than ordinary UUID-addressed resources.
 
 | Domain | Relationships and storage |

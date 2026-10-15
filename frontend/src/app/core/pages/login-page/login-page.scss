@@ -27,6 +27,13 @@
     justify-content: center;
 }
 
+.custom-logo { width: 3rem; height: 3rem; object-fit: contain; flex-shrink: 0; }
+.brand-logo > span, .mobile-logo > span { min-width: 0; overflow-wrap: anywhere; }
+h1, .subtitle { overflow-wrap: anywhere; }
+.legal-links { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem 1rem; margin-top: 1.5rem; }
+.legal-links a { color: var(--text-muted); font-size: .8rem; overflow-wrap: anywhere; }
+.legal-links a:hover { color: var(--accent); }
+
 // ---- brand side ----
 
 .brand {

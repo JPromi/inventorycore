@@ -16,9 +16,16 @@
             [style.top.mm]="element.y"
             [style.width.mm]="element.width"
             [style.height.mm]="element.height"
+            [style.color]="element.useBrandColor ? customization.labelColor : null"
             (pointerdown)="startDrag($event, element, 'move')"
         >
             @switch (element.type) {
+                @case ('logo') {
+                    @if (customization.settings.logoUrl) {
+                        <img [src]="customization.settings.logoUrl" alt="Logo" draggable="false"
+                            style="width: 100%; height: 100%; object-fit: contain; display: block" />
+                    }
+                }
                 @case ('text') {
                     <div
                         style="width: 100%; height: 100%; display: flex; flex-direction: column; line-height: 1.15; white-space: pre-wrap; word-break: break-word"
@@ -41,7 +48,7 @@
                     }
                 }
                 @case ('box') {
-                    <div style="width: 100%; height: 100%; box-sizing: border-box; border-style: solid; border-color: #000" [style.border-width.mm]="element.borderWidth ?? 0.3"></div>
+                    <div style="width: 100%; height: 100%; box-sizing: border-box; border-style: solid; border-color: currentColor" [style.border-width.mm]="element.borderWidth ?? 0.3"></div>
                 }
             }
             @if (editable && element.id === selectedId) {

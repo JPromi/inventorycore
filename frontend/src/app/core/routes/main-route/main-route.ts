@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../../components/confirm-dialog/confirm-dialog';
 import { UserEntity } from '../../entities/user.entity';
 import { AuthStateService } from '../../service/auth-state.service';
 import { PwaService } from '../../service/pwa.service';
+import { CustomizationService } from '../../service/customization.service';
 import { CommonModule } from '@angular/common';
 import {
   LucideAlarmClock,
@@ -27,6 +28,7 @@ import {
   LucideMenu,
   LucideMapPin,
   LucideNetwork,
+  LucidePalette,
   LucideQrCode,
   LucideSettings,
   LucideShapes,
@@ -102,6 +104,7 @@ export class MainRoute implements OnInit {
       adminOnly: true,
       children: [
         { label: 'Bereiche', route: '/admin/areas', icon: LucideLayers },
+        { label: 'Customization', route: '/admin/customization', icon: LucidePalette },
         { label: 'Benutzer', route: '/admin/users', icon: LucideUser },
         { label: 'Gruppen', route: '/admin/groups', icon: LucideUsers },
         { label: 'Gruppen Berechtigungen', route: '/admin/group-permissions', icon: LucideShield },
@@ -121,6 +124,7 @@ export class MainRoute implements OnInit {
     private readonly authStateService: AuthStateService,
     private readonly router: Router,
     protected readonly pwa: PwaService,
+    protected readonly customization: CustomizationService,
   ) {}
 
   ngOnInit(): void {

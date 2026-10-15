@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 
 import { PwaStatus } from './core/components/pwa-status/pwa-status';
 import { AuthService } from './core/service/auth.service';
+import { CustomizationService } from './core/service/customization.service';
 
 @Component({
   selector: 'app-root',
@@ -13,9 +14,10 @@ import { AuthService } from './core/service/auth.service';
 export class App implements OnInit {
   protected readonly title = 'inventorycore';
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly customization: CustomizationService) {}
 
   ngOnInit(): void {
     this.authService.initializeSession().subscribe();
+    this.customization.load().subscribe();
   }
 }

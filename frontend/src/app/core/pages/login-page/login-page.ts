@@ -16,6 +16,7 @@ import {
 } from '@lucide/angular';
 
 import { AuthService, LoginProviders } from '../../service/auth.service';
+import { CustomizationService } from '../../service/customization.service';
 
 /** Messages for the ?error= codes the backend sends after a rejected SSO login. */
 const SSO_ERRORS: Record<string, string> = {
@@ -47,6 +48,7 @@ export class LoginPage implements OnInit {
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly authService: AuthService,
+    protected readonly customization: CustomizationService,
   ) {}
 
   ngOnInit(): void {

@@ -265,6 +265,7 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
+          { path: 'customization', loadComponent: () => import('./core/pages/admin/customization-page/customization-page').then(m => m.CustomizationPage) },
           {
             path: 'areas',
             loadComponent: () => import('./core/pages/admin/areas-page/areas-page').then((m) => m.AreasPage),

@@ -90,12 +90,16 @@ export class LabelPrintDialog implements OnInit {
     this.elements = parseElements(this.template?.elementsJson);
   }
 
-  protected print(): void {
+  protected async print(): Promise<void> {
     const template = this.template;
     if (!template || !this.renderer) {
       return;
     }
-    printLabel(this.renderer.nativeLabel, template.widthMm, template.heightMm, Math.min(100, Math.max(1, this.copies || 1)));
+    try {
+      await printLabel(this.renderer.nativeLabel, template.widthMm, template.heightMm, Math.min(100, Math.max(1, this.copies || 1)));
+    } catch {
+      this.error = 'Das Logo konnte für den Druck nicht geladen werden.';
+    }
   }
 
   @HostListener('document:keydown.escape')

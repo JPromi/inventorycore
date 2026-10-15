@@ -66,6 +66,7 @@ public class SecurityConfig {
                     "/login/oauth2/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/customization", "/api/customization/logo").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
