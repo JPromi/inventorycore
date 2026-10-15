@@ -26,9 +26,6 @@ app-root {
     margin: 0;
     padding: 0;
     font-family: 'Poppins', sans-serif;
-    // scroll areas keep their own momentum and bounce, but never pass the scroll on to the area
-    // behind them (the document itself does not bounce, see html / body above)
-    overscroll-behavior: contain;
     // touch: scrolling yes, pinch and double-tap zoom no (the color picker and the label editor
     // set their own value for dragging)
     touch-action: pan-x pan-y;
@@ -678,6 +675,7 @@ label.field {
     flex-direction: column;
     gap: .9rem;
     overflow-y: auto;
+    overscroll-behavior: contain;
     box-shadow: var(--shadow-md);
 
     @include bp.phone {
