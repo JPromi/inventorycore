@@ -1,0 +1,42 @@
+# Testing
+
+## Backend
+
+JUnit Jupiter and Mockito are available through Spring Boot test starters. Tests live under `backend/src/test/java` and cover image processing, LDAP synchronization/referrals, provider settings, profile uploads, inspection scheduling, and activity logging.
+
+From `backend/` on Windows:
+
+```powershell
+.\gradlew.bat test
+.\gradlew.bat test --tests 'com.jpromi.inventorycore.ldap.*'
+```
+
+Use `./gradlew` on Unix. Results are written to `build/reports/tests/test/` and `build/test-results/test/`.
+
+`InventorycoreApplicationTests` uses `@SpringBootTest`. No dedicated test datasource, embedded database, or Testcontainers setup is checked in. A full run therefore needs the configured PostgreSQL database and can execute schema/default-data initializers. Mock-based unit tests can be selected independently.
+
+LDAP tests mock directory access; they do not prove connectivity to an actual LDAP server. Preserve cases for failed/incomplete searches, continuation references, direct DN verification before deletion, provider isolation, and interval boundaries.
+
+## Frontend Unit Tests
+
+The Angular unit-test builder uses Vitest and jsdom. Component specs live beside their components.
+
+From `frontend/`:
+
+```sh
+npm test -- --watch=false
+```
+
+Known baseline: this command fails during compilation in the existing login-page spec. It has an outdated service import, Jasmine-style `spyOn` calls, and direct access to protected component members. This was verified while preparing this documentation; it is not a passing test suite. Correct these tests in a separate application/test maintenance task rather than hiding the failure.
+
+## Browser Regressions
+
+```sh
+npm run test:e2e
+```
+
+Playwright reads [playwright.config.ts](../frontend/playwright.config.ts), uses installed Microsoft Edge, blocks service workers, and starts or reuses the Angular server on `127.0.0.1:4201`. CI does not reuse an existing server. Edge must be available; downloading Playwright Chromium alone does not satisfy the configured `msedge` channel.
+
+[The current regression suite](../frontend/e2e/zone-updates.spec.ts) mocks API responses and verifies LDAP loading, connection results, sync success/error after confirmation, and user-list refresh after deletion without a follow-up click. These tests do not contact a real backend or identity provider.
+
+For async UI changes, assert the final DOM after delayed responses without injecting an extra click or manual change-detection call. For permissions and persistence changes, prioritize backend checks. Documentation-only changes need link/command validation, not a database-backed application restart.
