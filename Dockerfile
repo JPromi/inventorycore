@@ -8,7 +8,9 @@ FROM --platform=$BUILDPLATFORM node:24-alpine AS frontend
 WORKDIR /src/frontend
 RUN npm install -g npm@12.0.2
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+# --legacy-peer-deps: npm on Windows drops the peers of optional wasm32 packages (@emnapi/*) from the
+# lock file, which npm ci on Linux then rejects; all versions still come from package-lock.json
+RUN npm ci --legacy-peer-deps
 COPY frontend/ ./
 RUN npm run build
 
