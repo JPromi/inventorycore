@@ -164,6 +164,17 @@
 
 // ---- print settings dialog ----
 .print-settings {
+    // like the global label.field, for fields around app-search-select
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        min-width: 0;
+        color: var(--text-muted);
+        font-size: .85rem;
+        font-weight: 700;
+    }
+
     .dialog-header {
         display: flex;
         align-items: center;

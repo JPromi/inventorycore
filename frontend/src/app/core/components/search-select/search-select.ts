@@ -126,6 +126,10 @@ export class SearchSelect implements ControlValueAccessor {
     if (!this.open && (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault();
       this.openPanel();
+    } else if (this.open && event.key === 'Escape') {
+      // the search field is not focused yet: only close the panel, not a surrounding dialog
+      event.preventDefault();
+      this.close();
     }
   }
 

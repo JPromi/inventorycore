@@ -41,6 +41,10 @@
 
                 <div class="header-actions">
                     @if (config.endpoint === 'assets') {
+                        <button type="button" class="secondary-action" (click)="printSheet()">
+                            <svg lucideFileText size="16"></svg>
+                            <span>Drucken</span>
+                        </button>
                         <button type="button" class="secondary-action" (click)="showPrintDialog = true">
                             <svg lucidePrinter size="16"></svg>
                             <span>Label drucken</span>
@@ -389,6 +393,21 @@
         }
     </div>
 </section>
+
+@if (item && config.endpoint === 'assets') {
+    <app-asset-print
+        [asset]="item"
+        [details]="printDetails"
+        [typeName]="assetType?.name ?? null"
+        [locationPath]="locationText"
+        [areaNames]="areaNames"
+        [images]="images"
+        [inspections]="inspections"
+        [schedules]="schedules"
+        [parent]="parentAsset"
+        [children]="childAssets"
+    />
+}
 
 @if (showPrintDialog && item) {
     <app-label-print-dialog [assets]="[item]" [locations]="locations" [assetTypes]="assetTypes" (closed)="showPrintDialog = false" />

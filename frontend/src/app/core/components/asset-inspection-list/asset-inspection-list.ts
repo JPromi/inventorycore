@@ -5,7 +5,28 @@ import { LucideClipboardCheck } from '@lucide/angular';
 
 import { AssetInspection, formatCheckValue } from '../../service/inspection.service';
 
-type Tone = 'good' | 'bad' | 'warn' | 'neutral';
+export type InspectionResultTone = 'good' | 'bad' | 'warn' | 'neutral';
+
+/** Result of an asset in one inspection, as text and tone. */
+export function inspectionResult(entry: AssetInspection): { label: string; tone: InspectionResultTone } {
+  if (!entry.expected) {
+    return { label: 'Als fremder Gegenstand gefunden', tone: 'warn' };
+  }
+  switch (entry.status) {
+    case 'PRESENT':
+      return entry.condition === 'DEFECT'
+        ? { label: 'Da, defekt', tone: 'bad' }
+        : { label: entry.condition === 'OK' ? 'Da, in Ordnung' : 'Da', tone: 'good' };
+    case 'MISSING':
+      return { label: 'Fehlt', tone: 'bad' };
+    case 'PASSED':
+      return { label: 'In Ordnung', tone: 'good' };
+    case 'FAILED':
+      return { label: 'Mangel', tone: 'bad' };
+    default:
+      return entry.inspectionStatus === 'OPEN' ? { label: 'Noch nicht geprüft', tone: 'neutral' } : { label: 'Nicht geprüft', tone: 'bad' };
+  }
+}
 
 /** Inspections an asset was part of, with its result and check values. */
 @Component({
@@ -19,23 +40,5 @@ export class AssetInspectionList {
 
   protected readonly formatCheckValue = formatCheckValue;
 
-  protected result(entry: AssetInspection): { label: string; tone: Tone } {
-    if (!entry.expected) {
-      return { label: 'Als fremder Gegenstand gefunden', tone: 'warn' };
-    }
-    switch (entry.status) {
-      case 'PRESENT':
-        return entry.condition === 'DEFECT'
-          ? { label: 'Da, defekt', tone: 'bad' }
-          : { label: entry.condition === 'OK' ? 'Da, in Ordnung' : 'Da', tone: 'good' };
-      case 'MISSING':
-        return { label: 'Fehlt', tone: 'bad' };
-      case 'PASSED':
-        return { label: 'In Ordnung', tone: 'good' };
-      case 'FAILED':
-        return { label: 'Mangel', tone: 'bad' };
-      default:
-        return entry.inspectionStatus === 'OPEN' ? { label: 'Noch nicht geprüft', tone: 'neutral' } : { label: 'Nicht geprüft', tone: 'bad' };
-    }
-  }
+  protected readonly result = inspectionResult;
 }

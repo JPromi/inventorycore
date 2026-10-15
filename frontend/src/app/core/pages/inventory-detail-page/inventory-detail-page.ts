@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -7,6 +7,7 @@ import {
   LucideBoxes,
   LucideCalendarClock,
   LucideChevronRight,
+  LucideFileText,
   LucideMapPin,
   LucidePencil,
   LucidePlus,
@@ -22,6 +23,7 @@ import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-di
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { AssetInspectionList } from '../../components/asset-inspection-list/asset-inspection-list';
 import { AuditHistory } from '../../components/audit-history/audit-history';
+import { AssetPrint, AssetPrintDetail } from './asset-print/asset-print';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { AreaService } from '../../service/area.service';
 import {
@@ -81,6 +83,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
   selector: 'app-inventory-detail-page',
   imports: [
     AssetInspectionList,
+    AssetPrint,
     AuditHistory,
     CommonModule,
     FormsModule,
@@ -90,6 +93,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     LucideBoxes,
     LucideCalendarClock,
     LucideChevronRight,
+    LucideFileText,
     LucideMapPin,
     LucidePencil,
     LucidePlus,
@@ -120,6 +124,8 @@ export class InventoryDetailPage implements OnInit {
   protected fixedDateInput = '';
   protected readonly dueText = dueText;
   protected readonly intervalText = intervalText;
+
+  @ViewChild(AssetPrint) private assetPrint?: AssetPrint;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -278,6 +284,29 @@ export class InventoryDetailPage implements OnInit {
     }));
     const own = values.map((value) => ({ name: value.name, value: value.value || null, fieldType: null }));
     return [...fromType, ...own];
+  }
+
+  /** Details for the printed data sheet; inventory ID, type and location are in its header. */
+  protected get printDetails(): AssetPrintDetail[] {
+    const fields = this.config.fields
+      .filter((field) => field.key !== 'invId')
+      .map((field) => ({ label: field.label, value: this.fieldValue(field), wide: field.key === 'description' }));
+    const custom = this.customFields.map((field) => ({ label: field.name, value: field.value ? this.formatCustomValue(field.value, field.fieldType) : null }));
+    const tags = [...this.ownTags, ...this.inheritedTags].map((tag) => tag.name).join(', ');
+    return [...fields, ...custom, { label: 'Tags', value: tags, wide: true }]
+      .filter((detail): detail is AssetPrintDetail => !!detail.value);
+  }
+
+  protected get locationText(): string | null {
+    return this.locationChain.map((location) => location.name).join(' / ') || null;
+  }
+
+  protected get areaNames(): string[] {
+    return this.areas.map((area) => area.name);
+  }
+
+  protected printSheet(): void {
+    this.assetPrint?.open();
   }
 
   protected formatCustomValue(value: string | null, fieldType: AssetFieldType | null): string {

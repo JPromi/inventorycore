@@ -1,4 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, Locator, test } from '@playwright/test';
+
+/** Picks an option of the app-search-select in the print dialog field with this caption. */
+async function choose(dialog: Locator, caption: string, option: string) {
+  const field = dialog.locator('.field', { hasText: caption });
+  await field.locator('.trigger').click();
+  await field.getByRole('option', { name: new RegExp(`^${option}`) }).click();
+  await expect(field.locator('.trigger')).toContainText(option);
+}
 
 const item = (i: number, overrides: Record<string, unknown> = {}) => ({
   uuid: `item-${i}`, assetUuid: `asset-${i}`, assetName: `Notebook ${String(i).padStart(3, '0')}`, invId: `INV-${1000 + i}`,
@@ -43,8 +51,10 @@ test('inspection protocol prints as a branded multi-page document', async ({ pag
   await page.goto('/inspections/run');
   await page.getByRole('button', { name: 'Drucken', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Prüfbericht drucken' });
-  await dialog.getByLabel('Papierformat').selectOption('A4');
-  await dialog.getByLabel('Ausrichtung').selectOption('portrait');
+  await expect(dialog.locator('select')).toHaveCount(0);
+  await choose(dialog, 'Papierformat', 'A4');
+  await choose(dialog, 'Ausrichtung', 'Hochformat');
+  await choose(dialog, 'Seitenränder', 'Normal');
   await expect(dialog.getByLabel('Fotos drucken')).toBeChecked();
   await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(1);
@@ -90,4 +100,92 @@ test('inspection protocol prints as a branded multi-page document', async ({ pag
   await expect(sheet.locator('.print-page')).toHaveCount(0);
   await expect(page.locator('body')).not.toHaveClass(/printing-document/);
   expect(await page.title()).not.toContain('Prüfbericht');
+});
+
+test('asset data sheet prints details, images, last inspection and due dates by choice', async ({ page }, testInfo) => {
+  const image = (name: string, sortOrder: number) => ({ kind: sortOrder ? 'GALLERY' : 'THUMBNAIL', url: '/icons/icon-192x192.png',
+    thumbnailUrl: '/icons/icon-192x192.png', fileName: name, sortOrder });
+  const asset = {
+    uuid: 'nb', name: 'Notebook Max', invId: 'INV-0042', serialNumber: 'SN-123', inventoryNumber: 'A-77', description: 'Dienstgerät\nmit Dockingstation',
+    inspectionPolicy: 'STANDARD', assetTypeUuid: 'type', locationUuid: 'room', areaUuids: ['area'], createdAt: '2025-03-01T09:00:00Z',
+    fieldValues: [{ fieldKey: 'ram', name: 'RAM', value: '32', customAssetField: false }], tags: [{ uuid: 't', name: 'Mobil' }],
+    images: [image('front.png', 0), image('rueckseite.png', 1), image('typenschild.png', 2)],
+  };
+  const inspections = [
+    { inspectionUuid: 'old', title: 'Inventur 2025', typeName: 'Inventur', inspectionStatus: 'COMPLETED', createdAt: '2025-10-01T08:00:00Z',
+      completedAt: '2025-10-01T12:00:00Z', expected: true, status: 'PRESENT', method: 'SCAN', condition: null, checkedAt: '2025-10-01T09:00:00Z',
+      checkedByName: 'Max Muster', locationName: 'Büro 2', note: null, values: [] },
+    { inspectionUuid: 'new', title: 'E-Check Oktober', typeName: 'E-Check', inspectionStatus: 'COMPLETED', createdAt: '2026-10-10T08:00:00Z',
+      completedAt: '2026-10-10T12:00:00Z', expected: true, status: 'FAILED', method: 'MANUAL', condition: null, checkedAt: '2026-10-10T09:30:00Z',
+      checkedByName: 'Erika Beispiel', locationName: 'Büro 2', note: 'Netzteil-Kabel beschädigt',
+      values: [{ fieldUuid: 'f', fieldName: 'Isolationswiderstand ok', fieldType: 'BOOLEAN', value: 'false' }] },
+  ];
+  const schedules = [{ assetUuid: 'nb', assetName: 'Notebook Max', invId: 'INV-0042', assetTypeName: 'Notebook', locationName: 'Büro 2',
+    inspectionTypeUuid: 'echeck', inspectionTypeName: 'E-Check', inspectionTypeColor: null, intervalValue: 1, intervalUnit: 'YEARS',
+    lastCheckedAt: '2026-10-10T09:30:00Z', lastCheckedByName: 'Erika Beispiel', lastResult: 'FAILED', nextDueDate: '2027-10-10',
+    fixedDueDate: null, state: 'OK', daysUntilDue: 360, assetAreaUuids: ['area'] }];
+  await page.addInitScript(() => {
+    (window as unknown as { printed: number }).printed = 0;
+    window.print = () => { (window as unknown as { printed: number }).printed++; };
+  });
+  await page.route('**/api/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    const body = path === '/api/auth/me' ? { authenticated: true, username: 'admin', displayName: 'Admin', role: 'ADMIN', permissions: [] }
+      : path === '/api/assets/nb' ? asset
+      : path === '/api/assets/nb/inspections' ? inspections
+      : path === '/api/assets/nb/inspection-schedules' ? schedules
+      : path === '/api/assets' ? [asset, { uuid: 'dock', name: 'Dockingstation', invId: 'INV-0043', parentAssetUuid: 'nb', parentAssetNote: 'USB-C', areaUuids: ['area'] }]
+      : path === '/api/asset-types' ? [{ uuid: 'type', name: 'Notebook', tags: [],
+        fieldDefinitions: [{ name: 'RAM', fieldKey: 'ram', fieldType: 'NUMBER', required: false, typeField: true, sortOrder: 0 }] }]
+      : path === '/api/locations' ? [{ uuid: 'site', name: 'Wien' }, { uuid: 'room', name: 'Büro 2', parentLocationUuid: 'site' }]
+      : path === '/api/areas' ? [{ uuid: 'area', name: 'EDV', defaultArea: true }]
+      : path === '/api/customization' ? { brandName: 'Muster GmbH', logoUrl: '/icons/icon-192x192.png' } : [];
+    return route.fulfill({ json: body });
+  });
+
+  await page.goto('/assets/nb');
+  await page.getByRole('button', { name: 'Drucken', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Asset-Datenblatt drucken' });
+  await expect(dialog.locator('.field', { hasText: 'Bilder' }).locator('.trigger')).toContainText('Alle Bilder');
+  // Escape closes an open dropdown, not the whole print dialog
+  await dialog.locator('.field', { hasText: 'Papierformat' }).locator('.trigger').click();
+  await page.keyboard.press('Escape');
+  await expect(dialog.locator('.panel')).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel('Letzte Prüfung mit Prüfwerten')).toBeChecked();
+  await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(1);
+
+  await page.emulateMedia({ media: 'print' });
+  const pages = page.locator('body > .print-document.active .print-pages');
+  await expect(pages.locator('h1')).toHaveText('Notebook Max');
+  const meta = pages.locator('.doc-meta');
+  await expect(meta).toContainText('INV-0042');
+  await expect(meta).toContainText('Wien / Büro 2');
+  await expect(meta).toContainText('10.10.2026 · Mangel');
+  await expect(pages.locator('.print-details').first()).toContainText('SN-123');
+  await expect(pages.locator('.print-details').first()).toContainText('RAM');
+  await expect(pages.locator('.print-figure img')).toHaveCount(1);
+  await expect(pages.locator('.print-gallery img')).toHaveCount(2);
+  await expect(pages).toContainText('E-Check Oktober');
+  await expect(pages).toContainText('Netzteil-Kabel beschädigt');
+  await expect(pages).toContainText('Isolationswiderstand ok');
+  await expect(pages).not.toContainText('Inventur 2025');
+  await expect(pages).toContainText('10.10.2027');
+  await expect(pages).toContainText('Dockingstation');
+  await expect(pages.locator('.print-page').first().locator('.print-page-footer')).toContainText('Seite 1 von');
+  const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  await testInfo.attach('asset.pdf', { body: pdf, contentType: 'application/pdf' });
+
+  // second print without images and without the inspection; the header still names the last result
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await page.getByRole('button', { name: 'Drucken', exact: true }).click();
+  await choose(dialog, 'Bilder', 'Keine Bilder');
+  await dialog.getByLabel('Letzte Prüfung mit Prüfwerten').uncheck();
+  await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(2);
+  await expect(pages.locator('img:not(.logo)')).toHaveCount(0);
+  await expect(pages).not.toContainText('Netzteil-Kabel beschädigt');
+  await expect(meta).toContainText('10.10.2026 · Mangel');
 });

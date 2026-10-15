@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucidePrinter, LucideX } from '@lucide/angular';
 
 import { CustomizationService } from '../../service/customization.service';
+import { SearchSelect, SelectOption } from '../search-select/search-select';
 
 /** One "label: value" entry in the document header (who, when, what). */
 export interface PrintMeta {
@@ -53,7 +54,7 @@ const SPLITTABLE = new Set(['DIV', 'SECTION', 'ARTICLE', 'MAIN', 'UL', 'OL', 'TA
  */
 @Component({
   selector: 'app-print-document',
-  imports: [FormsModule, LucidePrinter, LucideX],
+  imports: [FormsModule, SearchSelect, LucidePrinter, LucideX],
   templateUrl: './print-document.html',
   styleUrl: './print-document.scss',
   // the pages are built in code; all selectors are scoped by .print-document / .print-settings
@@ -74,11 +75,19 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   protected settings: PrintSettings = { ...DEFAULT_SETTINGS };
   protected dialogOpen = false;
   protected preparing = false;
-  protected readonly sizes: { value: PaperSize; label: string }[] = [
-    { value: 'A4', label: 'A4 (210 × 297 mm)' },
-    { value: 'A3', label: 'A3 (297 × 420 mm)' },
-    { value: 'A5', label: 'A5 (148 × 210 mm)' },
-    { value: 'letter', label: 'US Letter' },
+  protected readonly sizes: SelectOption[] = [
+    { value: 'A4', label: 'A4', hint: '210 × 297 mm' },
+    { value: 'A3', label: 'A3', hint: '297 × 420 mm' },
+    { value: 'A5', label: 'A5', hint: '148 × 210 mm' },
+    { value: 'letter', label: 'US Letter', hint: '216 × 279 mm' },
+  ];
+  protected readonly orientations: SelectOption[] = [
+    { value: 'portrait', label: 'Hochformat' },
+    { value: 'landscape', label: 'Querformat' },
+  ];
+  protected readonly margins: SelectOption[] = [
+    { value: 'normal', label: 'Normal', hint: '15 mm' },
+    { value: 'narrow', label: 'Schmal', hint: '8 mm' },
   ];
 
   constructor(
@@ -110,9 +119,16 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
     this.dialogOpen = true;
   }
 
-  @HostListener('document:keydown.escape')
   protected close(): void {
     this.dialogOpen = false;
+  }
+
+  /** Escape in an open dropdown only closes the dropdown (it prevents the default). */
+  @HostListener('document:keydown.escape', ['$event'])
+  protected onEscape(event: Event): void {
+    if (!event.defaultPrevented) {
+      this.close();
+    }
   }
 
   protected async print(): Promise<void> {

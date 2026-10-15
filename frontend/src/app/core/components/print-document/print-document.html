@@ -59,28 +59,18 @@
             </header>
 
             <div class="field-grid">
-                <label class="field">
+                <div class="field">
                     <span>Papierformat</span>
-                    <select name="size" [(ngModel)]="settings.size">
-                        @for (size of sizes; track size.value) {
-                            <option [value]="size.value">{{ size.label }}</option>
-                        }
-                    </select>
-                </label>
-                <label class="field">
+                    <app-search-select name="size" [options]="sizes" [(ngModel)]="settings.size" searchPlaceholder="Format suchen..." />
+                </div>
+                <div class="field">
                     <span>Ausrichtung</span>
-                    <select name="orientation" [(ngModel)]="settings.orientation">
-                        <option value="portrait">Hochformat</option>
-                        <option value="landscape">Querformat</option>
-                    </select>
-                </label>
-                <label class="field">
+                    <app-search-select name="orientation" [options]="orientations" [(ngModel)]="settings.orientation" searchPlaceholder="Ausrichtung suchen..." />
+                </div>
+                <div class="field">
                     <span>Seitenränder</span>
-                    <select name="margin" [(ngModel)]="settings.margin">
-                        <option value="normal">Normal</option>
-                        <option value="narrow">Schmal</option>
-                    </select>
-                </label>
+                    <app-search-select name="margin" [options]="margins" [(ngModel)]="settings.margin" searchPlaceholder="Ränder suchen..." />
+                </div>
             </div>
 
             <div class="options">
