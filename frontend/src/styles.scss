@@ -607,6 +607,17 @@ label.field {
     }
 }
 
+// Cover the scroll container's bottom padding below sticky form actions.
+.sticky-editor-actions::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    height: var(--page-padding);
+    background: var(--background);
+    pointer-events: none;
+}
+
 // tabs with counters, e.g. "Offen 3 | Abgeschlossen 5"; scrolls sideways on phones
 .segmented-tabs {
     max-width: 100%;
