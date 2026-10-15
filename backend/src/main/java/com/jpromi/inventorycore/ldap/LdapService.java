@@ -105,7 +105,7 @@ public class LdapService {
         try {
             context = LdapClient.connect(settings);
             List<LdapClient.Entry> userEntries = LdapClient.search(context, userBase(settings), settings.getUserFilter(),
-                settings.getUsernameAttribute(), settings.getDisplayNameAttribute(), settings.getEmailAttribute());
+                settings.getUsernameAttribute(), settings.getDisplayNameAttribute(), settings.getEmailAttribute(), "thumbnailPhoto", "jpegPhoto");
             List<LdapClient.Entry> groupEntries = LdapClient.search(context, groupBase(settings), settings.getGroupFilter(),
                 settings.getGroupNameAttribute(), settings.getGroupMemberAttribute());
 
@@ -190,6 +190,16 @@ public class LdapService {
                 user.setExternalId(entry.dn());
                 user.setEnabled(true);
                 updated++;
+            }
+            String photo = entry.first("thumbnailPhoto");
+            if (photo == null) {
+                photo = entry.first("jpegPhoto");
+            }
+            try {
+                com.jpromi.inventorycore.service.ProfileImageService.setImage(user,
+                    photo == null ? null : java.util.Base64.getDecoder().decode(photo));
+            } catch (IllegalArgumentException | org.springframework.web.server.ResponseStatusException exception) {
+                log.warn("Invalid LDAP profile image for {}", username);
             }
             seen.add(user);
             syncedByDn.put(lower(entry.dn()), user);

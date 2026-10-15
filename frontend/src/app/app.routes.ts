@@ -77,6 +77,10 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       {
+        path: 'profile',
+        loadComponent: () => import('./core/pages/profile-page/profile-page').then((m) => m.ProfilePage),
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard',

@@ -79,6 +79,21 @@ public class User {
     @Column(length = 1000)
     private String externalId;
 
+    @Column(length = 2000)
+    private String profileImageUrl;
+
+    @Column(length = 2097152)
+    private byte[] profileImage;
+
+    private String profileImageContentType;
+
+    private UUID profileImageVersion;
+
+    public String profileImageLocation() {
+        return profileImage != null && profileImageVersion != null
+            ? "/api/profile-images/" + uuid + "?v=" + profileImageVersion : profileImageUrl;
+    }
+
     @ManyToMany
     @JoinTable(
         name = "user_groups",

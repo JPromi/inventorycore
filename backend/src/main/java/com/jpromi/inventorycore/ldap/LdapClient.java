@@ -64,7 +64,7 @@ public final class LdapClient {
         env.put("com.sun.jndi.ldap.connect.timeout", "5000");
         env.put("com.sun.jndi.ldap.read.timeout", "15000");
         // binary attributes must not be decoded as text
-        env.put("java.naming.ldap.attributes.binary", "objectGUID objectSid");
+        env.put("java.naming.ldap.attributes.binary", "objectGUID objectSid thumbnailPhoto jpegPhoto");
         if (principal != null && !principal.isBlank()) {
             env.put(Context.SECURITY_AUTHENTICATION, "simple");
             env.put(Context.SECURITY_PRINCIPAL, principal);
@@ -178,6 +178,8 @@ public final class LdapClient {
                 Object value = attributeValues.next();
                 if (value instanceof String text) {
                     list.add(text);
+                } else if (value instanceof byte[] bytes && (name.equals("thumbnailphoto") || name.equals("jpegphoto"))) {
+                    list.add(java.util.Base64.getEncoder().encodeToString(bytes));
                 }
             }
         }

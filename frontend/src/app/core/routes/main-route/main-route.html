@@ -90,8 +90,14 @@
             </button>
         }
         <app-area-switcher />
-        <a class="user" href="#">
-            <span class="avatar">{{ user?.displayName?.charAt(0) }}</span>
+        <a class="user" routerLink="/profile">
+            <span class="avatar">
+                @if (user?.profileImageUrl && !profileImageFailed) {
+                    <img [src]="user?.profileImageUrl" alt="" referrerpolicy="no-referrer" (error)="profileImageFailed = true" />
+                } @else {
+                    {{ user?.displayName?.charAt(0) }}
+                }
+            </span>
             <span>{{ user?.displayName }}</span>
         </a>
     </footer>

@@ -22,6 +22,10 @@ public class AuthResponse {
     
     private String displayName;
 
+    private com.jpromi.inventorycore.enums.Provider sourceProvider;
+
+    private String profileImageUrl;
+
     private String role;
 
     @Builder.Default

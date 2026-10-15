@@ -48,7 +48,8 @@ public class ApiMapper {
             user.getRole(),
             user.isEnabled(),
             user.getGroups().stream().map(Group::getUuid).collect(Collectors.toSet()),
-            user.getSourceProvider()
+            user.getSourceProvider(),
+            user.profileImageLocation()
         );
     }
 

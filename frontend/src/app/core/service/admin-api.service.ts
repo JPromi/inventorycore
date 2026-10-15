@@ -15,6 +15,7 @@ export interface AdminUser {
   enabled: boolean;
   groupUuids: string[];
   sourceProvider: AuthProvider;
+  profileImageUrl?: string | null;
 }
 
 export type AuthProvider = 'LOCAL' | 'OIDC' | 'LDAP';

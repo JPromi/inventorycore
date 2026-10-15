@@ -63,7 +63,11 @@
                                     <div class="avatars">
                                         @for (user of members(group).slice(0, 5); track user.uuid) {
                                             <span class="avatar" [title]="user.displayName || user.username">
-                                                {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
+                                                @if (user.profileImageUrl) {
+                                                    <img [src]="user.profileImageUrl" alt="" referrerpolicy="no-referrer" (error)="user.profileImageUrl = null" />
+                                                } @else {
+                                                    {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
+                                                }
                                             </span>
                                         }
                                         <span class="muted count">{{ members(group).length }}</span>

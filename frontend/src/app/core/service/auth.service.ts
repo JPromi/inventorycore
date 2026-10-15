@@ -89,7 +89,8 @@ export class AuthService {
   private toUser(payload: AuthResponseDto): UserEntity {
     return {
       username: payload.username ?? 'unknown',
-      authProvider: 'LOCAL',
+      authProvider: payload.sourceProvider ?? 'LOCAL',
+      profileImageUrl: payload.profileImageUrl ?? null,
       displayName: payload.displayName ?? 'unknown',
       role: payload.role ?? 'USER',
       permissions: payload.permissions ?? [],

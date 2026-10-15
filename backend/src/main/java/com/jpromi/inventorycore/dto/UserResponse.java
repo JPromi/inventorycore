@@ -13,5 +13,6 @@ public record UserResponse(
     String role,
     boolean enabled,
     Set<UUID> groupUuids,
-    Provider sourceProvider
+    Provider sourceProvider,
+    String profileImageUrl
 ) {}

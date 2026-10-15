@@ -2,6 +2,8 @@ export interface AuthResponseDto {
   authenticated: boolean;
   username: string | null;
   displayName: string | null;
+  sourceProvider?: 'LOCAL' | 'OIDC' | 'LDAP';
+  profileImageUrl?: string | null;
   role: string | null;
   permissions?: PermissionDto[];
   message?: string | null;

@@ -67,7 +67,13 @@
                         <tr class="clickable" (click)="edit(user)">
                             <td>
                                 <div class="user-cell">
-                                    <span class="avatar">{{ (user.displayName || user.username).charAt(0).toUpperCase() }}</span>
+                                    <span class="avatar">
+                                        @if (user.profileImageUrl) {
+                                            <img [src]="user.profileImageUrl" alt="" referrerpolicy="no-referrer" (error)="user.profileImageUrl = null" />
+                                        } @else {
+                                            {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
+                                        }
+                                    </span>
                                     <span>
                                         <strong>{{ user.displayName || user.username }}</strong>
                                         <span class="muted">{{ user.username }}@if (isSelf(user)) { · Du}</span>

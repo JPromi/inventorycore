@@ -72,6 +72,7 @@ type NavItem = NavChild & {
 })
 export class MainRoute implements OnInit {
   protected user: UserEntity | null = null;
+  protected profileImageFailed = false;
   /** Phones and tablets: the navigation is a drawer that slides in. */
   protected menuOpen = false;
   protected currentUrl = '';
@@ -124,6 +125,7 @@ export class MainRoute implements OnInit {
 
   ngOnInit(): void {
     this.authStateService.currentUser$.subscribe((user) => {
+      this.profileImageFailed = false;
       this.user = user;
     });
 

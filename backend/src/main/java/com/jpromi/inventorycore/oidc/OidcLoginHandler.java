@@ -161,6 +161,8 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
                 user.setEmail(email);
             }
             user.setExternalId(subject);
+            String picture = claim(claims, "picture");
+            user.setProfileImageUrl(picture != null && picture.startsWith("https://") ? picture : null);
             if (settings.isSyncGroups()) {
                 assignGroups(user, groupNames(claims.get(settings.getGroupsClaim())));
             }

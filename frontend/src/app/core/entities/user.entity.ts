@@ -2,6 +2,7 @@ export interface UserEntity {
   username: string;
   displayName: string;
   authProvider: 'LOCAL' | 'OIDC' | 'LDAP';
+  profileImageUrl?: string | null;
   role: string;
   permissions: UserPermissionEntity[];
   isLoggedIn: boolean;
