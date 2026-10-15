@@ -631,3 +631,14 @@ dd {
         }
     }
 }
+
+// asset structure in the printed protocol
+.print-tree-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4mm;
+    margin-left: calc(var(--asset-depth, 0) * 5mm);
+    padding: 1mm 0;
+    border-bottom: 1px solid var(--border);
+    break-inside: avoid;
+}

@@ -812,3 +812,118 @@ app-selection-checkbox.selection-hidden { display: none; }
         box-shadow: none !important;
     }
 }
+
+// ---- building blocks for the content of an app-print-document (paper sizes in mm/pt) ----
+.print-document {
+    .print-muted {
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    .print-block {
+        display: block;
+    }
+
+    .print-alert {
+        font-weight: 700;
+    }
+
+    .print-mono {
+        font-family: var(--font-mono);
+        font-size: 8.5pt;
+    }
+}
+
+.print-stats {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 7mm;
+    border: 1px solid var(--border);
+    break-inside: avoid;
+
+    > div {
+        flex: 1 1 0;
+        min-width: 26mm;
+        display: flex;
+        flex-direction: column;
+        padding: 2.5mm 3.5mm;
+
+        + div {
+            border-left: 1px solid var(--border);
+        }
+    }
+
+    strong {
+        font-size: 16pt;
+        line-height: 1.2;
+    }
+
+    span {
+        color: var(--text-muted);
+        font-size: 8pt;
+    }
+}
+
+.print-section {
+    margin-bottom: 7mm;
+
+    h2 {
+        margin-bottom: 2mm;
+        padding-bottom: 1.5mm;
+        border-bottom: 1.5px solid var(--text);
+        font-size: 11.5pt;
+        break-after: avoid;
+    }
+}
+
+.print-text {
+    white-space: pre-wrap;
+}
+
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+
+    th,
+    td {
+        padding: 1.6mm 2mm;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    th {
+        color: var(--text-muted);
+        font-size: 7.5pt;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    tr {
+        break-inside: avoid;
+    }
+}
+
+.print-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5mm;
+    margin-top: 1.5mm;
+
+    img {
+        width: 22mm;
+        height: 22mm;
+        object-fit: cover;
+        border: 1px solid var(--border);
+    }
+}
+
+// printing an app-print-document: only its sheet (moved into <body>), nothing of the app
+@media print {
+    body.printing-document > :not(.print-document.active) {
+        display: none !important;
+    }
+}

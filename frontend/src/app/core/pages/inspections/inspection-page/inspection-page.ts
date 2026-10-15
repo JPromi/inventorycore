@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet, formatDate } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpEventType } from '@angular/common/http';
@@ -29,6 +29,7 @@ import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { CameraView } from '../../../components/camera-view/camera-view';
+import { PrintDocument, PrintMeta } from '../../../components/print-document/print-document';
 import { InspectionItemEditor } from '../inspection-item-editor/inspection-item-editor';
 import { CameraScanner } from '../../../scan/camera-scanner';
 import { scanFeedback } from '../../../scan/scan-feedback';
@@ -69,6 +70,7 @@ const DUPLICATE_WINDOW_MS = 2500;
     DatePipe,
     FormsModule,
     NgTemplateOutlet,
+    PrintDocument,
     RouterLink,
     SearchSelect,
     LucideArrowLeft,
@@ -95,6 +97,7 @@ const DUPLICATE_WINDOW_MS = 2500;
 export class InspectionPage implements OnInit, OnDestroy {
   @ViewChild('scanInput') private scanInput?: ElementRef<HTMLInputElement>;
   @ViewChild(CameraView) private camera?: CameraView;
+  @ViewChild(PrintDocument) private printDocument?: PrintDocument;
 
   protected readonly formatValue = formatCheckValue;
   protected readonly options = fieldOptions;
@@ -128,6 +131,9 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected assetToAdd: string | null = null;
 
   protected completing = false;
+  /** print options of the protocol */
+  protected printPhotos = true;
+  protected printPassed = true;
   protected comment = '';
   protected submitting = false;
 
@@ -324,7 +330,41 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   protected print(): void {
-    window.print();
+    this.printDocument?.open();
+  }
+
+  /** Header of the printed protocol: what, when, who. */
+  protected get printMeta(): PrintMeta[] {
+    const summary = this.detail?.summary;
+    if (!summary) {
+      return [];
+    }
+    const date = (value: string | null) => (value ? formatDate(value, 'dd.MM.yyyy HH:mm', 'en-US') : '');
+    return [
+      { label: 'Protokoll', value: `${summary.typeName} (${this.isCheck ? 'Einzelprüfung' : 'Inventur'})` },
+      { label: 'Gestartet', value: [date(summary.createdAt), summary.createdByName].filter(Boolean).join(' · ') },
+      { label: 'Abgeschlossen', value: [date(summary.completedAt), summary.completedByName].filter(Boolean).join(' · ') },
+      { label: 'Bereich', value: summary.areaNames.join(', ') },
+      { label: 'Umfang', value: summary.filterSummary },
+    ];
+  }
+
+  /** Nested assets exist: the protocol also shows the structure. */
+  protected get hasHierarchy(): boolean {
+    return this.hierarchyRows.some((row) => row.ancestors.length);
+  }
+
+  protected printStatus(item: InspectionItem): string {
+    if (!item.expected) {
+      return item.assetUuid ? `Fremd (${item.locationName || 'ohne Standort'})` : 'Unbekannter Code';
+    }
+    return this.checkFunction && item.status === 'PRESENT' ? `Da · ${this.conditionLabel(item)}` : this.statusLabel(item);
+  }
+
+  /** Not in order: printed bold. */
+  protected printBad(item: InspectionItem): boolean {
+    return !item.expected || item.status === 'MISSING' || item.status === 'FAILED' || item.condition === 'DEFECT'
+      || (!this.open && item.status === 'PENDING');
   }
 
   // ---- scanning ----

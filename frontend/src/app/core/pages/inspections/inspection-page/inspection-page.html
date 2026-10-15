@@ -567,6 +567,69 @@
                         <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportPresent, empty: 'Keine.' }" />
                     </section>
                 }
+
+                <!-- ================= PRINTED PROTOCOL ================= -->
+                <app-print-document kind="Prüfbericht" [title]="detail.summary.title" [meta]="printMeta"
+                    [signatures]="['Geprüft von', 'Verantwortlich']">
+                    <label printOptions class="toggle">
+                        <input type="checkbox" name="printPhotos" [(ngModel)]="printPhotos" />
+                        <span>Fotos drucken</span>
+                    </label>
+                    <label printOptions class="toggle">
+                        <input type="checkbox" name="printPassed" [(ngModel)]="printPassed" />
+                        <span>{{ isCheck ? 'Geräte in Ordnung auflisten' : 'Gefundene Assets auflisten' }}</span>
+                    </label>
+
+                    <div class="print-stats">
+                        <div><strong>{{ count('ALL') }}</strong><span>{{ isCheck ? 'Geräte' : 'Erwartet' }}</span></div>
+                        <div><strong>{{ count(goodStatus) }}</strong><span>{{ goodLabel }}</span></div>
+                        <div><strong>{{ isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</strong><span>{{ isCheck ? 'Mängel' : 'Fehlen' }}</span></div>
+                        @if (checkFunction) {
+                            <div><strong>{{ count('DEFECT') }}</strong><span>Defekt</span></div>
+                        }
+                        @if (isCheck) {
+                            <div><strong>{{ count('PENDING') }}</strong><span>Nicht geprüft</span></div>
+                        } @else {
+                            <div><strong>{{ unexpectedItems.length }}</strong><span>Fremd / unbekannt</span></div>
+                        }
+                    </div>
+
+                    @if (detail.comment) {
+                        <section class="print-section">
+                            <h2>Kommentar</h2>
+                            <p class="print-text">{{ detail.comment }}</p>
+                        </section>
+                    }
+
+                    @if (isCheck) {
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Mängel', items: reportWith('FAILED'), empty: 'Keine Mängel.' }" />
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Nicht geprüft', items: reportWith('PENDING'), empty: 'Alle Geräte wurden geprüft.' }" />
+                        @if (printPassed) {
+                            <ng-container *ngTemplateOutlet="printSection; context: { title: 'In Ordnung', items: reportWith('PASSED'), empty: 'Keine.' }" />
+                        }
+                    } @else {
+                        @if (checkFunction) {
+                            <ng-container *ngTemplateOutlet="printSection; context: { title: 'Defekte Assets', items: reportDefect, empty: 'Keine defekten Assets.' }" />
+                        }
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Fehlende Assets', items: reportMissing, empty: 'Keine – alle erwarteten Assets wurden gefunden.' }" />
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Fremde Gegenstände', items: unexpectedItems, empty: 'Keine.' }" />
+                        @if (printPassed) {
+                            <ng-container *ngTemplateOutlet="printSection; context: { title: 'Gefundene Assets', items: reportPresent, empty: 'Keine.' }" />
+                        }
+                    }
+
+                    @if (hasHierarchy) {
+                        <section class="print-section">
+                            <h2>Asset-Struktur</h2>
+                            @for (row of hierarchyRows; track row.item.uuid) {
+                                <div class="print-tree-row" [style.--asset-depth]="row.ancestors.length">
+                                    <span>{{ row.item.assetName }} <span class="print-muted">{{ row.item.parentAssetNote || row.item.invId }}</span></span>
+                                    <span [class.print-alert]="printBad(row.item)">{{ printStatus(row.item) }}</span>
+                                </div>
+                            }
+                        </section>
+                    }
+                </app-print-document>
             }
         }
     </div>
@@ -686,4 +749,76 @@
     } @else {
         <p class="hint">{{ empty }}</p>
     }
+</ng-template>
+
+<!-- one section of the printed protocol; the table header repeats on every page -->
+<ng-template #printSection let-title="title" let-items="items" let-empty="empty">
+    <section class="print-section">
+        <h2>{{ title }} <span class="print-muted">({{ items.length }})</span></h2>
+        @if (items.length) {
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Inventar-ID</th>
+                        <th>Typ / Standort</th>
+                        <th>Ergebnis</th>
+                        @if (detail?.fields?.length) {
+                            <th>Prüfwerte</th>
+                        }
+                        <th>Erfasst</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of items; track item.uuid) {
+                        <tr>
+                            <td>
+                                <strong>{{ item.assetName }}</strong>
+                                @if (item.parentAssetNote) {
+                                    <span class="print-muted print-block">{{ item.parentAssetNote }}</span>
+                                }
+                                @if (item.note) {
+                                    <span class="print-block">Notiz: {{ item.note }}</span>
+                                }
+                                @if (printPhotos && item.photos.length) {
+                                    <span class="print-photos">
+                                        @for (photo of item.photos; track photo.uuid) {
+                                            <img [src]="photo.thumbnailUrl" alt="Foto" />
+                                        }
+                                    </span>
+                                }
+                            </td>
+                            <td class="print-mono">{{ item.invId || item.scannedCode || '—' }}</td>
+                            <td>
+                                {{ item.assetTypeName || '—' }}
+                                @if (item.expected && item.locationName) {
+                                    <span class="print-muted print-block">{{ item.locationName }}</span>
+                                }
+                            </td>
+                            <td [class.print-alert]="printBad(item)">{{ printStatus(item) }}</td>
+                            @if (detail?.fields?.length) {
+                                <td>
+                                    @for (entry of item.values; track entry.fieldUuid) {
+                                        <span class="print-block"><span class="print-muted">{{ entry.fieldName }}:</span> {{ formatValue(entry.value, entry.fieldType) }}</span>
+                                    } @empty {
+                                        <span class="print-muted">—</span>
+                                    }
+                                </td>
+                            }
+                            <td>
+                                @if (item.checkedAt) {
+                                    {{ item.checkedByName }}
+                                    <span class="print-muted print-block">{{ item.checkedAt | date: 'dd.MM.yyyy HH:mm' }} · {{ item.method === 'SCAN' ? 'Scan' : 'manuell' }}</span>
+                                } @else {
+                                    <span class="print-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        } @else {
+            <p class="print-muted">{{ empty }}</p>
+        }
+    </section>
 </ng-template>
