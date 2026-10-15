@@ -2,7 +2,7 @@
 
 An inventory application for assets, nested locations, tags, asset types with custom fields, recurring inspections, and printable barcode/QR labels. Administration includes users, groups, area permissions, LDAP synchronization, OIDC login, and an activity log.
 
-The Angular frontend and Spring Boot backend are separate applications. PostgreSQL stores domain data; uploaded inventory images also require persistent filesystem storage. Some navigation routes, such as the dashboard, are placeholders rather than completed features.
+The Angular frontend and Spring Boot backend are developed separately and shipped together as one container image; [deploy/](deploy/) runs it with PostgreSQL through Docker Compose. PostgreSQL stores domain data; uploaded inventory images also require persistent filesystem storage. Some navigation routes, such as the dashboard, are placeholders rather than completed features.
 
 ## Get Started
 
@@ -19,7 +19,7 @@ Follow [local development](docs/DEVELOPMENT.md) to configure PostgreSQL, bootstr
 | HTTP contracts | [API](docs/API.md) |
 | Persistence and schema updates | [Database](docs/DATABASE.md) |
 | Authentication and permissions | [Security](docs/SECURITY.md) |
-| Running in production | [Deployment](docs/DEPLOYMENT.md) |
+| Running in production, Docker image | [Deployment](docs/DEPLOYMENT.md) |
 | Coding, styling, and language | [Conventions](docs/CONVENTIONS.md) |
 | Architectural decision process | [Decision records](docs/decisions/README.md) |
 

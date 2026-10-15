@@ -1,7 +1,7 @@
 # Agent Instructions
 
 InventoryCore manages assets, nested locations, asset types, inspections, labels, and group permissions.
-This repository contains two independently built applications: Angular 21 in `frontend/` and Spring Boot 4 / Java 21 in `backend/`, backed by PostgreSQL.
+This repository contains an Angular 21 frontend in `frontend/` and a Spring Boot 4 / Java 21 backend in `backend/`, backed by PostgreSQL. They are developed separately; the container image (`Dockerfile`) bundles the frontend into the backend JAR.
 
 ## Start Here
 

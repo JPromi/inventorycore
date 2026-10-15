@@ -1,0 +1,14 @@
+.git
+.github
+**/node_modules
+frontend/dist
+frontend/.angular
+frontend/test-results
+frontend/playwright-report
+backend/.gradle
+backend/build
+backend/bin
+backend/data
+# local configuration with real credentials never goes into an image
+backend/src/main/resources/application.properties
+deploy/.env

@@ -4,7 +4,7 @@
 
 - Java 21 with `JAVA_HOME` configured; use the checked-in Gradle wrapper.
 - Node.js compatible with Angular 21. The installed CLI declares `^20.19.0 || ^22.12.0 || >=24.0.0`. The frontend declares npm 12.0.2; use a Node version compatible with that npm release as well.
-- PostgreSQL reachable from the backend. No database container or pinned PostgreSQL version is supplied.
+- PostgreSQL reachable from the backend. For development no database container is supplied; the production Compose setup in [deploy/](../deploy/) uses PostgreSQL 17.
 - Microsoft Edge for the current Playwright configuration.
 
 ## Configure the Backend

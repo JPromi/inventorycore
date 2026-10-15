@@ -4,7 +4,7 @@
 
 The browser runs a standalone Angular SPA. Angular services call the Spring MVC REST API over HTTP using a session cookie. Spring Data JPA repositories persist to PostgreSQL. Image bytes for inventory uploads live on disk, with metadata in the database.
 
-Local development uses Angular's proxy for `/api`, `/oauth2`, and `/login/oauth2`. Production static hosting and reverse-proxy infrastructure are not included; see [deployment](DEPLOYMENT.md).
+Local development uses Angular's proxy for `/api`, `/oauth2`, and `/login/oauth2`. In the container image the backend serves the built Angular app itself (`SpaWebConfig`), so browser, API, and OIDC paths share one origin; see [deployment](DEPLOYMENT.md).
 
 ## Frontend
 
@@ -14,7 +14,7 @@ Local development uses Angular's proxy for `/api`, `/oauth2`, and `/login/oauth2
 - `core/service` owns HTTP access and application state. Auth and area selection use RxJS subjects; permissions determine UI visibility.
 - `core/labels` renders label layouts and barcodes using bwip-js. Camera scanning uses ZXing. PWA support handles installation, connectivity, and updates.
 
-Change detection is zone-based. Both the root provider and the build's Zone.js polyfill are necessary for async workflows; see [conventions](CONVENTIONS.md). Inventory pagination and filtering are currently client-side over authorized arrays returned by the backend.
+Change detection is zone-based. Both the root provider and the build's Zone.js polyfill are necessary for async workflows; see [conventions](CONVENTIONS.md). List pages load server-side pages with search and filters; see [conventions](CONVENTIONS.md).
 
 ## Backend
 

@@ -69,7 +69,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/customization", "/api/customization/logo").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated())
+                .requestMatchers("/api/**").authenticated()
+                // the bundled Angular app (static files and client routes); its data comes from /api
+                .anyRequest().permitAll())
             // the SPA handles logins itself: unauthenticated API calls get 401, no redirect
             .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .oauth2Login(oauth -> oauth

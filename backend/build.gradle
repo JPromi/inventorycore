@@ -5,7 +5,8 @@ plugins {
 }
 
 group = 'com.jpromi'
-version = '0.0.1-SNAPSHOT'
+// release builds pass the version, e.g. -PappVersion=1.2.0 (the container build does this from the Git tag)
+version = findProperty('appVersion') ?: '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
@@ -47,4 +48,16 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// one application: -PfrontendDist=<built Angular app> bundles the frontend into the JAR (served from /static),
+// e.g. -PfrontendDist=../frontend/dist/inventorycore/browser after `npm run build`
+def frontendDist = findProperty('frontendDist')
+if (frontendDist) {
+	tasks.named('processResources') {
+		inputs.dir(frontendDist)
+		from(frontendDist) {
+			into 'static'
+		}
+	}
 }

@@ -1,6 +1,6 @@
 # Build
 
-The two modules have independent builds. There is no root build that bundles the Angular application into the backend JAR.
+The two modules have independent builds. For one deployable application, the backend build can bundle the built frontend into its JAR (`-PfrontendDist`); the [Dockerfile](../Dockerfile) does this. See [deployment](DEPLOYMENT.md) for the image and its CI workflow.
 
 ## Frontend
 
@@ -27,6 +27,15 @@ From `backend/` on Windows:
 .\gradlew.bat build
 ```
 
-Use `./gradlew` on Unix. `bootJar` produces the executable application under `backend/build/libs/`; `build` also executes tests. The wrapper pins Gradle 9.7.1, and [build.gradle](../backend/build.gradle) selects Java 21, Spring Boot 4.1.1, Lombok annotation processing, and PostgreSQL runtime support.
+Use `./gradlew` on Unix. `bootJar` produces the executable application under `backend/build/libs/`; `build` also executes tests.
+
+Optional project properties:
+
+| Property | Effect |
+| --- | --- |
+| `-PappVersion=1.2.0` | Project and JAR version (default `0.0.1-SNAPSHOT`) |
+| `-PfrontendDist=../frontend/dist/inventorycore/browser` | Copies the built Angular app into `static/` of the JAR; run `npm run build` first |
+
+Example of one application: `npm run build` in `frontend/`, then `.\gradlew.bat bootJar -PfrontendDist=../frontend/dist/inventorycore/browser` in `backend/`. The wrapper pins Gradle 9.7.1, and [build.gradle](../backend/build.gradle) selects Java 21, Spring Boot 4.1.1, Lombok annotation processing, and PostgreSQL runtime support.
 
 Dependencies may need registry/network access on first installation. Runtime configuration is described in [development](DEVELOPMENT.md); test prerequisites are in [testing](TESTING.md). Never package real development credentials as production configuration.
