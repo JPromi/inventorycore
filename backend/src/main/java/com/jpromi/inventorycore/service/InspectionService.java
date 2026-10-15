@@ -386,6 +386,15 @@ public class InspectionService {
             .findFirst()
             .orElse(null);
 
+        var policy = item == null ? asset.getInspectionPolicy() : item.getInspectionPolicy();
+        if (policy == com.jpromi.inventorycore.enums.AssetInspectionPolicy.EXCLUDED) {
+            return new InspectionScanResponse("IGNORED", asset.getName() + " ist von Prüfungen ausgenommen.", null);
+        }
+        if (policy == com.jpromi.inventorycore.enums.AssetInspectionPolicy.MANUAL) {
+            return new InspectionScanResponse("IGNORED", asset.getName() + " wird ohne Label manuell geprüft.",
+                item == null ? null : toResponse(item, locations));
+        }
+
         if (inspection.getMode() == InspectionMode.CHECK) {
             if (item != null) {
                 return new InspectionScanResponse("OPENED", asset.getName() + " ist bereits in der Prüfung.", toResponse(item, locations));
@@ -482,6 +491,9 @@ public class InspectionService {
         Asset asset = assetRepository.findByUuid(assetUuid)
             .filter(entry -> !entry.isDeleted() && access.canViewAsset(entry))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden"));
+        if (!asset.isInspectionRequired()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Asset ist von Prüfungen ausgenommen.");
+        }
         Map<Long, Location> locations = locationsById();
         InspectionItem existing = inspection.getItems().stream()
             .filter(entry -> entry.getAsset() != null && entry.getAsset().getId().equals(asset.getId()))
@@ -694,6 +706,7 @@ public class InspectionService {
         Set<Long> finalLocationIds = locationIds;
 
         return assetRepository.findByDeletedFalse().stream()
+            .filter(Asset::isInspectionRequired)
             .filter(access::canViewAsset)
             .filter(asset -> access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas()))
             .filter(asset -> finalLocationIds == null || (asset.getLocation() != null && finalLocationIds.contains(asset.getLocation().getId())))
@@ -750,6 +763,9 @@ public class InspectionService {
             .assetName(asset.getName())
             .invId(asset.getInvId())
             .serialNumber(asset.getSerialNumber())
+            .parentAssetUuid(asset.getParentAsset() == null ? null : asset.getParentAsset().getUuid())
+            .parentAssetNote(asset.getParentAssetNote())
+            .inspectionPolicy(asset.getInspectionPolicy())
             .assetTypeUuid(asset.getAssetType() == null ? null : asset.getAssetType().getUuid())
             .assetTypeName(asset.getAssetType() == null ? null : asset.getAssetType().getName())
             .locationName(asset.getLocation() == null ? null : locationPath(asset.getLocation(), locations))
@@ -937,7 +953,10 @@ public class InspectionService {
                     ApiMapper.fileUrl(photo.getFile(), true),
                     photo.getTakenAt(),
                     photo.getTakenByName()))
-                .toList()
+                .toList(),
+            item.getParentAssetUuid(),
+            item.getParentAssetNote(),
+            item.getInspectionPolicy()
         );
     }
 

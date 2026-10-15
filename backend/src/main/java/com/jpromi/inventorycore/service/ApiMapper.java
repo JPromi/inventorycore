@@ -170,7 +170,8 @@ public class ApiMapper {
             asset.isDeleted(),
             asset.getAreas().stream().map(Area::getUuid).collect(Collectors.toSet()),
             asset.getParentAsset() == null ? null : asset.getParentAsset().getUuid(),
-            asset.getParentAssetNote()
+            asset.getParentAssetNote(),
+            asset.getInspectionPolicy()
         );
     }
 

@@ -54,6 +54,14 @@
                     @if (config.endpoint === 'assets') {
                         <div class="asset-link-fields">
                             <label>
+                                <span>Prüferfassung</span>
+                                <select [(ngModel)]="form.inspectionPolicy" name="inspectionPolicy">
+                                    <option value="STANDARD">Mit Label prüfen</option>
+                                    <option value="MANUAL">Ohne Label manuell prüfen</option>
+                                    <option value="EXCLUDED">Von Prüfungen ausnehmen</option>
+                                </select>
+                            </label>
+                            <label>
                                 <span>Übergeordnetes Asset</span>
                                 <app-search-select [options]="parentAssetOptions" [(ngModel)]="form.parentAssetUuid"
                                     name="parentAssetUuid" placeholder="Asset auswählen" clearLabel="Kein übergeordnetes Asset"

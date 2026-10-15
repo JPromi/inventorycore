@@ -32,9 +32,10 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
     await parentSelect.locator('.trigger').click();
     await parentSelect.getByRole('option', { name: 'Computer INV-PC', exact: true }).click();
     await page.locator('input[name="parentAssetNote"]').fill('RAM Slot 2');
+    await page.locator('select[name="inspectionPolicy"]').selectOption('MANUAL');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page).toHaveURL(/\/assets\/ram$/);
-    expect(saved).toMatchObject({ parentAssetUuid: 'pc', parentAssetNote: 'RAM Slot 2' });
+    expect(saved).toMatchObject({ parentAssetUuid: 'pc', parentAssetNote: 'RAM Slot 2', inspectionPolicy: 'MANUAL' });
     await expect(page.getByRole('link', { name: 'Computer INV-PC RAM Slot 2', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Chip INV-CHIP Modul A', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Computer INV-PC RAM Slot 2', exact: true }).click();

@@ -328,19 +328,33 @@
                 }
 
                 <div class="item-list">
-                    @for (item of visibleItems; track item.uuid) {
+                    @for (row of visibleRows; track row.item.uuid) {
+                        @let item = row.item;
                         <article
                             class="item"
+                            [style.--asset-depth]="row.ancestors.length"
                             [id]="'item-' + item.uuid"
                             [class.present]="item.status === goodStatus && item.condition !== 'DEFECT'"
                             [class.missing]="item.status === badStatus || item.condition === 'DEFECT'"
                             [class.highlight]="highlighted === item.uuid"
                         >
                             <div class="item-row">
+                                @if (row.children.length) {
+                                    <button type="button" class="icon-button asset-group-toggle"
+                                        [attr.aria-expanded]="!collapsedAssets.has(item.uuid)" [class.collapsed]="collapsedAssets.has(item.uuid)"
+                                        [attr.aria-label]="'Untergeordnete Assets von ' + item.assetName" (click)="toggleAssetGroup(item.uuid)">
+                                        <svg lucideChevronDown size="16"></svg>
+                                    </button>
+                                }
                                 <span class="status-dot" [title]="statusLabel(item)"></span>
                                 <div class="item-main">
                                     <a [routerLink]="['/assets', item.assetUuid]" target="_blank" class="item-name">{{ item.assetName }}</a>
                                     <span class="meta">{{ itemMeta(item) }}</span>
+                                    @if (item.parentAssetNote) { <span class="meta asset-link-note">{{ item.parentAssetNote }}</span> }
+                                    @if (item.inspectionPolicy === 'MANUAL') { <span class="badge">Ohne Label · manuell prüfen</span> }
+                                    @if (row.children.length) {
+                                        <span class="meta">{{ checkedChildren(row) }}/{{ row.children.length }} Unter-Assets geprüft</span>
+                                    }
                                     @if (item.checkedAt) {
                                         <span class="checked">
                                             {{ item.method === 'SCAN' ? 'Gescannt' : 'Manuell' }} von {{ item.checkedByName }},
@@ -455,6 +469,18 @@
                 }
             } @else {
                 <!-- ================= PROTOCOL ================= -->
+                @if (hierarchyRows.length) {
+                    <section class="card">
+                        <h2>Asset-Struktur</h2>
+                        @for (row of hierarchyRows; track row.item.uuid) {
+                            <div class="protocol-asset" [style.--asset-depth]="row.ancestors.length">
+                                <strong>{{ row.item.assetName }}</strong>
+                                <span class="meta">{{ row.item.parentAssetNote || row.item.invId }}</span>
+                                <span>{{ statusLabel(row.item) }}</span>
+                            </div>
+                        }
+                    </section>
+                }
                 <section class="card protocol-meta">
                     <dl>
                         <div><dt>Prüfungsart</dt><dd>{{ detail.summary.typeName }} ({{ isCheck ? 'Einzelprüfung' : 'Inventur' }})</dd></div>

@@ -64,6 +64,13 @@ public class InspectionItem {
     private String assetName;
     private String invId;
     private String serialNumber;
+    private UUID parentAssetUuid;
+    @Column(length = 1000)
+    private String parentAssetNote;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(16) default 'STANDARD'")
+    @Builder.Default
+    private com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy = com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD;
     private UUID assetTypeUuid;
     private String assetTypeName;
     @Column(length = 1000)

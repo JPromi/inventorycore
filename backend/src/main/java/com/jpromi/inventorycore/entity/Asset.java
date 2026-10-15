@@ -58,6 +58,15 @@ public class Asset {
     private String inventoryNumber;
     private Integer inspectionIntervalDays;
 
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(16) default 'STANDARD'")
+    @Builder.Default
+    private com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy = com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD;
+
+    public boolean isInspectionRequired() {
+        return inspectionPolicy != com.jpromi.inventorycore.enums.AssetInspectionPolicy.EXCLUDED;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "asset_type_id")
     private AssetType assetType;

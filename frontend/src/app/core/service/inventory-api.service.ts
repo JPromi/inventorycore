@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface InventoryItem {
+  inspectionPolicy?: AssetInspectionPolicy;
   uuid: string;
   name: string;
   description?: string | null;
@@ -30,6 +31,7 @@ export interface InventoryItem {
 }
 
 export interface InventoryRequest {
+  inspectionPolicy?: AssetInspectionPolicy;
   parentAssetUuid?: string | null;
   parentAssetNote?: string | null;
   invId?: string;
@@ -88,6 +90,14 @@ export interface TagItem {
   name: string;
   color?: string | null;
 }
+
+export type AssetInspectionPolicy = 'STANDARD' | 'MANUAL' | 'EXCLUDED';
+
+export const ASSET_INSPECTION_POLICIES: Record<AssetInspectionPolicy, string> = {
+  STANDARD: 'Mit Label prüfen',
+  MANUAL: 'Ohne Label manuell prüfen',
+  EXCLUDED: 'Von Prüfungen ausnehmen',
+};
 
 @Injectable({ providedIn: 'root' })
 export class InventoryApiService {

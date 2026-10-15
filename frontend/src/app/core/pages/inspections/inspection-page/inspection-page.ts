@@ -32,6 +32,7 @@ import { CameraView } from '../../../components/camera-view/camera-view';
 import { InspectionItemEditor } from '../inspection-item-editor/inspection-item-editor';
 import { CameraScanner } from '../../../scan/camera-scanner';
 import { scanFeedback } from '../../../scan/scan-feedback';
+import { inspectionTree, InspectionTreeRow } from '../../../util/inspection-tree';
 import {
   InspectionCondition,
   InspectionDetail,
@@ -226,8 +227,31 @@ export class InspectionPage implements OnInit, OnDestroy {
     return this.expectedItems.filter(
       (item) =>
         this.matches(item, this.itemFilter) &&
-        (!term || [item.assetName, item.invId, item.serialNumber, item.assetTypeName, item.locationName].some((value) => value?.toLowerCase().includes(term))),
+        (!term || [item.assetName, item.invId, item.serialNumber, item.assetTypeName, item.locationName, item.parentAssetNote].some((value) => value?.toLowerCase().includes(term))),
     );
+  }
+
+  protected readonly collapsedAssets = new Set<string>();
+
+  protected get hierarchyRows(): InspectionTreeRow[] {
+    return inspectionTree(this.expectedItems);
+  }
+
+  protected get visibleRows(): InspectionTreeRow[] {
+    const rows = this.hierarchyRows;
+    const matching = new Set(this.visibleItems.map((item) => item.uuid));
+    const included = new Set(matching);
+    rows.filter((row) => matching.has(row.item.uuid)).forEach((row) => row.ancestors.forEach((uuid) => included.add(uuid)));
+    return rows.filter((row) => included.has(row.item.uuid)
+      && (this.search.trim() || this.itemFilter !== 'ALL' || !row.ancestors.some((uuid) => this.collapsedAssets.has(uuid))));
+  }
+
+  protected toggleAssetGroup(uuid: string): void {
+    if (!this.collapsedAssets.delete(uuid)) this.collapsedAssets.add(uuid);
+  }
+
+  protected checkedChildren(row: InspectionTreeRow): number {
+    return row.children.filter((item) => item.status !== 'PENDING').length;
   }
 
   protected get canDelete(): boolean {
@@ -275,6 +299,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     const inList = new Set(this.detail?.items.map((item) => item.assetUuid));
     return this.addableAssets
       .filter((asset) => !inList.has(asset.uuid) && this.areaService.matchesSelection(asset))
+      .filter((asset) => asset.inspectionPolicy !== 'EXCLUDED')
       .map((asset) => ({ value: asset.uuid, label: asset.name, hint: asset.invId ?? undefined }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -679,6 +704,7 @@ export class InspectionPage implements OnInit, OnDestroy {
 
   /** Show the scanned item in the list, with its fields open. */
   private focusItem(item: InspectionItem): void {
+    this.hierarchyRows.find((row) => row.item.uuid === item.uuid)?.ancestors.forEach((uuid) => this.collapsedAssets.delete(uuid));
     if (!this.matches(item, this.itemFilter)) {
       this.itemFilter = 'ALL';
     }

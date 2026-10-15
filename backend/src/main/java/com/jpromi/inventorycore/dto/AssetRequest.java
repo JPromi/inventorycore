@@ -18,5 +18,6 @@ public record AssetRequest(
     List<AssetImageRequest> images,
     Set<UUID> areaUuids,
     UUID parentAssetUuid,
-    String parentAssetNote
+    String parentAssetNote,
+    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy
 ) {}

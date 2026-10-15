@@ -30,6 +30,7 @@ export const ASSET_DETAIL_CONFIG: DetailConfig = {
   fields: [
     { key: 'serialNumber', label: 'Seriennummer' },
     { key: 'inventoryNumber', label: 'Inventarnummer' },
+    { key: 'inspectionPolicy', label: 'Prüferfassung' },
     { key: 'description', label: 'Beschreibung' },
   ],
 };

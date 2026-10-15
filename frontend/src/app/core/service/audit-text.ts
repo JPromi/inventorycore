@@ -17,6 +17,7 @@ const FIELD_LABELS: Record<string, string> = {
   parentLocationUuid: 'Übergeordneter Standort',
   parentAssetUuid: 'Übergeordnetes Asset',
   parentAssetNote: 'Verknüpfungsbeschreibung',
+  inspectionPolicy: 'Prüferfassung',
   tags: 'Tags',
   images: 'Bilder',
   areaUuids: 'Bereiche',

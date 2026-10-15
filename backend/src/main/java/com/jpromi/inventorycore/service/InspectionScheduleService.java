@@ -110,6 +110,9 @@ public class InspectionScheduleService {
     @Transactional
     public InspectionDueResponse setFixedDate(AccessContext access, User user, UUID assetUuid, UUID typeUuid, LocalDate date) {
         Asset asset = visibleAsset(access, assetUuid);
+        if (!asset.isInspectionRequired()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Asset ist von Prüfungen ausgenommen.");
+        }
         PermissionService.require(access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas())
             || access.can(PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas()));
         InspectionType type = typeRepository.findByUuid(typeUuid)
@@ -165,6 +168,7 @@ public class InspectionScheduleService {
         LocalDate today = today();
         List<InspectionDueResponse> result = new ArrayList<>();
         for (Asset asset : assets) {
+            if (!asset.isInspectionRequired()) continue;
             for (InspectionType type : types) {
                 if (type.appliesTo(asset)) {
                     Key key = new Key(asset.getId(), type.getId());

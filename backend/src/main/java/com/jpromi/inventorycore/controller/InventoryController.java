@@ -401,6 +401,8 @@ public class InventoryController {
 
     private void applyAsset(AccessContext access, Asset asset, AssetRequest request) {
         hierarchy.assign(access, asset, request.parentAssetUuid(), request.parentAssetNote());
+        asset.setInspectionPolicy(request.inspectionPolicy() == null
+            ? com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD : request.inspectionPolicy());
         if (request.invId() != null && !request.invId().isBlank()) {
             asset.setInvId(request.invId());
         } else if (asset.getInvId() == null || asset.getInvId().isBlank()) {

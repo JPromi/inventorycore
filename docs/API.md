@@ -46,3 +46,5 @@ Handlers use `ResponseStatusException` and explicit statuses such as 201, 204, 4
 No generated OpenAPI specification or API collection is currently checked in. Controllers and DTOs remain the authoritative route and payload definitions.
 
 Asset form requests/responses include nullable `parentAssetUuid` and `parentAssetNote` (up to 1000 characters). A null parent detaches the asset and clears its link note. The existing asset create/update routes handle these fields; no separate relationship endpoint is required. Parent deletion returns 409 while live children exist. Related asset names and child lists in the UI come from the authorized asset list, so hierarchy links do not grant additional visibility.
+
+Assets also expose `inspectionPolicy`: `STANDARD` (default, label-based), `MANUAL` (no label; confirm manually), or `EXCLUDED` (omit from new inspections and due dates). Inspection items snapshot this policy and the parent UUID/link note at creation; later asset edits do not rewrite existing runs. Scanning a manual or excluded asset returns `IGNORED`, and an excluded asset cannot be explicitly added to a run.

@@ -187,6 +187,9 @@ export interface InspectionItemValue {
 }
 
 export interface InspectionItem {
+  parentAssetUuid?: string | null;
+  parentAssetNote?: string | null;
+  inspectionPolicy?: import('./inventory-api.service').AssetInspectionPolicy;
   uuid: string;
   assetUuid: string | null;
   assetName: string;

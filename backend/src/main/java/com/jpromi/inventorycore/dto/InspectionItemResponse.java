@@ -27,5 +27,8 @@ public record InspectionItemResponse(
     String checkedByName,
     String note,
     List<InspectionItemValueResponse> values,
-    List<InspectionPhotoResponse> photos
+    List<InspectionPhotoResponse> photos,
+    UUID parentAssetUuid,
+    String parentAssetNote,
+    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy
 ) {}

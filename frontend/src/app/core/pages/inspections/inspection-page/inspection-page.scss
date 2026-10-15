@@ -1,5 +1,25 @@
 @use 'breakpoints' as bp;
 
+.item-list > .item,
+.protocol-asset {
+    margin-inline-start: min(calc(var(--asset-depth, 0) * var(--inspection-tree-indent)), 20%);
+}
+
+.asset-group-toggle {
+    flex-shrink: 0;
+    &.collapsed svg { transform: rotate(-90deg); }
+}
+
+.asset-link-note { color: var(--text); }
+.protocol-asset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--border);
+    strong { overflow-wrap: anywhere; }
+}
+
 :host {
     display: block;
     width: 100%;

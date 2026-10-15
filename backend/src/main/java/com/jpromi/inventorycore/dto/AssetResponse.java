@@ -23,5 +23,6 @@ public record AssetResponse(
     boolean deleted,
     Set<UUID> areaUuids,
     UUID parentAssetUuid,
-    String parentAssetNote
+    String parentAssetNote,
+    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy
 ) {}

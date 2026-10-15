@@ -60,6 +60,14 @@ class InspectionScheduleServiceTest {
     }
 
     @Test
+    void excludedAssetsHaveNoDueDatesWhileManualAssetsRemainScheduled() {
+        car.setInspectionPolicy(com.jpromi.inventorycore.enums.AssetInspectionPolicy.EXCLUDED);
+        assertTrue(service.all(admin).isEmpty());
+        car.setInspectionPolicy(com.jpromi.inventorycore.enums.AssetInspectionPolicy.MANUAL);
+        assertEquals(1, service.all(admin).size());
+    }
+
+    @Test
     void neverCheckedIsDueTodayAndOnlyForAssignedTypes() {
         List<InspectionDueResponse> due = service.all(admin);
         assertEquals(1, due.size(), "the laptop does not need the brake inspection");

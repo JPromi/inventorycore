@@ -92,6 +92,7 @@ body {
     --dropdown-max-height: 24rem;
     --dropdown-select-min-width: 16rem;
     --dropdown-color-width: 15.5rem;
+    --inspection-tree-indent: 1.25rem;
 
     @include bp.phone {
         --page-padding: 1rem;

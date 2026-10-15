@@ -34,6 +34,7 @@ import {
 } from '../../service/inspection.service';
 import {
   AssetFieldType,
+  ASSET_INSPECTION_POLICIES,
   CustomFieldDefinition,
   InventoryApiService,
   InventoryImage,
@@ -284,6 +285,7 @@ export class InventoryDetailPage implements OnInit {
   }
 
   protected fieldValue(field: DetailField): string | null {
+    if (field.key === 'inspectionPolicy') return ASSET_INSPECTION_POLICIES[this.item?.inspectionPolicy ?? 'STANDARD'];
     const value = this.item?.[field.key];
     if (value === null || value === undefined || value === '') {
       return null;
