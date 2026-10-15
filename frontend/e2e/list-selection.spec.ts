@@ -88,7 +88,7 @@ test('selection across loaded pages, indeterminate state, server search and grid
   await page.getByRole('button', { name: 'Kachelansicht', exact: true }).click();
   await expect(page.locator('.items.grid .selection-checkbox:checked')).toHaveCount(61);
   // the search runs on the server; hidden selections are dropped
-  await page.getByRole('textbox', { name: 'Suchen', exact: true }).fill('Eintrag 14');
+  await page.getByRole('textbox', { name: 'Suchen', exact: true }).fill('Eintrag 07');
   await expect(checks).toHaveCount(1);
   await expect(page.locator('.eyebrow')).toContainText('1 Treffer');
   await expect(page.locator('app-list-actions')).toContainText('0 ausgewählt');

@@ -193,6 +193,7 @@ export interface InspectionSummary {
   checkFunction: boolean;
   filterSummary: string | null;
   createdAt: string;
+  createdByUuid?: string | null;
   createdByName: string | null;
   completedAt: string | null;
   completedByName: string | null;

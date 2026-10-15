@@ -1,5 +1,6 @@
 export interface AuthResponseDto {
   authenticated: boolean;
+  uuid?: string | null;
   username: string | null;
   displayName: string | null;
   sourceProvider?: 'LOCAL' | 'OIDC' | 'LDAP';

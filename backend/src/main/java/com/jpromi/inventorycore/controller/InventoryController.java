@@ -78,6 +78,7 @@ public class InventoryController {
     private final ApiMapper mapper;
     private final AuditService audit;
     private final com.jpromi.inventorycore.service.AssetHierarchyService hierarchy;
+    private final com.jpromi.inventorycore.service.FileAccess fileAccess;
 
     public InventoryController(
         AssetRepository assetRepository,
@@ -89,8 +90,10 @@ public class InventoryController {
         PermissionService permissionService,
         ApiMapper mapper,
         AuditService audit,
-        com.jpromi.inventorycore.service.AssetHierarchyService hierarchy
+        com.jpromi.inventorycore.service.AssetHierarchyService hierarchy,
+        com.jpromi.inventorycore.service.FileAccess fileAccess
     ) {
+        this.fileAccess = fileAccess;
         this.assetRepository = assetRepository;
         this.assetTypeRepository = assetTypeRepository;
         this.locationRepository = locationRepository;
@@ -243,7 +246,8 @@ public class InventoryController {
     @PatchMapping("/tags/{uuid}")
     public TagResponse updateTag(@PathVariable UUID uuid, @RequestBody TagRequest request, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
-        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
+        // tags are global: renaming one changes it in every area
+        require(access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
         Tag tag = tagOr404(uuid);
         TagResponse before = mapper.toResponse(tag);
         tag.setName(request.name());
@@ -258,8 +262,15 @@ public class InventoryController {
     @Transactional
     public void deleteTag(@PathVariable UUID uuid, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
-        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
+        // tags are global: deleting one removes it in every area
+        require(access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
         Tag tag = tagOr404(uuid);
+        // a recurring inspection limited to this one tag would otherwise suddenly apply to all assets
+        List<String> limited = tagRepository.recurringInspectionsOnlyWith(tag.getId());
+        if (!limited.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Der Tag begrenzt die wiederkehrende Prüfung „"
+                + String.join("“, „", limited) + "“. Bitte dort zuerst einen anderen Tag wählen.");
+        }
         tagRepository.detachFromAssets(tag.getId());
         tagRepository.detachFromAssetTypes(tag.getId());
         tagRepository.detachFromInspectionTypes(tag.getId());
@@ -386,10 +397,11 @@ public class InventoryController {
             }
         }
         location.setParentLocation(parent);
+        java.util.Set<UUID> attached = attachedFiles(location.getImages().stream().map(LocationImage::getFile));
         location.getImages().clear();
         if (request.images() != null) {
             request.images().stream().filter(InventoryController::hasSource)
-                .forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest)));
+                .forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest, attached)));
         }
     }
 
@@ -405,10 +417,11 @@ public class InventoryController {
         if (request.fieldDefinitions() != null) {
             request.fieldDefinitions().forEach(fieldRequest -> type.getFieldDefinitions().add(fieldDefinition(type, fieldRequest)));
         }
+        java.util.Set<UUID> attached = attachedFiles(type.getImages().stream().map(AssetTypeImage::getFile));
         type.getImages().clear();
         if (request.images() != null) {
             request.images().stream().filter(InventoryController::hasSource)
-                .forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest)));
+                .forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest, attached)));
         }
         type.setTags(new HashSet<>());
         if (request.tagUuids() != null) {
@@ -421,6 +434,13 @@ public class InventoryController {
         asset.setInspectionPolicy(request.inspectionPolicy() == null
             ? com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD : request.inspectionPolicy());
         if (request.invId() != null && !request.invId().isBlank()) {
+            // the inventory id is also a scan code: it must not point to another asset
+            // (its inventory id, serial number or inventory number), or scans would hit the wrong asset
+            boolean taken = assetRepository.findByScanCode(request.invId().trim()).stream()
+                .anyMatch(other -> !other.getId().equals(asset.getId()));
+            if (taken && !request.invId().equals(asset.getInvId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Die Inventar-ID wird schon von einem anderen Asset verwendet.");
+            }
             asset.setInvId(request.invId());
         } else if (asset.getInvId() == null || asset.getInvId().isBlank()) {
             asset.setInvId(generateInvId());
@@ -451,10 +471,11 @@ public class InventoryController {
         if (request.fieldValues() != null) {
             request.fieldValues().forEach(fieldRequest -> asset.getFieldValues().add(fieldValue(asset, fieldRequest)));
         }
+        java.util.Set<UUID> attached = attachedFiles(asset.getImages().stream().map(AssetImage::getFile));
         asset.getImages().clear();
         if (request.images() != null) {
             request.images().stream().filter(InventoryController::hasSource)
-                .forEach(imageRequest -> asset.getImages().add(assetImage(asset, imageRequest)));
+                .forEach(imageRequest -> asset.getImages().add(assetImage(asset, imageRequest, attached)));
         }
     }
 
@@ -481,51 +502,65 @@ public class InventoryController {
             .build();
     }
 
-    private AssetImage assetImage(Asset asset, AssetImageRequest request) {
-        StoredFile file = file(request.fileUuid());
+    private AssetImage assetImage(Asset asset, AssetImageRequest request, java.util.Set<UUID> attached) {
+        StoredFile file = file(request.fileUuid(), attached);
         return AssetImage.builder()
             .asset(asset)
             .kind(request.kind())
             .file(file)
-            .url(file == null ? request.url() : null)
+            .url(file == null ? webUrl(request.url()) : null)
             .fileName(request.fileName())
             .contentType(request.contentType())
             .sortOrder(request.sortOrder())
             .build();
     }
 
-    private LocationImage locationImage(Location location, LocationImageRequest request) {
-        StoredFile file = file(request.fileUuid());
+    private LocationImage locationImage(Location location, LocationImageRequest request, java.util.Set<UUID> attached) {
+        StoredFile file = file(request.fileUuid(), attached);
         return LocationImage.builder()
             .location(location)
             .kind(request.kind())
             .file(file)
-            .url(file == null ? request.url() : null)
+            .url(file == null ? webUrl(request.url()) : null)
             .fileName(request.fileName())
             .contentType(request.contentType())
             .sortOrder(request.sortOrder())
             .build();
     }
 
-    private AssetTypeImage assetTypeImage(AssetType assetType, AssetImageRequest request) {
-        StoredFile file = file(request.fileUuid());
+    private AssetTypeImage assetTypeImage(AssetType assetType, AssetImageRequest request, java.util.Set<UUID> attached) {
+        StoredFile file = file(request.fileUuid(), attached);
         return AssetTypeImage.builder()
             .assetType(assetType)
             .kind(request.kind())
             .file(file)
-            .url(file == null ? request.url() : null)
+            .url(file == null ? webUrl(request.url()) : null)
             .fileName(request.fileName())
             .contentType(request.contentType())
             .sortOrder(request.sortOrder())
             .build();
     }
 
-    private StoredFile file(UUID uuid) {
-        if (uuid == null) {
+    private StoredFile file(UUID uuid, java.util.Set<UUID> attached) {
+        return uuid == null ? null : fileAccess.attachable(uuid, attached);
+    }
+
+    /** External image addresses must be http(s) (no javascript:, data: or file: links). */
+    private static String webUrl(String url) {
+        if (url == null || url.isBlank()) {
             return null;
         }
-        return fileRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown file " + uuid));
+        String value = url.trim();
+        String lower = value.toLowerCase(java.util.Locale.ROOT);
+        if (!lower.startsWith("https://") && !lower.startsWith("http://") && !value.startsWith("/")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bild-Links müssen mit http:// oder https:// beginnen.");
+        }
+        return value;
+    }
+
+    /** Files already attached to the object being saved (they may stay). */
+    private static java.util.Set<UUID> attachedFiles(java.util.stream.Stream<StoredFile> files) {
+        return files.filter(java.util.Objects::nonNull).map(StoredFile::getUuid).collect(java.util.stream.Collectors.toSet());
     }
 
     /** An image needs an uploaded file or an external url. */
@@ -568,15 +603,18 @@ public class InventoryController {
     }
 
     private Asset assetOr404(UUID uuid) {
-        return assetRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not found"));
+        return assetRepository.findByUuid(uuid).filter(asset -> !asset.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not found"));
     }
 
     private AssetType assetTypeOr404(UUID uuid) {
-        return assetTypeRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset type not found"));
+        return assetTypeRepository.findByUuid(uuid).filter(type -> !type.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset type not found"));
     }
 
     private Location locationOr404(UUID uuid) {
-        return locationRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location not found"));
+        return locationRepository.findByUuid(uuid).filter(location -> !location.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location not found"));
     }
 
     private Tag tagOr404(UUID uuid) {

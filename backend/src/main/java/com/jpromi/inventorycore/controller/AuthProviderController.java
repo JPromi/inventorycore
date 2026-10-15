@@ -80,6 +80,13 @@ public class AuthProviderController {
         LdapSettings stored = ldapRepository.load();
         settings.setBindPassword(stored.getBindPassword());
         apply(settings, request);
+        // the stored password only goes to the stored server and account; for another server or bind DN
+        // it must be typed in again (otherwise a test against a foreign server would reveal it)
+        boolean storedPassword = java.util.Objects.equals(settings.getBindPassword(), stored.getBindPassword());
+        if (storedPassword && (!java.util.Objects.equals(settings.getUrl(), stored.getUrl())
+            || !java.util.Objects.equals(settings.getBindDn(), stored.getBindDn()))) {
+            settings.setBindPassword(null);
+        }
         return ldapService.test(settings);
     }
 

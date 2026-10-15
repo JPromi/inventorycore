@@ -152,8 +152,8 @@ public class InspectionService {
             || access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE));
         InspectionType type = InspectionType.builder().name(requireName(request.name())).build();
         applyType(type, request, access);
-        // only for areas the user manages; without areas (= all) only with a right for all areas
-        requireAreas(canManage(access, type, PermissionAction.CREATE) || canManage(access, type, PermissionAction.EDIT));
+        // only for areas the user manages, in every chosen area; without areas (= all) only with a right for all areas
+        requireAreas(canManageAll(access, type.getAreas(), PermissionAction.CREATE) || canManageAll(access, type.getAreas(), PermissionAction.EDIT));
         InspectionTypeResponse created = toResponse(typeRepository.save(type), access);
         audit.log(AuditAction.CREATE, AuditObjectType.INSPECTION_TYPE, created.uuid(), created.name());
         return created;
@@ -164,9 +164,14 @@ public class InspectionService {
         InspectionType type = typeOr404(uuid);
         require(canManage(access, type, PermissionAction.EDIT));
         InspectionTypeResponse before = toResponse(type, access);
+        Set<Area> oldAreas = new java.util.HashSet<>(type.getAreas());
         applyType(type, request, access);
-        // also for the new areas (rolls back the changes otherwise)
-        requireAreas(canManage(access, type, PermissionAction.EDIT));
+        // every added or removed area needs the right too (rolls back the changes otherwise)
+        Set<Area> changed = new java.util.HashSet<>(oldAreas);
+        changed.addAll(type.getAreas());
+        changed.removeIf(area -> oldAreas.contains(area) && type.getAreas().contains(area));
+        requireAreas((changed.isEmpty() || canManageAll(access, changed, PermissionAction.EDIT))
+            && (!type.getAreas().isEmpty() || access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT)));
         InspectionTypeResponse after = toResponse(typeRepository.save(type), access);
         audit.logChanges(AuditObjectType.INSPECTION_TYPE, after.uuid(), after.name(), before, after);
         return after;
@@ -284,7 +289,7 @@ public class InspectionService {
     @Transactional(readOnly = true)
     public InspectionDetailResponse inspection(AccessContext access, UUID uuid) {
         requireInspect(access);
-        return toDetail(usableInspection(access, uuid));
+        return toDetail(usableInspection(access, uuid), access);
     }
 
     /** Assets the filters would select, without creating anything (for the preview when starting). */
@@ -407,7 +412,7 @@ public class InspectionService {
         assets.stream()
             .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
             .forEach(asset -> inspection.getItems().add(newItem(inspection, asset, true, locations)));
-        InspectionDetailResponse created = toDetail(inspectionRepository.save(inspection));
+        InspectionDetailResponse created = toDetail(inspectionRepository.save(inspection), access);
         audit.log(AuditAction.CREATE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(
             "INSPECTION_STARTED",
             "inspectionType", type.getName(),
@@ -469,6 +474,10 @@ public class InspectionService {
         }
 
         Asset asset = resolution.assets().get(0);
+        if (!canInspect(access, asset)) {
+            // visible, but not in an area the user may inspect: nothing is recorded (it would also count as a check)
+            return new InspectionScanResponse("IGNORED", "Keine Berechtigung, " + asset.getName() + " zu prüfen.", null);
+        }
         InspectionItem item = inspection.getItems().stream()
             .filter(entry -> entry.getAsset() != null && entry.getAsset().getId().equals(asset.getId()))
             .findFirst()
@@ -528,6 +537,7 @@ public class InspectionService {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
+        requireInspectItem(access, item);
 
         if (request.status() != null && !allowedStatus(inspection.getMode()).contains(request.status())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status passt nicht zur Art der Prüfung.");
@@ -579,6 +589,9 @@ public class InspectionService {
         Asset asset = assetRepository.findByUuid(assetUuid)
             .filter(entry -> !entry.isDeleted() && access.canViewAsset(entry))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden"));
+        if (!canInspect(access, asset)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung, dieses Asset zu prüfen.");
+        }
         if (!asset.isInspectionRequired()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Asset ist von Prüfungen ausgenommen.");
         }
@@ -607,11 +620,16 @@ public class InspectionService {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
+        requireInspectItem(access, item);
         if (request.fileUuid() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kein Bild angegeben.");
         }
         StoredFile file = fileRepository.findByUuid(request.fileUuid())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bild nicht gefunden."));
+        // only a fresh upload: photos of other objects cannot be taken over by their file id
+        if (fileRepository.isAttached(file)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Das Bild gehört bereits zu einem anderen Eintrag.");
+        }
 
         if (request.target() == InspectionPhotoTarget.ASSET) {
             Asset asset = item.getAsset();
@@ -699,6 +717,7 @@ public class InspectionService {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
+        requireInspectItem(access, item);
         if (item.isExpected() && inspection.getMode() == InspectionMode.INVENTORY) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erwartete Assets können nicht entfernt werden.");
         }
@@ -719,7 +738,7 @@ public class InspectionService {
         inspection.setCompletedAt(OffsetDateTime.now());
         inspection.setCompletedByUuid(user.getUuid());
         inspection.setCompletedByName(displayName(user));
-        InspectionDetailResponse completed = toDetail(inspectionRepository.save(inspection));
+        InspectionDetailResponse completed = toDetail(inspectionRepository.save(inspection), access);
         InspectionCounts counts = completed.summary().counts();
         audit.log(AuditAction.COMPLETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(
             "INSPECTION_COMPLETED",
@@ -737,10 +756,12 @@ public class InspectionService {
     }
 
     @Transactional
-    public void delete(AccessContext access, UUID uuid) {
+    public void delete(AccessContext access, User user, UUID uuid) {
         Inspection inspection = usableInspection(access, uuid);
-        // a completed protocol is a record; only admins may remove it
-        require(inspection.isCompleted() ? access.isAdmin() : access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.INSPECT));
+        // a completed protocol is a record; only admins may remove it. An open one: whoever started it,
+        // or who may delete assets in the protocol's area.
+        require(inspection.isCompleted() ? access.isAdmin()
+            : user.getUuid().equals(inspection.getCreatedByUuid()) || canDeleteIn(access, inspection));
         inspectionRepository.delete(inspection);
         audit.log(AuditAction.DELETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(),
             AuditDetail.event("INSPECTION_DELETED", "completed", inspection.isCompleted()));
@@ -995,6 +1016,7 @@ public class InspectionService {
             inspection.isCheckFunction(),
             inspection.getFilterSummary(),
             inspection.getCreatedAt(),
+            inspection.getCreatedByUuid(),
             inspection.getCreatedByName(),
             inspection.getCompletedAt(),
             inspection.getCompletedByName(),
@@ -1002,7 +1024,11 @@ public class InspectionService {
         );
     }
 
-    private InspectionDetailResponse toDetail(Inspection inspection) {
+    /**
+     * Items of assets the reader may not see are left out (a protocol of area X can contain assets of
+     * other areas, e.g. found there or added by someone with rights there). Unknown codes stay.
+     */
+    private InspectionDetailResponse toDetail(Inspection inspection, AccessContext access) {
         Map<Long, Location> locations = locationsById();
         List<InspectionFieldResponse> fields = inspection.getInspectionType() == null
             ? List.of()
@@ -1020,7 +1046,10 @@ public class InspectionService {
             inspection.getComment(),
             filter,
             fields,
-            inspection.getItems().stream().map(item -> toResponse(item, locations)).toList()
+            inspection.getItems().stream()
+                .filter(item -> item.getAsset() == null || access.canViewAsset(item.getAsset()))
+                .map(item -> toResponse(item, locations))
+                .toList()
         );
     }
 
@@ -1101,6 +1130,17 @@ public class InspectionService {
         return inspection;
     }
 
+    /** A protocol photo: the protocol must be usable and the asset (if any) visible, like in the detail. */
+    static boolean canSeePhoto(AccessContext access, InspectionItem item) {
+        return canUseInspection(access, item.getInspection()) && (item.getAsset() == null || access.canViewAsset(item.getAsset()));
+    }
+
+    private static boolean canDeleteIn(AccessContext access, Inspection inspection) {
+        return inspection.getArea() == null
+            ? allows(access, inspection.getInspectionType(), PermissionResourceType.ASSET, PermissionAction.DELETE)
+            : access.can(PermissionResourceType.ASSET, PermissionAction.DELETE, Set.of(inspection.getArea()));
+    }
+
     private static boolean canUseInspection(AccessContext access, Inspection inspection) {
         return inspection.getArea() == null ? canUse(access, inspection.getInspectionType())
             : access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, Set.of(inspection.getArea()));
@@ -1121,6 +1161,23 @@ public class InspectionService {
     /** Configuring a type (ASSET_TYPE rights) follows the same rule: in its areas, or for all areas. */
     private static boolean canManage(AccessContext access, InspectionType type, PermissionAction action) {
         return allows(access, type, PermissionResourceType.ASSET_TYPE, action);
+    }
+
+    /** The action in every one of these areas; no areas means "all areas" and needs a right without area. */
+    private static boolean canManageAll(AccessContext access, Collection<Area> areas, PermissionAction action) {
+        return areas.isEmpty() ? access.canEverywhere(PermissionResourceType.ASSET_TYPE, action)
+            : access.canInAll(PermissionResourceType.ASSET_TYPE, action, areas);
+    }
+
+    /** Checking an asset needs the right to inspect in its areas, not only in the protocol's area. */
+    private static boolean canInspect(AccessContext access, Asset asset) {
+        return access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas());
+    }
+
+    private static void requireInspectItem(AccessContext access, InspectionItem item) {
+        if (item.getAsset() != null && !canInspect(access, item.getAsset())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Keine Berechtigung, dieses Asset zu prüfen.");
+        }
     }
 
     /** Visible for whoever may use it or view it in the configuration. */

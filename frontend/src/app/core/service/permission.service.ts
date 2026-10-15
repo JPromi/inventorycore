@@ -33,6 +33,16 @@ export class PermissionService {
     );
   }
 
+  /** Allowed for all areas at once (a permission without area), e.g. for global tags. */
+  canEverywhere(resourceType: PermissionResourceType, action: PermissionAction): boolean {
+    return this.isAdmin || this.matching(resourceType, action).some((permission) => !permission.areaUuid);
+  }
+
+  /** The logged-in user's UUID. */
+  get userUuid(): string | null {
+    return this.authState.getCurrentUser()?.uuid ?? null;
+  }
+
   /** Allowed in this specific area. */
   canInArea(resourceType: PermissionResourceType, action: PermissionAction, areaUuid: string): boolean {
     return this.can(resourceType, action, [areaUuid]);

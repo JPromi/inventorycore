@@ -26,6 +26,8 @@ import com.jpromi.inventorycore.entity.AuditLog;
 import com.jpromi.inventorycore.entity.Location;
 import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.enums.PermissionAction;
+import com.jpromi.inventorycore.enums.PermissionResourceType;
 import com.jpromi.inventorycore.repository.AssetRepository;
 import com.jpromi.inventorycore.repository.AuditLogRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
@@ -129,7 +131,16 @@ public class AuditController {
         if (!access.canViewAsset(asset)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden");
         }
-        return toPage(repository.findByObjectUuidOrderByCreatedAtDescIdDesc(uuid, pageRequest(page, size, Sort.unsorted())), page, size);
+        if (access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas())) {
+            return toPage(repository.findByObjectUuidOrderByCreatedAtDescIdDesc(uuid, pageRequest(page, size, Sort.unsorted())), page, size);
+        }
+        // without the right to inspect: no inspection results, protocol photos or inspection scans
+        // (they name protocols and photo files that are only shown to inspectors)
+        Specification<AuditLog> filter = (root, query, cb) -> cb.and(
+            cb.equal(root.get("objectUuid"), uuid),
+            root.get("action").in(AuditAction.INSPECT, AuditAction.PHOTO).not(),
+            cb.not(cb.and(cb.equal(root.get("action"), AuditAction.SCAN), cb.like(root.get("details"), "%INSPECTION_SCAN%"))));
+        return toPage(repository.findAll(filter, pageRequest(page, size, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")))), page, size);
     }
 
     @GetMapping("/locations/{uuid}/logs")

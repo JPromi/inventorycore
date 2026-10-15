@@ -29,4 +29,12 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     @Modifying
     @Query(value = "delete from inspection_type_recurring_tags where tag_id = :tagId", nativeQuery = true)
     void detachFromRecurringInspections(@Param("tagId") Long tagId);
+
+    /** Names of recurring inspections limited to this tag alone (removing it would make them apply to all assets). */
+    @Query(value = """
+        select t.name from inspection_types t
+        where exists (select 1 from inspection_type_recurring_tags r where r.inspection_type_id = t.id and r.tag_id = :tagId)
+          and (select count(*) from inspection_type_recurring_tags r where r.inspection_type_id = t.id) = 1
+        """, nativeQuery = true)
+    java.util.List<String> recurringInspectionsOnlyWith(@Param("tagId") Long tagId);
 }

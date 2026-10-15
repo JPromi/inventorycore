@@ -103,7 +103,13 @@ public class InspectionScheduleService {
     @Transactional(readOnly = true)
     public List<InspectionDueResponse> ofAsset(AccessContext access, UUID assetUuid) {
         Asset asset = visibleAsset(access, assetUuid);
-        return compute(List.of(asset));
+        // like the overview: only for users who inspect, and only the kinds they may do
+        if (!access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.INSPECT)) {
+            return List.of();
+        }
+        return compute(List.of(asset)).stream()
+            .filter(entry -> typeRepository.findByUuid(entry.inspectionTypeUuid()).map(type -> InspectionService.canUse(access, type)).orElse(false))
+            .toList();
     }
 
     /** Sets (or with {@code null} removes) a fixed date for the next inspection of one asset. */
@@ -113,10 +119,14 @@ public class InspectionScheduleService {
         if (!asset.isInspectionRequired()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dieses Asset ist von Prüfungen ausgenommen.");
         }
-        PermissionService.require(access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas())
-            || access.can(PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas()));
+        // moving a due date is part of inspecting: the right to inspect the asset and to do this kind of inspection
+        PermissionService.require(access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas()));
         InspectionType type = typeRepository.findByUuid(typeUuid)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfungsvorlage nicht gefunden"));
+        PermissionService.require(InspectionService.canUse(access, type));
+        if (date != null && (date.isBefore(LocalDate.now().minusYears(1)) || date.isAfter(LocalDate.now().plusYears(10)))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Das Datum muss zwischen einem Jahr zurück und zehn Jahren voraus liegen.");
+        }
 
         AssetInspectionSchedule schedule = scheduleRepository.findByAssetAndInspectionType(asset, type).orElse(null);
         if (date == null) {

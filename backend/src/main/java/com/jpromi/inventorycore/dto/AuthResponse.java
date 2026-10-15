@@ -19,6 +19,8 @@ public class AuthResponse {
     private boolean authenticated = false;
 
     private String username;
+    /** the user's UUID, e.g. to know which protocols the user started */
+    private java.util.UUID uuid;
     
     private String displayName;
 

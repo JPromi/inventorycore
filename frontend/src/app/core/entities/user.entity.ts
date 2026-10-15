@@ -1,4 +1,6 @@
 export interface UserEntity {
+  /** missing in sessions from before the field existed */
+  uuid?: string | null;
   username: string;
   displayName: string;
   authProvider: 'LOCAL' | 'OIDC' | 'LDAP';

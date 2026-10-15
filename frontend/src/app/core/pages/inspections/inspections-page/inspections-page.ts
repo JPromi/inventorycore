@@ -65,8 +65,10 @@ interface DueGroup {
   styleUrl: './inspections-page.scss',
 })
 export class InspectionsPage implements OnInit, OnDestroy {
+  /** Like the backend: completed protocols only admins; open ones whoever started them or may delete assets there. */
   protected readonly canBulkDelete = (item: InspectionSummary) => this.permissions.isAdmin
-    || (item.status === 'OPEN' && this.permissions.can('ASSET', 'inspect', item.areaUuids));
+    || (item.status === 'OPEN' && ((!!item.createdByUuid && item.createdByUuid === this.permissions.userUuid)
+      || this.permissions.can('ASSET', 'delete', item.areaUuids)));
   protected readonly bulkDelete = (item: InspectionSummary) => this.api.delete(item.uuid);
   protected bulkDeleted(uuids: string[]): void {
     const open = this.list.items.filter((item) => uuids.includes(item.uuid) && item.status === 'OPEN').length;

@@ -171,7 +171,7 @@ public class InspectionController {
     @DeleteMapping("/inspections/{uuid}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID uuid, Authentication authentication) {
-        service.delete(permissionService.context(authentication), uuid);
+        service.delete(permissionService.context(authentication), permissionService.currentUser(authentication), uuid);
     }
 
     @PostMapping("/inspections/{uuid}/scan")

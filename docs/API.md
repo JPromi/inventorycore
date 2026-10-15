@@ -40,12 +40,18 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |
 | `/audit-logs`, `/assets/{uuid}/logs`, `/locations/{uuid}/logs` | Admin activity search and authorized object histories; `AuditController` |
 | `/health` | Public health response; `HealthController` |
+| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` |
+| `/inspection-types/page`, `/inspections/page`, `/label-templates/page`, `/admin/users/page`, `/admin/groups/page`, `/admin/areas/page` | Searched, paged lists of the other list pages; their controllers |
+
+### Paged lists
+
+All `/page` endpoints take `page` (from 0), `size` (default 50, max 200) and `q` (every word must occur), and return `PageResponse` (`items`, `total`, `page`, `size`, `hasMore`). `areas` (repeatable) is the sidebar area selection. Further filters: assets `tag`, `location` (with sub-locations), `assetType`, `area`; locations `type`, `area`; asset types `area`; protocols `status` (`OPEN`/`COMPLETED`, response adds `openCount` / `completedCount` within the area selection, independent of search and status); users `group`, `status` (`enabled`, `disabled`, `admin`). Tags return `TagUsageResponse` with `assetCount` / `assetTypeCount` of visible objects; groups return `GroupRowResponse` with `memberCount` and up to five `members`. Sorting is fixed per list (by name; protocols newest first; label templates by area, default area first).
 
 OIDC browser redirects additionally use `/oauth2/authorization/oidc` and `/login/oauth2/**` outside `/api`.
 
 ## Authentication and Access
 
-The frontend sends credentials with HTTP requests and restores the user through `/auth/me`. The login response includes authentication state, username, display name, role, provider, profile image URL, and group permissions. This is session authentication, not bearer-token/JWT authentication.
+The frontend sends credentials with HTTP requests and restores the user through `/auth/me`. The login response includes authentication state, user UUID, username, display name, role, provider, profile image URL, and group permissions. This is session authentication, not bearer-token/JWT authentication.
 
 `/admin/**` requires an admin session. Other operations apply resource/area permissions or feature-specific checks; see [security](SECURITY.md). Tags do not have a separate resource permission type. UUIDs are identifiers, not access grants.
 

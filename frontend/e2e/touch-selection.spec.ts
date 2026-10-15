@@ -78,17 +78,18 @@ test('touch cancellation stops the gesture and auto-scroll', async ({ page, cont
 });
 
 test('a gesture starting on selected rows deselects and a new tap works immediately', async ({ page, context }) => {
-  await page.getByRole('checkbox', { name: 'Alle auf dieser Seite auswählen' }).check();
+  await page.getByRole('checkbox', { name: 'Alle geladenen auswählen' }).check();
   const cdp = await context.newCDPSession(page);
   const first = await page.locator('.item').first().boundingBox();
   const fourth = await page.locator('.item').nth(3).boundingBox();
   const x = first!.x + first!.width / 2;
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: first!.y + first!.height / 2, id: 1 }] });
   await expect(page.locator('.touch-selecting')).toHaveCount(1);
-  await expect(page.locator('app-selection-checkbox input:checked')).toHaveCount(11);
+  // all 20 entries are loaded (one page of 50)
+  await expect(page.locator('app-selection-checkbox input:checked')).toHaveCount(19);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: fourth!.y + fourth!.height / 2, id: 1 }] });
-  await expect(page.locator('app-selection-checkbox input:checked')).toHaveCount(8);
+  await expect(page.locator('app-selection-checkbox input:checked')).toHaveCount(16);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.locator('.item').nth(3).tap();
-  await expect(page.locator('app-selection-checkbox input:checked')).toHaveCount(9);
+  await expect(page.locator('app-selection-checkbox input:checked')).toHaveCount(17);
 });

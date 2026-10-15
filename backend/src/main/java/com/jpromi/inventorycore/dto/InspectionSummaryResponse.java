@@ -20,6 +20,7 @@ public record InspectionSummaryResponse(
     boolean checkFunction,
     String filterSummary,
     OffsetDateTime createdAt,
+    UUID createdByUuid,
     String createdByName,
     OffsetDateTime completedAt,
     String completedByName,

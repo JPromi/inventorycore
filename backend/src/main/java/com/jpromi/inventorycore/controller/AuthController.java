@@ -73,6 +73,10 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
+            // new session id after the login, so an id planted before the login is worthless (session fixation)
+            if (httpRequest.getSession(false) != null) {
+                httpRequest.changeSessionId();
+            }
             SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
             securityContext.setAuthentication(authentication);
             SecurityContextHolder.setContext(securityContext);
@@ -88,6 +92,7 @@ public class AuthController {
             return ResponseEntity.ok(AuthResponse.builder()
                 .authenticated(true)
                 .username(authentication.getName())
+                .uuid(user.getUuid())
                 .displayName(user.getDisplayName())
                 .sourceProvider(user.getSourceProvider())
                 .profileImageUrl(user.profileImageLocation())
@@ -124,6 +129,7 @@ public class AuthController {
         return AuthResponse.builder()
             .authenticated(true)
             .username(user.getUsername())
+            .uuid(user.getUuid())
             .displayName(user.getDisplayName())
             .sourceProvider(user.getSourceProvider())
             .profileImageUrl(user.profileImageLocation())

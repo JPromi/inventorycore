@@ -16,7 +16,33 @@ The request filter requires `ROLE_ADMIN` for `/api/admin/**`. A user is an admin
 
 Permissions support view, create, edit, inspect, delete, and admin actions for `ASSET`, `LOCATION`, or `ASSET_TYPE`. A null resource type or area broadens the grant to all types or areas. An object may be accessible through any of its areas. View access to a location extends to descendant locations and their assets; this does not automatically grant mutation rights.
 
-Frontend guards and permission-based action visibility improve UX, but backend checks remain authoritative. File and profile-image delivery currently require authentication rather than a per-file inventory ownership check; do not describe them as object-permission protected.
+Frontend guards and permission-based action visibility improve UX, but backend checks remain authoritative: every endpoint must refuse what the UI hides. When adding an endpoint, check the action against the object's areas on the server before reading or changing anything, and keep the frontend's `PermissionService` mirror in line.
+
+## Permission Rules
+
+"Any area" means the action is allowed in at least one of the object's areas (`AccessContext.can`); "every area" means in each of them (`canInAll`); "all areas" means a permission without area (`canEverywhere`). Admins pass every check. Objects the user may not see answer 404, missing rights 403.
+
+| Object / operation | Rule |
+| --- | --- |
+| Assets, locations, asset types: view, lists, `/page` lists | VIEW in any area; locations and assets also through a visible (parent) location. Lists and searches are filtered after this check, so totals never count hidden objects. |
+| Create | CREATE in **every** chosen area; referenced parent, location, type must be visible. |
+| Edit | EDIT in any current area, plus EDIT in every area that is added or removed. |
+| Delete | DELETE in any area. Soft-deleted objects answer 404 for reads and changes. |
+| Images of assets, locations, types | Only freshly uploaded files or files already attached to the same object; files of other objects are refused (403). External image links must be `http(s)` or app-relative. |
+| Tags (global) | Create: CREATE/EDIT for assets or types anywhere. **Rename/recolor: EDIT for types in all areas. Delete: DELETE for types in all areas**; refused (409) while the tag is the only tag limiting a recurring inspection. |
+| Inspection templates | View: INSPECT or type VIEW in its areas. Create: CREATE/EDIT for types in **every** chosen area (no areas = all areas). Edit: EDIT in any area plus every added/removed area. Delete: DELETE in its areas. |
+| Protocols: view, scan, check, photos | INSPECT in the protocol's area. Scanning, adding, checking, photographing or removing an item additionally needs INSPECT in the **asset's** areas (otherwise the scan is ignored or 403). The detail leaves out items of assets the reader may not view. |
+| Protocols: delete | Open: the user who started it, or ASSET DELETE in the protocol's area. Completed: admins only. |
+| Due dates | Read per asset: only for users who inspect, only inspection kinds they may use. Fixed date: INSPECT on the asset and use of the inspection kind; within one year back / ten years ahead. |
+| Files (`/files/{uuid}`, `/info`) | Readable for the uploader, admins, or whoever may see an object the file belongs to (asset, location, type, or the protocol and asset of an inspection photo); otherwise 404. Upload needs CREATE/EDIT for assets, locations or types, or INSPECT, somewhere. |
+| Object histories (`/assets/{uuid}/logs`) | VIEW on the asset; without INSPECT on it, inspection results, protocol photos and inspection scans are left out. |
+| Inventory id | Must not equal another asset's inventory id, serial number or inventory number (409), since all three are scan codes. |
+| Geocoding | Location CREATE or EDIT somewhere. |
+| `/admin/**` | Admin session. The LDAP test reuses the stored bind password only for the stored server URL and bind DN. |
+
+The login changes the session id (session fixation). Profile-image delivery requires authentication only.
+
+Known remaining gaps, not yet enforced: a protocol's `filterSummary` and the activity log diff names (`nameOf`) can name locations, types or areas the reader may not see; changing `inspectionPolicy` (e.g. to `EXCLUDED`) needs only EDIT; deleting a location does not check for child locations or assets.
 
 ## External Map Services
 

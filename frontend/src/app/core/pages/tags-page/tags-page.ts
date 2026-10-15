@@ -118,12 +118,13 @@ export class TagsPage implements OnInit, OnDestroy {
     );
   }
 
+  /** Tags are global: changing or deleting one needs the right for all areas (like the backend). */
   protected get canEdit(): boolean {
-    return this.permissions.can('ASSET_TYPE', 'edit');
+    return this.permissions.canEverywhere('ASSET_TYPE', 'edit');
   }
 
   protected get canDelete(): boolean {
-    return this.permissions.can('ASSET_TYPE', 'delete');
+    return this.permissions.canEverywhere('ASSET_TYPE', 'delete');
   }
 
   protected textColor(color: string | null | undefined): string {
