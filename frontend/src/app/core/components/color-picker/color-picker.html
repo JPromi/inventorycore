@@ -5,13 +5,13 @@
     [class.compact]="compact"
     [class.open]="open"
     [disabled]="disabled"
-    [attr.aria-label]="label + ': ' + (value || 'keine')"
+    [attr.aria-label]="'components.colorPicker.triggerLabel' | t: { label: label, value: value || ('components.colorPicker.noColor' | t) }"
     [attr.aria-expanded]="open"
     (click)="toggle()"
 >
     <span class="swatch" [class.empty]="!value" [style.background]="value"></span>
     @if (!compact) {
-        <span class="trigger-text">{{ value ? value.toUpperCase() : 'Keine Farbe' }}</span>
+        <span class="trigger-text">{{ value ? value.toUpperCase() : ('components.colorPicker.noColor' | t) }}</span>
         <svg class="chevron" lucideChevronDown size="15"></svg>
     }
 </button>
@@ -20,7 +20,7 @@
     <div class="popover" role="dialog" [attr.aria-label]="label" [appDropdownPosition]="dropdownTrigger">
         <div class="presets">
             @if (allowEmpty) {
-                <button type="button" class="preset none" [class.active]="!value" title="Keine Farbe" (click)="choose(null)">
+                <button type="button" class="preset none" [class.active]="!value" [title]="'components.colorPicker.noColor' | t" (click)="choose(null)">
                     <svg lucideBan size="14"></svg>
                 </button>
             }
@@ -44,7 +44,7 @@
             class="area"
             tabindex="0"
             role="slider"
-            aria-label="Sättigung und Helligkeit"
+            [attr.aria-label]="'components.colorPicker.saturation' | t"
             [attr.aria-valuetext]="value"
             [style.background-color]="hueColor"
             (pointerdown)="startDrag('area', $event)"
@@ -65,7 +65,7 @@
             class="hue"
             tabindex="0"
             role="slider"
-            aria-label="Farbton"
+            [attr.aria-label]="'components.colorPicker.hue' | t"
             aria-valuemin="0"
             aria-valuemax="360"
             [attr.aria-valuenow]="roundedHue"
@@ -81,7 +81,7 @@
         <div class="hex-row">
             <span class="preview" [class.empty]="!value" [style.background]="value"></span>
             <label class="hex-field">
-                <span>Hex</span>
+                <span>{{ 'components.colorPicker.hex' | t }}</span>
                 <input
                     type="text"
                     maxlength="7"
@@ -94,7 +94,7 @@
                     placeholder="#000000"
                 />
             </label>
-            <button type="button" class="done" (click)="toggle()">Fertig</button>
+            <button type="button" class="done" (click)="toggle()">{{ 'components.colorPicker.done' | t }}</button>
         </div>
     </div>
 }

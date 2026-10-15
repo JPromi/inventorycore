@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Page, pageParams } from '../util/paged-list';
 import type { LocationType } from '../util/location-types';
+import { t } from '../i18n/i18n';
 
 export interface InventoryItem {
   inspectionPolicy?: AssetInspectionPolicy;
@@ -116,9 +117,9 @@ export interface TagItem {
 export type AssetInspectionPolicy = 'STANDARD' | 'MANUAL' | 'EXCLUDED';
 
 export const ASSET_INSPECTION_POLICIES: Record<AssetInspectionPolicy, string> = {
-  STANDARD: 'Mit Label prüfen',
-  MANUAL: 'Ohne Label manuell prüfen',
-  EXCLUDED: 'Von Prüfungen ausnehmen',
+  STANDARD: t('services.inspectionPolicies.STANDARD'),
+  MANUAL: t('services.inspectionPolicies.MANUAL'),
+  EXCLUDED: t('services.inspectionPolicies.EXCLUDED'),
 };
 
 @Injectable({ providedIn: 'root' })

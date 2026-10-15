@@ -21,7 +21,7 @@ public final class ProfileImageService {
             return;
         }
         if (data.length > 5 * 1024 * 1024) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Profilbild darf maximal 5 MB gross sein.");
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Das Profilbild darf maximal 5 MB groß sein.");
         }
         var image = ImageProcessor.read(data);
         if (image == null) {

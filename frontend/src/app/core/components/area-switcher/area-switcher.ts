@@ -2,6 +2,8 @@ import { AsyncPipe } from '@angular/common';
 import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
 import { LucideCheck, LucideChevronsUpDown, LucideLayers } from '@lucide/angular';
 
+import { t, tn } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AreaItem, AreaService } from '../../service/area.service';
 import { DropdownPosition } from '../dropdown-position.directive';
 
@@ -11,7 +13,7 @@ import { DropdownPosition } from '../dropdown-position.directive';
  */
 @Component({
   selector: 'app-area-switcher',
-  imports: [DropdownPosition, AsyncPipe, LucideCheck, LucideChevronsUpDown, LucideLayers],
+  imports: [DropdownPosition, AsyncPipe, TranslatePipe, LucideCheck, LucideChevronsUpDown, LucideLayers],
   templateUrl: './area-switcher.html',
   styleUrl: './area-switcher.scss',
 })
@@ -29,12 +31,12 @@ export class AreaSwitcher implements OnInit {
 
   protected label(areas: AreaItem[], selected: string[]): string {
     if (!selected.length) {
-      return 'Alle Bereiche';
+      return t('components.areaSwitcher.allAreas');
     }
     if (selected.length === 1) {
-      return areas.find((area) => area.uuid === selected[0])?.name ?? '1 Bereich';
+      return areas.find((area) => area.uuid === selected[0])?.name ?? tn('components.areaSwitcher.areaCount', 1);
     }
-    return `${selected.length} Bereiche`;
+    return tn('components.areaSwitcher.areaCount', selected.length);
   }
 
   protected isSelected(uuid: string): boolean {

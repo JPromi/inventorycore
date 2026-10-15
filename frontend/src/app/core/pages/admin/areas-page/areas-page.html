@@ -1,24 +1,21 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Bereich' : 'Bereiche' }} }</p>
+            <p class="eyebrow">@if (list.loaded) { {{ 'adminAreas.count' | tn: list.total }} }</p>
             <h1>
                 <svg lucideLayers size="20"></svg>
-                <span>Bereiche</span>
+                <span>{{ 'terms.areas' | t }}</span>
             </h1>
         </div>
         <div class="header-actions">
             <button type="button" class="primary-action" (click)="startCreate()" [disabled]="editing === 'new'">
                 <svg lucidePlus size="17"></svg>
-                <span>Neuer Bereich</span>
+                <span>{{ 'adminAreas.newArea' | t }}</span>
             </button>
         </div>
     </header>
 
-    <p class="hint intro">
-        Inventar, Standorte und Typen werden Bereichen zugeordnet. Über die Gruppen-Berechtigungen legst du fest,
-        welche Gruppe in welchem Bereich was darf. Alles ohne Zuordnung landet im Standardbereich.
-    </p>
+    <p class="hint intro">{{ 'adminAreas.intro' | t }}</p>
 
     @if (error) {
         <p class="error">{{ error }}</p>
@@ -27,25 +24,25 @@
     @if (editing) {
         <form class="card editor" (ngSubmit)="save()">
             <div class="card-title">
-                <h2>{{ editing === 'new' ? 'Neuer Bereich' : 'Bereich bearbeiten' }}</h2>
-                <button type="button" class="icon-button" title="Schließen" (click)="cancel()">
+                <h2>{{ (editing === 'new' ? 'adminAreas.newArea' : 'adminAreas.editArea') | t }}</h2>
+                <button type="button" class="icon-button" [title]="'common.close' | t" (click)="cancel()">
                     <svg lucideX size="16"></svg>
                 </button>
             </div>
             <div class="field-grid">
                 <label class="field">
-                    <span>Name *</span>
-                    <input type="text" [(ngModel)]="form.name" name="name" required placeholder="z. B. EDV" />
+                    <span>{{ 'adminAreas.nameRequired' | t }}</span>
+                    <input type="text" [(ngModel)]="form.name" name="name" required [placeholder]="'adminAreas.namePlaceholder' | t" />
                 </label>
                 <label class="field">
-                    <span>Beschreibung</span>
+                    <span>{{ 'common.description' | t }}</span>
                     <input type="text" [(ngModel)]="form.description" name="description" />
                 </label>
             </div>
             <div class="field-row">
                 <div class="field">
-                    <span class="field-label">Farbe</span>
-                    <div class="colors" role="radiogroup" aria-label="Farbe">
+                    <span class="field-label">{{ 'adminAreas.color' | t }}</span>
+                    <div class="colors" role="radiogroup" [attr.aria-label]="'adminAreas.color' | t">
                         @for (color of colors; track color) {
                             <button
                                 type="button"
@@ -60,17 +57,17 @@
                 </div>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="form.defaultArea" name="defaultArea" [disabled]="editingDefault" />
-                    <span>Standardbereich</span>
+                    <span>{{ 'adminAreas.defaultArea' | t }}</span>
                 </label>
             </div>
             @if (editingDefault) {
-                <p class="hint">Um den Standard zu wechseln, markiere einen anderen Bereich als Standardbereich.</p>
+                <p class="hint">{{ 'adminAreas.defaultAreaHint' | t }}</p>
             }
             <div class="editor-actions">
-                <button type="button" class="secondary-action" (click)="cancel()">Abbrechen</button>
+                <button type="button" class="secondary-action" (click)="cancel()">{{ 'common.cancel' | t }}</button>
                 <button type="submit" class="primary-action" [disabled]="saving">
                     <svg lucideSave size="16"></svg>
-                    <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+                    <span>{{ (saving ? 'common.saving' : 'common.save') | t }}</span>
                 </button>
             </div>
         </form>
@@ -80,9 +77,9 @@
         <div class="search-box">
             <svg class="search-icon" lucideSearch size="18"></svg>
             <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
-                placeholder="Bereich suchen..." aria-label="Suchen" />
+                [placeholder]="'adminAreas.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                <button type="button" class="clear" [title]="'adminAreas.clearSearch' | t" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -91,23 +88,23 @@
 
     <app-list-actions #selection [items]="areas" [disabled]="!list.loaded || saving" [canDelete]="canBulkDelete"
         [deleteItem]="bulkDelete" (deleted)="removed($event); refreshSidebar()"
-        deleteWarning="Einträge wandern bei Bedarf in den Standardbereich. Die Gruppen-Berechtigungen dieser Bereiche werden entfernt." />
+        [deleteWarning]="'adminAreas.bulkDeleteWarning' | t" />
     @if (list.error && !areas.length) {
-        <p class="error">Bereiche konnten nicht geladen werden.</p>
+        <p class="error">{{ 'adminAreas.loadError' | t }}</p>
     } @else if (!list.loaded) {
-        <p class="empty">Lade Bereiche...</p>
+        <p class="empty">{{ 'adminAreas.loading' | t }}</p>
     } @else if (!areas.length) {
-        <div class="empty-state">Keine Bereiche gefunden.</div>
+        <div class="empty-state">{{ 'adminAreas.empty' | t }}</div>
     } @else {
         <div class="data-table-wrap">
             <table class="data-table">
                 <thead>
                     <tr>
                         @if (selection.active) { <th class="selection-column"></th> }
-                        <th>Bereich</th>
-                        <th class="center">Inventar</th>
-                        <th class="center">Standorte</th>
-                        <th class="center">Typen</th>
+                        <th>{{ 'terms.area' | t }}</th>
+                        <th class="center">{{ 'adminAreas.columns.assets' | t }}</th>
+                        <th class="center">{{ 'terms.locations' | t }}</th>
+                        <th class="center">{{ 'terms.assetTypes' | t }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -121,7 +118,7 @@
                                     <span>
                                         <strong>{{ area.name }}</strong>
                                         @if (area.defaultArea) {
-                                            <span class="badge accent">Standard</span>
+                                            <span class="badge accent">{{ 'adminAreas.defaultBadge' | t }}</span>
                                         }
                                         @if (area.description) {
                                             <span class="muted description">{{ area.description }}</span>
@@ -133,11 +130,11 @@
                             <td class="center">{{ area.locationCount ?? 0 }}</td>
                             <td class="center">{{ area.assetTypeCount ?? 0 }}</td>
                             <td class="actions">
-                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); startEdit(area)">
+                                <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); startEdit(area)">
                                     <svg lucidePencil size="15"></svg>
                                 </button>
                                 @if (!area.defaultArea) {
-                                    <button type="button" class="icon-button danger" title="Löschen" (click)="$event.stopPropagation(); remove(area)">
+                                    <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="$event.stopPropagation(); remove(area)">
                                         <svg lucideTrash2 size="15"></svg>
                                     </button>
                                 }
@@ -149,9 +146,9 @@
         </div>
         <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
             @if (list.loading) {
-                <span>Lade weitere Bereiche...</span>
+                <span>{{ 'adminAreas.loadingMore' | t }}</span>
             } @else if (list.error) {
-                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'adminAreas.retry' | t }}</button>
             }
         </div>
     }

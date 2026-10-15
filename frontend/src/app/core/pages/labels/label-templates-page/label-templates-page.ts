@@ -7,6 +7,8 @@ import { Subject, Subscription, debounceTime } from 'rxjs';
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 import { LabelRenderer } from '../../../labels/label-renderer/label-renderer';
 import { LabelTemplateService } from '../../../labels/label-template.service';
 import { LabelElement, LabelTemplate, SAMPLE_CONTEXT, parseElements } from '../../../labels/label.model';
@@ -16,7 +18,7 @@ import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
 
 @Component({
   selector: 'app-label-templates-page',
-  imports: [FormsModule, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, LabelRenderer, LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideSearch, LucideTrash2, LucideX],
+  imports: [FormsModule, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, LabelRenderer, TranslatePipe, TranslateCountPipe, LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideSearch, LucideTrash2, LucideX],
   templateUrl: './label-templates-page.html',
   styleUrl: './label-templates-page.scss',
 })
@@ -123,7 +125,7 @@ export class LabelTemplatesPage implements OnInit, OnDestroy {
     event.stopPropagation();
     this.api
       .create({
-        name: `${template.name} (Kopie)`,
+        name: t('labelTemplates.copyName', { name: template.name }),
         description: template.description ?? null,
         areaUuid: template.areaUuid,
         defaultForArea: false,
@@ -133,7 +135,7 @@ export class LabelTemplatesPage implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (copy) => this.router.navigate(['/config/labels', copy.uuid, 'edit']),
-        error: () => (this.error = 'Vorlage konnte nicht kopiert werden.'),
+        error: () => (this.error = t('labelTemplates.copyFailed')),
       });
   }
 
@@ -144,7 +146,7 @@ export class LabelTemplatesPage implements OnInit, OnDestroy {
     }
     this.api.delete(template.uuid).subscribe({
       next: () => this.removed([template.uuid]),
-      error: () => (this.error = 'Vorlage konnte nicht gelöscht werden.'),
+      error: () => (this.error = t('labelTemplates.deleteFailed')),
     });
   }
 

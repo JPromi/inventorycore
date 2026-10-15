@@ -10,6 +10,8 @@ import { AuthStateService } from '../../service/auth-state.service';
 import { PwaService } from '../../service/pwa.service';
 import { CustomizationService } from '../../service/customization.service';
 import { CommonModule } from '@angular/common';
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import {
   LucideAlarmClock,
   LucideBox,
@@ -68,6 +70,7 @@ type NavItem = NavChild & {
     LucideDownload,
     LucideMenu,
     LucideX,
+    TranslatePipe,
   ],
   templateUrl: './main-route.html',
   styleUrl: './main-route.scss',
@@ -81,36 +84,36 @@ export class MainRoute implements OnInit {
   protected readonly expandedGroups = new Set<string>();
   protected readonly navIconInputs = { size: 17 };
   protected readonly primaryNavItems: NavItem[] = [
-    { label: 'Dashboard', route: '/dashboard', icon: LucideHouse },
-    { label: 'Scannen', route: '/scan', icon: LucideScanBarcode },
-    { label: 'Inventar', route: '/assets', icon: LucideBoxes },
-    { label: 'Standorte', route: '/locations', icon: LucideMapPin },
-    { label: 'Prüfungen', route: '/inspections', icon: LucideClipboardCheck },
+    { label: t('nav.dashboard'), route: '/dashboard', icon: LucideHouse },
+    { label: t('nav.scan'), route: '/scan', icon: LucideScanBarcode },
+    { label: t('nav.assets'), route: '/assets', icon: LucideBoxes },
+    { label: t('nav.locations'), route: '/locations', icon: LucideMapPin },
+    { label: t('nav.inspections'), route: '/inspections', icon: LucideClipboardCheck },
     {
-      label: 'Konfiguration',
+      label: t('nav.config'),
       icon: LucideSettings,
       disabled: false,
       children: [
-        { label: 'Tags', route: '/config/tags', icon: LucideTags },
-        { label: 'Typen', route: '/config/types', icon: LucideShapes },
-        { label: 'Labels', route: '/config/labels', icon: LucideQrCode },
-        { label: 'Prüfungsvorlagen', route: '/config/inspection-templates', icon: LucideClipboardList },
+        { label: t('nav.tags'), route: '/config/tags', icon: LucideTags },
+        { label: t('nav.types'), route: '/config/types', icon: LucideShapes },
+        { label: t('nav.labels'), route: '/config/labels', icon: LucideQrCode },
+        { label: t('nav.inspectionTemplates'), route: '/config/inspection-templates', icon: LucideClipboardList },
       ],
     },
     {
-      label: 'Administration',
+      label: t('nav.administration'),
       icon: LucideUsers,
       disabled: false,
       adminOnly: true,
       children: [
-        { label: 'Bereiche', route: '/admin/areas', icon: LucideLayers },
-        { label: 'Customization', route: '/admin/customization', icon: LucidePalette },
-        { label: 'Benutzer', route: '/admin/users', icon: LucideUser },
-        { label: 'Gruppen', route: '/admin/groups', icon: LucideUsers },
-        { label: 'Gruppen Berechtigungen', route: '/admin/group-permissions', icon: LucideShield },
-        { label: 'LDAP', route: '/admin/ldap', icon: LucideNetwork },
-        { label: 'OIDC', route: '/admin/oidc', icon: LucideKeyRound },
-        { label: 'Protokoll', route: '/admin/logs', icon: LucideHistory },
+        { label: t('nav.areas'), route: '/admin/areas', icon: LucideLayers },
+        { label: t('nav.customization'), route: '/admin/customization', icon: LucidePalette },
+        { label: t('nav.users'), route: '/admin/users', icon: LucideUser },
+        { label: t('nav.groups'), route: '/admin/groups', icon: LucideUsers },
+        { label: t('nav.groupPermissions'), route: '/admin/group-permissions', icon: LucideShield },
+        { label: t('nav.ldap'), route: '/admin/ldap', icon: LucideNetwork },
+        { label: t('nav.oidc'), route: '/admin/oidc', icon: LucideKeyRound },
+        { label: t('nav.logs'), route: '/admin/logs', icon: LucideHistory },
       ],
     },
   ];
@@ -157,7 +160,7 @@ export class MainRoute implements OnInit {
         return child.label;
       }
     }
-    return 'Inventar';
+    return t('nav.assets');
   }
 
   @HostListener('document:keydown.escape')

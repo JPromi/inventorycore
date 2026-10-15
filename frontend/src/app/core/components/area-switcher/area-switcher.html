@@ -8,11 +8,11 @@
             [class.filtered]="selected.length"
             (click)="open = !open"
             [attr.aria-expanded]="open"
-            title="Ansicht auf Bereiche einschränken"
+            [title]="'components.areaSwitcher.triggerTitle' | t"
         >
             <svg lucideLayers size="16"></svg>
             <span class="text">
-                <small>Bereich</small>
+                <small>{{ 'terms.area' | t }}</small>
                 <span>{{ label(areas, selected) }}</span>
             </span>
             <svg class="chevron" lucideChevronsUpDown size="15"></svg>
@@ -26,7 +26,7 @@
                             <svg lucideCheck size="14"></svg>
                         }
                     </span>
-                    <span class="name">Alle Bereiche</span>
+                    <span class="name">{{ 'components.areaSwitcher.allAreas' | t }}</span>
                 </button>
                 <div class="divider"></div>
                 @for (area of areas; track area.uuid) {
@@ -38,10 +38,10 @@
                         </span>
                         <span class="dot" [style.background]="area.color || 'var(--text-subtle)'"></span>
                         <span class="name">{{ area.name }}</span>
-                        <span class="only" role="button" (click)="only(area.uuid, $event)">nur</span>
+                        <span class="only" role="button" (click)="only(area.uuid, $event)">{{ 'components.areaSwitcher.only' | t }}</span>
                     </button>
                 }
-                <p class="note">Schränkt nur die Anzeige ein, nicht deine Rechte.</p>
+                <p class="note">{{ 'components.areaSwitcher.note' | t }}</p>
             </div>
         }
     }

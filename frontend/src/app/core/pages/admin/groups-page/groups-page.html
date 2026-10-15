@@ -1,16 +1,16 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Gruppe' : 'Gruppen' }} }</p>
+            <p class="eyebrow">@if (list.loaded) { {{ 'adminGroups.count' | tn: list.total }} }</p>
             <h1>
                 <svg lucideUsers size="20"></svg>
-                <span>Gruppen</span>
+                <span>{{ 'terms.groups' | t }}</span>
             </h1>
         </div>
         <div class="header-actions">
             <button type="button" class="primary-action" (click)="create()">
                 <svg lucidePlus size="17"></svg>
-                <span>Neue Gruppe</span>
+                <span>{{ 'adminGroups.create' | t }}</span>
             </button>
         </div>
     </header>
@@ -19,9 +19,9 @@
         <div class="search-box">
             <svg class="search-icon" lucideSearch size="18"></svg>
             <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
-                placeholder="Gruppe oder Mitglied suchen..." aria-label="Suchen" />
+                [placeholder]="'adminGroups.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                <button type="button" class="clear" [title]="'adminGroups.clearSearch' | t" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -35,20 +35,20 @@
     }
 
     @if (list.error && !groups.length) {
-        <p class="error">Gruppen konnten nicht geladen werden.</p>
+        <p class="error">{{ 'adminGroups.errors.load' | t }}</p>
     } @else if (!list.loaded) {
-        <p class="empty">Lade Gruppen...</p>
+        <p class="empty">{{ 'adminGroups.loading' | t }}</p>
     } @else if (!groups.length) {
-        <div class="empty-state">Keine Gruppen gefunden.</div>
+        <div class="empty-state">{{ 'adminGroups.empty' | t }}</div>
     } @else {
         <div class="data-table-wrap">
             <table class="data-table">
                 <thead>
                     <tr>
                         @if (selection.active) { <th class="selection-column"></th> }
-                        <th>Gruppe</th>
-                        <th>Mitglieder</th>
-                        <th>Bereiche</th>
+                        <th>{{ 'terms.group' | t }}</th>
+                        <th>{{ 'adminGroups.columns.members' | t }}</th>
+                        <th>{{ 'terms.areas' | t }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -59,7 +59,7 @@
                             <td>
                                 <strong>{{ group.name }}</strong>
                                 @if (group.adminGroup) {
-                                    <span class="badge accent provider">Admin</span>
+                                    <span class="badge accent provider">{{ 'adminGroups.adminBadge' | t }}</span>
                                 }
                                 @if (group.sourceProvider !== 'LOCAL') {
                                     <span class="badge provider">{{ group.sourceProvider }}</span>
@@ -80,7 +80,7 @@
                                         <span class="muted count">{{ group.memberCount }}</span>
                                     </div>
                                 } @else {
-                                    <span class="muted">Keine</span>
+                                    <span class="muted">{{ 'common.none' | t }}</span>
                                 }
                             </td>
                             <td>
@@ -88,15 +88,15 @@
                                     @for (area of permissionAreas(group); track area.name) {
                                         <span class="chip"><span class="dot" [style.background]="area.color || null"></span>{{ area.name }}</span>
                                     } @empty {
-                                        <span class="muted">Keine Berechtigungen</span>
+                                        <span class="muted">{{ 'adminGroups.noPermissions' | t }}</span>
                                     }
                                 </div>
                             </td>
                             <td class="actions">
-                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(group)">
+                                <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); edit(group)">
                                     <svg lucidePencil size="15"></svg>
                                 </button>
-                                <button type="button" class="icon-button danger" title="Löschen" (click)="remove(group, $event)">
+                                <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(group, $event)">
                                     <svg lucideTrash2 size="15"></svg>
                                 </button>
                             </td>
@@ -107,9 +107,9 @@
         </div>
         <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
             @if (list.loading) {
-                <span>Lade weitere Gruppen...</span>
+                <span>{{ 'adminGroups.loadingMore' | t }}</span>
             } @else if (list.error) {
-                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'adminGroups.retry' | t }}</button>
             }
         </div>
     }

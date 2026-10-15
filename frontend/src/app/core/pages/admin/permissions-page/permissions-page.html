@@ -1,16 +1,16 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ rows.length }} Einträge · Änderungen werden sofort gespeichert</p>
+            <p class="eyebrow">{{ 'adminPermissions.eyebrow' | tn: rows.length }}</p>
             <h1>
                 <svg lucideShield size="20"></svg>
-                <span>Gruppen-Berechtigungen</span>
+                <span>{{ 'adminPermissions.title' | t }}</span>
             </h1>
         </div>
         <div class="header-actions">
             <button type="button" class="primary-action" (click)="openAddForm()" [disabled]="!groups.length">
                 <svg lucidePlus size="17"></svg>
-                <span>Berechtigung hinzufügen</span>
+                <span>{{ 'adminPermissions.add' | t }}</span>
             </button>
         </div>
     </header>
@@ -18,33 +18,33 @@
     @if (showAddForm) {
         <section class="card add-form">
             <div class="card-title">
-                <h2>Neue Berechtigung</h2>
-                <button type="button" class="icon-button" title="Schließen" (click)="showAddForm = false">
+                <h2>{{ 'adminPermissions.newTitle' | t }}</h2>
+                <button type="button" class="icon-button" [title]="'common.close' | t" (click)="showAddForm = false">
                     <svg lucideX size="16"></svg>
                 </button>
             </div>
             <div class="add-grid">
                 <div class="field">
-                    <span class="field-label">Gruppe</span>
-                    <app-search-select [options]="groupOptions" [(ngModel)]="newGroupUuid" placeholder="Gruppe wählen" searchPlaceholder="Gruppe suchen..." />
+                    <span class="field-label">{{ 'terms.group' | t }}</span>
+                    <app-search-select [options]="groupOptions" [(ngModel)]="newGroupUuid" [placeholder]="'adminPermissions.chooseGroup' | t" [searchPlaceholder]="'adminPermissions.searchGroup' | t" />
                 </div>
                 <div class="field">
-                    <span class="field-label">Bereich</span>
+                    <span class="field-label">{{ 'terms.area' | t }}</span>
                     <app-search-select
                         [options]="areaOptions"
                         [(ngModel)]="newAreaUuid"
-                        placeholder="Alle Bereiche"
-                        clearLabel="Alle Bereiche"
-                        searchPlaceholder="Bereich suchen..."
+                        [placeholder]="'adminPermissions.allAreas' | t"
+                        [clearLabel]="'adminPermissions.allAreas' | t"
+                        [searchPlaceholder]="'adminPermissions.searchArea' | t"
                     />
                 </div>
                 <div class="field">
-                    <span class="field-label">Objektart</span>
+                    <span class="field-label">{{ 'adminPermissions.objectType' | t }}</span>
                     <app-search-select [options]="typeOptions" [ngModel]="newType" (ngModelChange)="changeNewType($event)" />
                 </div>
                 <div class="field">
-                    <span class="field-label">Rechte</span>
-                    <select [(ngModel)]="newPreset" aria-label="Rechte">
+                    <span class="field-label">{{ 'adminPermissions.rights' | t }}</span>
+                    <select [(ngModel)]="newPreset" [attr.aria-label]="'adminPermissions.rights' | t">
                         @for (preset of presets; track preset.key) {
                             <option [value]="preset.key">{{ preset.label }}</option>
                         }
@@ -53,11 +53,11 @@
             </div>
             <div class="editor-actions">
                 @if (newPermissionExists) {
-                    <span class="hint warn">Diese Gruppe hat dafür bereits eine Berechtigung.</span>
+                    <span class="hint warn">{{ 'adminPermissions.exists' | t }}</span>
                 }
-                <button type="button" class="secondary-action" (click)="showAddForm = false">Abbrechen</button>
+                <button type="button" class="secondary-action" (click)="showAddForm = false">{{ 'common.cancel' | t }}</button>
                 <button type="button" class="primary-action" [disabled]="!newGroupUuid || newPermissionExists" (click)="addPermission()">
-                    Hinzufügen
+                    {{ 'common.add' | t }}
                 </button>
             </div>
         </section>
@@ -68,24 +68,24 @@
             class="filter-select"
             [options]="groupOptions"
             [(ngModel)]="groupFilter"
-            placeholder="Alle Gruppen"
-            clearLabel="Alle Gruppen"
-            searchPlaceholder="Gruppe suchen..."
+            [placeholder]="'adminPermissions.allGroups' | t"
+            [clearLabel]="'adminPermissions.allGroups' | t"
+            [searchPlaceholder]="'adminPermissions.searchGroup' | t"
         />
         <app-search-select
             class="filter-select"
             [options]="areaFilterOptions"
             [(ngModel)]="areaFilter"
-            placeholder="Alle Bereiche"
-            clearLabel="Alle Bereiche"
-            searchPlaceholder="Bereich suchen..."
+            [placeholder]="'adminPermissions.allAreas' | t"
+            [clearLabel]="'adminPermissions.allAreas' | t"
+            [searchPlaceholder]="'adminPermissions.searchArea' | t"
         />
         <app-search-select
             class="filter-select"
             [options]="typeOptions"
             [(ngModel)]="typeFilter"
-            placeholder="Alle Objektarten"
-            clearLabel="Alle Objektarten"
+            [placeholder]="'adminPermissions.allObjectTypes' | t"
+            [clearLabel]="'adminPermissions.allObjectTypes' | t"
         />
     </app-filter-bar>
 
@@ -94,21 +94,21 @@
     }
 
     @if (loading) {
-        <p class="empty">Lade Berechtigungen...</p>
+        <p class="empty">{{ 'adminPermissions.loading' | t }}</p>
     } @else if (!rows.length) {
-        <div class="empty-state">Keine Berechtigungen gefunden.</div>
+        <div class="empty-state">{{ 'adminPermissions.empty' | t }}</div>
     } @else {
         <div class="data-table-wrap">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Gruppe</th>
-                        <th>Bereich</th>
-                        <th>Objektart</th>
+                        <th>{{ 'terms.group' | t }}</th>
+                        <th>{{ 'terms.area' | t }}</th>
+                        <th>{{ 'adminPermissions.objectType' | t }}</th>
                         @for (flag of flags; track flag.key) {
                             <th class="center">{{ flag.label }}</th>
                         }
-                        <th>Vorlage</th>
+                        <th>{{ 'adminPermissions.preset' | t }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -125,14 +125,14 @@
                                         {{ areaName(row.permission.areaUuid) }}
                                     </span>
                                 } @else {
-                                    <span class="badge accent">Alle Bereiche</span>
+                                    <span class="badge accent">{{ 'adminPermissions.allAreas' | t }}</span>
                                 }
                             </td>
                             <td>
                                 @if (row.permission.resourceType) {
                                     {{ typeLabel(row.permission.resourceType) }}
                                 } @else {
-                                    <span class="badge accent">Alle Objektarten</span>
+                                    <span class="badge accent">{{ 'adminPermissions.allObjectTypes' | t }}</span>
                                 }
                             </td>
                             @for (flag of flags; track flag.key) {
@@ -151,16 +151,16 @@
                                     #presetSelect
                                     class="preset"
                                     (change)="applyPreset(row, presetSelect.value); presetSelect.value = ''"
-                                    aria-label="Vorlage anwenden"
+                                    [attr.aria-label]="'adminPermissions.applyPreset' | t"
                                 >
-                                    <option value="" disabled selected>Anwenden...</option>
+                                    <option value="" disabled selected>{{ 'adminPermissions.applyPlaceholder' | t }}</option>
                                     @for (preset of presets; track preset.key) {
                                         <option [value]="preset.key">{{ preset.label }}</option>
                                     }
                                 </select>
                             </td>
                             <td class="actions">
-                                <button type="button" class="icon-button danger" title="Entfernen" (click)="remove(row)">
+                                <button type="button" class="icon-button danger" [title]="'common.remove' | t" (click)="remove(row)">
                                     <svg lucideTrash2 size="15"></svg>
                                 </button>
                             </td>

@@ -49,6 +49,8 @@ import {
   formatCheckValue,
 } from '../../../service/inspection.service';
 import { AreaService } from '../../../service/area.service';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 import { FileApiService } from '../../../service/file-api.service';
 import { InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
 import { PermissionService } from '../../../service/permission.service';
@@ -74,6 +76,8 @@ const DUPLICATE_WINDOW_MS = 2500;
     PrintDocument,
     RouterLink,
     SearchSelect,
+    TranslatePipe,
+    TranslateCountPipe,
     LucideArrowLeft,
     LucideCamera,
     LucideCameraOff,
@@ -114,6 +118,8 @@ export class InspectionPage implements OnInit, OnDestroy {
   protected lastScan: InspectionScanResponse | null = null;
   /** The code of an AMBIGUOUS answer; scanned again together with the asset the user picks. */
   private ambiguousCode = '';
+  /** The code that led to `lastScan`, for the result text. */
+  private lastScanCode = '';
   protected cameraOn = false;
   /** Result popup over the full-screen camera. */
   protected sheetOpen = false;
@@ -185,12 +191,19 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   protected get goodLabel(): string {
-    return this.isCheck ? 'In Ordnung' : 'Da';
+    return t(`inspectionStatus.${this.goodStatus}`);
   }
 
   protected get badLabel(): string {
-    return this.isCheck ? 'Mangel' : 'Fehlt';
+    return t(`inspectionStatus.${this.badStatus}`);
   }
+
+  /** "Inventur" / "Einzelprüfung" */
+  protected get modeLabel(): string {
+    return t(this.isCheck ? 'inspectionRun.mode.CHECK' : 'inspectionRun.mode.INVENTORY');
+  }
+
+  protected readonly printSignatures = [t('inspectionRun.print.checkedBy'), t('inspectionRun.print.responsible')];
 
   protected get expectedItems(): InspectionItem[] {
     return this.detail?.items.filter((item) => item.expected) ?? [];
@@ -223,7 +236,7 @@ export class InspectionPage implements OnInit, OnDestroy {
   }
 
   protected conditionLabel(item: InspectionItem): string {
-    return item.condition === 'OK' ? 'In Ordnung' : item.condition === 'DEFECT' ? 'Defekt' : 'Nicht geprüft';
+    return item.condition ? t(`inspectionCondition.${item.condition}`) : t('inspectionStatus.PENDING');
   }
 
   protected get progress(): number {
@@ -324,7 +337,7 @@ export class InspectionPage implements OnInit, OnDestroy {
         this.focusItem(item);
         setTimeout(() => (this.assetToAdd = null));
       },
-      error: (error) => this.handleError(error, 'Gerät konnte nicht hinzugefügt werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.errors.addAsset')),
     });
   }
 
@@ -344,11 +357,11 @@ export class InspectionPage implements OnInit, OnDestroy {
     }
     const date = (value: string | null) => (value ? formatDate(value, 'dd.MM.yyyy HH:mm', 'en-US') : '');
     return [
-      { label: 'Protokoll', value: `${summary.typeName} (${this.isCheck ? 'Einzelprüfung' : 'Inventur'})` },
-      { label: 'Gestartet', value: [date(summary.createdAt), summary.createdByName].filter(Boolean).join(' · ') },
-      { label: 'Abgeschlossen', value: [date(summary.completedAt), summary.completedByName].filter(Boolean).join(' · ') },
-      { label: 'Bereich', value: summary.areaNames.join(', ') },
-      { label: 'Umfang', value: summary.filterSummary },
+      { label: t('inspectionRun.print.protocol'), value: t('inspectionRun.typeWithMode', { type: summary.typeName, mode: this.modeLabel }) },
+      { label: t('inspectionRun.protocol.started'), value: [date(summary.createdAt), summary.createdByName].filter(Boolean).join(' · ') },
+      { label: t('inspectionRun.protocol.completed'), value: [date(summary.completedAt), summary.completedByName].filter(Boolean).join(' · ') },
+      { label: t('terms.area'), value: summary.areaNames.join(', ') },
+      { label: t('inspectionRun.protocol.scope'), value: summary.filterSummary },
     ];
   }
 
@@ -359,9 +372,12 @@ export class InspectionPage implements OnInit, OnDestroy {
 
   protected printStatus(item: InspectionItem): string {
     if (!item.expected) {
-      return item.assetUuid ? `Fremd (${item.locationName || 'ohne Standort'})` : 'Unbekannter Code';
+      if (!item.assetUuid) {
+        return t('inspectionRun.status.unknownCode');
+      }
+      return item.locationName ? t('inspectionRun.status.foreignAt', { location: item.locationName }) : t('inspectionRun.status.foreignNoLocation');
     }
-    return this.checkFunction && item.status === 'PRESENT' ? `Da · ${this.conditionLabel(item)}` : this.statusLabel(item);
+    return this.checkFunction && item.status === 'PRESENT' && !item.condition ? t('inspectionRun.status.presentUnchecked') : this.statusLabel(item);
   }
 
   /** Not in order: printed bold. */
@@ -432,7 +448,7 @@ export class InspectionPage implements OnInit, OnDestroy {
 
   /** Uploads the image and puts it into the protocol or into the asset's images. */
   protected uploadPhoto(item: InspectionItem, file: File, target: InspectionPhotoTarget): void {
-    this.photoStatus[item.uuid] = 'Foto wird hochgeladen...';
+    this.photoStatus[item.uuid] = t('inspectionRun.photo.uploading');
     this.files
       .uploadImage(file)
       .pipe(
@@ -443,23 +459,23 @@ export class InspectionPage implements OnInit, OnDestroy {
       .subscribe({
         next: (updated) => {
           this.mergeItem(updated);
-          this.showPhotoStatus(item.uuid, target === 'ASSET' ? 'Foto in die Bilder des Assets übernommen.' : 'Foto zur Prüfung gespeichert.');
+          this.showPhotoStatus(item.uuid, t(target === 'ASSET' ? 'inspectionRun.photo.savedToAsset' : 'inspectionRun.photo.savedToInspection'));
         },
         error: (error) => {
           if (error?.status === 409) {
             this.handleError(error, '');
             return;
           }
-          this.showPhotoStatus(item.uuid, error?.error?.message ?? 'Foto konnte nicht gespeichert werden.');
+          this.showPhotoStatus(item.uuid, error?.error?.message ?? t('inspectionRun.photo.saveFailed'));
         },
       });
   }
 
   protected async removePhoto(item: InspectionItem, photo: InspectionPhoto): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Foto entfernen?',
-      message: 'Das Foto wird aus dem Prüfprotokoll entfernt.',
-      confirmLabel: 'Entfernen',
+      title: t('inspectionRun.photo.removeTitle'),
+      message: t('inspectionRun.photo.removeMessage'),
+      confirmLabel: t('common.remove'),
       danger: true,
     });
     if (!confirmed) {
@@ -467,7 +483,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     }
     this.api.removePhoto(this.uuid, item.uuid, photo.uuid).subscribe({
       next: (updated) => this.mergeItem(updated),
-      error: (error) => this.handleError(error, 'Foto konnte nicht entfernt werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.photo.removeFailed')),
     });
   }
 
@@ -501,7 +517,7 @@ export class InspectionPage implements OnInit, OnDestroy {
 
     this.api.scan(this.uuid, code).subscribe({
       next: (response) => this.showScan(code, response),
-      error: (error) => this.handleError(error, 'Scan konnte nicht verarbeitet werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.errors.scan')),
     });
   }
 
@@ -514,25 +530,47 @@ export class InspectionPage implements OnInit, OnDestroy {
     this.scanning = true;
     this.api.scan(this.uuid, code, candidate.uuid).subscribe({
       next: (response) => this.showScan(code, response),
-      error: (error) => this.handleError(error, 'Scan konnte nicht verarbeitet werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.errors.scan')),
     });
   }
 
-  /** Why and where, e.g. "Seriennummer · INV-2026-0012 · Notebook · Lager". */
+  /** Why and where, e.g. "Treffer über Seriennummer · FW-2026-0042 · Atemschutzgerät · Fahrzeughalle". */
   protected candidateMeta(candidate: InspectionScanCandidate): string {
-    const matched = { INV_ID: 'Inventar-ID', INVENTORY_NUMBER: 'Inventarnummer', SERIAL_NUMBER: 'Seriennummer' } as const;
     return [
-      candidate.matchedBy ? `passt über ${matched[candidate.matchedBy]}` : null,
+      candidate.matchedBy ? t(`inspectionRun.scan.matchedBy.${candidate.matchedBy}`) : null,
       candidate.invId,
       candidate.assetTypeName,
       candidate.locationName,
     ].filter((part) => !!part).join(' · ');
   }
 
+  /** Result text chosen by outcome; the server message where the data for it is missing. */
+  protected scanText(scan: InspectionScanResponse): string {
+    const name = scan.item?.assetName;
+    const code = this.lastScanCode;
+    switch (scan.outcome) {
+      case 'CHECKED':
+      case 'ALREADY_CHECKED':
+      case 'ADDED':
+      case 'OPENED':
+      case 'UNEXPECTED':
+        return name ? t(`inspectionRun.scan.outcome.${scan.outcome}`, { name }) : scan.message;
+      case 'UNKNOWN':
+        return code ? t('inspectionRun.scan.outcome.UNKNOWN', { code }) : scan.message;
+      case 'AMBIGUOUS':
+        return code && scan.candidates?.length
+          ? t('inspectionRun.scan.outcome.AMBIGUOUS', { code, count: scan.candidates.length })
+          : scan.message;
+      default:
+        return scan.message;
+    }
+  }
+
   private showScan(code: string, response: InspectionScanResponse): void {
     this.scanning = false;
     this.error = '';
     this.lastScan = response;
+    this.lastScanCode = code;
     this.ambiguousCode = response.outcome === 'AMBIGUOUS' ? code : '';
     this.sheetOpen = true;
     if (response.item) {
@@ -572,7 +610,7 @@ export class InspectionPage implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.busy.delete(item.uuid);
-        this.handleError(error, 'Status konnte nicht gespeichert werden.');
+        this.handleError(error, t('inspectionRun.errors.status'));
       },
     });
   }
@@ -591,7 +629,7 @@ export class InspectionPage implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.busy.delete(item.uuid);
-        this.handleError(error, 'Zustand konnte nicht gespeichert werden.');
+        this.handleError(error, t('inspectionRun.errors.condition'));
       },
     });
   }
@@ -619,7 +657,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     const run = () =>
       this.api.updateItem(this.uuid, item.uuid, { values: { [fieldUuid]: value } }).pipe(
         catchError((error) => {
-          this.handleError(error, `„${field.name}“ konnte nicht gespeichert werden.`);
+          this.handleError(error, t('inspectionRun.errors.value', { field: field.name }));
           return of(null);
         }),
       );
@@ -640,17 +678,15 @@ export class InspectionPage implements OnInit, OnDestroy {
     }
     item.note = note;
     this.api.updateItem(this.uuid, item.uuid, { note }).subscribe({
-      error: (error) => this.handleError(error, 'Notiz konnte nicht gespeichert werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.errors.note')),
     });
   }
 
   protected async removeUnexpected(item: InspectionItem): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Eintrag entfernen?',
-      message: this.isCheck
-        ? `„${item.assetName}“ wird aus dieser Prüfung entfernt.`
-        : `„${item.assetName}“ wird aus dieser Prüfung entfernt (z. B. weil versehentlich gescannt).`,
-      confirmLabel: 'Entfernen',
+      title: t('inspectionRun.removeItem.title'),
+      message: t(this.isCheck ? 'inspectionRun.removeItem.messageCheck' : 'inspectionRun.removeItem.messageInventory', { name: item.assetName }),
+      confirmLabel: t('common.remove'),
       danger: true,
     });
     if (!confirmed) {
@@ -662,7 +698,7 @@ export class InspectionPage implements OnInit, OnDestroy {
           this.detail.items = this.detail.items.filter((entry) => entry.uuid !== item.uuid);
         }
       },
-      error: (error) => this.handleError(error, 'Eintrag konnte nicht entfernt werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.removeItem.failed')),
     });
   }
 
@@ -689,18 +725,16 @@ export class InspectionPage implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.submitting = false;
-          this.handleError(error, 'Prüfung konnte nicht abgeschlossen werden.');
+          this.handleError(error, t('inspectionRun.errors.complete'));
         },
       });
   }
 
   protected async remove(): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Prüfung löschen?',
-      message: this.open
-        ? 'Die Prüfung und alle bisher erfassten Ergebnisse werden gelöscht.'
-        : 'Das abgeschlossene Protokoll wird endgültig gelöscht.',
-      confirmLabel: 'Löschen',
+      title: t('inspectionRun.deleteDialog.title'),
+      message: t(this.open ? 'inspectionRun.deleteDialog.messageOpen' : 'inspectionRun.deleteDialog.messageCompleted'),
+      confirmLabel: t('common.delete'),
       danger: true,
     });
     if (!confirmed) {
@@ -708,7 +742,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     }
     this.api.delete(this.uuid).subscribe({
       next: () => this.router.navigate(['/inspections']),
-      error: (error) => this.handleError(error, 'Prüfung konnte nicht gelöscht werden.'),
+      error: (error) => this.handleError(error, t('inspectionRun.errors.delete')),
     });
   }
 
@@ -720,20 +754,12 @@ export class InspectionPage implements OnInit, OnDestroy {
 
   protected statusLabel(item: InspectionItem): string {
     if (item.status === 'PRESENT' && item.condition) {
-      return item.condition === 'DEFECT' ? 'Da, defekt' : 'Da, in Ordnung';
+      return t(item.condition === 'DEFECT' ? 'inspectionRun.status.presentDefect' : 'inspectionRun.status.presentOk');
     }
-    switch (item.status) {
-      case 'PRESENT':
-        return 'Da';
-      case 'MISSING':
-        return 'Fehlt';
-      case 'PASSED':
-        return 'In Ordnung';
-      case 'FAILED':
-        return 'Mangel';
-      default:
-        return this.open ? 'Offen' : 'Nicht geprüft';
+    if (item.status === 'PENDING' && this.open) {
+      return t('inspectionRun.status.open');
     }
+    return t(`inspectionStatus.${item.status}`);
   }
 
   private flushSaves(): Observable<unknown> {
@@ -757,7 +783,7 @@ export class InspectionPage implements OnInit, OnDestroy {
         setTimeout(() => this.scanInput?.nativeElement.focus());
       },
       error: () => {
-        this.error = 'Prüfung konnte nicht geladen werden.';
+        this.error = t('inspectionRun.errors.load');
         this.loading = false;
       },
     });
@@ -800,7 +826,7 @@ export class InspectionPage implements OnInit, OnDestroy {
     this.scanning = false;
     if (error?.status === 409) {
       // completed in the meantime (e.g. by someone else): show the protocol
-      this.error = 'Die Prüfung wurde inzwischen abgeschlossen.';
+      this.error = t('inspectionRun.errors.completedMeanwhile');
       this.load();
       return;
     }

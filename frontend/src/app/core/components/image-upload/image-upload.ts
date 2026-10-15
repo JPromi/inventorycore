@@ -11,6 +11,8 @@ import {
 } from '@lucide/angular';
 import { Subscription } from 'rxjs';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ACCEPTED_IMAGE_TYPES, FileApiService, MAX_UPLOAD_BYTES } from '../../service/file-api.service';
 import { InventoryImage } from '../../service/inventory-api.service';
 
@@ -28,7 +30,7 @@ interface PendingUpload {
  */
 @Component({
   selector: 'app-image-upload',
-  imports: [LucideChevronLeft, LucideChevronRight, LucideCircleAlert, LucideImageUp, LucideStar, LucideTrash2, LucideX],
+  imports: [TranslatePipe, LucideChevronLeft, LucideChevronRight, LucideCircleAlert, LucideImageUp, LucideStar, LucideTrash2, LucideX],
   templateUrl: './image-upload.html',
   styleUrl: './image-upload.scss',
 })
@@ -119,11 +121,11 @@ export class ImageUpload implements OnDestroy {
       this.pending = [...this.pending, upload];
 
       if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        upload.error = 'Kein unterstütztes Bildformat (JPEG, PNG, GIF, WebP, BMP, TIFF).';
+        upload.error = t('components.imageUpload.errors.unsupportedType');
         continue;
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        upload.error = `Datei ist größer als ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.`;
+        upload.error = t('components.imageUpload.errors.maxSize', { size: MAX_UPLOAD_BYTES / 1024 / 1024 });
         continue;
       }
 
@@ -153,10 +155,10 @@ export class ImageUpload implements OnDestroy {
         error: (error: HttpErrorResponse) => {
           upload.error =
             error.status === 413
-              ? 'Datei ist zu groß.'
+              ? t('components.imageUpload.errors.tooLarge')
               : typeof error.error?.message === 'string' && error.error.message
                 ? error.error.message
-                : 'Hochladen fehlgeschlagen.';
+                : t('components.imageUpload.errors.failed');
           upload.subscription = undefined;
           this.updateBusy();
         },

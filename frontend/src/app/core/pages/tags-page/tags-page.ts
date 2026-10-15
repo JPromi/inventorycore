@@ -7,6 +7,8 @@ import { ColorPicker, PRESET_COLORS } from '../../components/color-picker/color-
 import { readableTextColor } from '../../components/color-picker/color-utils';
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
 import { InfiniteScroll } from '../../components/infinite-scroll.directive';
+import { t, tn } from '../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
 import { InventoryApiService, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
@@ -32,7 +34,7 @@ interface TagRow extends TagItem {
 /** Tags are global (not bound to areas); name and color are edited inline and saved right away. */
 @Component({
   selector: 'app-tags-page',
-  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, ColorPicker, InfiniteScroll, LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, ColorPicker, InfiniteScroll, LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX, TranslatePipe, TranslateCountPipe],
   templateUrl: './tags-page.html',
   styleUrl: './tags-page.scss',
 })
@@ -137,7 +139,7 @@ export class TagsPage implements OnInit, OnDestroy {
       return;
     }
     if (this.rows.some((row) => row.name.toLowerCase() === name.toLowerCase())) {
-      this.error = `Den Tag „${name}“ gibt es schon.`;
+      this.error = t('tags.exists', { name });
       return;
     }
     this.creating = true;
@@ -151,7 +153,7 @@ export class TagsPage implements OnInit, OnDestroy {
         this.flash(tag.uuid, 'saved');
       },
       error: () => {
-        this.error = 'Tag konnte nicht angelegt werden.';
+        this.error = t('tags.createError');
         this.creating = false;
       },
     });
@@ -186,11 +188,11 @@ export class TagsPage implements OnInit, OnDestroy {
   protected async remove(row: TagRow): Promise<void> {
     const usage = row.assetCount + row.typeCount;
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Tag löschen?',
+      title: t('tags.deleteTitle'),
       message: usage
-        ? `„${row.name}“ wird von ${this.usageText(row)} entfernt. Das kann nicht rückgängig gemacht werden.`
-        : `„${row.name}“ wird gelöscht. Das kann nicht rückgängig gemacht werden.`,
-      confirmLabel: 'Löschen',
+        ? t('tags.deleteUsed', { name: row.name, usage: this.usageText(row) })
+        : t('tags.deleteUnused', { name: row.name }),
+      confirmLabel: t('common.delete'),
       danger: true,
     });
     if (!confirmed) {
@@ -198,19 +200,14 @@ export class TagsPage implements OnInit, OnDestroy {
     }
     this.api.delete('tags', row.uuid).subscribe({
       next: () => this.list.remove((entry) => entry === row),
-      error: () => (this.error = `„${row.name}“ konnte nicht gelöscht werden.`),
+      error: () => (this.error = t('tags.deleteError', { name: row.name })),
     });
   }
 
   protected usageText(row: TagRow): string {
-    const parts: string[] = [];
-    if (row.assetCount) {
-      parts.push(`${row.assetCount} ${row.assetCount === 1 ? 'Asset' : 'Assets'}`);
-    }
-    if (row.typeCount) {
-      parts.push(`${row.typeCount} ${row.typeCount === 1 ? 'Typ' : 'Typen'}`);
-    }
-    return parts.join(' und ');
+    const assets = row.assetCount ? tn('tags.usage.assets', row.assetCount) : '';
+    const types = row.typeCount ? tn('tags.usage.types', row.typeCount) : '';
+    return assets && types ? t('tags.usage.both', { assets, types }) : assets || types;
   }
 
   private persist(row: TagRow): void {

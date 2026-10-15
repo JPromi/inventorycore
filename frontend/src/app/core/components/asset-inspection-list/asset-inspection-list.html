@@ -8,10 +8,10 @@
                     <small>
                         {{ entry.typeName }} · {{ entry.completedAt ?? entry.createdAt | date: 'dd.MM.yyyy' }}
                         @if (entry.inspectionStatus === 'OPEN') {
-                            · läuft noch
+                            · {{ 'assetInspections.running' | t }}
                         }
                         @if (entry.checkedByName) {
-                            · geprüft von {{ entry.checkedByName }}
+                            · {{ 'assetInspections.checkedBy' | t: { name: entry.checkedByName } }}
                         }
                     </small>
                 </span>
@@ -29,7 +29,7 @@
                     }
                     @if (entry.note) {
                         <div>
-                            <dt>Notiz</dt>
+                            <dt>{{ 'assetInspections.note' | t }}</dt>
                             <dd>{{ entry.note }}</dd>
                         </div>
                     }

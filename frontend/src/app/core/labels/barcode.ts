@@ -1,3 +1,4 @@
+import { t } from '../i18n/i18n';
 import { SYMBOLOGIES } from './label.model';
 
 type BwipModule = typeof import('bwip-js/browser');
@@ -22,7 +23,7 @@ export interface BarcodeResult {
  */
 export async function renderBarcode(symbology: string, text: string, showText: boolean): Promise<BarcodeResult> {
   if (!text) {
-    return { svg: null, error: 'Kein Inhalt' };
+    return { svg: null, error: t('labels.barcode.noContent') };
   }
   const key = `${symbology}|${showText}|${text}`;
   const cached = cache.get(key);
@@ -49,6 +50,6 @@ export async function renderBarcode(symbology: string, text: string, showText: b
     return { svg, error: null };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { svg: null, error: message.replace(/^bwipp\.\w+#?\d*:\s*/, '') || 'Ungültiger Inhalt' };
+    return { svg: null, error: message.replace(/^bwipp\.\w+#?\d*:\s*/, '') || t('labels.barcode.invalid') };
   }
 }

@@ -1,0 +1,1983 @@
+{
+  "common": {
+    "save": "Speichern",
+    "saving": "Wird gespeichert …",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Anlegen",
+    "add": "Hinzufügen",
+    "remove": "Entfernen",
+    "back": "Zurück",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "apply": "Übernehmen",
+    "reset": "Zurücksetzen",
+    "search": "Suchen",
+    "searchPlaceholder": "Suchen …",
+    "filter": "Filter",
+    "select": "Auswählen",
+    "selectPlaceholder": "Bitte auswählen …",
+    "all": "Alle",
+    "none": "Keine",
+    "yes": "Ja",
+    "no": "Nein",
+    "name": "Name",
+    "description": "Beschreibung",
+    "notes": "Bemerkung",
+    "loading": "Wird geladen …",
+    "loadingMore": "Weitere Einträge werden geladen …",
+    "listEnd": "Alle Einträge geladen",
+    "noEntries": "Keine Einträge vorhanden.",
+    "noResults": "Keine Treffer.",
+    "print": "Drucken",
+    "open": "Öffnen",
+    "details": "Details",
+    "history": "Verlauf",
+    "optional": "optional",
+    "required": "Pflichtfeld",
+    "unknown": "Unbekannt",
+    "notSet": "Nicht angegeben",
+    "errors": {
+      "load": "Die Daten konnten nicht geladen werden.",
+      "save": "Das Speichern ist fehlgeschlagen.",
+      "delete": "Das Löschen ist fehlgeschlagen.",
+      "network": "Keine Verbindung zum Server. Bitte die Netzwerkverbindung prüfen.",
+      "forbidden": "Für diese Aktion fehlt die Berechtigung.",
+      "notFound": "Der Eintrag wurde nicht gefunden."
+    }
+  },
+  "terms": {
+    "asset": "Asset",
+    "assets": "Assets",
+    "location": "Standort",
+    "locations": "Standorte",
+    "assetType": "Typ",
+    "assetTypes": "Typen",
+    "tag": "Tag",
+    "tags": "Tags",
+    "area": "Bereich",
+    "areas": "Bereiche",
+    "inspection": "Prüfung",
+    "inspections": "Prüfungen",
+    "inspectionTemplate": "Prüfungsvorlage",
+    "inspectionTemplates": "Prüfungsvorlagen",
+    "label": "Label",
+    "labelTemplates": "Label-Vorlagen",
+    "invId": "Inventar-ID",
+    "inventoryNumber": "Inventarnummer",
+    "serialNumber": "Seriennummer",
+    "user": "Benutzer",
+    "users": "Benutzer",
+    "group": "Gruppe",
+    "groups": "Gruppen"
+  },
+  "inspectionStatus": {
+    "PENDING": "Nicht geprüft",
+    "PRESENT": "Vorhanden",
+    "MISSING": "Nicht vorhanden",
+    "PASSED": "In Ordnung",
+    "FAILED": "Mangelhaft"
+  },
+  "inspectionCondition": {
+    "OK": "Funktionsfähig",
+    "DEFECT": "Defekt"
+  },
+  "adminAreas": {
+    "count": {
+      "one": "{count} Bereich",
+      "other": "{count} Bereiche"
+    },
+    "newArea": "Neuer Bereich",
+    "editArea": "Bereich bearbeiten",
+    "intro": "Inventar, Standorte und Typen werden Bereichen zugeordnet. Über die Gruppen-Berechtigungen wird festgelegt, welche Gruppe in welchem Bereich was darf. Alles ohne Zuordnung landet im Standardbereich.",
+    "nameRequired": "Name *",
+    "namePlaceholder": "z. B. Atemschutzwerkstatt",
+    "color": "Farbe",
+    "defaultArea": "Standardbereich",
+    "defaultAreaHint": "Um den Standard zu wechseln, einen anderen Bereich als Standardbereich markieren.",
+    "defaultBadge": "Standard",
+    "searchPlaceholder": "Bereich suchen …",
+    "clearSearch": "Suche leeren",
+    "bulkDeleteWarning": "Einträge wandern bei Bedarf in den Standardbereich. Die Gruppen-Berechtigungen dieser Bereiche werden entfernt.",
+    "loadError": "Bereiche konnten nicht geladen werden.",
+    "loading": "Bereiche werden geladen …",
+    "loadingMore": "Weitere Bereiche werden geladen …",
+    "empty": "Keine Bereiche gefunden.",
+    "retry": "Erneut versuchen",
+    "columns": {
+      "assets": "Inventar"
+    },
+    "deleteConfirm": {
+      "title": "Bereich löschen?",
+      "message": "„{name}“ wird gelöscht. Einträge, die nur in diesem Bereich sind, wandern in den Standardbereich. Alle Gruppen-Berechtigungen für diesen Bereich werden entfernt."
+    },
+    "errors": {
+      "nameRequired": "Name ist erforderlich.",
+      "save": "Speichern fehlgeschlagen. Ist der Name bereits vergeben?",
+      "delete": "Bereich konnte nicht gelöscht werden."
+    }
+  },
+  "adminAuditLog": {
+    "count": {
+      "one": "{count} Eintrag",
+      "other": "{count} Einträge"
+    },
+    "title": "Protokoll",
+    "intro": "Wer wann was mit welchem Objekt gemacht hat: Anlegen, Bearbeiten (mit alten und neuen Werten), Löschen, Scans, Prüfergebnisse und Fotos. Den Verlauf eines einzelnen Assets oder Standorts gibt es auch auf dessen Detailseite.",
+    "searchPlaceholder": "Objekt, Benutzer oder Wert suchen …",
+    "clearSearch": "Suche leeren",
+    "allObjects": "Alle Objekte",
+    "allActions": "Alle Aktionen",
+    "from": "Von",
+    "to": "Bis",
+    "fromDate": "Von Datum",
+    "toDate": "Bis Datum",
+    "loading": "Protokoll wird geladen …",
+    "loadingMore": "Ältere Einträge werden geladen …",
+    "noMatches": "Keine Einträge passen zum Filter.",
+    "empty": "Noch keine Einträge.",
+    "loadError": "Protokoll konnte nicht geladen werden."
+  },
+  "adminCustomization": {
+    "eyebrow": "Administration",
+    "title": "Erscheinungsbild",
+    "loading": "Anpassungen werden geladen …",
+    "brand": "Marke",
+    "brandName": "Markenname",
+    "brandNamePlaceholder": "InventoryCore",
+    "brandColor": "Markenfarbe",
+    "logo": "Logo",
+    "currentLogo": "Aktuelles Logo",
+    "uploadLogo": "Logo hochladen",
+    "removeLogo": "Logo entfernen",
+    "login": "Anmeldung",
+    "loginTitle": "Login-Titel",
+    "loginTitlePlaceholder": "Willkommen zurück",
+    "loginMessage": "Login-Text",
+    "loginMessagePlaceholder": "Bitte mit dem eigenen Konto anmelden.",
+    "legal": "Rechtliches & Kontakt",
+    "urlPlaceholder": "https://…",
+    "links": {
+      "imprint": "Impressum",
+      "privacy": "Datenschutz",
+      "website": "Website",
+      "support": "Support"
+    },
+    "loadError": "Anpassungen konnten nicht geladen werden.",
+    "saved": "Anpassungen gespeichert.",
+    "logoTooLarge": "Das Logo darf maximal 5 MB groß sein.",
+    "logoSaved": "Logo gespeichert.",
+    "logoRemoved": "Logo entfernt.",
+    "logoSaveFailed": "Logo konnte nicht gespeichert werden."
+  },
+  "adminLdap": {
+    "eyebrow": "Administration · Authentifizierung",
+    "title": "LDAP / Active Directory",
+    "test": "Verbindung testen",
+    "testing": "Verbindung wird getestet …",
+    "sync": "Synchronisieren",
+    "syncing": "Wird synchronisiert …",
+    "syncTitle": "Benutzer und Gruppen jetzt importieren",
+    "syncNeedsEnabled": "LDAP erst aktivieren und speichern",
+    "syncNeedsSave": "Erst speichern",
+    "saved": "Gespeichert",
+    "usersFound": "Benutzer gefunden",
+    "groupsFound": "Gruppen gefunden",
+    "syncDone": "Synchronisation abgeschlossen",
+    "usersSkipped": "Übersprungen wurden Benutzer, deren Name bereits von einem lokalen oder OIDC-Konto belegt ist.",
+    "loading": "Einstellungen werden geladen …",
+    "connection": "Verbindung",
+    "enabled": "Aktiv",
+    "disabled": "Deaktiviert",
+    "serverUrl": "Server-URL",
+    "serverUrlPlaceholder": "ldaps://dc01.example.org:636",
+    "serverUrlHint": "ldap:// (Port 389) oder ldaps:// (Port 636). Mehrere Server mit Leerzeichen trennen.",
+    "bindDn": "Bind-DN / Benutzer",
+    "bindDnPlaceholder": "CN=svc-inventar,OU=Service,DC=example,DC=org",
+    "bindDnHint": "Bei Active Directory ist auch svc-inventar@example.org möglich.",
+    "password": "Passwort",
+    "passwordStored": "•••••••• (gespeichert)",
+    "passwordKeep": "Leer lassen, um das gespeicherte Passwort zu behalten.",
+    "passwordMissing": "Noch kein Passwort gespeichert.",
+    "baseDn": "Base-DN",
+    "baseDnPlaceholder": "DC=example,DC=org",
+    "ignoreCertificates": "Zertifikate ignorieren",
+    "ignoreCertificatesHint": "Akzeptiert selbstsignierte Zertifikate und falsche Hostnamen bei ldaps://. Nur verwenden, wenn das Netz vertrauenswürdig ist.",
+    "ignoreCertificatesLdapsOnly": "Hinweis: Die Option wirkt nur bei ldaps://-Adressen.",
+    "preset": "Vorlage:",
+    "presets": {
+      "ad": "Active Directory",
+      "openldap": "OpenLDAP",
+      "ucs": "UCS"
+    },
+    "searchBase": "Suchbasis",
+    "userSearchBasePlaceholder": "Leer = Base-DN, z. B. OU=Mitglieder,DC=example,DC=org",
+    "userFilter": "Benutzer-Filter",
+    "userFilterHint": "Beispiel nur Mitglieder einer Gruppe: (&(objectClass=user)(memberOf=CN=Inventar,OU=Gruppen,DC=example,DC=org))",
+    "usernameAttribute": "Attribut Benutzername",
+    "displayNameAttribute": "Attribut Anzeigename",
+    "emailAttribute": "Attribut E-Mail",
+    "groupSearchBasePlaceholder": "Leer = Base-DN, z. B. OU=Gruppen,DC=example,DC=org",
+    "groupFilter": "Gruppen-Filter",
+    "groupFilterHint": "Beispiel nur bestimmte Gruppen: (&(objectClass=group)(cn=INV-*))",
+    "selectGroups": "Gruppen auswählen",
+    "selectGroupsPlaceholder": "Gruppen auswählen …",
+    "selectGroupsLabel": "Zu synchronisierende Gruppen",
+    "noMoreGroups": "Keine weiteren Gruppen",
+    "groupNameAttribute": "Attribut Gruppenname",
+    "groupMemberAttribute": "Attribut Mitglieder",
+    "groupMemberAttributeHint": "„member“ (DNs) oder „memberUid“ (Benutzernamen)",
+    "groupsHint": "Gruppen werden beim Synchronisieren automatisch angelegt. Ob eine Gruppe Admin-Rechte bekommt, wird unter Administration → Gruppen festgelegt.",
+    "loginAndSync": "Anmeldung & Synchronisation",
+    "syncInterval": "Sync-Intervall",
+    "syncIntervalUnit": "Einheit",
+    "units": {
+      "MINUTES": "Minuten",
+      "HOURS": "Stunden",
+      "DAYS": "Tage"
+    },
+    "loginEnabled": "Anmeldung mit LDAP-Passwort",
+    "loginEnabledHint": "Importierte Benutzer melden sich mit ihrem Verzeichnis-Passwort an. Aus, wenn sie sich nur per OIDC anmelden sollen.",
+    "disableMissingUsers": "Nicht mehr gefundene Benutzer deaktivieren",
+    "disableMissingUsersHint": "Betrifft nur Benutzer, die aus LDAP stammen.",
+    "lastSync": "Letzte Synchronisation: {date}",
+    "syncConfirm": {
+      "title": "Jetzt synchronisieren?",
+      "message": "Benutzer und Gruppen werden aus LDAP importiert und aktualisiert. Nicht mehr gefundene LDAP-Gruppen werden mit ihren Zuordnungen und Berechtigungen gelöscht.",
+      "messageDisableMissing": "Benutzer und Gruppen werden aus LDAP importiert. LDAP-Benutzer, die nicht mehr gefunden werden, werden deaktiviert. Nicht mehr gefundene LDAP-Gruppen werden mit ihren Zuordnungen und Berechtigungen gelöscht."
+    },
+    "errors": {
+      "load": "Einstellungen konnten nicht geladen werden.",
+      "invalidGroupNameAttribute": "Ungültiges Attribut für Gruppennamen.",
+      "syncInterval": "Das Sync-Intervall muss mindestens eine Einheit und maximal 365 Tage betragen.",
+      "test": "Test konnte nicht ausgeführt werden.",
+      "sync": "Synchronisation fehlgeschlagen."
+    }
+  },
+  "adminOidc": {
+    "eyebrow": "Administration · Authentifizierung",
+    "title": "OpenID Connect (SSO)",
+    "test": "Verbindung testen",
+    "testing": "Verbindung wird getestet …",
+    "saved": "Gespeichert",
+    "issuer": "Issuer",
+    "authorizationEndpoint": "Login-Endpunkt",
+    "loading": "Einstellungen werden geladen …",
+    "identityProvider": "Identity Provider",
+    "enabled": "Aktiv",
+    "disabled": "Deaktiviert",
+    "issuerUrl": "Issuer-URL",
+    "issuerUrlPlaceholder": "https://login.microsoftonline.com/<tenant-id>/v2.0",
+    "issuerUrlHint": "Keycloak: https://keycloak.example.org/realms/<realm> · Entra ID: https://login.microsoftonline.com/<tenant>/v2.0",
+    "clientId": "Client-ID",
+    "clientSecret": "Client-Secret",
+    "secretStored": "•••••••• (gespeichert)",
+    "secretKeep": "Leer lassen, um das gespeicherte Secret zu behalten.",
+    "secretMissing": "Noch kein Secret gespeichert.",
+    "scopes": "Scopes",
+    "buttonLabel": "Text des Login-Buttons",
+    "buttonLabelPlaceholder": "z. B. Zentrale Anmeldung",
+    "publicUrl": "Öffentliche URL der Anwendung",
+    "publicUrlPlaceholder": "Leer = automatisch, z. B. https://inventar.example.org",
+    "publicUrlHint": "Nötig, wenn die Anwendung hinter einem Reverse Proxy läuft.",
+    "redirectUri": "Redirect-URI (beim Identity Provider eintragen)",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "claims": "Claims",
+    "usernameClaim": "Benutzername",
+    "usernameClaimHint": "Muss zum Benutzernamen aus LDAP passen, wenn Provider-übergreifend angemeldet wird.",
+    "displayNameClaim": "Anzeigename",
+    "emailClaim": "E-Mail",
+    "usersAndGroups": "Benutzer & Gruppen",
+    "autoCreateUsers": "Benutzer automatisch anlegen",
+    "autoCreateUsersHint": "Unbekannte Benutzer werden beim ersten Login angelegt. Aus: Nur bereits vorhandene Benutzer (z. B. aus LDAP) dürfen sich anmelden.",
+    "syncGroups": "Gruppen automatisch anlegen und zuweisen",
+    "syncGroupsHint": "Gruppen aus dem Gruppen-Claim werden angelegt. Gilt nur für Benutzer, die über OIDC angelegt wurden.",
+    "crossProviderLogin": "Provider-übergreifende Anmeldung",
+    "crossProviderLoginHint": "Benutzer, die über LDAP importiert wurden, dürfen sich per OIDC anmelden (Zuordnung über den Benutzernamen).",
+    "note": "Lokale Benutzer können sich nie über OIDC anmelden. Admin-Rechte werden unter Administration → Gruppen mit „Admin-Gruppe“ vergeben.",
+    "errors": {
+      "load": "Einstellungen konnten nicht geladen werden.",
+      "test": "Test konnte nicht ausgeführt werden."
+    }
+  },
+  "adminUsers": {
+    "count": {
+      "one": "{count} Benutzer",
+      "other": "{count} Benutzer"
+    },
+    "matches": {
+      "one": "{count} Treffer",
+      "other": "{count} Treffer"
+    },
+    "create": "Neuer Benutzer",
+    "searchPlaceholder": "Name, Benutzername oder E-Mail suchen …",
+    "clearSearch": "Suche leeren",
+    "allGroups": "Alle Gruppen",
+    "searchGroup": "Gruppe suchen …",
+    "allStatus": "Alle Status",
+    "status": {
+      "enabled": "Aktiv",
+      "disabled": "Deaktiviert",
+      "admin": "Administratoren"
+    },
+    "columns": {
+      "email": "E-Mail",
+      "status": "Status"
+    },
+    "self": "Sie",
+    "adminBadge": "Admin",
+    "source": "Quelle: {provider}",
+    "loading": "Benutzer werden geladen …",
+    "loadingMore": "Weitere Benutzer werden geladen …",
+    "empty": "Keine Benutzer gefunden.",
+    "retry": "Erneut versuchen",
+    "errors": {
+      "load": "Benutzer konnten nicht geladen werden.",
+      "loadGroups": "Gruppen konnten nicht geladen werden.",
+      "delete": "Benutzer konnte nicht gelöscht werden."
+    }
+  },
+  "adminUserForm": {
+    "eyebrow": "Administration",
+    "titleEdit": "Benutzer bearbeiten",
+    "titleCreate": "Benutzer erstellen",
+    "loading": "Wird geladen …",
+    "account": "Konto",
+    "username": "Benutzername",
+    "displayName": "Anzeigename",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordKeep": "Leer lassen, um es nicht zu ändern",
+    "signIn": "Anmeldung",
+    "providerHint": "Konto aus {provider}. Das Passwort wird dort verwaltet; Name und E-Mail werden bei der nächsten Synchronisation bzw. Anmeldung überschrieben.",
+    "access": "Zugriff",
+    "role": "Rolle",
+    "roleUser": "Benutzer",
+    "roleAdmin": "Administrator",
+    "ownRoleHint": "Die eigene Rolle kann nicht geändert werden.",
+    "adminHint": "Administratoren haben vollen Zugriff, unabhängig von Gruppen.",
+    "status": "Status",
+    "enabled": "Aktiv – kann sich anmelden",
+    "disabled": "Deaktiviert",
+    "groupsPlaceholder": "Gruppen suchen …",
+    "noMoreGroups": "Keine weiteren Gruppen",
+    "groupsHint": "Über Gruppen erhält der Benutzer seine Berechtigungen.",
+    "groupPermissions": {
+      "one": "{count} Berechtigung",
+      "other": "{count} Berechtigungen"
+    },
+    "errors": {
+      "usernameRequired": "Benutzername ist erforderlich.",
+      "passwordRequired": "Für neue Benutzer ist ein Passwort erforderlich.",
+      "save": "Das Speichern ist fehlgeschlagen. Möglicherweise ist der Benutzername bereits vergeben.",
+      "delete": "Benutzer konnte nicht gelöscht werden.",
+      "notFound": "Benutzer wurde nicht gefunden."
+    }
+  },
+  "adminGroups": {
+    "count": {
+      "one": "{count} Gruppe",
+      "other": "{count} Gruppen"
+    },
+    "create": "Neue Gruppe",
+    "searchPlaceholder": "Gruppe oder Mitglied suchen …",
+    "clearSearch": "Suche leeren",
+    "columns": {
+      "members": "Mitglieder"
+    },
+    "adminBadge": "Admin",
+    "allAreas": "Alle Bereiche",
+    "noPermissions": "Keine Berechtigungen",
+    "loading": "Gruppen werden geladen …",
+    "loadingMore": "Weitere Gruppen werden geladen …",
+    "empty": "Keine Gruppen gefunden.",
+    "retry": "Erneut versuchen",
+    "errors": {
+      "load": "Gruppen konnten nicht geladen werden.",
+      "delete": "Gruppe konnte nicht gelöscht werden."
+    }
+  },
+  "adminGroupForm": {
+    "eyebrow": "Administration",
+    "titleEdit": "Gruppe bearbeiten",
+    "titleCreate": "Gruppe erstellen",
+    "loading": "Wird geladen …",
+    "general": "Allgemein",
+    "nameExternal": "Name wird vom externen Anbieter verwaltet.",
+    "adminGroup": "Admin-Gruppe",
+    "adminGroupHint": "Mitglieder haben vollen Zugriff auf alles, auch auf die Administration, unabhängig von den Berechtigungen unten.",
+    "members": "Mitglieder",
+    "membersPlaceholder": "Benutzer suchen …",
+    "noMoreUsers": "Keine weiteren Benutzer",
+    "permissions": "Berechtigungen",
+    "permissionsHint": "Rechte gelten für Objekte im gewählten Bereich. Wer einen Standort sehen darf, sieht auch alle Unter-Standorte und Assets darin.",
+    "addPermission": "Berechtigung",
+    "grantArea": "Bereich freigeben",
+    "chooseArea": "Bereich wählen",
+    "searchArea": "Bereich suchen …",
+    "rights": "Rechte",
+    "grantAll": "Für alle Objektarten setzen",
+    "defaultArea": "Standardbereich",
+    "objectType": "Objektart",
+    "preset": "Vorlage",
+    "allAreas": "Alle Bereiche",
+    "allObjectTypes": "Alle Objektarten",
+    "duplicateEntry": "Doppelter Eintrag",
+    "applyPreset": "Vorlage anwenden",
+    "applyPlaceholder": "Anwenden …",
+    "noPermissions": "Diese Gruppe hat noch keine Berechtigungen.",
+    "errors": {
+      "nameRequired": "Name ist erforderlich.",
+      "duplicate": "Jede Kombination aus Bereich und Objektart darf nur einmal vorkommen.",
+      "delete": "Gruppe konnte nicht gelöscht werden.",
+      "notFound": "Gruppe wurde nicht gefunden."
+    }
+  },
+  "adminPermissions": {
+    "eyebrow": {
+      "one": "{count} Eintrag · Änderungen werden sofort gespeichert",
+      "other": "{count} Einträge · Änderungen werden sofort gespeichert"
+    },
+    "title": "Gruppen-Berechtigungen",
+    "add": "Berechtigung hinzufügen",
+    "newTitle": "Neue Berechtigung",
+    "chooseGroup": "Gruppe wählen",
+    "searchGroup": "Gruppe suchen …",
+    "searchArea": "Bereich suchen …",
+    "allGroups": "Alle Gruppen",
+    "allAreas": "Alle Bereiche",
+    "appliesToAllAreas": "Gilt für alle Bereiche",
+    "unknownArea": "Unbekannter Bereich",
+    "allObjectTypes": "Alle Objektarten",
+    "objectType": "Objektart",
+    "rights": "Rechte",
+    "preset": "Vorlage",
+    "applyPreset": "Vorlage anwenden",
+    "applyPlaceholder": "Anwenden …",
+    "exists": "Diese Gruppe hat dafür bereits eine Berechtigung.",
+    "loading": "Berechtigungen werden geladen …",
+    "empty": "Keine Berechtigungen gefunden.",
+    "removeConfirm": {
+      "title": "Berechtigung entfernen?",
+      "message": "Gruppe „{group}“ verliert den Zugriff auf {type} in „{area}“."
+    },
+    "errors": {
+      "remove": "Berechtigung konnte nicht entfernt werden.",
+      "add": "Berechtigung konnte nicht hinzugefügt werden.",
+      "update": "Änderung konnte nicht gespeichert werden.",
+      "load": "Berechtigungen konnten nicht geladen werden."
+    }
+  },
+  "components": {
+    "areaSwitcher": {
+      "triggerTitle": "Ansicht auf Bereiche einschränken",
+      "allAreas": "Alle Bereiche",
+      "areaCount": {
+        "one": "{count} Bereich",
+        "other": "{count} Bereiche"
+      },
+      "only": "nur",
+      "note": "Schränkt nur die Anzeige ein, nicht die Berechtigungen."
+    },
+    "auditHistory": {
+      "loading": "Verlauf wird geladen …",
+      "empty": "Noch keine Einträge. Änderungen, Scans und Prüfergebnisse erscheinen hier.",
+      "showAll": "Gesamten Verlauf anzeigen ({count})",
+      "loadingOlder": "Ältere Einträge werden geladen …",
+      "loadError": "Verlauf konnte nicht geladen werden."
+    },
+    "auditTimeline": {
+      "system": "System"
+    },
+    "cameraView": {
+      "title": "Scannen",
+      "hint": "Code in den Rahmen halten",
+      "retry": "Erneut versuchen",
+      "starting": "Kamera wird gestartet …",
+      "cancelPhoto": "Foto abbrechen",
+      "close": "Kamera schließen",
+      "torchOn": "Licht an",
+      "torchOff": "Licht aus",
+      "switchCamera": "Kamera wechseln",
+      "takePhoto": "Foto aufnehmen",
+      "errors": {
+        "photo": "Foto konnte nicht aufgenommen werden.",
+        "notAllowed": "Kein Zugriff auf die Kamera. Bitte den Zugriff im Browser erlauben (Schloss-Symbol neben der Adresse).",
+        "notFound": "Keine passende Kamera gefunden.",
+        "notReadable": "Die Kamera wird gerade von einem anderen Programm verwendet.",
+        "start": "Die Kamera konnte nicht gestartet werden."
+      }
+    },
+    "colorPicker": {
+      "label": "Farbe",
+      "triggerLabel": "{label}: {value}",
+      "noColor": "Keine Farbe",
+      "saturation": "Sättigung und Helligkeit",
+      "hue": "Farbton",
+      "hex": "Hex",
+      "done": "Fertig"
+    },
+    "confirmDialog": {
+      "deleteTitle": "Wirklich löschen?",
+      "deleteMessage": "„{name}“ wird gelöscht. Das kann nicht rückgängig gemacht werden."
+    },
+    "filterBar": {
+      "reset": "Filter zurücksetzen"
+    },
+    "imageUpload": {
+      "imageAlt": "Bild",
+      "cover": "Titelbild",
+      "moveForward": "Nach vorne",
+      "setCover": "Als Titelbild verwenden",
+      "moveBack": "Nach hinten",
+      "dismiss": "Ausblenden",
+      "progress": "{progress} %",
+      "processing": "Wird verarbeitet …",
+      "upload": "Bilder hochladen",
+      "dropHint": "Klicken oder hierher ziehen",
+      "errors": {
+        "unsupportedType": "Kein unterstütztes Bildformat (JPEG, PNG, GIF, WebP, BMP, TIFF).",
+        "maxSize": "Datei ist größer als {size} MB.",
+        "tooLarge": "Datei ist zu groß.",
+        "failed": "Hochladen fehlgeschlagen."
+      }
+    },
+    "listActions": {
+      "endSelection": "Auswahl beenden",
+      "selectPage": "Alle geladenen auswählen",
+      "selectPageTitle": "Alle geladenen Einträge auswählen",
+      "selected": "{count} ausgewählt",
+      "deleting": "Wird gelöscht …",
+      "actions": "Aktionen",
+      "clearSelection": "Auswahl aufheben",
+      "deleteSelected": "Ausgewählte Einträge löschen",
+      "deleteNotAllowed": "Nicht alle ausgewählten Einträge dürfen gelöscht werden",
+      "deleteTitle": {
+        "one": "{count} Eintrag löschen?",
+        "other": "{count} Einträge löschen?"
+      },
+      "namesMore": "{names}, …",
+      "deleteMessage": "{names}. Das kann nicht rückgängig gemacht werden. {warning}",
+      "reasons": {
+        "linked": "Verknüpfte Einträge vorhanden",
+        "forbidden": "Keine Löschberechtigung",
+        "failed": "Löschen fehlgeschlagen"
+      },
+      "failedItem": "{name} ({reason})",
+      "result": "{removed} gelöscht, {failed} fehlgeschlagen: {details}",
+      "item": "Eintrag",
+      "selectItem": "{name} auswählen"
+    },
+    "locationLookup": {
+      "findCoordinates": "Koordinaten ermitteln",
+      "findCoordinatesTitle": "Koordinaten zur eingegebenen Adresse suchen",
+      "enterAddressFirst": "Zuerst eine Adresse eingeben",
+      "findAddress": "Adresse ermitteln",
+      "findAddressTitle": "Adresse zu den Koordinaten suchen",
+      "enterCoordinatesFirst": "Zuerst Koordinaten eingeben",
+      "searching": "Wird gesucht …",
+      "noCoordinates": "Zu dieser Adresse wurden keine Koordinaten gefunden.",
+      "multipleMatches": "Mehrere Treffer – bitte den passenden Ort wählen:",
+      "addressApplied": "Adresse übernommen: {label}",
+      "coordinatesApplied": "Koordinaten übernommen: {label}",
+      "noAddress": "Zu diesen Koordinaten wurde keine Adresse gefunden.",
+      "nothingFound": "Nichts gefunden.",
+      "forbidden": "Keine Berechtigung für die Adresssuche.",
+      "unavailable": "Der Kartendienst ist gerade nicht erreichbar. Bitte später erneut versuchen."
+    },
+    "locationMap": {
+      "ariaLabel": "Karte: {title}",
+      "openInOsm": "In OpenStreetMap öffnen"
+    },
+    "multiSelect": {
+      "placeholder": "Hinzufügen …",
+      "emptyText": "Keine weiteren Einträge",
+      "removeOption": "{label} entfernen",
+      "searchLabel": "Eintrag suchen",
+      "create": "„{name}“ erstellen"
+    },
+    "printDocument": {
+      "logoAlt": "Logo",
+      "signatureHint": "Datum, Unterschrift",
+      "dialogTitle": "{kind} drucken",
+      "defaultKind": "Dokument",
+      "paperSize": "Papierformat",
+      "paperSizeSearch": "Format suchen …",
+      "orientation": "Ausrichtung",
+      "orientationSearch": "Ausrichtung suchen …",
+      "margins": "Seitenränder",
+      "marginsSearch": "Ränder suchen …",
+      "signatures": "Unterschriftsfelder",
+      "preparing": "Wird vorbereitet …",
+      "sizes": {
+        "letter": "US Letter"
+      },
+      "orientations": {
+        "portrait": "Hochformat",
+        "landscape": "Querformat"
+      },
+      "marginOptions": {
+        "normal": "Normal",
+        "narrow": "Schmal"
+      },
+      "printedAt": "Gedruckt am {date}",
+      "pageOf": "Seite {page} von {pages}"
+    },
+    "pwaStatus": {
+      "offline": "Keine Verbindung. Änderungen können erst wieder gespeichert werden, sobald die Verbindung wiederhergestellt ist.",
+      "reloadRequired": "Die App muss neu geladen werden.",
+      "reload": "Neu laden",
+      "updateAvailable": "Eine neue Version ist verfügbar.",
+      "update": "Aktualisieren",
+      "later": "Später"
+    },
+    "searchSelect": {
+      "clearSelection": "Auswahl entfernen",
+      "searchLabel": "Optionen durchsuchen"
+    }
+  },
+  "inspectionRun": {
+    "backToList": "Alle Prüfungen",
+    "dismiss": "Ausblenden",
+    "loading": "Prüfung wird geladen …",
+    "mode": {
+      "INVENTORY": "Inventur",
+      "CHECK": "Einzelprüfung"
+    },
+    "typeWithMode": "{type} ({mode})",
+    "open": "Offen",
+    "completed": "Abgeschlossen",
+    "areaLine": "Bereich: {areas}",
+    "complete": "Abschließen",
+    "stats": {
+      "expected": "Erwartet",
+      "devices": "Geräte",
+      "missing": "Nicht vorhanden",
+      "defects": "Mängel",
+      "pending": "Noch offen",
+      "unexpected": "Fremd / unbekannt",
+      "progress": "{percent} % geprüft"
+    },
+    "status": {
+      "open": "Offen",
+      "presentOk": "Vorhanden · Funktionsfähig",
+      "presentDefect": "Vorhanden · Defekt",
+      "presentUnchecked": "Vorhanden · Nicht geprüft",
+      "foreignAt": "Fremd ({location})",
+      "foreignNoLocation": "Fremd (ohne Standort)",
+      "unknownCode": "Unbekannter Code",
+      "functionOpen": "Vorhanden – Funktion noch nicht geprüft",
+      "presentAndWorking": "Vorhanden und funktionsfähig",
+      "presentButDefect": "Vorhanden, aber defekt"
+    },
+    "scan": {
+      "placeholderCheck": "Gerät scannen, um es zu prüfen …",
+      "placeholderInventory": "Asset scannen oder Code eintippen …",
+      "codeLabel": "Gescannter Code",
+      "submit": "Prüfen (Enter)",
+      "cameraOff": "Kamera aus",
+      "camera": "Kamera",
+      "orSearch": "oder Gerät suchen:",
+      "addPlaceholder": "Gerät hinzufügen …",
+      "addSearchPlaceholder": "Name oder Inventar-ID …",
+      "addEmpty": "Keine weiteren Geräte",
+      "cameraTitleCheck": "Gerät prüfen",
+      "cameraTitleInventory": "Inventur",
+      "cameraHintCheck": "Code des Geräts in den Rahmen halten",
+      "cameraHintInventory": "Code des Assets in den Rahmen halten",
+      "photoHintAsset": "Foto für die Bilder des Assets",
+      "photoHintInspection": "Foto für das Prüfprotokoll",
+      "chooseAsset": "Asset auswählen",
+      "inInspection": "In dieser Prüfung",
+      "matchedBy": {
+        "INV_ID": "Treffer über Inventar-ID",
+        "INVENTORY_NUMBER": "Treffer über Inventarnummer",
+        "SERIAL_NUMBER": "Treffer über Seriennummer"
+      },
+      "outcome": {
+        "CHECKED": "{name} ist vorhanden.",
+        "ALREADY_CHECKED": "{name} wurde bereits geprüft.",
+        "ADDED": "{name} wurde hinzugefügt.",
+        "OPENED": "{name} ist bereits in der Prüfung.",
+        "UNEXPECTED": "{name} gehört nicht zu dieser Prüfung.",
+        "UNKNOWN": "Zu „{code}“ ist kein Asset vorhanden.",
+        "AMBIGUOUS": "{count} Assets passen zu „{code}“. Bitte das richtige Asset auswählen."
+      }
+    },
+    "unexpected": {
+      "title": "Fremde Gegenstände ({count})",
+      "hint": "Diese wurden hier gefunden, gehören aber nicht zu dieser Prüfung.",
+      "belongsTo": "gehört zu {location}",
+      "noLocation": "ohne Standort",
+      "unknownCode": "unbekannter Code",
+      "code": "Code:",
+      "remove": "Entfernen (versehentlich gescannt)"
+    },
+    "list": {
+      "searchPlaceholder": "In dieser Prüfung suchen …",
+      "clearSearch": "Suche leeren",
+      "emptyCheck": "Noch keine Geräte. Bitte ein Gerät scannen oder über die Suche hinzufügen.",
+      "emptyInventory": "Die Filter haben keine Assets ausgewählt. Gefundene Gegenstände erscheinen oben als fremd.",
+      "emptyView": "Keine Einträge in dieser Ansicht.",
+      "childAssets": "Untergeordnete Assets von {name}",
+      "manualBadge": "Ohne Label · manuell prüfen",
+      "childrenChecked": "{checked}/{total} Unter-Assets geprüft",
+      "checkedByScan": "Gescannt von {name}, {date}",
+      "checkedManually": "Manuell von {name}, {date}",
+      "fieldsFilled": "{filled}/{total} Felder",
+      "photos": {
+        "one": "{count} Foto",
+        "other": "{count} Fotos"
+      },
+      "removeItem": "Aus der Prüfung entfernen"
+    },
+    "completeDialog": {
+      "title": "Prüfung abschließen",
+      "goodOfTotalCheck": "von {total} Geräten in Ordnung",
+      "goodOfTotalInventory": "von {total} Assets vorhanden",
+      "badCheck": "mangelhaft",
+      "badInventory": "nicht vorhanden",
+      "pending": "wurden nicht geprüft und erscheinen im Bericht als „Nicht geprüft“",
+      "unexpected": "fremde Gegenstände / unbekannte Codes",
+      "defect": "sind defekt",
+      "functionOpen": "sind vorhanden, aber die Funktion wurde nicht geprüft",
+      "missingRequired": "Pflichtfelder sind leer",
+      "comment": "Kommentar zur Prüfung",
+      "commentPlaceholder": "z. B. Auffälligkeiten, offene Punkte",
+      "lockHint": "Nach dem Abschließen kann die Prüfung nicht mehr bearbeitet werden.",
+      "submitting": "Wird abgeschlossen …",
+      "submit": "Endgültig abschließen"
+    },
+    "protocol": {
+      "structure": "Asset-Struktur",
+      "scope": "Umfang",
+      "started": "Gestartet",
+      "completed": "Abgeschlossen",
+      "byLine": "{date} von {name}",
+      "comment": "Kommentar",
+      "defects": "Mängel ({count})",
+      "notChecked": "Nicht geprüft ({count})",
+      "passed": "In Ordnung ({count})",
+      "defectAssets": "Defekte Assets ({count})",
+      "missingAssets": "Fehlende Assets ({count})",
+      "unexpected": "Fremde Gegenstände ({count})",
+      "checkedAssets": "Geprüfte Assets ({count})",
+      "noDefects": "Keine Mängel.",
+      "allChecked": "Alle Geräte wurden geprüft.",
+      "none": "Keine.",
+      "noDefectAssets": "Keine defekten Assets.",
+      "noMissing": "Keine – alle erwarteten Assets wurden gefunden.",
+      "columns": {
+        "object": "Gegenstand",
+        "invIdOrCode": "Inventar-ID / Code",
+        "belongsTo": "Gehört zu",
+        "recorded": "Erfasst",
+        "status": "Status",
+        "note": "Notiz",
+        "function": "Funktion",
+        "values": "Prüfwerte",
+        "checked": "Geprüft",
+        "typeLocation": "Typ / Standort",
+        "result": "Ergebnis"
+      },
+      "note": "Notiz: {note}",
+      "photo": "Foto",
+      "methodScan": "Scan",
+      "methodManual": "manuell"
+    },
+    "print": {
+      "kind": "Prüfbericht",
+      "protocol": "Protokoll",
+      "checkedBy": "Geprüft von",
+      "responsible": "Verantwortlich",
+      "printPhotos": "Fotos drucken",
+      "listPassed": "Geräte in Ordnung auflisten",
+      "listFound": "Gefundene Assets auflisten",
+      "defects": "Mängel",
+      "notChecked": "Nicht geprüft",
+      "passed": "In Ordnung",
+      "defectAssets": "Defekte Assets",
+      "missingAssets": "Fehlende Assets",
+      "unexpected": "Fremde Gegenstände",
+      "foundAssets": "Gefundene Assets"
+    },
+    "photo": {
+      "uploading": "Foto wird hochgeladen …",
+      "savedToAsset": "Foto in die Bilder des Assets übernommen.",
+      "savedToInspection": "Foto zur Prüfung gespeichert.",
+      "saveFailed": "Foto konnte nicht gespeichert werden.",
+      "removeTitle": "Foto entfernen?",
+      "removeMessage": "Das Foto wird aus dem Prüfprotokoll entfernt.",
+      "removeFailed": "Foto konnte nicht entfernt werden."
+    },
+    "removeItem": {
+      "title": "Eintrag entfernen?",
+      "messageCheck": "„{name}“ wird aus dieser Prüfung entfernt.",
+      "messageInventory": "„{name}“ wird aus dieser Prüfung entfernt (z. B. weil versehentlich gescannt).",
+      "failed": "Eintrag konnte nicht entfernt werden."
+    },
+    "deleteDialog": {
+      "title": "Prüfung löschen?",
+      "messageOpen": "Die Prüfung und alle bisher erfassten Ergebnisse werden gelöscht.",
+      "messageCompleted": "Das abgeschlossene Protokoll wird endgültig gelöscht."
+    },
+    "errors": {
+      "addAsset": "Gerät konnte nicht hinzugefügt werden.",
+      "scan": "Scan konnte nicht verarbeitet werden.",
+      "status": "Status konnte nicht gespeichert werden.",
+      "condition": "Zustand konnte nicht gespeichert werden.",
+      "value": "„{field}“ konnte nicht gespeichert werden.",
+      "note": "Notiz konnte nicht gespeichert werden.",
+      "complete": "Prüfung konnte nicht abgeschlossen werden.",
+      "delete": "Prüfung konnte nicht gelöscht werden.",
+      "load": "Prüfung konnte nicht geladen werden.",
+      "completedMeanwhile": "Die Prüfung wurde inzwischen abgeschlossen."
+    }
+  },
+  "inspectionItemEditor": {
+    "note": "Notiz",
+    "photos": "Fotos",
+    "takenBy": "Aufgenommen von {name}",
+    "photo": "Foto",
+    "removePhoto": "Foto entfernen",
+    "toInspection": "Zur Prüfung",
+    "toAsset": "Zum Asset",
+    "toAssetTitle": "Foto in die Bilder des Assets übernehmen"
+  },
+  "inspectionNew": {
+    "title": "Neue Prüfung",
+    "noTemplates": "Es gibt noch keine Prüfungsvorlage.",
+    "createTemplate": "Jetzt unter Konfiguration anlegen",
+    "templateLabel": "Prüfungsvorlage *",
+    "templatePlaceholder": "Prüfungsvorlage wählen",
+    "templateSearch": "Prüfungsvorlage suchen …",
+    "mode": {
+      "INVENTORY": "Inventur",
+      "CHECK": "Einzelprüfung"
+    },
+    "fieldCount": {
+      "one": "{count} Prüffeld",
+      "other": "{count} Prüffelder"
+    },
+    "onlyTypes": "nur {types}",
+    "titleLabel": "Titel",
+    "protocolArea": "Bereich des Prüfprotokolls *",
+    "protocolAreaPlaceholder": "Bereich wählen",
+    "checkFunction": "Funktion prüfen – vorhandene Assets auch als „Funktionsfähig“ oder „Defekt“ erfassen",
+    "checkFunctionDefault": {
+      "with": "Vorgabe der Prüfungsvorlage: mit Funktionsprüfung",
+      "without": "Vorgabe der Prüfungsvorlage: ohne Funktionsprüfung"
+    },
+    "onlyDue": "Nur fällige Assets prüfen",
+    "dueWithin": {
+      "before": "überfällig oder fällig in den nächsten",
+      "after": "Tagen"
+    },
+    "assetsHeading": "Welche Assets werden geprüft?",
+    "filterHint": "Leer gelassene Filter schränken nicht ein. Innerhalb eines Filters reicht eine Übereinstimmung.",
+    "lockedHint": "Durch die Prüfungsvorlage vorgegeben",
+    "allLocations": "Alle Standorte",
+    "includeSubLocations": "Unterstandorte einschließen",
+    "includeChildAssets": "Untergeordnete Assets mitprüfen",
+    "addTag": "Tag hinzufügen …",
+    "addType": "Typ hinzufügen …",
+    "allAreas": "Alle Bereiche",
+    "areasHint": "Vorbelegt mit dem links gewählten Bereich. Typen, Tags und Standorte zeigen nur, was es dort gibt.",
+    "counting": "Assets werden gezählt …",
+    "expected": {
+      "one": "Asset wird erwartet",
+      "other": "Assets werden erwartet"
+    },
+    "start": "Prüfung starten",
+    "starting": "Wird gestartet …",
+    "defaultTitle": {
+      "due": "fällige"
+    },
+    "errors": {
+      "protocolAreaRequired": "Bitte einen Bereich für das Prüfprotokoll auswählen.",
+      "templateRequired": "Bitte eine Prüfungsvorlage auswählen.",
+      "start": "Die Prüfung konnte nicht gestartet werden."
+    }
+  },
+  "inspectionTemplateEditor": {
+    "eyebrow": "Konfiguration · Prüfungsvorlagen",
+    "titleNew": "Neue Prüfungsvorlage",
+    "titleEdit": "Prüfungsvorlage bearbeiten",
+    "general": "Allgemein",
+    "nameLabel": "Name *",
+    "namePlaceholder": "z. B. Jahresprüfung Atemschutz, Fahrzeugkontrolle",
+    "color": "Farbe",
+    "descriptionPlaceholder": "Wofür ist diese Prüfung?",
+    "protocolArea": "Bereich der Prüfprotokolle",
+    "currentArea": "Aktuell ausgewählter Bereich",
+    "mode": {
+      "heading": "Art der Prüfung",
+      "INVENTORY": "Inventur",
+      "CHECK": "Einzelprüfung",
+      "inventoryHint": "Die Assets werden beim Start per Filter festgelegt und als „Vorhanden“ oder „Nicht vorhanden“ markiert. Gegenstände, die nicht dazugehören, werden als fremd gemeldet.",
+      "checkHint": "Geräte werden einzeln geprüft („In Ordnung“ / „Mangelhaft“) und können jederzeit per Scan oder Suche hinzugefügt werden. Die Prüfung kann offen bleiben, bis alles erledigt ist."
+    },
+    "checkFunction": "Funktion prüfen",
+    "checkFunctionHint": "Vorhandene Assets zusätzlich als „Funktionsfähig“ oder „Defekt“ erfassen. Defekte werden bei wiederkehrenden Prüfungen sofort wieder fällig. Beim Start einer Prüfung änderbar.",
+    "defaultTags": "Standard-Tags",
+    "defaultTypes": "Standard-Typen",
+    "defaultLocations": "Standard-Standorte",
+    "addTag": "Tag hinzufügen …",
+    "addType": "Typ hinzufügen …",
+    "addLocation": "Standort hinzufügen …",
+    "includeChildAssets": "Untergeordnete Assets mitprüfen",
+    "scope": {
+      "heading": "Anwendungsbereich",
+      "typesPlaceholder": "Alle Assets – Typ hinzufügen, um einzuschränken …",
+      "typesHint": "Leer = alle Assets. Typen schränken die Ausgangsauswahl und die wiederkehrenden Prüftermine ein.",
+      "areasPlaceholder": "Alle Bereiche – Bereich hinzufügen, um einzuschränken …",
+      "areasHint": "Leer = alle Bereiche. Mit Bereichen, z. B. „Atemschutz“, sehen und starten nur Benutzer mit dem Recht „Prüfen“ in diesen Bereichen die Prüfung. Die Bereiche begrenzen die Ausgangsauswahl."
+    },
+    "recurrence": {
+      "heading": "Wiederholung",
+      "recurring": "Wiederkehrende Prüfung",
+      "tags": "Wiederholung für Tags",
+      "allTags": "Alle Tags",
+      "every": "Alle",
+      "interval": "Intervall",
+      "unit": "Einheit",
+      "hint": "Jedes Asset bekommt einen eigenen Termin. Nach einer bestandenen Prüfung startet der Zeitraum neu, bei einem Mangel ist das Asset sofort wieder fällig. Pro Asset kann auf der Detailseite ein festes Datum gesetzt werden."
+    },
+    "fields": {
+      "onlyForType": "Nur für Typ „{type}“",
+      "forAll": "Prüffelder für alle Assets",
+      "removeType": "Typ entfernen",
+      "empty": "Noch keine Felder. Ohne Felder wird nur geprüft, ob das Asset vorhanden ist.",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "name": "Bezeichnung",
+      "namePlaceholder": "z. B. Dichtheit geprüft",
+      "type": "Art",
+      "required": "Pflicht",
+      "remove": "Feld entfernen",
+      "options": "Optionen (mit Komma getrennt)",
+      "optionsPlaceholder": "z. B. In Ordnung, Mangelhaft, Defekt",
+      "add": "Feld hinzufügen"
+    },
+    "typeFields": {
+      "heading": "Felder für einen bestimmten Typ",
+      "hint": "Diese Felder erscheinen in der Prüfung nur bei Assets dieses Typs.",
+      "search": "Typ suchen …",
+      "empty": "Alle Typen haben bereits Felder"
+    },
+    "unknownType": "Unbekannter Typ",
+    "errors": {
+      "nameRequired": "Bitte einen Namen angeben.",
+      "selectWithoutOptions": "Das Auswahlfeld „{name}“ braucht mindestens eine Option.",
+      "intervalMin": "Bitte ein Intervall von mindestens 1 angeben."
+    }
+  },
+  "inspectionTemplateList": {
+    "count": {
+      "one": "{count} Prüfungsvorlage",
+      "other": "{count} Prüfungsvorlagen"
+    },
+    "new": "Neue Prüfungsvorlage",
+    "intro": "Eine Prüfungsvorlage legt fest, was bei jedem Asset geprüft wird: Felder für alle Assets und zusätzliche Felder nur für bestimmte Typen, z. B. „Dichtheit geprüft“ bei Atemschutzgeräten.",
+    "searchPlaceholder": "Vorlage oder Typ suchen …",
+    "clearSearch": "Suche leeren",
+    "deleteWarning": "Bestehende Prüfprotokolle bleiben erhalten.",
+    "loadError": "Die Prüfungsvorlagen konnten nicht geladen werden.",
+    "loading": "Prüfungsvorlagen werden geladen …",
+    "notFound": "Keine Prüfungsvorlage gefunden.",
+    "empty": "Keine Prüfungsvorlage vorhanden. Eventuell ist links ein anderer Bereich ausgewählt; andernfalls zuerst eine Prüfungsvorlage anlegen.",
+    "mode": {
+      "INVENTORY": "Inventur",
+      "CHECK": "Einzelprüfung"
+    },
+    "withFunctionCheck": "mit Funktionsprüfung",
+    "allAssets": "Alle Assets",
+    "areas": "Bereich {areas}",
+    "allAreas": "Alle Bereiche",
+    "noInspectRight": "Kein Prüfrecht",
+    "noInspectRightHint": "Es fehlt das Recht „Prüfen“ in diesem Bereich.",
+    "generalFields": "Felder für alle",
+    "retry": "Erneut versuchen",
+    "deleteConfirm": {
+      "title": "Prüfungsvorlage löschen?",
+      "message": "„{name}“ wird gelöscht.",
+      "messageWithInspections": {
+        "one": "„{name}“ wird gelöscht. Die {count} Prüfung dieser Art bleibt mit allen Werten erhalten.",
+        "other": "„{name}“ wird gelöscht. Die {count} Prüfungen dieser Art bleiben mit allen Werten erhalten."
+      }
+    },
+    "deleteError": "Die Prüfungsvorlage konnte nicht gelöscht werden."
+  },
+  "inspectionList": {
+    "summary": "{open} offen · {completed} abgeschlossen",
+    "overdue": "{count} überfällig",
+    "new": "Neue Prüfung",
+    "tabs": {
+      "due": "Fällig",
+      "open": "Offen",
+      "completed": "Abgeschlossen"
+    },
+    "searchPlaceholder": "Titel, Art, Standort oder Person suchen …",
+    "clearSearch": "Suche leeren",
+    "loading": "Prüfungen werden geladen …",
+    "loadError": "Die Prüfungen konnten nicht geladen werden.",
+    "notFound": "Keine Prüfungen gefunden. Eventuell ist links ein anderer Bereich ausgewählt.",
+    "empty": "Noch keine Prüfungen vorhanden. Zuerst unter Konfiguration eine Prüfungsvorlage anlegen und dann eine Prüfung starten.",
+    "due": {
+      "empty": "Keine fälligen Prüfungen. Wiederkehrende Prüfungen werden unter Konfiguration → Prüfungsvorlagen angelegt.",
+      "soon": "{count} bald fällig",
+      "start": "Fällige prüfen",
+      "fixedDate": "(festes Datum)",
+      "lastChecked": "zuletzt {date}",
+      "lastCheckedFailed": "zuletzt {date} – Mangelhaft",
+      "neverChecked": "noch nie geprüft"
+    },
+    "status": {
+      "OPEN": "Offen",
+      "COMPLETED": "Abgeschlossen"
+    },
+    "started": "Gestartet {date} von {name}",
+    "completed": "abgeschlossen {date} von {name}",
+    "progress": "{percent} % geprüft",
+    "counts": {
+      "pending": "Offen",
+      "unexpected": "Fremd"
+    },
+    "retry": "Erneut versuchen"
+  },
+  "inventoryDetail": {
+    "backToList": "Zurück zur Übersicht",
+    "printLabel": "Label drucken",
+    "fields": {
+      "inspectionPolicy": "Prüferfassung",
+      "address": "Adresse",
+      "kind": "Art",
+      "createdAt": "Erstellt am"
+    },
+    "areaWithoutAccess": "Bereich ohne Zugriff",
+    "tags": {
+      "inheritedTitle": "Vom Typ übernommen",
+      "inheritedBadge": "Typ",
+      "none": "Keine Tags vergeben."
+    },
+    "fieldDefinitions": {
+      "title": "Felddefinitionen",
+      "requiredBadge": "Pflicht",
+      "none": "Keine Felder definiert."
+    },
+    "fieldTypes": {
+      "TEXT": "Text",
+      "NUMBER": "Zahl",
+      "BOOLEAN": "Ja/Nein",
+      "DATE": "Datum",
+      "DATETIME": "Datum und Uhrzeit",
+      "URL": "URL",
+      "EMAIL": "E-Mail",
+      "SELECT": "Auswahl"
+    },
+    "childLocations": {
+      "title": "Unter-Standorte",
+      "none": "Keine Unter-Standorte."
+    },
+    "linkedAssets": {
+      "atLocation": "Assets an diesem Standort",
+      "ofType": "Assets dieses Typs",
+      "none": "Keine Assets zugeordnet."
+    },
+    "assetLinks": {
+      "title": "Asset-Verknüpfungen",
+      "addChild": "Untergeordnetes Asset",
+      "parent": "Übergeordnetes Asset",
+      "parentUnavailable": "Übergeordnetes Asset nicht verfügbar.",
+      "children": "Untergeordnete Assets",
+      "noChildren": "Keine untergeordneten Assets."
+    },
+    "inspections": {
+      "showAll": "Alle Prüfungen anzeigen ({count})",
+      "none": "Dieses Asset war noch in keiner Prüfung."
+    },
+    "schedules": {
+      "title": "Prüftermine",
+      "fixedDate": "(festes Datum)",
+      "lastChecked": "Zuletzt {date} von {name}",
+      "neverChecked": "Noch nie geprüft",
+      "dateLabel": "Nächste Prüfung am",
+      "set": "Setzen",
+      "changeDate": "Datum ändern",
+      "setFixedDate": "Festes Datum setzen",
+      "useInterval": "Wieder Intervall verwenden"
+    },
+    "gallery": {
+      "openOriginal": "In Originalgröße öffnen",
+      "noImage": "Kein Bild"
+    },
+    "map": "Karte",
+    "errors": {
+      "saveSchedule": "Der Prüftermin konnte nicht gespeichert werden.",
+      "hasChildren": "Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.",
+      "load": "Der Eintrag konnte nicht geladen werden."
+    }
+  },
+  "assetPrint": {
+    "kind": "Asset-Datenblatt",
+    "images": "Bilder",
+    "imageModes": {
+      "all": "Alle Bilder",
+      "main": "Nur Hauptbild",
+      "none": "Keine Bilder"
+    },
+    "options": {
+      "inspection": "Letzte Prüfung mit Prüfwerten",
+      "schedules": "Prüftermine",
+      "links": "Verknüpfte Assets"
+    },
+    "meta": {
+      "createdAt": "Erfasst am",
+      "lastInspection": "Letzte Prüfung",
+      "neverChecked": "Noch nie geprüft"
+    },
+    "noDetails": "Keine weiteren Angaben.",
+    "lastInspection": {
+      "title": "Letzte Prüfung",
+      "template": "Vorlage",
+      "checked": "Geprüft",
+      "result": "Ergebnis",
+      "methodScan": "Scan",
+      "methodManual": "manuell",
+      "locationAtInspection": "Standort bei der Prüfung",
+      "status": "Status",
+      "running": "Prüfung läuft noch",
+      "note": "Notiz",
+      "checkValue": "Prüfwert"
+    },
+    "schedules": {
+      "title": "Prüftermine",
+      "interval": "Intervall",
+      "nextDue": "Nächste Prüfung",
+      "lastChecked": "Zuletzt geprüft",
+      "fixedDate": "(festes Datum)",
+      "never": "Noch nie"
+    },
+    "links": {
+      "title": "Verknüpfte Assets",
+      "relation": "Beziehung",
+      "note": "Notiz",
+      "parent": "Übergeordnet",
+      "child": "Untergeordnet"
+    }
+  },
+  "objectLog": {
+    "backTo": "Zurück zu {name}",
+    "loadingInspections": "Prüfungen werden geladen …",
+    "noInspections": "Dieses Asset war noch in keiner Prüfung.",
+    "errors": {
+      "loadInspections": "Die Prüfungen konnten nicht geladen werden."
+    }
+  },
+  "assetInspections": {
+    "running": "läuft noch",
+    "checkedBy": "geprüft von {name}",
+    "note": "Notiz",
+    "result": {
+      "foreign": "Als fremder Gegenstand gefunden",
+      "withCondition": "{status} · {condition}",
+      "notYetChecked": "Noch nicht geprüft"
+    }
+  },
+  "inventory": {
+    "pageNotFound": "Seite nicht gefunden",
+    "assets": {
+      "listTitle": "Inventar",
+      "createTitle": "Asset erstellen",
+      "editTitle": "Asset bearbeiten",
+      "searchPlaceholder": "Name, Beschreibung oder Tag suchen …"
+    },
+    "locations": {
+      "createTitle": "Standort erstellen",
+      "editTitle": "Standort bearbeiten",
+      "searchPlaceholder": "Name oder Adresse suchen …"
+    },
+    "assetTypes": {
+      "createTitle": "Typ erstellen",
+      "editTitle": "Typ bearbeiten",
+      "searchPlaceholder": "Typ oder Tag suchen …"
+    }
+  },
+  "inventoryList": {
+    "hits": {
+      "one": "{count} Treffer",
+      "other": "{count} Treffer"
+    },
+    "entries": {
+      "one": "{count} Eintrag",
+      "other": "{count} Einträge"
+    },
+    "areaFilter": "Bereich: {names}",
+    "view": "Ansicht",
+    "listView": "Listenansicht",
+    "gridView": "Kachelansicht",
+    "refresh": "Aktualisieren",
+    "new": "Neu",
+    "clearSearch": "Suche leeren",
+    "allAreas": "Alle Bereiche",
+    "searchArea": "Bereich suchen …",
+    "allTags": "Alle Tags",
+    "searchTag": "Tag suchen …",
+    "allLocations": "Alle Standorte",
+    "searchLocation": "Standort suchen …",
+    "allAssetTypes": "Alle Typen",
+    "searchAssetType": "Typ suchen …",
+    "noFilterMatches": "Keine Einträge passen zum Filter.",
+    "resetFilters": "Filter zurücksetzen",
+    "empty": "Noch keine Einträge vorhanden.",
+    "createFirst": "Ersten Eintrag erstellen",
+    "inspectionOverdue": "Prüfung überfällig",
+    "inspectionDue": "Prüfung fällig",
+    "dueTitle": "{type}: {due}",
+    "retry": "Erneut versuchen",
+    "loadedOf": "{count} von {total}",
+    "printLabels": "Labels drucken",
+    "assetHasChildren": "Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.",
+    "inParent": "in {path}",
+    "inspectionInterval": {
+      "one": "Prüfung jeden Tag",
+      "other": "Prüfung alle {count} Tage"
+    }
+  },
+  "inventoryForm": {
+    "created": "„{name}“ wurde erstellt. Felder wie Bereich, Standort und Typ sind für den nächsten Eintrag übernommen.",
+    "view": "Ansehen",
+    "general": "Allgemein",
+    "autoInvId": "Die Inventar-ID wird beim Speichern automatisch generiert.",
+    "locationType": "Art",
+    "selectLocationType": "Art wählen",
+    "searchLocationType": "Art suchen …",
+    "selectAssetType": "Typ auswählen",
+    "noAssetType": "Kein Typ",
+    "searchAssetType": "Typ suchen …",
+    "inspectionPolicyLabel": "Prüferfassung",
+    "inspectionPolicy": {
+      "STANDARD": "Mit Label prüfen",
+      "MANUAL": "Ohne Label manuell prüfen",
+      "EXCLUDED": "Von Prüfungen ausnehmen"
+    },
+    "parentAsset": "Übergeordnetes Asset",
+    "selectAsset": "Asset auswählen",
+    "noParentAsset": "Kein übergeordnetes Asset",
+    "searchAsset": "Asset suchen …",
+    "parentAssetNote": "Verknüpfungsbeschreibung",
+    "parentAssetNotePlaceholder": "z. B. Halterung G1",
+    "areaLocked": "Keine Berechtigung, diesen Bereich zu ändern",
+    "selectArea": "Bereich wählen …",
+    "noMoreAreas": "Keine weiteren Bereiche",
+    "defaultArea": "Standardbereich",
+    "parentLocation": "Übergeordneter Standort",
+    "noParentLocation": "Kein übergeordneter Standort",
+    "noLocation": "Kein Standort",
+    "searchLocation": "Standort suchen …",
+    "tagLocked": "Vom Typ übernommen",
+    "tagsPlaceholder": "Tags suchen oder neu anlegen …",
+    "noMoreTags": "Keine weiteren Tags",
+    "tagsHint": "Enter oder Komma übernimmt den Tag. Unbekannte Tags werden neu angelegt.",
+    "lockedTagsHint": "Gestrichelte Tags kommen vom Typ.",
+    "position": "Position",
+    "positionHint": "Adresse und Koordinaten für die Karte in der Standort-Ansicht.",
+    "street": "Straße und Hausnummer",
+    "postalCode": "PLZ",
+    "city": "Ort",
+    "country": "Land",
+    "latitude": "Breitengrad",
+    "latitudePlaceholder": "z. B. 48.208493",
+    "longitude": "Längengrad",
+    "longitudePlaceholder": "z. B. 16.373149",
+    "legacyAddress": "Die bisherige Adresse „{address}“ steht in „Straße und Hausnummer“ – bitte auf die Felder aufteilen oder „Koordinaten ermitteln“ und danach „Adresse ermitteln“ verwenden.",
+    "customFields": "Eigene Felder",
+    "addField": "Feld",
+    "fieldType": "Typ",
+    "fieldTypes": {
+      "TEXT": "Text",
+      "NUMBER": "Nummer",
+      "BOOLEAN": "Ja/Nein",
+      "DATE": "Datum",
+      "URL": "URL",
+      "EMAIL": "E-Mail",
+      "SELECT": "Auswahl"
+    },
+    "value": "Wert",
+    "typeField": "Typ-Feld",
+    "removeField": "Feld entfernen",
+    "inspection": "Prüfung",
+    "images": "Bilder",
+    "imagesHint": "Werden automatisch verkleinert. Das Titelbild erscheint in Listen.",
+    "createAnother": "Erstellen & neu",
+    "createAnotherTitle": "Speichern und direkt einen weiteren Eintrag mit denselben Vorgaben anlegen",
+    "create": "Erstellen",
+    "uploadingImages": "Bilder werden hochgeladen …",
+    "errors": {
+      "areaRequired": "Bitte mindestens einen Bereich auswählen.",
+      "save": "Speichern fehlgeschlagen. Bitte Eingaben prüfen.",
+      "loadAssets": "Assets konnten nicht geladen werden.",
+      "loadAssetTypes": "Typen konnten nicht geladen werden.",
+      "loadLocations": "Standorte konnten nicht geladen werden.",
+      "loadTags": "Tags konnten nicht geladen werden.",
+      "createTag": "Tag konnte nicht erstellt werden.",
+      "coordinatesIncomplete": "Bitte Breiten- und Längengrad angeben.",
+      "latitudeRange": "Der Breitengrad muss zwischen -90 und 90 liegen.",
+      "longitudeRange": "Der Längengrad muss zwischen -180 und 180 liegen."
+    }
+  },
+  "labels": {
+    "logo": "Logo",
+    "size": "{width} × {height} mm",
+    "barcode": {
+      "noContent": "Kein Inhalt",
+      "invalid": "Ungültiger Inhalt"
+    },
+    "symbologies": {
+      "qrcode": "QR-Code",
+      "datamatrix": "Data Matrix",
+      "azteccode": "Aztec",
+      "pdf417": "PDF417",
+      "code128": "Code 128",
+      "code39": "Code 39",
+      "ean13": "EAN-13",
+      "ean8": "EAN-8",
+      "upca": "UPC-A",
+      "interleaved2of5": "Interleaved 2 of 5"
+    },
+    "symbologyHints": {
+      "code39": "Nur A–Z, 0–9 und - . $ / + % Leerzeichen",
+      "ean13": "12 oder 13 Ziffern",
+      "ean8": "7 oder 8 Ziffern",
+      "upca": "11 oder 12 Ziffern",
+      "interleaved2of5": "Gerade Anzahl Ziffern"
+    },
+    "placeholders": {
+      "brandName": "Markenname",
+      "brandColor": "Markenfarbe",
+      "website": "Website",
+      "imprint": "Impressum",
+      "privacy": "Datenschutz",
+      "support": "Support",
+      "loginTitle": "Login-Titel",
+      "loginMessage": "Login-Text",
+      "locationPath": "Standort-Pfad",
+      "url": "Link zum Asset",
+      "uuid": "UUID",
+      "date": "Druckdatum"
+    },
+    "sizePresets": {
+      "tape24": "24 mm Band, 60 mm lang"
+    },
+    "sample": {
+      "name": "Atemschutzgerät PA 1",
+      "type": "Atemschutzgerät",
+      "location": "Fahrzeughalle",
+      "locationPath": "Gerätehaus / Fahrzeughalle",
+      "areas": "Atemschutz",
+      "description": "Pressluftatmer für den Innenangriff"
+    },
+    "print": {
+      "logoFailed": "Das Logo konnte für den Druck nicht geladen werden."
+    }
+  },
+  "labelPrint": {
+    "title": {
+      "one": "Label drucken",
+      "other": "{count} Labels drucken"
+    },
+    "loading": "Vorlagen werden geladen …",
+    "loadFailed": "Vorlagen konnten nicht geladen werden.",
+    "noTemplates": "Es gibt noch keine Label-Vorlagen.",
+    "createTemplate": "Vorlage anlegen",
+    "template": "Vorlage",
+    "templatePlaceholder": "Vorlage wählen",
+    "templateSearch": "Vorlage suchen …",
+    "copies": "Anzahl",
+    "copiesPerAsset": "Anzahl je Asset",
+    "previousAsset": "Vorheriges Asset",
+    "nextAsset": "Nächstes Asset",
+    "total": {
+      "one": "{count} Label insgesamt.",
+      "other": "{count} Labels insgesamt."
+    },
+    "printHint": "{width} × {height} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.",
+    "dialogLabel": "Label drucken"
+  },
+  "labelTemplates": {
+    "count": {
+      "one": "{count} Vorlage",
+      "other": "{count} Vorlagen"
+    },
+    "newTemplate": "Neue Vorlage",
+    "intro": "Vorlagen gehören zu einem Bereich. Beim Drucken eines Assets wird die Standard-Vorlage seines Bereichs vorgeschlagen, ohne eigene Vorlage die Standard-Vorlage des Standardbereichs.",
+    "searchPlaceholder": "Vorlage oder Bereich suchen …",
+    "clearSearch": "Suche leeren",
+    "loadFailed": "Vorlagen konnten nicht geladen werden.",
+    "loading": "Vorlagen werden geladen …",
+    "noneFound": "Keine Vorlagen gefunden.",
+    "empty": "Noch keine Vorlagen vorhanden.",
+    "default": "Standard",
+    "duplicate": "Duplizieren",
+    "loadingMore": "Weitere Vorlagen werden geladen …",
+    "retry": "Erneut versuchen",
+    "copyName": "{name} (Kopie)",
+    "copyFailed": "Vorlage konnte nicht kopiert werden.",
+    "deleteFailed": "Vorlage konnte nicht gelöscht werden."
+  },
+  "labelEditor": {
+    "eyebrow": "Konfiguration · Labels",
+    "titleEdit": "Label-Vorlage bearbeiten",
+    "titleCreate": "Label-Vorlage erstellen",
+    "loading": "Vorlage wird geladen …",
+    "loadFailed": "Vorlage konnte nicht geladen werden.",
+    "nameMissing": "Bitte einen Namen vergeben.",
+    "template": "Vorlage",
+    "nameRequired": "Name *",
+    "namePlaceholder": "z. B. Geräte-Label Atemschutz",
+    "areaPlaceholder": "Bereich wählen",
+    "areaSearch": "Bereich suchen …",
+    "defaultArea": "Standardbereich",
+    "defaultForArea": "Standard-Vorlage für diesen Bereich",
+    "size": "Größe",
+    "sizePreset": "Vorlage",
+    "sizePresetPlaceholder": "Etikettengröße wählen …",
+    "widthMm": "Breite (mm)",
+    "heightMm": "Höhe (mm)",
+    "elements": "Elemente",
+    "globalLogo": "Globales Logo",
+    "add": {
+      "logo": "Logo",
+      "text": "Text",
+      "barcode": "Code",
+      "box": "Rahmen"
+    },
+    "elementTypes": {
+      "text": "Text",
+      "barcode": "Barcode",
+      "box": "Rahmen",
+      "logo": "Logo"
+    },
+    "codeFallback": "Code",
+    "moveBack": "Nach hinten",
+    "moveForward": "Nach vorne",
+    "noElements": "Noch keine Elemente.",
+    "duplicateShortcut": "Duplizieren (Strg+D)",
+    "removeShortcut": "Entfernen (Entf)",
+    "symbology": "Code-Art",
+    "symbologySearch": "Code-Art suchen …",
+    "content": "Inhalt",
+    "text": "Text",
+    "showText": "Klartext unter dem Code",
+    "useBrandColor": "Markenfarbe verwenden",
+    "fontSize": "Schriftgröße (pt)",
+    "align": "Ausrichtung",
+    "alignLeft": "Links",
+    "alignCenter": "Zentriert",
+    "alignRight": "Rechts",
+    "verticalAlign": "Vertikal",
+    "alignTop": "Oben",
+    "alignMiddle": "Mitte",
+    "alignBottom": "Unten",
+    "style": "Stil",
+    "bold": "Fett",
+    "italic": "Kursiv",
+    "borderWidth": "Linienstärke (mm)",
+    "x": "X",
+    "y": "Y",
+    "width": "Breite",
+    "height": "Höhe",
+    "measureHint": "Alle Maße in mm. Pfeiltasten verschieben (Shift = 2 mm).",
+    "previewWith": "Vorschau mit",
+    "sampleData": "Beispieldaten",
+    "assetSearch": "Asset suchen …",
+    "zoomOut": "Verkleinern",
+    "zoomFit": "Einpassen",
+    "zoomIn": "Vergrößern",
+    "canvasHint": "Elemente mit der Maus verschieben, am roten Griff die Größe ändern.",
+    "placeholderHintPrefix": "Platzhalter wie",
+    "placeholderHintSuffix": "werden beim Drucken durch die Werte des Assets ersetzt."
+  },
+  "scan": {
+    "eyebrow": "Asset oder Standort per Barcode finden",
+    "title": "Scannen",
+    "soundOff": "Ton aus",
+    "soundOn": "Ton an",
+    "autoOpen": "Direkt öffnen",
+    "autoOpenHint": "Bei genau einem Treffer sofort die Detailseite öffnen",
+    "modeLabel": "Eingabe",
+    "modeScanner": "Scanner / Eingabe",
+    "modeScannerHint": "Handscanner, der den Code eintippt und Enter drückt",
+    "modeCamera": "Kamera",
+    "modeCameraHint": "Code mit der Kamera des Geräts lesen",
+    "cameraHttpsOnly": "Nur über HTTPS verfügbar",
+    "cameraUnavailable": "Kamera nur über HTTPS oder localhost verfügbar",
+    "cameraDevice": "Kamera {number}",
+    "cameraHint": "Barcode oder QR-Code in den Rahmen halten",
+    "cameraOff": "Kamera ist aus",
+    "startCamera": "Kamera starten",
+    "placeholder": "Code scannen oder eintippen …",
+    "inputLabel": "Gescannter Code",
+    "submit": "Suchen (Enter)",
+    "scannerHint": {
+      "active": "Das Feld bleibt aktiv: Einfach scannen.",
+      "enterBefore": "Der Scanner muss nach dem Code",
+      "enterAfter": "senden.",
+      "fields": "Gesucht wird nach Link, ID, Inventar-ID, Inventarnummer und Seriennummer."
+    },
+    "searching": "Suche …",
+    "lookupFailed": "Abfrage fehlgeschlagen. Keine Verbindung zum Server. Bitte die Netzwerkverbindung prüfen.",
+    "nothingFoundFor": "Nichts gefunden für",
+    "noMatchReason": "Entweder gibt es kein passendes Objekt oder es fehlt die Berechtigung dafür.",
+    "selectHit": "{count} Treffer – bitte auswählen",
+    "hitsFor": "{count} Treffer für",
+    "pleaseSelect": "– bitte auswählen.",
+    "hitCount": "{count} Treffer",
+    "notFound": "Nicht gefunden",
+    "clearHistory": "Verlauf leeren",
+    "ready": "Bereit zum Scannen",
+    "readyHint": "Das gefundene Asset wird hier angezeigt.",
+    "locationAssets": {
+      "one": "Standort · {count} Asset",
+      "other": "Standort · {count} Assets"
+    },
+    "address": "Adresse",
+    "openDetails": "Details öffnen",
+    "openLocation": "Standort öffnen",
+    "found": {
+      "link": "Gefunden über den Link im Code",
+      "uuid": "Gefunden über die ID",
+      "invId": "Gefunden über die Inventar-ID",
+      "inventoryNumber": "Gefunden über die Inventarnummer",
+      "serialNumber": "Gefunden über die Seriennummer",
+      "any": "Gefunden über Inventar-ID, Inventarnummer oder Seriennummer"
+    },
+    "assetFound": {
+      "link": "Asset · gefunden über den Link im Code",
+      "uuid": "Asset · gefunden über die ID",
+      "invId": "Asset · gefunden über die Inventar-ID",
+      "inventoryNumber": "Asset · gefunden über die Inventarnummer",
+      "serialNumber": "Asset · gefunden über die Seriennummer",
+      "any": "Asset · gefunden über Inventar-ID, Inventarnummer oder Seriennummer"
+    },
+    "locationFound": {
+      "link": "Standort · gefunden über den Link im Code",
+      "uuid": "Standort · gefunden über die ID",
+      "any": "Standort · gefunden über Inventar-ID, Inventarnummer oder Seriennummer"
+    }
+  },
+  "tags": {
+    "count": {
+      "one": "{count} Tag",
+      "other": "{count} Tags"
+    },
+    "newColorLabel": "Farbe des neuen Tags",
+    "newPlaceholder": "Neuer Tag, z. B. Atemschutz",
+    "newNameLabel": "Name des neuen Tags",
+    "preview": "Vorschau",
+    "creating": "Wird angelegt …",
+    "searchPlaceholder": "Tag suchen …",
+    "searchLabel": "Tag suchen",
+    "clearSearch": "Suche leeren",
+    "loadError": "Tags konnten nicht geladen werden.",
+    "loading": "Tags werden geladen …",
+    "loadingMore": "Weitere Tags werden geladen …",
+    "retry": "Erneut versuchen",
+    "noneFound": "Keine Tags gefunden.",
+    "empty": "Noch keine Tags angelegt.",
+    "colorOf": "Farbe von {name}",
+    "nameOf": "Name von {name}",
+    "notUsed": "Nicht verwendet",
+    "saved": "Gespeichert",
+    "saveError": "Fehler beim Speichern",
+    "exists": "Den Tag „{name}“ gibt es schon.",
+    "createError": "Tag konnte nicht angelegt werden.",
+    "deleteTitle": "Tag löschen?",
+    "deleteUsed": "„{name}“ wird von {usage} entfernt. Das kann nicht rückgängig gemacht werden.",
+    "deleteUnused": "„{name}“ wird gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "deleteError": "„{name}“ konnte nicht gelöscht werden.",
+    "usage": {
+      "assets": {
+        "one": "{count} Asset",
+        "other": "{count} Assets"
+      },
+      "types": {
+        "one": "{count} Typ",
+        "other": "{count} Typen"
+      },
+      "both": "{assets} und {types}"
+    }
+  },
+  "login": {
+    "tagline": "Inventar, Standorte und Prüfungen an einem Ort.",
+    "features": {
+      "assets": "Geräte und Assets mit eigenen Feldern verwalten",
+      "locations": "Standorte verschachtelt abbilden",
+      "access": "Zugriff pro Bereich und Gruppe steuern",
+      "labels": "Labels mit QR- und Barcodes drucken"
+    },
+    "welcome": "Willkommen zurück",
+    "subtitle": "Bitte mit dem eigenen Konto anmelden.",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "submit": "Anmelden",
+    "submitting": "Anmelden …",
+    "or": "oder",
+    "sso": "Mit {provider} anmelden",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "website": "Website",
+    "support": "Support",
+    "errors": {
+      "missingCredentials": "Bitte Benutzername und Passwort eingeben.",
+      "unreachable": "Server nicht erreichbar. Bitte später erneut versuchen.",
+      "failed": "Anmeldung fehlgeschlagen. Bitte Benutzername und Passwort prüfen."
+    },
+    "ssoErrors": {
+      "localUser": "Lokale Konten können sich nicht per SSO anmelden. Bitte mit Benutzername und Passwort anmelden.",
+      "unknownUser": "Für dieses SSO-Konto gibt es keinen Benutzer. Bitte an einen Administrator wenden.",
+      "providerMismatch": "Dieses Konto stammt aus einem anderen Verzeichnis und darf sich nicht per SSO anmelden.",
+      "disabledUser": "Dieses Konto ist deaktiviert.",
+      "noUsername": "Der Identity Provider hat keinen Benutzernamen geliefert.",
+      "failed": "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+    }
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "image": "Profilbild",
+    "upload": "Bild hochladen",
+    "managedBy": "Das Profilbild wird von {provider} verwaltet.",
+    "tooLarge": "Das Profilbild darf maximal 5 MB groß sein.",
+    "saveError": "Das Profilbild konnte nicht gespeichert werden."
+  },
+  "placeholder": {
+    "title": "Seite"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "scan": "Scannen",
+    "assets": "Inventar",
+    "locations": "Standorte",
+    "inspections": "Prüfungen",
+    "config": "Konfiguration",
+    "tags": "Tags",
+    "types": "Typen",
+    "labels": "Labels",
+    "inspectionTemplates": "Prüfungsvorlagen",
+    "administration": "Administration",
+    "areas": "Bereiche",
+    "customization": "Erscheinungsbild",
+    "users": "Benutzer",
+    "groups": "Gruppen",
+    "groupPermissions": "Gruppenberechtigungen",
+    "ldap": "LDAP",
+    "oidc": "OIDC",
+    "logs": "Protokoll",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen"
+  },
+  "pwa": {
+    "install": "App installieren"
+  },
+  "locationTypes": {
+    "SITE": "Gelände",
+    "BUILDING": "Gebäude",
+    "FLOOR": "Etage",
+    "ROOM": "Raum",
+    "WAREHOUSE": "Lager",
+    "SHELF": "Regal",
+    "CABINET": "Schrank",
+    "RACK": "Serverschrank",
+    "CONTAINER": "Behälter",
+    "VEHICLE": "Fahrzeug",
+    "OUTDOOR": "Außenbereich",
+    "OTHER": "Anderes",
+    "hints": {
+      "SITE": "Grundstück, Wachgelände, Übungsplatz",
+      "BUILDING": "Gerätehaus, Feuerwache, Halle",
+      "FLOOR": "Stockwerk, Geschoss",
+      "ROOM": "Fahrzeughalle, Umkleide, Werkstatt",
+      "WAREHOUSE": "Lagerraum, Depot",
+      "SHELF": "Regal, Regalfach",
+      "CABINET": "Schrank, Spind, Schublade",
+      "RACK": "Rack, Verteiler",
+      "CONTAINER": "Kiste, Box, Koffer",
+      "VEHICLE": "HLF 20, Mannschaftstransporter, Anhänger",
+      "OUTDOOR": "Hof, Parkplatz, Garten",
+      "OTHER": "Sonstiger Standort"
+    }
+  },
+  "services": {
+    "unknownArea": "Unbekannter Bereich",
+    "permissions": {
+      "allResourceTypes": "Alle Objektarten",
+      "resourceTypes": {
+        "ASSET": "Inventar",
+        "LOCATION": "Standorte",
+        "ASSET_TYPE": "Typen & Tags"
+      },
+      "flags": {
+        "canView": "Ansehen",
+        "canCreate": "Erstellen",
+        "canEdit": "Bearbeiten",
+        "canDelete": "Löschen",
+        "canInspect": "Prüfen",
+        "admin": "Admin"
+      },
+      "presets": {
+        "read": "Nur ansehen",
+        "write": "Ansehen & bearbeiten",
+        "full": "Vollzugriff",
+        "admin": "Admin"
+      }
+    },
+    "intervalUnits": {
+      "DAYS": {
+        "plural": "Tage",
+        "singular": "Tag"
+      },
+      "WEEKS": {
+        "plural": "Wochen",
+        "singular": "Woche"
+      },
+      "MONTHS": {
+        "plural": "Monate",
+        "singular": "Monat"
+      },
+      "YEARS": {
+        "plural": "Jahre",
+        "singular": "Jahr"
+      }
+    },
+    "interval": {
+      "DAYS": {
+        "one": "täglich",
+        "other": "alle {count} Tage"
+      },
+      "WEEKS": {
+        "one": "wöchentlich",
+        "other": "alle {count} Wochen"
+      },
+      "MONTHS": {
+        "one": "monatlich",
+        "other": "alle {count} Monate"
+      },
+      "YEARS": {
+        "one": "jährlich",
+        "other": "alle {count} Jahre"
+      }
+    },
+    "due": {
+      "overdue": {
+        "one": "überfällig seit {count} Tag",
+        "other": "überfällig seit {count} Tagen"
+      },
+      "today": "heute fällig",
+      "tomorrow": "morgen fällig",
+      "inDays": "fällig in {count} Tagen"
+    },
+    "fieldTypes": {
+      "BOOLEAN": "Ja / Nein",
+      "TEXT": "Text",
+      "NUMBER": "Zahl",
+      "SELECT": "Auswahl",
+      "DATE": "Datum",
+      "DATETIME": "Datum & Zeit",
+      "URL": "Link",
+      "EMAIL": "E-Mail"
+    },
+    "inspectionPolicies": {
+      "STANDARD": "Mit Label prüfen",
+      "MANUAL": "Ohne Label manuell prüfen",
+      "EXCLUDED": "Von Prüfungen ausnehmen"
+    }
+  },
+  "audit": {
+    "actions": {
+      "CREATE": "Erstellt",
+      "UPDATE": "Bearbeitet",
+      "DELETE": "Gelöscht",
+      "SCAN": "Gescannt",
+      "INSPECT": "Geprüft",
+      "PHOTO": "Foto",
+      "COMPLETE": "Abgeschlossen",
+      "SYNC": "Synchronisiert"
+    },
+    "objectTypes": {
+      "LABEL_TEMPLATE": "Label-Vorlage",
+      "PERMISSION": "Berechtigung",
+      "SETTINGS": "Einstellungen"
+    },
+    "fields": {
+      "name": "Name",
+      "description": "Beschreibung",
+      "invId": "Inventar-ID",
+      "serialNumber": "Seriennummer",
+      "inventoryNumber": "Inventarnummer",
+      "assetTypeUuid": "Typ",
+      "locationUuid": "Standort",
+      "parentLocationUuid": "Übergeordneter Standort",
+      "parentAssetUuid": "Übergeordnetes Asset",
+      "parentAssetNote": "Verknüpfungsbeschreibung",
+      "inspectionPolicy": "Prüferfassung",
+      "tags": "Tags",
+      "images": "Bilder",
+      "areaUuids": "Bereiche",
+      "areaUuid": "Bereich",
+      "address": "Adresse",
+      "locationType": "Art",
+      "street": "Straße",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad",
+      "fieldDefinitions": "Felder",
+      "fields": "Prüffelder",
+      "color": "Farbe",
+      "brandName": "Markenname",
+      "brandColor": "Markenfarbe",
+      "loginTitle": "Login-Titel",
+      "loginMessage": "Login-Text",
+      "imprintUrl": "Impressum",
+      "privacyUrl": "Datenschutz",
+      "websiteUrl": "Website",
+      "supportUrl": "Support",
+      "logoUrl": "Logo",
+      "username": "Benutzername",
+      "displayName": "Anzeigename",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "enabled": "Aktiv",
+      "groupUuids": "Gruppen",
+      "adminGroup": "Admin-Gruppe",
+      "permissions": "Berechtigungen",
+      "defaultArea": "Standardbereich",
+      "mode": "Art",
+      "intervalValue": "Intervall",
+      "intervalUnit": "Intervall-Einheit",
+      "assetTypeUuids": "Typen",
+      "widthMm": "Breite (mm)",
+      "heightMm": "Höhe (mm)",
+      "defaultForArea": "Standard im Bereich",
+      "elementsJson": "Layout",
+      "optionsJson": "Auswahlwerte",
+      "url": "URL",
+      "ignoreCertificates": "Zertifikate ignorieren",
+      "bindDn": "Bind-DN",
+      "baseDn": "Base-DN",
+      "userSearchBase": "Benutzer-Suchbasis",
+      "userFilter": "Benutzerfilter",
+      "usernameAttribute": "Attribut Benutzername",
+      "displayNameAttribute": "Attribut Anzeigename",
+      "emailAttribute": "Attribut E-Mail",
+      "groupSearchBase": "Gruppen-Suchbasis",
+      "groupFilter": "Gruppenfilter",
+      "groupNameAttribute": "Attribut Gruppenname",
+      "groupMemberAttribute": "Attribut Mitglied",
+      "loginEnabled": "Anmeldung erlaubt",
+      "disableMissingUsers": "Fehlende Benutzer deaktivieren",
+      "buttonLabel": "Button-Text",
+      "issuerUri": "Issuer-URL",
+      "clientId": "Client-ID",
+      "scopes": "Scopes",
+      "usernameClaim": "Claim Benutzername",
+      "displayNameClaim": "Claim Anzeigename",
+      "emailClaim": "Claim E-Mail",
+      "groupsClaim": "Claim Gruppen",
+      "autoCreateUsers": "Benutzer automatisch anlegen",
+      "syncGroups": "Gruppen übernehmen",
+      "crossProviderLogin": "Anmeldung über andere Anbieter",
+      "publicUrl": "Öffentliche URL"
+    },
+    "values": {
+      "true": "Ja",
+      "false": "Nein",
+      "INVENTORY": "Inventur",
+      "CHECK": "Einzelprüfung",
+      "DAYS": "Tage",
+      "WEEKS": "Wochen",
+      "MONTHS": "Monate",
+      "YEARS": "Jahre",
+      "ADMIN": "Admin",
+      "USER": "Benutzer"
+    },
+    "change": {
+      "modified": "Geändert",
+      "fieldModified": "{field}: geändert",
+      "added": "+ {values}",
+      "removed": "− {values}",
+      "list": "{field}: {changes}",
+      "value": "{field}: {from} → {to}"
+    },
+    "permission": {
+      "text": "{what} in {where}: {rights}",
+      "everything": "Alles",
+      "allAreas": "allen Bereichen",
+      "noRights": "keine Rechte"
+    },
+    "scanOutcomes": {
+      "CHECKED": "als vorhanden erfasst",
+      "ALREADY_CHECKED": "war bereits erfasst",
+      "UNEXPECTED": "fremder Gegenstand",
+      "UNKNOWN": "unbekannter Code",
+      "IGNORED": "ignoriert",
+      "OPENED": "geöffnet (war bereits in der Prüfung)",
+      "ADDED": "zur Prüfung hinzugefügt",
+      "ADDED_OTHER_TYPE": "hinzugefügt, obwohl Typ oder Bereich nicht passen",
+      "AMBIGUOUS": "mehrdeutiger Code"
+    },
+    "results": {
+      "PRESENT": "vorhanden",
+      "MISSING": "nicht vorhanden",
+      "PASSED": "in Ordnung",
+      "FAILED": "mangelhaft",
+      "PENDING": "zurückgesetzt (nicht geprüft)"
+    },
+    "conditions": {
+      "OK": "funktionsfähig",
+      "DEFECT": "defekt",
+      "NONE": "Funktion zurückgesetzt"
+    },
+    "events": {
+      "scanPage": "Scan-Seite, Code: {code}",
+      "inspectionScan": "Prüfung „{inspection}“: {outcome}",
+      "inspectionResult": "Prüfung „{inspection}“: {result}",
+      "inspectionCondition": "Prüfung „{inspection}“: {condition}",
+      "itemAdded": "Zur Prüfung „{inspection}“ hinzugefügt",
+      "photoToAsset": "Foto in Prüfung „{inspection}“ zu den Bildern hinzugefügt",
+      "photoToProtocol": "Foto im Protokoll der Prüfung „{inspection}“",
+      "fixedDueDateSet": "Prüftermin „{inspectionType}“: fester Termin {date}",
+      "fixedDueDateRemoved": "Prüftermin „{inspectionType}“: fester Termin entfernt, das Intervall gilt wieder",
+      "completedCheck": "{passed} in Ordnung, {failed} mangelhaft, {pending} nicht geprüft",
+      "completedInventory": "{present} vorhanden, {missing} nicht vorhanden, {pending} nicht geprüft, {unexpected} fremd",
+      "completedInventoryDefect": "{present} vorhanden (davon {defect} defekt), {missing} nicht vorhanden, {pending} nicht geprüft, {unexpected} fremd",
+      "comment": "Kommentar: {comment}",
+      "completedProtocolDeleted": "Abgeschlossenes Protokoll gelöscht",
+      "objectsMovedToDefaultArea": "Objekte nur in diesem Bereich wurden nach „{defaultArea}“ verschoben",
+      "ldapUsers": "Benutzer: {created} angelegt, {updated} aktualisiert, {disabled} deaktiviert, {skipped} übersprungen",
+      "ldapGroups": "Gruppen: {created} angelegt, {updated} aktualisiert, {deleted} gelöscht",
+      "error": "Fehler: {error}",
+      "PASSWORD_CHANGED": "Passwort geändert",
+      "BIND_PASSWORD_CHANGED": "Bind-Passwort geändert",
+      "CLIENT_SECRET_CHANGED": "Client-Secret geändert"
+    },
+    "started": {
+      "summary": {
+        "one": "{inspectionType} ({mode}), {count} Asset erwartet",
+        "other": "{inspectionType} ({mode}), {count} Assets erwartet"
+      },
+      "checkFunction": "Mit Funktionsprüfung",
+      "location": "Standort: {location}",
+      "locationWithSubLocations": "Standort: {location} (mit Unterstandorten)",
+      "tags": "Tags: {names}",
+      "assetTypes": "Typen: {names}",
+      "areas": "Bereiche: {names}",
+      "onlyDue": "Nur fällige Assets"
+    }
+  }
+}

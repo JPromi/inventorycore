@@ -6,6 +6,8 @@ import { Subject, debounceTime } from 'rxjs';
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 import { AdminApiService, AdminAreaRequest } from '../../../service/admin-api.service';
 import { AreaItem, AreaService } from '../../../service/area.service';
 import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
@@ -14,7 +16,7 @@ const COLORS = ['#b62f2f', '#d97706', '#15803d', '#0f766e', '#2563eb', '#7c3aed'
 
 @Component({
   selector: 'app-areas-page',
-  imports: [InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, LucideLayers, LucidePencil, LucidePlus, LucideSave, LucideSearch, LucideTrash2, LucideX],
+  imports: [InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, TranslatePipe, TranslateCountPipe, LucideLayers, LucidePencil, LucidePlus, LucideSave, LucideSearch, LucideTrash2, LucideX],
   templateUrl: './areas-page.html',
   styleUrl: './areas-page.scss',
 })
@@ -88,7 +90,7 @@ export class AreasPage implements OnInit, OnDestroy {
 
   protected save(): void {
     if (!this.form.name.trim() || this.saving) {
-      this.error = this.form.name.trim() ? this.error : 'Name ist erforderlich.';
+      this.error = this.form.name.trim() ? this.error : t('adminAreas.errors.nameRequired');
       return;
     }
     const request: AdminAreaRequest = {
@@ -106,18 +108,16 @@ export class AreasPage implements OnInit, OnDestroy {
       },
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen. Ist der Name bereits vergeben?';
+        this.error = t('adminAreas.errors.save');
       },
     });
   }
 
   protected async remove(area: AreaItem): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Bereich löschen?',
-      message:
-        `„${area.name}“ wird gelöscht. Einträge, die nur in diesem Bereich sind, wandern in den Standardbereich. ` +
-        'Alle Gruppen-Berechtigungen für diesen Bereich werden entfernt.',
-      confirmLabel: 'Löschen',
+      title: t('adminAreas.deleteConfirm.title'),
+      message: t('adminAreas.deleteConfirm.message', { name: area.name }),
+      confirmLabel: t('common.delete'),
       danger: true,
     });
     if (!confirmed) {
@@ -126,7 +126,7 @@ export class AreasPage implements OnInit, OnDestroy {
     this.api.deleteArea(area.uuid).subscribe({
       next: () => this.load(),
       error: () => {
-        this.error = 'Bereich konnte nicht gelöscht werden.';
+        this.error = t('adminAreas.errors.delete');
       },
     });
   }

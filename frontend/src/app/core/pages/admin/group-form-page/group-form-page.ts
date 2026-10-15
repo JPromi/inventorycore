@@ -20,10 +20,12 @@ import {
   applyPreset,
 } from '../../../service/admin-api.service';
 import { AreaItem } from '../../../service/area.service';
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-group-form-page',
-  imports: [FormsModule, RouterLink, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2, LucideUsers],
+  imports: [TranslatePipe, FormsModule, RouterLink, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2, LucideUsers],
   templateUrl: './group-form-page.html',
   styleUrl: './group-form-page.scss',
 })
@@ -60,7 +62,7 @@ export class GroupFormPage implements OnInit {
   }
 
   protected get title(): string {
-    return this.uuid ? 'Gruppe bearbeiten' : 'Gruppe erstellen';
+    return this.uuid ? t('adminGroupForm.titleEdit') : t('adminGroupForm.titleCreate');
   }
 
   protected get userOptions(): SelectOption[] {
@@ -74,7 +76,7 @@ export class GroupFormPage implements OnInit {
       value: area.uuid,
       label: area.name,
       color: area.color,
-      hint: area.defaultArea ? 'Standardbereich' : undefined,
+      hint: area.defaultArea ? t('adminGroupForm.defaultArea') : undefined,
     }));
   }
 
@@ -133,11 +135,11 @@ export class GroupFormPage implements OnInit {
       return;
     }
     if (!this.name.trim()) {
-      this.error = 'Name ist erforderlich.';
+      this.error = t('adminGroupForm.errors.nameRequired');
       return;
     }
     if (this.permissions.some((_, index) => this.isDuplicate(index))) {
-      this.error = 'Jede Kombination aus Bereich und Objektart darf nur einmal vorkommen.';
+      this.error = t('adminGroupForm.errors.duplicate');
       return;
     }
 
@@ -149,7 +151,7 @@ export class GroupFormPage implements OnInit {
       next: () => this.router.navigate(['/admin/groups']),
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen.';
+        this.error = t('common.errors.save');
       },
     });
   }
@@ -161,7 +163,7 @@ export class GroupFormPage implements OnInit {
     this.api.deleteGroup(this.uuid).subscribe({
       next: () => this.router.navigate(['/admin/groups']),
       error: () => {
-        this.error = 'Gruppe konnte nicht gelöscht werden.';
+        this.error = t('adminGroupForm.errors.delete');
       },
     });
   }
@@ -205,7 +207,7 @@ export class GroupFormPage implements OnInit {
         if (this.uuid) {
           const group = groups.find((entry) => entry.uuid === this.uuid);
           if (!group) {
-            this.error = 'Gruppe wurde nicht gefunden.';
+            this.error = t('adminGroupForm.errors.notFound');
           } else {
             this.name = group.name;
             this.readOnlyName = group.sourceProvider !== 'LOCAL';
@@ -221,7 +223,7 @@ export class GroupFormPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Daten konnten nicht geladen werden.';
+        this.error = t('common.errors.load');
         this.loading = false;
       },
     });

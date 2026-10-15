@@ -2,6 +2,8 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
 import { FormsModule } from '@angular/forms';
 import { LucideCamera, LucideImagePlus, LucideX } from '@lucide/angular';
 
+import { TranslatePipe } from '../../../i18n/translate.pipe';
+
 import {
   InspectionField,
   InspectionItem,
@@ -28,7 +30,7 @@ export interface PhotoFile {
  */
 @Component({
   selector: 'app-inspection-item-editor',
-  imports: [FormsModule, LucideCamera, LucideImagePlus, LucideX],
+  imports: [FormsModule, TranslatePipe, LucideCamera, LucideImagePlus, LucideX],
   templateUrl: './inspection-item-editor.html',
   styleUrl: './inspection-item-editor.scss',
 })
@@ -39,7 +41,7 @@ export class InspectionItemEditor {
   @Input() fields: InspectionField[] = [];
   /** Photo buttons ask for the live camera (`photoRequest`) instead of opening the file picker. */
   @Input() liveCamera = false;
-  /** "Lädt hoch...", "Beim Asset gespeichert" and errors of the last photo. */
+  /** Upload state, result and errors of the last photo. */
   @Input() photoStatus: string | null | undefined = null;
 
   @Output() readonly valueChange = new EventEmitter<FieldValueChange>();

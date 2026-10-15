@@ -1,6 +1,6 @@
 <!-- phones and tablets: top bar with menu button, the navigation slides in -->
 <header class="mobile-bar">
-    <button type="button" class="menu-button" aria-label="Menü öffnen" [attr.aria-expanded]="menuOpen" (click)="menuOpen = true">
+    <button type="button" class="menu-button" [attr.aria-label]="'nav.openMenu' | t" [attr.aria-expanded]="menuOpen" (click)="menuOpen = true">
         <svg lucideMenu size="22"></svg>
     </button>
     <span class="mobile-title">{{ currentTitle }}</span>
@@ -15,7 +15,7 @@
             <img [src]="customization.settings.logoUrl || 'icons/icon.svg'" alt="" width="28" height="28" />
             <span>{{ customization.brandName }}</span>
         </a>
-        <button type="button" class="menu-close" aria-label="Menü schließen" (click)="menuOpen = false">
+        <button type="button" class="menu-close" [attr.aria-label]="'nav.closeMenu' | t" (click)="menuOpen = false">
             <svg lucideX size="20"></svg>
         </button>
     </header>
@@ -86,7 +86,7 @@
         @if (pwa.canInstall()) {
             <button type="button" class="install" (click)="pwa.install()">
                 <svg lucideDownload size="17"></svg>
-                <span>App installieren</span>
+                <span>{{ 'pwa.install' | t }}</span>
             </button>
         }
         <app-area-switcher />

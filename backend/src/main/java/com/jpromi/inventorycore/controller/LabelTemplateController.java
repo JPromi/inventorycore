@@ -102,7 +102,7 @@ public class LabelTemplateController {
         AccessContext access = permissionService.context(authentication);
         LabelTemplate template = templateOr404(uuid);
         if (!isVisible(access, template)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Label-Vorlage nicht gefunden.");
         }
         return toResponse(template);
     }
@@ -157,10 +157,10 @@ public class LabelTemplateController {
 
     private void apply(LabelTemplate template, LabelTemplateRequest request) {
         if (request.name() == null || request.name().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Namen angeben.");
         }
         if (request.widthMm() <= 0 || request.heightMm() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Label size must be positive");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Breite und Höhe des Labels müssen größer als 0 sein.");
         }
         template.setName(request.name().trim());
         template.setDescription(request.description());
@@ -198,7 +198,7 @@ public class LabelTemplateController {
     private Area areaOr400(UUID uuid) {
         if (uuid == null) {
             return areaRepository.findFirstByDefaultAreaTrue()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No default area configured"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Es ist kein Standardbereich festgelegt."));
         }
         return areaRepository.findByUuid(uuid)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Area not found"));

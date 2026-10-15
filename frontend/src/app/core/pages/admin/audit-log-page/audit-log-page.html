@@ -1,18 +1,15 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ total }} Einträge</p>
+            <p class="eyebrow">{{ 'adminAuditLog.count' | tn: total }}</p>
             <h1>
                 <svg lucideHistory size="20"></svg>
-                <span>Protokoll</span>
+                <span>{{ 'adminAuditLog.title' | t }}</span>
             </h1>
         </div>
     </header>
 
-    <p class="hint intro">
-        Wer wann was mit welchem Objekt gemacht hat: Anlegen, Bearbeiten (mit alten und neuen Werten), Löschen, Scans,
-        Prüfergebnisse und Fotos. Den Verlauf eines einzelnen Assets oder Standorts gibt es auch auf dessen Detailseite.
-    </p>
+    <p class="hint intro">{{ 'adminAuditLog.intro' | t }}</p>
 
     <app-filter-bar class="toolbar" [activeCount]="activeFilterCount" [canReset]="hasActiveFilters" (reset)="resetFilters()">
         <div class="search-box" filterSearch>
@@ -21,11 +18,11 @@
                 type="text"
                 [(ngModel)]="search"
                 (ngModelChange)="onSearch()"
-                placeholder="Objekt, Benutzer oder Wert suchen..."
-                aria-label="Suchen"
+                [placeholder]="'adminAuditLog.searchPlaceholder' | t"
+                [attr.aria-label]="'common.search' | t"
             />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="search = ''; reload()">
+                <button type="button" class="clear" [title]="'adminAuditLog.clearSearch' | t" (click)="search = ''; reload()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -35,24 +32,24 @@
             [options]="typeOptions"
             [(ngModel)]="objectType"
             (ngModelChange)="reload()"
-            placeholder="Alle Objekte"
-            clearLabel="Alle Objekte"
+            [placeholder]="'adminAuditLog.allObjects' | t"
+            [clearLabel]="'adminAuditLog.allObjects' | t"
         />
         <app-search-select
             class="filter-select"
             [options]="actionOptions"
             [(ngModel)]="action"
             (ngModelChange)="reload()"
-            placeholder="Alle Aktionen"
-            clearLabel="Alle Aktionen"
+            [placeholder]="'adminAuditLog.allActions' | t"
+            [clearLabel]="'adminAuditLog.allActions' | t"
         />
         <label class="date-filter">
-            <span>Von</span>
-            <input type="date" [(ngModel)]="from" (ngModelChange)="reload()" aria-label="Von Datum" />
+            <span>{{ 'adminAuditLog.from' | t }}</span>
+            <input type="date" [(ngModel)]="from" (ngModelChange)="reload()" [attr.aria-label]="'adminAuditLog.fromDate' | t" />
         </label>
         <label class="date-filter">
-            <span>Bis</span>
-            <input type="date" [(ngModel)]="to" (ngModelChange)="reload()" aria-label="Bis Datum" />
+            <span>{{ 'adminAuditLog.to' | t }}</span>
+            <input type="date" [(ngModel)]="to" (ngModelChange)="reload()" [attr.aria-label]="'adminAuditLog.toDate' | t" />
         </label>
     </app-filter-bar>
 
@@ -61,15 +58,15 @@
     }
 
     @if (loading && !entries.length) {
-        <p class="empty">Lade Protokoll...</p>
+        <p class="empty">{{ 'adminAuditLog.loading' | t }}</p>
     } @else if (!entries.length) {
-        <div class="empty-state">{{ hasActiveFilters ? 'Keine Einträge passen zum Filter.' : 'Noch keine Einträge.' }}</div>
+        <div class="empty-state">{{ (hasActiveFilters ? 'adminAuditLog.noMatches' : 'adminAuditLog.empty') | t }}</div>
     } @else {
         <section class="card log">
             <app-audit-timeline [entries]="entries" [showObject]="true" />
             <div class="list-end" (appInfiniteScroll)="loadMore()" [scrollDisabled]="loading || entries.length >= total">
                 @if (loading) {
-                    <span>Lade ältere Einträge...</span>
+                    <span>{{ 'adminAuditLog.loadingMore' | t }}</span>
                 }
             </div>
         </section>

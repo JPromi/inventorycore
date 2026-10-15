@@ -2,6 +2,8 @@ import { NgComponentOutlet } from '@angular/common';
 import { Component, Directive, ElementRef, EventEmitter, HostBinding, HostListener, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX, type LucideIcon } from '@lucide/angular';
 import { Observable, firstValueFrom } from 'rxjs';
+import { t, tn } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
 import { DropdownPosition } from '../dropdown-position.directive';
 import { TouchSelection } from './touch-selection';
@@ -25,7 +27,7 @@ export interface ListAction<T> {
 
 @Component({
   selector: 'app-list-actions',
-  imports: [NgComponentOutlet, DropdownPosition, LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX],
+  imports: [NgComponentOutlet, DropdownPosition, TranslatePipe, LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX],
   templateUrl: './list-actions.html', styleUrl: './list-actions.scss',
 })
 export class ListActions<T extends SelectableItem> implements OnChanges, OnDestroy {
@@ -114,12 +116,13 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
     this.busy = true;
     const items = this.items.filter(item => this.isSelected(item));
     const deleteItem = this.deleteItem;
-    const names = items.slice(0, 5).map(item => this.label(item)).join(', ');
+    const shown = items.slice(0, 5).map(item => this.label(item)).join(', ');
+    const names = items.length > 5 ? t('components.listActions.namesMore', { names: shown }) : shown;
     try {
       const confirmed = await this.confirm.confirm({
-        title: `${items.length} Einträge löschen?`,
-        message: `${names}${items.length > 5 ? ', ...' : ''}. Das kann nicht rückgängig gemacht werden. ${this.deleteWarning}`.trim(),
-        confirmLabel: 'Löschen', danger: true,
+        title: tn('components.listActions.deleteTitle', items.length),
+        message: t('components.listActions.deleteMessage', { names, warning: this.deleteWarning }).trim(),
+        confirmLabel: t('common.delete'), danger: true,
       });
       if (!confirmed) return;
       this.error = '';
@@ -144,19 +147,19 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
           removed.push(item.uuid);
           this.selected.delete(item.uuid);
         } catch (error: any) {
-          const reason = error?.status === 409 ? 'Verknüpfte Einträge vorhanden'
-            : error?.status === 403 ? 'Keine Löschberechtigung' : 'Löschen fehlgeschlagen';
-          failed.push(`${this.label(item)} (${reason})`);
+          const reason = t(error?.status === 409 ? 'components.listActions.reasons.linked'
+            : error?.status === 403 ? 'components.listActions.reasons.forbidden' : 'components.listActions.reasons.failed');
+          failed.push(t('components.listActions.failedItem', { name: this.label(item), reason }));
         }
       }
-      if (failed.length) this.error = `${removed.length} gelöscht, ${failed.length} fehlgeschlagen: ${failed.join('; ')}`;
+      if (failed.length) this.error = t('components.listActions.result', { removed: removed.length, failed: failed.length, details: failed.join('; ') });
       if (removed.length) this.deleted.emit(removed);
     } finally {
       this.busy = false;
     }
   }
 
-  private label(item: T): string { return item.name || item.title || item.displayName || item.username || 'Eintrag'; }
+  private label(item: T): string { return item.name || item.title || item.displayName || item.username || t('components.listActions.item'); }
 
   @HostListener('document:click', ['$event'])
   protected outside(event: Event): void { if (!this.host.nativeElement.contains(event.target as Node)) this.open = false; }
@@ -169,11 +172,11 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
 
 @Component({
   selector: 'app-selection-checkbox',
-  imports: [LucideCheck],
+  imports: [TranslatePipe, LucideCheck],
   host: { '[class.selection-hidden]': '!selection.active', '(click)': '$event.stopPropagation()' },
   template: `<label class="selection-control">
     <input type="checkbox" class="selection-checkbox" [checked]="selection.isSelected(item)"
-    [disabled]="selection.busy || selection.disabled" [attr.aria-label]="(item.name || item.title || item.displayName || item.username || 'Eintrag') + ' auswählen'"
+    [disabled]="selection.busy || selection.disabled" [attr.aria-label]="'components.listActions.selectItem' | t: { name: item.name || item.title || item.displayName || item.username || ('components.listActions.item' | t) }"
     (click)="selection.toggle(item, $event)" />
     <span class="selection-mark" aria-hidden="true">@if (selection.isSelected(item)) { <svg lucideCheck size="14"></svg> }</span>
     </label>`,

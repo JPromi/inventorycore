@@ -7,6 +7,7 @@ import { AuthLoginRequestDto } from '../dtos/auth-login-request.dto';
 import { AuthResponseDto } from '../dtos/auth-response.dto';
 import { UserEntity } from '../entities/user.entity';
 import { AuthStateService } from './auth-state.service';
+import { t } from '../i18n/i18n';
 
 export interface LoginProviders {
   oidcEnabled: boolean;
@@ -92,7 +93,7 @@ export class AuthService {
       username: payload.username ?? 'unknown',
       authProvider: payload.sourceProvider ?? 'LOCAL',
       profileImageUrl: payload.profileImageUrl ?? null,
-      displayName: payload.displayName ?? 'unknown',
+      displayName: payload.displayName ?? t('common.unknown'),
       role: payload.role ?? 'USER',
       permissions: payload.permissions ?? [],
       isLoggedIn: true,

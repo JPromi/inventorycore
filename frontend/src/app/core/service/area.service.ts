@@ -5,6 +5,7 @@ import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 import { InventoryItem } from './inventory-api.service';
+import { t } from '../i18n/i18n';
 
 export interface AreaItem {
   uuid: string;
@@ -80,7 +81,7 @@ export class AreaService {
   }
 
   name(uuid: string): string {
-    return this.areas.find((area) => area.uuid === uuid)?.name ?? 'Unbekannter Bereich';
+    return this.areas.find((area) => area.uuid === uuid)?.name ?? t('services.unknownArea');
   }
 
   /**

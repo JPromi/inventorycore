@@ -9,10 +9,12 @@ import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SelectOption } from '../../../components/search-select/search-select';
 import { AdminApiService, AdminGroup, AdminUserRequest, AuthProvider, PROVIDER_LABELS } from '../../../service/admin-api.service';
 import { AuthStateService } from '../../../service/auth-state.service';
+import { t, tn } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-user-form-page',
-  imports: [FormsModule, RouterLink, MultiSelect, LucideArrowLeft, LucideSave, LucideTrash2, LucideUser],
+  imports: [TranslatePipe, FormsModule, RouterLink, MultiSelect, LucideArrowLeft, LucideSave, LucideTrash2, LucideUser],
   templateUrl: './user-form-page.html',
   styleUrl: './user-form-page.scss',
 })
@@ -41,12 +43,12 @@ export class UserFormPage implements OnInit {
   }
 
   protected get title(): string {
-    return this.uuid ? 'Benutzer bearbeiten' : 'Benutzer erstellen';
+    return this.uuid ? t('adminUserForm.titleEdit') : t('adminUserForm.titleCreate');
   }
 
   protected get groupOptions(): SelectOption[] {
     return this.groups
-      .map((group) => ({ value: group.uuid, label: group.name, hint: `${group.permissions.length} Berechtigungen` }))
+      .map((group) => ({ value: group.uuid, label: group.name, hint: tn('adminUserForm.groupPermissions', group.permissions.length) }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
@@ -59,11 +61,11 @@ export class UserFormPage implements OnInit {
       return;
     }
     if (!this.form.username.trim()) {
-      this.error = 'Benutzername ist erforderlich.';
+      this.error = t('adminUserForm.errors.usernameRequired');
       return;
     }
     if (this.passwordRequired && !this.form.password) {
-      this.error = 'Für neue Benutzer ist ein Passwort erforderlich.';
+      this.error = t('adminUserForm.errors.passwordRequired');
       return;
     }
 
@@ -81,7 +83,7 @@ export class UserFormPage implements OnInit {
       next: () => this.router.navigate(['/admin/users']),
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen. Ist der Benutzername bereits vergeben?';
+        this.error = t('adminUserForm.errors.save');
       },
     });
   }
@@ -93,7 +95,7 @@ export class UserFormPage implements OnInit {
     this.api.deleteUser(this.uuid).subscribe({
       next: () => this.router.navigate(['/admin/users']),
       error: () => {
-        this.error = 'Benutzer konnte nicht gelöscht werden.';
+        this.error = t('adminUserForm.errors.delete');
       },
     });
   }
@@ -106,7 +108,7 @@ export class UserFormPage implements OnInit {
         if (this.uuid) {
           const user = users.find((entry) => entry.uuid === this.uuid);
           if (!user) {
-            this.error = 'Benutzer wurde nicht gefunden.';
+            this.error = t('adminUserForm.errors.notFound');
           } else {
             this.form = {
               username: user.username,
@@ -124,7 +126,7 @@ export class UserFormPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Daten konnten nicht geladen werden.';
+        this.error = t('common.errors.load');
         this.loading = false;
       },
     });

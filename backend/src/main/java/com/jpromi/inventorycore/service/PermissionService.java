@@ -33,7 +33,7 @@ public class PermissionService {
 
     public static void require(boolean allowed) {
         if (!allowed) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing permission");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Für diese Aktion fehlt die Berechtigung.");
         }
     }
 
@@ -43,7 +43,7 @@ public class PermissionService {
 
     public User currentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bitte anmelden.");
         }
 
         return userRepository.findByUsername(authentication.getName())

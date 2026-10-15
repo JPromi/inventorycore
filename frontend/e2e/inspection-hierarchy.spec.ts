@@ -49,7 +49,7 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
         await expect(computer).toBeVisible();
         await page.getByRole('textbox', { name: 'Suchen', exact: true }).fill('');
         await computer.locator('.asset-group-toggle').click();
-        await ram.getByRole('button', { name: 'Da', exact: true }).click();
+        await ram.getByRole('button', { name: 'Vorhanden', exact: true }).click();
         await expect(ram).toHaveClass(/present/);
         await expect(computer).toContainText('1/2 Unter-Assets geprüft');
         await expect(page.locator('#item-item-chip')).not.toHaveClass(/present/);

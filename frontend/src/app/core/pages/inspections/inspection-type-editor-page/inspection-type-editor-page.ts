@@ -23,6 +23,8 @@ import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AreaItem, AreaService } from '../../../service/area.service';
 import { locationPath } from '../../../util/location-utils';
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { AssetFieldType, InventoryApiService, InventoryItem, TagItem } from '../../../service/inventory-api.service';
 import {
   CHECK_FIELD_TYPES,
@@ -58,6 +60,7 @@ interface FieldGroup {
     ColorPicker,
     MultiSelect,
     SearchSelect,
+    TranslatePipe,
     LucideArrowDown,
     LucideArrowLeft,
     LucideArrowUp,
@@ -156,14 +159,14 @@ export class InspectionTypeEditorPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Daten konnten nicht geladen werden.';
+        this.error = t('common.errors.load');
         this.loading = false;
       },
     });
   }
 
   protected get title(): string {
-    return this.uuid ? 'Prüfungsvorlage bearbeiten' : 'Neue Prüfungsvorlage';
+    return this.uuid ? t('inspectionTemplateEditor.titleEdit') : t('inspectionTemplateEditor.titleNew');
   }
 
   protected get areaOptions(): SelectOption[] {
@@ -195,7 +198,7 @@ export class InspectionTypeEditorPage implements OnInit {
   }
 
   protected typeName(uuid: string | null): string {
-    return this.assetTypes.find((type) => type.uuid === uuid)?.name ?? 'Unbekannter Typ';
+    return this.assetTypes.find((type) => type.uuid === uuid)?.name ?? t('inspectionTemplateEditor.unknownType');
   }
 
   protected addField(group: FieldGroup): void {
@@ -230,7 +233,7 @@ export class InspectionTypeEditorPage implements OnInit {
 
   protected save(): void {
     if (!this.name.trim()) {
-      this.error = 'Bitte einen Namen angeben.';
+      this.error = t('inspectionTemplateEditor.errors.nameRequired');
       return;
     }
     const fields: InspectionField[] = this.groups.flatMap((group) =>
@@ -248,13 +251,13 @@ export class InspectionTypeEditorPage implements OnInit {
     );
     const invalidSelect = fields.find((field) => field.fieldType === 'SELECT' && !fieldOptions(field).length);
     if (invalidSelect) {
-      this.error = `Das Auswahlfeld „${invalidSelect.name}“ braucht mindestens eine Option.`;
+      this.error = t('inspectionTemplateEditor.errors.selectWithoutOptions', { name: invalidSelect.name });
       return;
     }
     fields.forEach((field, index) => (field.sortOrder = index));
 
     if (this.recurring && (!this.intervalValue || this.intervalValue < 1)) {
-      this.error = 'Bitte ein Intervall von mindestens 1 angeben.';
+      this.error = t('inspectionTemplateEditor.errors.intervalMin');
       return;
     }
     const request = {
@@ -282,7 +285,7 @@ export class InspectionTypeEditorPage implements OnInit {
       next: () => this.router.navigate(['/config/inspection-templates']),
       error: (error) => {
         this.saving = false;
-        this.error = error?.error?.message ?? 'Speichern fehlgeschlagen.';
+        this.error = error?.error?.message ?? t('common.errors.save');
       },
     });
   }

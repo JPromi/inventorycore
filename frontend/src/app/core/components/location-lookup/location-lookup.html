@@ -1,13 +1,13 @@
 <div class="lookup-actions">
     <button type="button" class="secondary-action compact" [disabled]="!query || !!busy" (click)="findCoordinates()"
-        [title]="query ? 'Koordinaten zur eingegebenen Adresse suchen' : 'Zuerst eine Adresse eingeben'">
+        [title]="(query ? 'components.locationLookup.findCoordinatesTitle' : 'components.locationLookup.enterAddressFirst') | t">
         <svg lucideLocateFixed size="15"></svg>
-        <span>{{ busy === 'search' ? 'Sucht...' : 'Koordinaten ermitteln' }}</span>
+        <span>{{ (busy === 'search' ? 'components.locationLookup.searching' : 'components.locationLookup.findCoordinates') | t }}</span>
     </button>
     <button type="button" class="secondary-action compact" [disabled]="!hasCoordinates || !!busy" (click)="findAddress()"
-        [title]="hasCoordinates ? 'Adresse zu den Koordinaten suchen' : 'Zuerst Koordinaten eingeben'">
+        [title]="(hasCoordinates ? 'components.locationLookup.findAddressTitle' : 'components.locationLookup.enterCoordinatesFirst') | t">
         <svg lucideMapPinned size="15"></svg>
-        <span>{{ busy === 'reverse' ? 'Sucht...' : 'Adresse ermitteln' }}</span>
+        <span>{{ (busy === 'reverse' ? 'components.locationLookup.searching' : 'components.locationLookup.findAddress') | t }}</span>
     </button>
 </div>
 
@@ -33,6 +33,6 @@
 }
 
 @if (hasCoordinates) {
-    <app-location-map class="preview" [latitude]="position.latitude!" [longitude]="position.longitude!" [title]="query || 'Standort'" [immediate]="false" />
+    <app-location-map class="preview" [latitude]="position.latitude!" [longitude]="position.longitude!" [title]="query || ('terms.location' | t)" [immediate]="false" />
 }
 

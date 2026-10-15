@@ -2,30 +2,30 @@
     <div class="page-shell">
         <header class="page-header">
             <div>
-                <p class="eyebrow">Administration · Authentifizierung</p>
+                <p class="eyebrow">{{ 'adminLdap.eyebrow' | t }}</p>
                 <h1>
                     <svg lucideNetwork size="20"></svg>
-                    <span>LDAP / Active Directory</span>
+                    <span>{{ 'adminLdap.title' | t }}</span>
                 </h1>
             </div>
             <div class="header-actions">
                 <button type="button" class="secondary-action" (click)="test()" [disabled]="!settings || testing">
                     <svg lucidePlugZap size="16"></svg>
-                    <span>{{ testing ? 'Teste...' : 'Verbindung testen' }}</span>
+                    <span>{{ (testing ? 'adminLdap.testing' : 'adminLdap.test') | t }}</span>
                 </button>
                 <button
                     type="button"
                     class="secondary-action"
                     (click)="sync()"
                     [disabled]="!settings?.enabled || dirty || syncing"
-                    [title]="!settings?.enabled ? 'LDAP erst aktivieren und speichern' : dirty ? 'Erst speichern' : 'Benutzer und Gruppen jetzt importieren'"
+                    [title]="(!settings?.enabled ? 'adminLdap.syncNeedsEnabled' : dirty ? 'adminLdap.syncNeedsSave' : 'adminLdap.syncTitle') | t"
                 >
                     <svg lucideFolderSync size="16"></svg>
-                    <span>{{ syncing ? 'Synchronisiere...' : 'Synchronisieren' }}</span>
+                    <span>{{ (syncing ? 'adminLdap.syncing' : 'adminLdap.sync') | t }}</span>
                 </button>
                 <button type="button" class="primary-action" (click)="save()" [disabled]="!settings || saving">
                     <svg lucideSave size="16"></svg>
-                    <span>{{ saving ? 'Speichert...' : saved ? 'Gespeichert' : 'Speichern' }}</span>
+                    <span>{{ (saving ? 'common.saving' : saved ? 'adminLdap.saved' : 'common.save') | t }}</span>
                 </button>
             </div>
         </header>
@@ -48,7 +48,7 @@
                     <div class="counts">
                         <div>
                             <span class="count">{{ result.userCount }}</span>
-                            <span>Benutzer gefunden</span>
+                            <span>{{ 'adminLdap.usersFound' | t }}</span>
                             <div class="samples">
                                 @for (name of result.sampleUsers; track name) {
                                     <span class="chip">{{ name }}</span>
@@ -57,7 +57,7 @@
                         </div>
                         <div>
                             <span class="count">{{ result.groupCount }}</span>
-                            <span>Gruppen gefunden</span>
+                            <span>{{ 'adminLdap.groupsFound' | t }}</span>
                             <div class="samples">
                                 @for (name of result.sampleGroups; track name) {
                                     <span class="chip">{{ name }}</span>
@@ -77,160 +77,155 @@
                     } @else {
                         <svg lucideCircleX size="20"></svg>
                     }
-                    <strong>{{ result.success ? 'Synchronisation abgeschlossen' : result.message }}</strong>
+                    <strong>{{ result.success ? ('adminLdap.syncDone' | t) : result.message }}</strong>
                 </div>
                 @if (result.success) {
                     <p>{{ result.message }}</p>
                     @if (result.usersSkipped) {
-                        <p class="hint">
-                            Übersprungen wurden Benutzer, deren Name bereits von einem lokalen oder OIDC-Konto belegt ist.
-                        </p>
+                        <p class="hint">{{ 'adminLdap.usersSkipped' | t }}</p>
                     }
                 }
             </section>
         }
 
         @if (loading) {
-            <p class="empty">Lade Einstellungen...</p>
+            <p class="empty">{{ 'adminLdap.loading' | t }}</p>
         } @else if (settings) {
             <form class="stack" (ngSubmit)="save()" (input)="changed()" (change)="changed()">
                 <section class="card">
                     <div class="card-title">
-                        <h2>Verbindung</h2>
+                        <h2>{{ 'adminLdap.connection' | t }}</h2>
                         <label class="toggle switch">
                             <input type="checkbox" [(ngModel)]="settings.enabled" name="enabled" />
-                            <span>{{ settings.enabled ? 'Aktiv' : 'Deaktiviert' }}</span>
+                            <span>{{ (settings.enabled ? 'adminLdap.enabled' : 'adminLdap.disabled') | t }}</span>
                         </label>
                     </div>
                     <div class="field-grid">
                         <label class="field wide">
-                            <span>Server-URL</span>
-                            <input type="text" [(ngModel)]="settings.url" name="url" placeholder="ldaps://dc01.firma.local:636" />
-                            <small>ldap:// (Port 389) oder ldaps:// (Port 636). Mehrere Server mit Leerzeichen trennen.</small>
+                            <span>{{ 'adminLdap.serverUrl' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.url" name="url" [placeholder]="'adminLdap.serverUrlPlaceholder' | t" />
+                            <small>{{ 'adminLdap.serverUrlHint' | t }}</small>
                         </label>
                         <label class="field">
-                            <span>Bind-DN / Benutzer</span>
-                            <input type="text" [(ngModel)]="settings.bindDn" name="bindDn" placeholder="CN=svc-inventar,OU=Service,DC=firma,DC=local" autocomplete="off" />
-                            <small>Bei AD geht auch svc-inventar&#64;firma.local</small>
+                            <span>{{ 'adminLdap.bindDn' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.bindDn" name="bindDn" [placeholder]="'adminLdap.bindDnPlaceholder' | t" autocomplete="off" />
+                            <small>{{ 'adminLdap.bindDnHint' | t }}</small>
                         </label>
                         <label class="field">
-                            <span>Passwort</span>
+                            <span>{{ 'adminLdap.password' | t }}</span>
                             <input
                                 type="password"
                                 [(ngModel)]="settings.bindPassword"
                                 name="bindPassword"
                                 autocomplete="new-password"
-                                [placeholder]="settings.bindPasswordSet ? '•••••••• (gespeichert)' : ''"
+                                [placeholder]="settings.bindPasswordSet ? ('adminLdap.passwordStored' | t) : ''"
                             />
-                            <small>{{ settings.bindPasswordSet ? 'Leer lassen, um das gespeicherte Passwort zu behalten.' : 'Noch kein Passwort gespeichert.' }}</small>
+                            <small>{{ (settings.bindPasswordSet ? 'adminLdap.passwordKeep' : 'adminLdap.passwordMissing') | t }}</small>
                         </label>
                         <label class="field wide">
-                            <span>Base-DN</span>
-                            <input type="text" [(ngModel)]="settings.baseDn" name="baseDn" placeholder="DC=firma,DC=local" />
+                            <span>{{ 'adminLdap.baseDn' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.baseDn" name="baseDn" [placeholder]="'adminLdap.baseDnPlaceholder' | t" />
                         </label>
                     </div>
                     <label class="toggle option" [class.warn]="settings.ignoreCertificates">
                         <input type="checkbox" [(ngModel)]="settings.ignoreCertificates" name="ignoreCertificates" />
                         <span>
-                            Zertifikate ignorieren
-                            <small>Akzeptiert selbstsignierte Zertifikate und falsche Hostnamen bei ldaps://. Nur verwenden, wenn das Netz vertrauenswürdig ist.</small>
+                            {{ 'adminLdap.ignoreCertificates' | t }}
+                            <small>{{ 'adminLdap.ignoreCertificatesHint' | t }}</small>
                         </span>
                     </label>
                     @if (settings.ignoreCertificates && !isLdaps) {
-                        <p class="hint">Hinweis: Die Option wirkt nur bei ldaps://-Adressen.</p>
+                        <p class="hint">{{ 'adminLdap.ignoreCertificatesLdapsOnly' | t }}</p>
                     }
                 </section>
 
                 <section class="card">
                     <div class="card-title">
-                        <h2>Benutzer</h2>
+                        <h2>{{ 'terms.users' | t }}</h2>
                         <div class="inline-actions">
-                            <span class="hint">Vorlage:</span>
-                            <button type="button" class="secondary-action compact" (click)="applyPreset('ad')">Active Directory</button>
-                            <button type="button" class="secondary-action compact" (click)="applyPreset('openldap')">OpenLDAP</button>
-                            <button type="button" class="secondary-action compact" (click)="applyPreset('ucs')">UCS</button>
+                            <span class="hint">{{ 'adminLdap.preset' | t }}</span>
+                            <button type="button" class="secondary-action compact" (click)="applyPreset('ad')">{{ 'adminLdap.presets.ad' | t }}</button>
+                            <button type="button" class="secondary-action compact" (click)="applyPreset('openldap')">{{ 'adminLdap.presets.openldap' | t }}</button>
+                            <button type="button" class="secondary-action compact" (click)="applyPreset('ucs')">{{ 'adminLdap.presets.ucs' | t }}</button>
                         </div>
                     </div>
                     <div class="field-grid">
                         <label class="field wide">
-                            <span>Suchbasis</span>
-                            <input type="text" [(ngModel)]="settings.userSearchBase" name="userSearchBase" placeholder="Leer = Base-DN, z. B. OU=Mitarbeiter,DC=firma,DC=local" />
+                            <span>{{ 'adminLdap.searchBase' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.userSearchBase" name="userSearchBase" [placeholder]="'adminLdap.userSearchBasePlaceholder' | t" />
                         </label>
                         <label class="field wide">
-                            <span>Benutzer-Filter</span>
+                            <span>{{ 'adminLdap.userFilter' | t }}</span>
                             <input type="text" class="mono" [(ngModel)]="settings.userFilter" name="userFilter" />
-                            <small>Beispiel nur Mitglieder einer Gruppe: (&amp;(objectClass=user)(memberOf=CN=Inventar,OU=Gruppen,DC=firma,DC=local))</small>
+                            <small>{{ 'adminLdap.userFilterHint' | t }}</small>
                         </label>
                         <label class="field">
-                            <span>Attribut Benutzername</span>
+                            <span>{{ 'adminLdap.usernameAttribute' | t }}</span>
                             <input type="text" [(ngModel)]="settings.usernameAttribute" name="usernameAttribute" />
                         </label>
                         <label class="field">
-                            <span>Attribut Anzeigename</span>
+                            <span>{{ 'adminLdap.displayNameAttribute' | t }}</span>
                             <input type="text" [(ngModel)]="settings.displayNameAttribute" name="displayNameAttribute" />
                         </label>
                         <label class="field">
-                            <span>Attribut E-Mail</span>
+                            <span>{{ 'adminLdap.emailAttribute' | t }}</span>
                             <input type="text" [(ngModel)]="settings.emailAttribute" name="emailAttribute" />
                         </label>
                     </div>
                 </section>
 
                 <section class="card">
-                    <h2>Gruppen</h2>
+                    <h2>{{ 'terms.groups' | t }}</h2>
                     <div class="field-grid">
                         <label class="field wide">
-                            <span>Suchbasis</span>
-                            <input type="text" [(ngModel)]="settings.groupSearchBase" name="groupSearchBase" placeholder="Leer = Base-DN, z. B. OU=Gruppen,DC=firma,DC=local" />
+                            <span>{{ 'adminLdap.searchBase' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.groupSearchBase" name="groupSearchBase" [placeholder]="'adminLdap.groupSearchBasePlaceholder' | t" />
                         </label>
                         <label class="field wide">
-                            <span>Gruppen-Filter</span>
+                            <span>{{ 'adminLdap.groupFilter' | t }}</span>
                             <textarea class="mono" [(ngModel)]="settings.groupFilter" (ngModelChange)="groupFilterEdited()" name="groupFilter" rows="3"></textarea>
-                            <small>Beispiel nur bestimmte Gruppen: (&amp;(objectClass=group)(cn=INV-*))</small>
+                            <small>{{ 'adminLdap.groupFilterHint' | t }}</small>
                         </label>
                         @if (availableGroups.length || selectedGroups.length) {
                             <div class="field wide">
-                                <span>Gruppen auswaehlen</span>
+                                <span>{{ 'adminLdap.selectGroups' | t }}</span>
                                 <app-multi-select
                                     [options]="groupOptions"
                                     [ngModel]="selectedGroups"
                                     (ngModelChange)="selectGroups($event)"
                                     name="selectedGroupNames"
-                                    placeholder="Gruppen auswaehlen..."
-                                    emptyText="Keine weiteren Gruppen"
-                                    aria-label="Zu synchronisierende Gruppen"
+                                    [placeholder]="'adminLdap.selectGroupsPlaceholder' | t"
+                                    [emptyText]="'adminLdap.noMoreGroups' | t"
+                                    [attr.aria-label]="'adminLdap.selectGroupsLabel' | t"
                                 />
                             </div>
                         }
                         <label class="field">
-                            <span>Attribut Gruppenname</span>
+                            <span>{{ 'adminLdap.groupNameAttribute' | t }}</span>
                             <input type="text" [(ngModel)]="settings.groupNameAttribute" name="groupNameAttribute" />
                         </label>
                         <label class="field">
-                            <span>Attribut Mitglieder</span>
+                            <span>{{ 'adminLdap.groupMemberAttribute' | t }}</span>
                             <input type="text" [(ngModel)]="settings.groupMemberAttribute" name="groupMemberAttribute" />
-                            <small>„member“ (DNs) oder „memberUid“ (Benutzernamen)</small>
+                            <small>{{ 'adminLdap.groupMemberAttributeHint' | t }}</small>
                         </label>
                     </div>
-                    <p class="hint">
-                        Gruppen werden beim Synchronisieren automatisch angelegt. Ob eine Gruppe Admin-Rechte bekommt, legst du unter
-                        Administration → Gruppen fest.
-                    </p>
+                    <p class="hint">{{ 'adminLdap.groupsHint' | t }}</p>
                 </section>
 
                 <section class="card">
-                    <h2>Anmeldung &amp; Synchronisation</h2>
+                    <h2>{{ 'adminLdap.loginAndSync' | t }}</h2>
                     <div class="sync-interval">
                         <label class="field">
-                            <span>Sync-Intervall</span>
+                            <span>{{ 'adminLdap.syncInterval' | t }}</span>
                             <input type="number" min="1" [max]="maxSyncInterval" step="1" required [(ngModel)]="settings.syncIntervalValue" name="syncIntervalValue" />
                         </label>
                         <label class="field">
-                            <span>Einheit</span>
+                            <span>{{ 'adminLdap.syncIntervalUnit' | t }}</span>
                             <select [(ngModel)]="settings.syncIntervalUnit" name="syncIntervalUnit">
-                                <option value="MINUTES">Minuten</option>
-                                <option value="HOURS">Stunden</option>
-                                <option value="DAYS">Tage</option>
+                                <option value="MINUTES">{{ 'adminLdap.units.MINUTES' | t }}</option>
+                                <option value="HOURS">{{ 'adminLdap.units.HOURS' | t }}</option>
+                                <option value="DAYS">{{ 'adminLdap.units.DAYS' | t }}</option>
                             </select>
                         </label>
                     </div>
@@ -238,21 +233,21 @@
                         <label class="toggle option">
                             <input type="checkbox" [(ngModel)]="settings.loginEnabled" name="loginEnabled" />
                             <span>
-                                Anmeldung mit LDAP-Passwort
-                                <small>Importierte Benutzer melden sich mit ihrem Verzeichnis-Passwort an. Aus, wenn sie sich nur per OIDC anmelden sollen.</small>
+                                {{ 'adminLdap.loginEnabled' | t }}
+                                <small>{{ 'adminLdap.loginEnabledHint' | t }}</small>
                             </span>
                         </label>
                         <label class="toggle option">
                             <input type="checkbox" [(ngModel)]="settings.disableMissingUsers" name="disableMissingUsers" />
                             <span>
-                                Nicht mehr gefundene Benutzer deaktivieren
-                                <small>Betrifft nur Benutzer, die aus LDAP stammen.</small>
+                                {{ 'adminLdap.disableMissingUsers' | t }}
+                                <small>{{ 'adminLdap.disableMissingUsersHint' | t }}</small>
                             </span>
                         </label>
                     </div>
                     @if (settings.lastSyncAt) {
                         <p class="last-sync">
-                            Letzte Synchronisation: {{ settings.lastSyncAt | date: 'dd.MM.yyyy HH:mm' }}
+                            {{ 'adminLdap.lastSync' | t: { date: (settings.lastSyncAt | date: 'dd.MM.yyyy HH:mm') } }}
                             @if (settings.lastSyncResult) {
                                 <br /><span class="hint">{{ settings.lastSyncResult }}</span>
                             }

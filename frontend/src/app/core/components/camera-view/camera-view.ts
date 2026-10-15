@@ -14,6 +14,8 @@ import {
 } from '@angular/core';
 import { LucideCamera, LucideCircleAlert, LucideSwitchCamera, LucideX, LucideZap, LucideZapOff } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CameraDevice, CameraScanner } from '../../scan/camera-scanner';
 
 type CameraState = 'starting' | 'running' | 'error';
@@ -30,7 +32,7 @@ const IMMERSIVE_QUERY = '(max-width: 900px), (hover: none) and (pointer: coarse)
  */
 @Component({
   selector: 'app-camera-view',
-  imports: [LucideCamera, LucideCircleAlert, LucideSwitchCamera, LucideX, LucideZap, LucideZapOff],
+  imports: [TranslatePipe, LucideCamera, LucideCircleAlert, LucideSwitchCamera, LucideX, LucideZap, LucideZapOff],
   templateUrl: './camera-view.html',
   styleUrl: './camera-view.scss',
 })
@@ -38,13 +40,13 @@ export class CameraView implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('video', { static: true }) private videoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('sheet') private sheetRef?: ElementRef<HTMLElement>;
 
-  @Input() title = 'Scannen';
-  @Input() hint = 'Code in den Rahmen halten';
+  @Input() title = t('components.cameraView.title');
+  @Input() hint = t('components.cameraView.hint');
   /** Shows the projected content as sheet over the camera (only in full screen). */
   @Input() sheetOpen = false;
   /** Take a photo instead of scanning: shows a shutter button, codes are ignored. */
   @Input() photoMode = false;
-  @Input() photoHint = 'Foto aufnehmen';
+  @Input() photoHint = t('components.cameraView.takePhoto');
 
   @Output() readonly code = new EventEmitter<string>();
   @Output() readonly closed = new EventEmitter<void>();
@@ -131,7 +133,7 @@ export class CameraView implements OnInit, AfterViewInit, OnDestroy {
       this.flash();
       this.photo.emit(blob);
     } catch {
-      this.error = 'Foto konnte nicht aufgenommen werden.';
+      this.error = t('components.cameraView.errors.photo');
     } finally {
       this.capturing = false;
     }
@@ -214,13 +216,13 @@ function describeCameraError(error: unknown): string {
   switch ((error as { name?: string })?.name) {
     case 'NotAllowedError':
     case 'SecurityError':
-      return 'Kein Zugriff auf die Kamera. Bitte den Zugriff im Browser erlauben (Schloss-Symbol neben der Adresse).';
+      return t('components.cameraView.errors.notAllowed');
     case 'NotFoundError':
     case 'OverconstrainedError':
-      return 'Keine passende Kamera gefunden.';
+      return t('components.cameraView.errors.notFound');
     case 'NotReadableError':
-      return 'Die Kamera wird gerade von einem anderen Programm verwendet.';
+      return t('components.cameraView.errors.notReadable');
     default:
-      return 'Die Kamera konnte nicht gestartet werden.';
+      return t('components.cameraView.errors.start');
   }
 }

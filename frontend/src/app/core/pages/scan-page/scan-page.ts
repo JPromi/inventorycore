@@ -21,6 +21,8 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { CameraView } from '../../components/camera-view/camera-view';
+import { t } from '../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { CameraScanner } from '../../scan/camera-scanner';
 import { scanFeedback } from '../../scan/scan-feedback';
 import { InventoryApiService, InventoryItem } from '../../service/inventory-api.service';
@@ -41,6 +43,37 @@ interface HistoryEntry {
 const DUPLICATE_WINDOW_MS = 2500;
 const HISTORY_SIZE = 15;
 const STORAGE_KEY = 'inventorycore.scan';
+
+type MatchContext = 'found' | 'asset' | 'location';
+type MatchKind = 'link' | 'uuid' | 'invId' | 'inventoryNumber' | 'serialNumber' | 'any';
+
+/** Whole texts per context, so no sentence is put together from fragments. Locations only match by link, ID or code. */
+const MATCH_TEXTS: Record<MatchContext, Record<MatchKind, string>> = {
+  found: {
+    link: t('scan.found.link'),
+    uuid: t('scan.found.uuid'),
+    invId: t('scan.found.invId'),
+    inventoryNumber: t('scan.found.inventoryNumber'),
+    serialNumber: t('scan.found.serialNumber'),
+    any: t('scan.found.any'),
+  },
+  asset: {
+    link: t('scan.assetFound.link'),
+    uuid: t('scan.assetFound.uuid'),
+    invId: t('scan.assetFound.invId'),
+    inventoryNumber: t('scan.assetFound.inventoryNumber'),
+    serialNumber: t('scan.assetFound.serialNumber'),
+    any: t('scan.assetFound.any'),
+  },
+  location: {
+    link: t('scan.locationFound.link'),
+    uuid: t('scan.locationFound.uuid'),
+    invId: t('scan.locationFound.any'),
+    inventoryNumber: t('scan.locationFound.any'),
+    serialNumber: t('scan.locationFound.any'),
+    any: t('scan.locationFound.any'),
+  },
+};
 
 /**
  * Scanning with the camera or with a hardware scanner that types the code and presses Enter
@@ -66,7 +99,9 @@ const STORAGE_KEY = 'inventorycore.scan';
     LucideTrash2,
     LucideVolume2,
     LucideVolumeX,
-      ],
+    TranslatePipe,
+    TranslateCountPipe,
+  ],
   templateUrl: './scan-page.html',
   styleUrl: './scan-page.scss',
 })
@@ -206,7 +241,7 @@ export class ScanPage implements OnInit {
 
   /** Inventory id, type and location for the result popup; with several hits also the field that matched. */
   protected assetLines(asset: InventoryItem): string[] {
-    const matched = this.result && this.matchCount > 1 ? 'Gefunden ' + this.matchText(this.result, asset) : null;
+    const matched = this.result && this.matchCount > 1 ? this.matchText(this.result, asset) : null;
     return [matched, asset.invId, this.typeName(asset), this.locationName(asset.locationUuid)].filter((line): line is string => !!line);
   }
 
@@ -215,25 +250,28 @@ export class ScanPage implements OnInit {
     return location ? locationPath(this.locations, location) : null;
   }
 
-  /** How the code was understood; with an asset, the field that matched (several assets can share a serial number). */
-  protected matchText(result: ScanResult, asset?: InventoryItem): string {
+  /**
+   * How the code was understood; with an asset, the field that matched (several assets can share a serial number).
+   * `found`: "Gefunden über …", `asset` / `location`: the eyebrow of the result card.
+   */
+  protected matchText(result: ScanResult, asset?: InventoryItem, context: MatchContext = 'found'): string {
     switch (result.matchedBy) {
       case 'LINK':
-        return 'über den Link im Code';
+        return MATCH_TEXTS[context].link;
       case 'UUID':
-        return 'über die ID';
+        return MATCH_TEXTS[context].uuid;
     }
     const code = result.code.toLowerCase();
     if (asset?.invId?.toLowerCase() === code) {
-      return 'über die Inventar-ID';
+      return MATCH_TEXTS[context].invId;
     }
     if (asset?.inventoryNumber?.toLowerCase() === code) {
-      return 'über die Inventarnummer';
+      return MATCH_TEXTS[context].inventoryNumber;
     }
     if (asset?.serialNumber?.toLowerCase() === code) {
-      return 'über die Seriennummer';
+      return MATCH_TEXTS[context].serialNumber;
     }
-    return 'über Inventar-ID, Inventarnummer oder Seriennummer';
+    return MATCH_TEXTS[context].any;
   }
 
   protected clearHistory(): void {
@@ -273,7 +311,7 @@ export class ScanPage implements OnInit {
       },
       error: () => {
         this.lookingUp = false;
-        this.error = 'Abfrage fehlgeschlagen. Ist die Verbindung zum Server da?';
+        this.error = t('scan.lookupFailed');
         this.sheetOpen = true;
         this.feedback(false);
         this.focusInput();
@@ -293,7 +331,7 @@ export class ScanPage implements OnInit {
 
   private addHistory(result: ScanResult): void {
     const first = result.assets[0] ?? result.locations[0];
-    const label = !first ? null : this.matchCount > 1 ? `${this.matchCount} Treffer` : first.name;
+    const label = !first ? null : this.matchCount > 1 ? t('scan.hitCount', { count: this.matchCount }) : first.name;
     this.history = [{ code: result.code, time: new Date(), label, route: this.routeOf(result) }, ...this.history].slice(0, HISTORY_SIZE);
   }
 

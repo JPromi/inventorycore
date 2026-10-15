@@ -6,6 +6,8 @@ import { Subject, Subscription, debounceTime } from 'rxjs';
 import { AuditTimeline } from '../../../components/audit-timeline/audit-timeline';
 import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { FilterBar } from '../../../components/filter-bar/filter-bar';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import {
   AUDIT_ACTIONS,
@@ -21,7 +23,7 @@ const PAGE_SIZE = 50;
 /** Everything that happened, newest first, with filters (admins only). */
 @Component({
   selector: 'app-audit-log-page',
-  imports: [AuditTimeline, FilterBar, InfiniteScroll, FormsModule, SearchSelect, LucideHistory, LucideSearch, LucideX],
+  imports: [AuditTimeline, FilterBar, InfiniteScroll, FormsModule, SearchSelect, TranslatePipe, TranslateCountPipe, LucideHistory, LucideSearch, LucideX],
   templateUrl: './audit-log-page.html',
   styleUrl: './audit-log-page.scss',
 })
@@ -112,7 +114,7 @@ export class AuditLogPage implements OnInit, OnDestroy {
           if (id !== this.requestId) {
             return;
           }
-          this.error = 'Protokoll konnte nicht geladen werden.';
+          this.error = t('adminAuditLog.loadError');
           this.loading = false;
         },
       });

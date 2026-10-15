@@ -8,6 +8,7 @@ This repository contains an Angular 21 frontend in `frontend/` and a Spring Boot
 - Read the module's `AGENTS.md` before changing it.
 - Keep changes within the requested scope and preserve unrelated working-tree changes.
 - Use shared SCSS variables for styling and proper German characters (ä, ö, ü, ß) in German text. See [conventions](docs/CONVENTIONS.md).
+- Put every user-visible frontend text into `frontend/public/i18n/de.json` and use it through the `t` pipe / `t()`; write formal German ("Sie", "Vorhanden" instead of "Da") with general fire-service examples. See [language and texts](docs/CONVENTIONS.md#language-and-texts).
 - Keep API contracts consistent between Java DTOs and TypeScript interfaces.
 - Enforce authorization in the backend; frontend guards and hidden buttons are not authorization boundaries.
 - Preserve the Zone.js provider and build polyfill together. Do not migrate the app to zoneless change detection or introduce signals for ordinary page state.
@@ -24,6 +25,7 @@ Run commands in the indicated directory. On Windows use `npm.cmd` if PowerShell 
 | `frontend/` | `npm run build` | Production frontend build |
 | `frontend/` | `npm test -- --watch=false` | Angular unit tests; see known failures in testing docs |
 | `frontend/` | `npm run test:e2e` | Playwright tests, configured for Edge and port 4201 |
+| `frontend/` | `npm run i18n:check` | Every text key used in the sources exists in `public/i18n/de.json` |
 | `backend/` | `./gradlew.bat bootRun` | Start backend, example port 8080 |
 | `backend/` | `./gradlew.bat test` | Backend tests; context test needs configured PostgreSQL |
 | `backend/` | `./gradlew.bat bootJar` | Executable backend JAR |

@@ -7,5 +7,6 @@ Read the root [instructions](../AGENTS.md) and [conventions](../docs/CONVENTIONS
 - Use Lucide icons and retain icon references in navigation configuration.
 - Keep `provideZoneChangeDetection()` and `angular.json`'s `zone.js` polyfill. Async UI updates must work without a follow-up click.
 - Ordinary pages use class fields and subscriptions. The existing PWA service uses signals; this is not a precedent for migrating other pages to signals.
+- User-visible text goes through i18n (`t` pipe / `t()` from `core/i18n`, texts in `public/i18n/de.json`); see [language and texts](../docs/CONVENTIONS.md#language-and-texts) and run `npm run i18n:check`.
 - API calls use the relative environment API URL and session credentials. Match Java DTO changes in the service interfaces.
 - Verify async changes using the [browser regressions](../docs/TESTING.md), and use the [build guide](../docs/BUILD.md) for production output.

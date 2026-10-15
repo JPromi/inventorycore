@@ -351,7 +351,7 @@ public class InventoryController {
         }
         if (areas.isEmpty()) {
             areas.add(areaRepository.findFirstByDefaultAreaTrue()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No default area configured")));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Es ist kein Standardbereich festgelegt.")));
         }
         return areas;
     }
@@ -369,7 +369,7 @@ public class InventoryController {
     /** Hidden objects are reported as missing so their existence is not leaked. */
     private void requireVisible(boolean visible) {
         if (!visible) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Eintrag nicht gefunden.");
         }
     }
 
@@ -393,7 +393,7 @@ public class InventoryController {
         }
         for (Location current = parent; current != null; current = current.getParentLocation()) {
             if (current == location) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Location cannot be its own parent");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ein Standort kann nicht sein eigener übergeordneter Standort sein.");
             }
         }
         location.setParentLocation(parent);

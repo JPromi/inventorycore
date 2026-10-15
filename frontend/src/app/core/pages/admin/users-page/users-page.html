@@ -1,16 +1,16 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ hasActiveFilters ? 'Treffer' : list.total === 1 ? 'Benutzer' : 'Benutzer' }} }</p>
+            <p class="eyebrow">@if (list.loaded) { @if (hasActiveFilters) { {{ 'adminUsers.matches' | tn: list.total }} } @else { {{ 'adminUsers.count' | tn: list.total }} } }</p>
             <h1>
                 <svg lucideUser size="20"></svg>
-                <span>Benutzer</span>
+                <span>{{ 'terms.users' | t }}</span>
             </h1>
         </div>
         <div class="header-actions">
             <button type="button" class="primary-action" (click)="create()">
                 <svg lucideUserPlus size="17"></svg>
-                <span>Neuer Benutzer</span>
+                <span>{{ 'adminUsers.create' | t }}</span>
             </button>
         </div>
     </header>
@@ -19,9 +19,9 @@
         <div class="search-box" filterSearch>
             <svg class="search-icon" lucideSearch size="18"></svg>
             <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
-                placeholder="Name, Benutzername oder E-Mail suchen..." aria-label="Suchen" />
+                [placeholder]="'adminUsers.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                <button type="button" class="clear" [title]="'adminUsers.clearSearch' | t" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -31,17 +31,17 @@
             [options]="groupOptions"
             [(ngModel)]="groupFilter"
             (ngModelChange)="list.reload()"
-            placeholder="Alle Gruppen"
-            clearLabel="Alle Gruppen"
-            searchPlaceholder="Gruppe suchen..."
+            [placeholder]="'adminUsers.allGroups' | t"
+            [clearLabel]="'adminUsers.allGroups' | t"
+            [searchPlaceholder]="'adminUsers.searchGroup' | t"
         />
         <app-search-select
             class="filter-select"
             [options]="statusOptions"
             [(ngModel)]="statusFilter"
             (ngModelChange)="list.reload()"
-            placeholder="Alle Status"
-            clearLabel="Alle Status"
+            [placeholder]="'adminUsers.allStatus' | t"
+            [clearLabel]="'adminUsers.allStatus' | t"
         />
     </app-filter-bar>
 
@@ -52,21 +52,21 @@
     }
 
     @if (list.error && !users.length) {
-        <p class="error">Benutzer konnten nicht geladen werden.</p>
+        <p class="error">{{ 'adminUsers.errors.load' | t }}</p>
     } @else if (!list.loaded) {
-        <p class="empty">Lade Benutzer...</p>
+        <p class="empty">{{ 'adminUsers.loading' | t }}</p>
     } @else if (!users.length) {
-        <div class="empty-state">Keine Benutzer gefunden.</div>
+        <div class="empty-state">{{ 'adminUsers.empty' | t }}</div>
     } @else {
         <div class="data-table-wrap">
             <table class="data-table">
                 <thead>
                     <tr>
                         @if (selection.active) { <th class="selection-column"></th> }
-                        <th>Benutzer</th>
-                        <th>E-Mail</th>
-                        <th>Gruppen</th>
-                        <th>Status</th>
+                        <th>{{ 'terms.user' | t }}</th>
+                        <th>{{ 'adminUsers.columns.email' | t }}</th>
+                        <th>{{ 'terms.groups' | t }}</th>
+                        <th>{{ 'adminUsers.columns.status' | t }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -85,7 +85,7 @@
                                     </span>
                                     <span>
                                         <strong>{{ user.displayName || user.username }}</strong>
-                                        <span class="muted">{{ user.username }}@if (isSelf(user)) { · Du}</span>
+                                        <span class="muted">{{ user.username }}@if (isSelf(user)) { · {{ 'adminUsers.self' | t }}}</span>
                                     </span>
                                 </div>
                             </td>
@@ -95,31 +95,31 @@
                                     @for (name of groupNames(user); track name) {
                                         <span class="chip">{{ name }}</span>
                                     } @empty {
-                                        <span class="muted">Keine</span>
+                                        <span class="muted">{{ 'common.none' | t }}</span>
                                     }
                                 </div>
                             </td>
                             <td>
                                 <div class="chip-list">
                                     @if (isAdmin(user)) {
-                                        <span class="badge accent">Admin</span>
+                                        <span class="badge accent">{{ 'adminUsers.adminBadge' | t }}</span>
                                     }
                                     @if (user.sourceProvider !== 'LOCAL') {
-                                        <span class="badge" [title]="'Quelle: ' + providerLabels[user.sourceProvider]">{{ providerLabels[user.sourceProvider] }}</span>
+                                        <span class="badge" [title]="'adminUsers.source' | t: { provider: providerLabels[user.sourceProvider] }">{{ providerLabels[user.sourceProvider] }}</span>
                                     }
                                     @if (user.enabled) {
-                                        <span class="badge success">Aktiv</span>
+                                        <span class="badge success">{{ 'adminUsers.status.enabled' | t }}</span>
                                     } @else {
-                                        <span class="badge">Deaktiviert</span>
+                                        <span class="badge">{{ 'adminUsers.status.disabled' | t }}</span>
                                     }
                                 </div>
                             </td>
                             <td class="actions">
-                                <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(user)">
+                                <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); edit(user)">
                                     <svg lucidePencil size="15"></svg>
                                 </button>
                                 @if (!isSelf(user)) {
-                                    <button type="button" class="icon-button danger" title="Löschen" (click)="remove(user, $event)">
+                                    <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(user, $event)">
                                         <svg lucideTrash2 size="15"></svg>
                                     </button>
                                 }
@@ -131,9 +131,9 @@
         </div>
         <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
             @if (list.loading) {
-                <span>Lade weitere Benutzer...</span>
+                <span>{{ 'adminUsers.loadingMore' | t }}</span>
             } @else if (list.error) {
-                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'adminUsers.retry' | t }}</button>
             }
         </div>
     }

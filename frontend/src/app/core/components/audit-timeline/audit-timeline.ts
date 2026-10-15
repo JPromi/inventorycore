@@ -12,6 +12,7 @@ import {
   LucideTrash2,
 } from '@lucide/angular';
 
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { auditDetailLines } from '../../service/audit-text';
 import { AuditLog, auditActionLabel, auditObjectRoute, auditObjectTypeLabel } from '../../service/audit.service';
 
@@ -21,6 +22,7 @@ import { AuditLog, auditActionLabel, auditObjectRoute, auditObjectTypeLabel } fr
   imports: [
     DatePipe,
     RouterLink,
+    TranslatePipe,
     LucideCamera,
     LucideClipboardCheck,
     LucideLock,

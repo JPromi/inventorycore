@@ -2,29 +2,29 @@
     <div class="page-shell">
         <a class="back-link no-print" routerLink="/inspections">
             <svg lucideArrowLeft size="16"></svg>
-            <span>Alle Prüfungen</span>
+            <span>{{ 'inspectionRun.backToList' | t }}</span>
         </a>
 
         @if (error) {
             <p class="error no-print">
                 {{ error }}
-                <button type="button" class="icon-button" title="Ausblenden" (click)="error = ''">
+                <button type="button" class="icon-button" [title]="'inspectionRun.dismiss' | t" (click)="error = ''">
                     <svg lucideX size="14"></svg>
                 </button>
             </p>
         }
 
         @if (loading && !detail) {
-            <p class="empty">Lade Prüfung...</p>
+            <p class="empty">{{ 'inspectionRun.loading' | t }}</p>
         } @else if (detail) {
             <header class="page-header">
                 <div>
                     <p class="eyebrow">
-                        {{ detail.summary.typeName }} · {{ isCheck ? 'Einzelprüfung' : 'Inventur' }}
+                        {{ detail.summary.typeName }} · {{ modeLabel }}
                         @if (open) {
-                            · <span class="badge accent">Offen</span>
+                            · <span class="badge accent">{{ 'inspectionRun.open' | t }}</span>
                         } @else {
-                            · <span class="badge success"><svg lucideLock size="11"></svg> Abgeschlossen</span>
+                            · <span class="badge success"><svg lucideLock size="11"></svg> {{ 'inspectionRun.completed' | t }}</span>
                         }
                     </p>
                     <h1>
@@ -33,25 +33,25 @@
                     </h1>
                     <p class="filter-summary">{{ detail.summary.filterSummary }}</p>
                     @if (detail.summary.areaNames.length) {
-                        <p class="filter-summary">Bereich: {{ detail.summary.areaNames.join(', ') }}</p>
+                        <p class="filter-summary">{{ 'inspectionRun.areaLine' | t: { areas: detail.summary.areaNames.join(', ') } }}</p>
                     }
                 </div>
                 <div class="header-actions no-print">
                     @if (canDelete) {
                         <button type="button" class="danger-action" (click)="remove()">
                             <svg lucideTrash2 size="16"></svg>
-                            <span>Löschen</span>
+                            <span>{{ 'common.delete' | t }}</span>
                         </button>
                     }
                     @if (open) {
                         <button type="button" class="primary-action" (click)="startCompleting()">
                             <svg lucideCircleCheck size="16"></svg>
-                            <span>Abschließen</span>
+                            <span>{{ 'inspectionRun.complete' | t }}</span>
                         </button>
                     } @else {
                         <button type="button" class="primary-action" (click)="print()">
                             <svg lucidePrinter size="16"></svg>
-                            <span>Drucken</span>
+                            <span>{{ 'common.print' | t }}</span>
                         </button>
                     }
                 </div>
@@ -61,7 +61,7 @@
             <div class="stats">
                 <div class="stat">
                     <span class="value">{{ count('ALL') }}</span>
-                    <span class="label">{{ isCheck ? 'Geräte' : 'Erwartet' }}</span>
+                    <span class="label">{{ isCheck ? ('inspectionRun.stats.devices' | t) : ('inspectionRun.stats.expected' | t) }}</span>
                 </div>
                 <div class="stat present">
                     <span class="value">{{ count(goodStatus) }}</span>
@@ -69,24 +69,24 @@
                 </div>
                 <div class="stat missing">
                     <span class="value">{{ open || isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</span>
-                    <span class="label">{{ isCheck ? 'Mängel' : 'Fehlen' }}</span>
+                    <span class="label">{{ isCheck ? ('inspectionRun.stats.defects' | t) : ('inspectionRun.stats.missing' | t) }}</span>
                 </div>
                 @if (checkFunction) {
                     <div class="stat missing">
                         <span class="value">{{ count('DEFECT') }}</span>
-                        <span class="label">Defekt</span>
+                        <span class="label">{{ 'inspectionCondition.DEFECT' | t }}</span>
                     </div>
                 }
                 @if (open || isCheck) {
                     <div class="stat">
                         <span class="value">{{ count('PENDING') }}</span>
-                        <span class="label">{{ open ? 'Noch offen' : 'Nicht geprüft' }}</span>
+                        <span class="label">{{ open ? ('inspectionRun.stats.pending' | t) : ('inspectionStatus.PENDING' | t) }}</span>
                     </div>
                 }
                 @if (!isCheck) {
                     <div class="stat" [class.warning]="unexpectedItems.length">
                         <span class="value">{{ unexpectedItems.length }}</span>
-                        <span class="label">Fremd / unbekannt</span>
+                        <span class="label">{{ 'inspectionRun.stats.unexpected' | t }}</span>
                     </div>
                 }
                 @if (open) {
@@ -95,7 +95,7 @@
                             <span class="present" [style.width.%]="count('ALL') ? (count(goodStatus) / count('ALL')) * 100 : 0"></span>
                             <span class="missing" [style.width.%]="count('ALL') ? (count(badStatus) / count('ALL')) * 100 : 0"></span>
                         </div>
-                        <span class="hint">{{ progress }} % geprüft</span>
+                        <span class="hint">{{ 'inspectionRun.stats.progress' | t: { percent: progress } }}</span>
                     </div>
                 }
             </div>
@@ -111,14 +111,14 @@
                                 type="text"
                                 name="code"
                                 [(ngModel)]="code"
-                                [placeholder]="isCheck ? 'Gerät scannen, um es zu prüfen...' : 'Asset scannen oder Code eintippen...'"
-                                aria-label="Gescannter Code"
+                                [placeholder]="isCheck ? ('inspectionRun.scan.placeholderCheck' | t) : ('inspectionRun.scan.placeholderInventory' | t)"
+                                [attr.aria-label]="'inspectionRun.scan.codeLabel' | t"
                                 autocomplete="off"
                                 autocapitalize="off"
                                 spellcheck="false"
                                 enterkeyhint="send"
                             />
-                            <button type="submit" class="submit" title="Prüfen (Enter)" [disabled]="!code.trim()">
+                            <button type="submit" class="submit" [title]="'inspectionRun.scan.submit' | t" [disabled]="!code.trim()">
                                 <svg lucideCornerDownLeft size="17"></svg>
                             </button>
                         </label>
@@ -126,10 +126,10 @@
                             <button type="button" class="secondary-action camera-toggle" [class.active]="cameraOn" (click)="toggleCamera()">
                                 @if (cameraOn) {
                                     <svg lucideCameraOff size="17"></svg>
-                                    <span>Kamera aus</span>
+                                    <span>{{ 'inspectionRun.scan.cameraOff' | t }}</span>
                                 } @else {
                                     <svg lucideCamera size="17"></svg>
-                                    <span>Kamera</span>
+                                    <span>{{ 'inspectionRun.scan.camera' | t }}</span>
                                 }
                             </button>
                         }
@@ -137,15 +137,15 @@
 
                     @if (isCheck) {
                         <div class="add-asset">
-                            <span class="hint">oder Gerät suchen:</span>
+                            <span class="hint">{{ 'inspectionRun.scan.orSearch' | t }}</span>
                             <app-search-select
                                 [options]="assetOptions"
                                 [(ngModel)]="assetToAdd"
                                 (ngModelChange)="addAsset($event)"
                                 name="assetToAdd"
-                                placeholder="Gerät hinzufügen..."
-                                searchPlaceholder="Name oder Inventar-ID..."
-                                emptyText="Keine weiteren Geräte"
+                                [placeholder]="'inspectionRun.scan.addPlaceholder' | t"
+                                [searchPlaceholder]="'inspectionRun.scan.addSearchPlaceholder' | t"
+                                [emptyText]="'inspectionRun.scan.addEmpty' | t"
                             />
                         </div>
                     }
@@ -153,14 +153,14 @@
                     @if (cameraOn) {
                         <app-camera-view
                             class="camera"
-                            [title]="isCheck ? 'Gerät prüfen' : 'Inventur'"
-                            [hint]="isCheck ? 'Code des Geräts in den Rahmen halten' : 'Code des Assets in den Rahmen halten'"
+                            [title]="isCheck ? ('inspectionRun.scan.cameraTitleCheck' | t) : ('inspectionRun.scan.cameraTitleInventory' | t)"
+                            [hint]="isCheck ? ('inspectionRun.scan.cameraHintCheck' | t) : ('inspectionRun.scan.cameraHintInventory' | t)"
                             [sheetOpen]="sheetOpen"
                             (code)="onCameraCode($event)"
                             (closed)="cameraOn = false"
                             (sheetClose)="sheetOpen = false"
                             [photoMode]="!!photoTarget"
-                            [photoHint]="photoTarget?.target === 'ASSET' ? 'Foto für die Bilder des Assets' : 'Foto für das Prüfprotokoll'"
+                            [photoHint]="photoTarget?.target === 'ASSET' ? ('inspectionRun.scan.photoHintAsset' | t) : ('inspectionRun.scan.photoHintInspection' | t)"
                             (photo)="onCameraPhoto($event)"
                             (photoCancel)="photoTarget = null; sheetOpen = true"
                         >
@@ -179,17 +179,17 @@
                                         </div>
                                         <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
                                             @if (checkFunction) {
-                                                <button type="button" class="present" [class.active]="item.condition === 'OK'" (click)="setCondition(item, 'OK')" title="Da und funktioniert">
+                                                <button type="button" class="present" [class.active]="item.condition === 'OK'" (click)="setCondition(item, 'OK')" [title]="'inspectionRun.status.presentAndWorking' | t">
                                                     <svg lucideCheck size="18"></svg>
-                                                    <span>i. O.</span>
+                                                    <span>{{ 'inspectionCondition.OK' | t }}</span>
                                                 </button>
-                                                <button type="button" class="missing" [class.active]="item.condition === 'DEFECT'" (click)="setCondition(item, 'DEFECT')" title="Da, aber defekt">
+                                                <button type="button" class="missing" [class.active]="item.condition === 'DEFECT'" (click)="setCondition(item, 'DEFECT')" [title]="'inspectionRun.status.presentButDefect' | t">
                                                     <svg lucideWrench size="18"></svg>
-                                                    <span>Defekt</span>
+                                                    <span>{{ 'inspectionCondition.DEFECT' | t }}</span>
                                                 </button>
                                                 <button type="button" class="missing" [class.active]="item.status === 'MISSING'" (click)="setStatus(item, 'MISSING')">
                                                     <svg lucideX size="18"></svg>
-                                                    <span>Fehlt</span>
+                                                    <span>{{ 'inspectionStatus.MISSING' | t }}</span>
                                                 </button>
                                             } @else {
                                                 <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
@@ -253,10 +253,10 @@
                                     <svg lucideCircleCheck size="20"></svg>
                                 }
                             }
-                            <span>{{ scan.message }}</span>
+                            <span>{{ scanText(scan) }}</span>
                         </div>
                         @if (scan.outcome === 'AMBIGUOUS') {
-                            <div class="scan-choices" role="group" aria-label="Asset auswählen">
+                            <div class="scan-choices" role="group" [attr.aria-label]="'inspectionRun.scan.chooseAsset' | t">
                                 @for (candidate of scan.candidates ?? []; track candidate.uuid) {
                                     <button type="button" class="scan-choice" [disabled]="scanning" (click)="choose(candidate)">
                                         <span>
@@ -264,7 +264,7 @@
                                             <small>{{ candidateMeta(candidate) }}</small>
                                         </span>
                                         @if (candidate.inInspection) {
-                                            <span class="in-inspection">In dieser Prüfung</span>
+                                            <span class="in-inspection">{{ 'inspectionRun.scan.inInspection' | t }}</span>
                                         }
                                     </button>
                                 }
@@ -277,9 +277,9 @@
                     <section class="card unexpected">
                         <h2>
                             <svg lucideTriangleAlert size="18"></svg>
-                            Fremde Gegenstände ({{ unexpectedItems.length }})
+                            {{ 'inspectionRun.unexpected.title' | t: { count: unexpectedItems.length } }}
                         </h2>
-                        <p class="hint">Diese wurden hier gefunden, gehören aber nicht zu dieser Prüfung.</p>
+                        <p class="hint">{{ 'inspectionRun.unexpected.hint' | t }}</p>
                         <ul>
                             @for (item of unexpectedItems; track item.uuid) {
                                 <li>
@@ -294,13 +294,13 @@
                                                 {{ item.invId }} ·
                                             }
                                             @if (item.assetUuid) {
-                                                {{ item.locationName ? 'gehört zu ' + item.locationName : 'ohne Standort' }}
+                                                {{ item.locationName ? ('inspectionRun.unexpected.belongsTo' | t: { location: item.locationName }) : ('inspectionRun.unexpected.noLocation' | t) }}
                                             } @else {
-                                                Code: <code>{{ item.scannedCode }}</code>
+                                                {{ 'inspectionRun.unexpected.code' | t }} <code>{{ item.scannedCode }}</code>
                                             }
                                         </span>
                                     </div>
-                                    <button type="button" class="icon-button" title="Entfernen (versehentlich gescannt)" (click)="removeUnexpected(item)">
+                                    <button type="button" class="icon-button" [title]="'inspectionRun.unexpected.remove' | t" (click)="removeUnexpected(item)">
                                         <svg lucideX size="15"></svg>
                                     </button>
                                 </li>
@@ -311,8 +311,8 @@
 
                 <div class="toolbar list-toolbar">
                     <div class="segmented-tabs" role="tablist">
-                        <button type="button" [class.active]="itemFilter === 'ALL'" (click)="itemFilter = 'ALL'">Alle <span class="count">{{ count('ALL') }}</span></button>
-                        <button type="button" [class.active]="itemFilter === 'PENDING'" (click)="itemFilter = 'PENDING'">Offen <span class="count">{{ count('PENDING') }}</span></button>
+                        <button type="button" [class.active]="itemFilter === 'ALL'" (click)="itemFilter = 'ALL'">{{ 'common.all' | t }} <span class="count">{{ count('ALL') }}</span></button>
+                        <button type="button" [class.active]="itemFilter === 'PENDING'" (click)="itemFilter = 'PENDING'">{{ 'inspectionRun.status.open' | t }} <span class="count">{{ count('PENDING') }}</span></button>
                         <button type="button" [class.active]="itemFilter === goodStatus" (click)="itemFilter = goodStatus">
                             {{ goodLabel }} <span class="count">{{ count(goodStatus) }}</span>
                         </button>
@@ -321,15 +321,15 @@
                         </button>
                         @if (checkFunction) {
                             <button type="button" [class.active]="itemFilter === 'DEFECT'" (click)="itemFilter = 'DEFECT'">
-                                Defekt <span class="count" [class.alert]="count('DEFECT')">{{ count('DEFECT') }}</span>
+                                {{ 'inspectionCondition.DEFECT' | t }} <span class="count" [class.alert]="count('DEFECT')">{{ count('DEFECT') }}</span>
                             </button>
                         }
                     </div>
                     <div class="search-box">
                         <svg class="search-icon" lucideSearch size="18"></svg>
-                        <input type="text" [(ngModel)]="search" placeholder="In dieser Prüfung suchen..." aria-label="Suchen" />
+                        <input type="text" [(ngModel)]="search" [placeholder]="'inspectionRun.list.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
                         @if (search) {
-                            <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                            <button type="button" class="clear" [title]="'inspectionRun.list.clearSearch' | t" (click)="search = ''">
                                 <svg lucideX size="15"></svg>
                             </button>
                         }
@@ -339,13 +339,13 @@
                 @if (!expectedItems.length) {
                     <div class="empty-state">
                         @if (isCheck) {
-                            Noch keine Geräte. Scanne ein Gerät oder füge es über die Suche hinzu.
+                            {{ 'inspectionRun.list.emptyCheck' | t }}
                         } @else {
-                            Die Filter haben keine Assets ausgewählt. Gefundene Gegenstände erscheinen oben als fremd.
+                            {{ 'inspectionRun.list.emptyInventory' | t }}
                         }
                     </div>
                 } @else if (!visibleItems.length) {
-                    <div class="empty-state">Keine Einträge in dieser Ansicht.</div>
+                    <div class="empty-state">{{ 'inspectionRun.list.emptyView' | t }}</div>
                 }
 
                 <div class="item-list">
@@ -363,7 +363,7 @@
                                 @if (row.children.length) {
                                     <button type="button" class="icon-button asset-group-toggle"
                                         [attr.aria-expanded]="!collapsedAssets.has(item.uuid)" [class.collapsed]="collapsedAssets.has(item.uuid)"
-                                        [attr.aria-label]="'Untergeordnete Assets von ' + item.assetName" (click)="toggleAssetGroup(item.uuid)">
+                                        [attr.aria-label]="'inspectionRun.list.childAssets' | t: { name: item.assetName }" (click)="toggleAssetGroup(item.uuid)">
                                         <svg lucideChevronDown size="16"></svg>
                                     </button>
                                 }
@@ -372,26 +372,29 @@
                                     <a [routerLink]="['/assets', item.assetUuid]" target="_blank" class="item-name">{{ item.assetName }}</a>
                                     <span class="meta">{{ itemMeta(item) }}</span>
                                     @if (item.parentAssetNote) { <span class="meta asset-link-note">{{ item.parentAssetNote }}</span> }
-                                    @if (item.inspectionPolicy === 'MANUAL') { <span class="badge">Ohne Label · manuell prüfen</span> }
+                                    @if (item.inspectionPolicy === 'MANUAL') { <span class="badge">{{ 'inspectionRun.list.manualBadge' | t }}</span> }
                                     @if (row.children.length) {
-                                        <span class="meta">{{ checkedChildren(row) }}/{{ row.children.length }} Unter-Assets geprüft</span>
+                                        <span class="meta">{{ 'inspectionRun.list.childrenChecked' | t: { checked: checkedChildren(row), total: row.children.length } }}</span>
                                     }
                                     @if (item.checkedAt) {
                                         <span class="checked">
-                                            {{ item.method === 'SCAN' ? 'Gescannt' : 'Manuell' }} von {{ item.checkedByName }},
-                                            {{ item.checkedAt | date: 'dd.MM. HH:mm' }}
+                                            @if (item.method === 'SCAN') {
+                                                {{ 'inspectionRun.list.checkedByScan' | t: { name: item.checkedByName, date: (item.checkedAt | date: 'dd.MM. HH:mm') } }}
+                                            } @else {
+                                                {{ 'inspectionRun.list.checkedManually' | t: { name: item.checkedByName, date: (item.checkedAt | date: 'dd.MM. HH:mm') } }}
+                                            }
                                         </span>
                                     }
                                     @if (checkFunction && item.status === 'PRESENT' && !item.condition) {
-                                        <span class="checked function-open">Da – Funktion noch nicht geprüft</span>
+                                        <span class="checked function-open">{{ 'inspectionRun.status.functionOpen' | t }}</span>
                                     }
                                 </div>
                                 @if (item.assetUuid) {
                                     <button type="button" class="fields-toggle" [class.open]="expanded.has(item.uuid)" (click)="toggleExpanded(item)">
                                         <span [class.incomplete]="item.status !== 'PENDING' && missingRequired(item)">
-                                            {{ fieldsFor(item).length ? filledCount(item) + '/' + fieldsFor(item).length + ' Felder' : 'Details' }}
+                                            {{ fieldsFor(item).length ? ('inspectionRun.list.fieldsFilled' | t: { filled: filledCount(item), total: fieldsFor(item).length }) : ('common.details' | t) }}
                                             @if (item.photos.length) {
-                                                · {{ item.photos.length }} {{ item.photos.length === 1 ? 'Foto' : 'Fotos' }}
+                                                · {{ 'inspectionRun.list.photos' | tn: item.photos.length }}
                                             }
                                         </span>
                                         <svg lucideChevronDown size="15"></svg>
@@ -399,22 +402,22 @@
                                 }
                                 <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
                                     @if (checkFunction) {
-                                        <button type="button" class="present" [class.active]="item.condition === 'OK'" (click)="setCondition(item, 'OK')" title="Da und funktioniert">
+                                        <button type="button" class="present" [class.active]="item.condition === 'OK'" (click)="setCondition(item, 'OK')" [title]="'inspectionRun.status.presentAndWorking' | t">
                                             <svg lucideCheck size="15"></svg>
-                                            <span>i. O.</span>
+                                            <span>{{ 'inspectionCondition.OK' | t }}</span>
                                         </button>
-                                        <button type="button" class="missing" [class.active]="item.condition === 'DEFECT'" (click)="setCondition(item, 'DEFECT')" title="Da, aber defekt">
+                                        <button type="button" class="missing" [class.active]="item.condition === 'DEFECT'" (click)="setCondition(item, 'DEFECT')" [title]="'inspectionRun.status.presentButDefect' | t">
                                             <svg lucideWrench size="15"></svg>
-                                            <span>Defekt</span>
+                                            <span>{{ 'inspectionCondition.DEFECT' | t }}</span>
                                         </button>
                                         <button type="button" class="missing" [class.active]="item.status === 'MISSING'" (click)="setStatus(item, 'MISSING')">
                                             <svg lucideX size="15"></svg>
-                                            <span>Fehlt</span>
+                                            <span>{{ 'inspectionStatus.MISSING' | t }}</span>
                                         </button>
                                     } @else {
                                         <button type="button" class="present" [class.active]="item.status === goodStatus" (click)="setStatus(item, goodStatus)">
                                             <svg lucideCheck size="15"></svg>
-                                            <span>{{ isCheck ? 'i. O.' : 'Da' }}</span>
+                                            <span>{{ goodLabel }}</span>
                                         </button>
                                         <button type="button" class="missing" [class.active]="item.status === badStatus" (click)="setStatus(item, badStatus)">
                                             <svg lucideX size="15"></svg>
@@ -423,7 +426,7 @@
                                     }
                                 </div>
                                 @if (isCheck && item.status === 'PENDING') {
-                                    <button type="button" class="icon-button" title="Aus der Prüfung entfernen" (click)="removeUnexpected(item)">
+                                    <button type="button" class="icon-button" [title]="'inspectionRun.list.removeItem' | t" (click)="removeUnexpected(item)">
                                         <svg lucideTrash2 size="14"></svg>
                                     </button>
                                 }
@@ -448,41 +451,41 @@
                 @if (completing) {
                     <div class="dialog-backdrop" (click)="completing = false">
                         <div class="card dialog" role="dialog" aria-modal="true" aria-labelledby="complete-title" (click)="$event.stopPropagation()">
-                            <h2 id="complete-title">Prüfung abschließen</h2>
+                            <h2 id="complete-title">{{ 'inspectionRun.completeDialog.title' | t }}</h2>
                             <ul class="complete-summary">
-                                <li><strong>{{ count(goodStatus) }}</strong> von {{ count('ALL') }} {{ isCheck ? 'Geräten in Ordnung' : 'Assets sind da' }}</li>
+                                <li><strong>{{ count(goodStatus) }}</strong> {{ isCheck ? ('inspectionRun.completeDialog.goodOfTotalCheck' | t: { total: count('ALL') }) : ('inspectionRun.completeDialog.goodOfTotalInventory' | t: { total: count('ALL') }) }}</li>
                                 @if (count(badStatus)) {
-                                    <li class="bad"><strong>{{ count(badStatus) }}</strong> {{ isCheck ? 'mit Mangel' : 'fehlen' }}</li>
+                                    <li class="bad"><strong>{{ count(badStatus) }}</strong> {{ isCheck ? ('inspectionRun.completeDialog.badCheck' | t) : ('inspectionRun.completeDialog.badInventory' | t) }}</li>
                                 }
                                 @if (count('PENDING')) {
-                                    <li class="bad"><strong>{{ count('PENDING') }}</strong> wurden nicht geprüft und erscheinen im Bericht als „nicht geprüft“</li>
+                                    <li class="bad"><strong>{{ count('PENDING') }}</strong> {{ 'inspectionRun.completeDialog.pending' | t }}</li>
                                 }
                                 @if (unexpectedItems.length) {
-                                    <li class="warn"><strong>{{ unexpectedItems.length }}</strong> fremde Gegenstände / unbekannte Codes</li>
+                                    <li class="warn"><strong>{{ unexpectedItems.length }}</strong> {{ 'inspectionRun.completeDialog.unexpected' | t }}</li>
                                 }
                                 @if (checkFunction && count('DEFECT')) {
-                                    <li class="bad"><strong>{{ count('DEFECT') }}</strong> sind defekt</li>
+                                    <li class="bad"><strong>{{ count('DEFECT') }}</strong> {{ 'inspectionRun.completeDialog.defect' | t }}</li>
                                 }
                                 @if (checkFunction && functionOpenCount) {
-                                    <li class="warn"><strong>{{ functionOpenCount }}</strong> sind da, aber die Funktion wurde nicht geprüft</li>
+                                    <li class="warn"><strong>{{ functionOpenCount }}</strong> {{ 'inspectionRun.completeDialog.functionOpen' | t }}</li>
                                 }
                                 @if (missingRequiredTotal) {
-                                    <li class="warn"><strong>{{ missingRequiredTotal }}</strong> Pflichtfelder sind leer</li>
+                                    <li class="warn"><strong>{{ missingRequiredTotal }}</strong> {{ 'inspectionRun.completeDialog.missingRequired' | t }}</li>
                                 }
                             </ul>
                             <label class="check-field wide">
-                                <span class="check-label">Kommentar zur Prüfung</span>
-                                <textarea [(ngModel)]="comment" rows="4" placeholder="z. B. Auffälligkeiten, offene Punkte"></textarea>
+                                <span class="check-label">{{ 'inspectionRun.completeDialog.comment' | t }}</span>
+                                <textarea [(ngModel)]="comment" rows="4" [placeholder]="'inspectionRun.completeDialog.commentPlaceholder' | t"></textarea>
                             </label>
                             <p class="hint lock-hint">
                                 <svg lucideLock size="14"></svg>
-                                Nach dem Abschließen kann die Prüfung nicht mehr bearbeitet werden.
+                                {{ 'inspectionRun.completeDialog.lockHint' | t }}
                             </p>
                             <div class="dialog-actions">
-                                <button type="button" class="secondary-action" (click)="completing = false">Abbrechen</button>
+                                <button type="button" class="secondary-action" (click)="completing = false">{{ 'common.cancel' | t }}</button>
                                 <button type="button" class="primary-action" [disabled]="submitting" (click)="complete()">
                                     <svg lucideLock size="15"></svg>
-                                    <span>{{ submitting ? 'Schließt ab...' : 'Endgültig abschließen' }}</span>
+                                    <span>{{ submitting ? ('inspectionRun.completeDialog.submitting' | t) : ('inspectionRun.completeDialog.submit' | t) }}</span>
                                 </button>
                             </div>
                         </div>
@@ -492,7 +495,7 @@
                 <!-- ================= PROTOCOL ================= -->
                 @if (hierarchyRows.length) {
                     <section class="card">
-                        <h2>Asset-Struktur</h2>
+                        <h2>{{ 'inspectionRun.protocol.structure' | t }}</h2>
                         @for (row of hierarchyRows; track row.item.uuid) {
                             <div class="protocol-asset" [style.--asset-depth]="row.ancestors.length">
                                 <strong>{{ row.item.assetName }}</strong>
@@ -504,20 +507,20 @@
                 }
                 <section class="card protocol-meta">
                     <dl>
-                        <div><dt>Prüfungsvorlage</dt><dd>{{ detail.summary.typeName }} ({{ isCheck ? 'Einzelprüfung' : 'Inventur' }})</dd></div>
-                        <div><dt>Umfang</dt><dd>{{ detail.summary.filterSummary }}</dd></div>
+                        <div><dt>{{ 'terms.inspectionTemplate' | t }}</dt><dd>{{ 'inspectionRun.typeWithMode' | t: { type: detail.summary.typeName, mode: modeLabel } }}</dd></div>
+                        <div><dt>{{ 'inspectionRun.protocol.scope' | t }}</dt><dd>{{ detail.summary.filterSummary }}</dd></div>
                         <div>
-                            <dt>Gestartet</dt>
-                            <dd>{{ detail.summary.createdAt | date: 'dd.MM.yyyy HH:mm' }} von {{ detail.summary.createdByName }}</dd>
+                            <dt>{{ 'inspectionRun.protocol.started' | t }}</dt>
+                            <dd>{{ 'inspectionRun.protocol.byLine' | t: { date: (detail.summary.createdAt | date: 'dd.MM.yyyy HH:mm'), name: detail.summary.createdByName } }}</dd>
                         </div>
                         <div>
-                            <dt>Abgeschlossen</dt>
-                            <dd>{{ detail.summary.completedAt | date: 'dd.MM.yyyy HH:mm' }} von {{ detail.summary.completedByName }}</dd>
+                            <dt>{{ 'inspectionRun.protocol.completed' | t }}</dt>
+                            <dd>{{ 'inspectionRun.protocol.byLine' | t: { date: (detail.summary.completedAt | date: 'dd.MM.yyyy HH:mm'), name: detail.summary.completedByName } }}</dd>
                         </div>
                     </dl>
                     @if (detail.comment) {
                         <div class="comment">
-                            <dt>Kommentar</dt>
+                            <dt>{{ 'inspectionRun.protocol.comment' | t }}</dt>
                             <dd>{{ detail.comment }}</dd>
                         </div>
                     }
@@ -525,42 +528,42 @@
 
                 @if (isCheck) {
                     <section class="card report-section">
-                        <h2 class="bad">Mängel ({{ reportWith('FAILED').length }})</h2>
-                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('FAILED'), empty: 'Keine Mängel.' }" />
+                        <h2 class="bad">{{ 'inspectionRun.protocol.defects' | t: { count: reportWith('FAILED').length } }}</h2>
+                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('FAILED'), empty: ('inspectionRun.protocol.noDefects' | t) }" />
                     </section>
                     <section class="card report-section" [class.empty-section]="!reportWith('PENDING').length">
-                        <h2 class="warn">Nicht geprüft ({{ reportWith('PENDING').length }})</h2>
-                        <ng-container *ngTemplateOutlet="simpleTable; context: { $implicit: reportWith('PENDING'), empty: 'Alle Geräte wurden geprüft.' }" />
+                        <h2 class="warn">{{ 'inspectionRun.protocol.notChecked' | t: { count: reportWith('PENDING').length } }}</h2>
+                        <ng-container *ngTemplateOutlet="simpleTable; context: { $implicit: reportWith('PENDING'), empty: ('inspectionRun.protocol.allChecked' | t) }" />
                     </section>
                     <section class="card report-section">
-                        <h2 class="good">In Ordnung ({{ reportWith('PASSED').length }})</h2>
-                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('PASSED'), empty: 'Keine.' }" />
+                        <h2 class="good">{{ 'inspectionRun.protocol.passed' | t: { count: reportWith('PASSED').length } }}</h2>
+                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportWith('PASSED'), empty: ('inspectionRun.protocol.none' | t) }" />
                     </section>
                 } @else {
                     @if (checkFunction) {
                         <section class="card report-section" [class.empty-section]="!reportDefect.length">
-                            <h2 class="bad">Defekte Assets ({{ reportDefect.length }})</h2>
-                            <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportDefect, empty: 'Keine defekten Assets.' }" />
+                            <h2 class="bad">{{ 'inspectionRun.protocol.defectAssets' | t: { count: reportDefect.length } }}</h2>
+                            <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportDefect, empty: ('inspectionRun.protocol.noDefectAssets' | t) }" />
                         </section>
                     }
                     <section class="card report-section" [class.empty-section]="!reportMissing.length">
-                        <h2 class="bad">Fehlende Assets ({{ reportMissing.length }})</h2>
+                        <h2 class="bad">{{ 'inspectionRun.protocol.missingAssets' | t: { count: reportMissing.length } }}</h2>
                         <ng-container
-                            *ngTemplateOutlet="simpleTable; context: { $implicit: reportMissing, empty: 'Keine – alle erwarteten Assets wurden gefunden.' }"
+                            *ngTemplateOutlet="simpleTable; context: { $implicit: reportMissing, empty: ('inspectionRun.protocol.noMissing' | t) }"
                         />
                     </section>
 
                     <section class="card report-section" [class.empty-section]="!unexpectedItems.length">
-                        <h2 class="warn">Fremde Gegenstände ({{ unexpectedItems.length }})</h2>
+                        <h2 class="warn">{{ 'inspectionRun.protocol.unexpected' | t: { count: unexpectedItems.length } }}</h2>
                         @if (unexpectedItems.length) {
                             <div class="table-wrap">
                                 <table class="report-table">
                                     <thead>
                                         <tr>
-                                            <th>Gegenstand</th>
-                                            <th>Inventar-ID / Code</th>
-                                            <th>Gehört zu</th>
-                                            <th>Erfasst</th>
+                                            <th>{{ 'inspectionRun.protocol.columns.object' | t }}</th>
+                                            <th>{{ 'inspectionRun.protocol.columns.invIdOrCode' | t }}</th>
+                                            <th>{{ 'inspectionRun.protocol.columns.belongsTo' | t }}</th>
+                                            <th>{{ 'inspectionRun.protocol.columns.recorded' | t }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -568,7 +571,7 @@
                                             <tr>
                                                 <td>{{ item.assetName }}</td>
                                                 <td class="mono">{{ item.invId || item.scannedCode || '—' }}</td>
-                                                <td>{{ item.assetUuid ? item.locationName || 'ohne Standort' : 'unbekannter Code' }}</td>
+                                                <td>{{ item.assetUuid ? item.locationName || ('inspectionRun.unexpected.noLocation' | t) : ('inspectionRun.unexpected.unknownCode' | t) }}</td>
                                                 <td>{{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }}</td>
                                             </tr>
                                         }
@@ -576,69 +579,69 @@
                                 </table>
                             </div>
                         } @else {
-                            <p class="hint">Keine.</p>
+                            <p class="hint">{{ 'inspectionRun.protocol.none' | t }}</p>
                         }
                     </section>
 
                     <section class="card report-section">
-                        <h2 class="good">Geprüfte Assets ({{ reportPresent.length }})</h2>
-                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportPresent, empty: 'Keine.' }" />
+                        <h2 class="good">{{ 'inspectionRun.protocol.checkedAssets' | t: { count: reportPresent.length } }}</h2>
+                        <ng-container *ngTemplateOutlet="checkedTable; context: { $implicit: reportPresent, empty: ('inspectionRun.protocol.none' | t) }" />
                     </section>
                 }
 
                 <!-- ================= PRINTED PROTOCOL ================= -->
-                <app-print-document kind="Prüfbericht" [title]="detail.summary.title" [meta]="printMeta"
-                    [signatures]="['Geprüft von', 'Verantwortlich']">
+                <app-print-document [kind]="'inspectionRun.print.kind' | t" [title]="detail.summary.title" [meta]="printMeta"
+                    [signatures]="printSignatures">
                     <label printOptions class="toggle">
                         <input type="checkbox" name="printPhotos" [(ngModel)]="printPhotos" />
-                        <span>Fotos drucken</span>
+                        <span>{{ 'inspectionRun.print.printPhotos' | t }}</span>
                     </label>
                     <label printOptions class="toggle">
                         <input type="checkbox" name="printPassed" [(ngModel)]="printPassed" />
-                        <span>{{ isCheck ? 'Geräte in Ordnung auflisten' : 'Gefundene Assets auflisten' }}</span>
+                        <span>{{ isCheck ? ('inspectionRun.print.listPassed' | t) : ('inspectionRun.print.listFound' | t) }}</span>
                     </label>
 
                     <div class="print-stats">
-                        <div><strong>{{ count('ALL') }}</strong><span>{{ isCheck ? 'Geräte' : 'Erwartet' }}</span></div>
+                        <div><strong>{{ count('ALL') }}</strong><span>{{ isCheck ? ('inspectionRun.stats.devices' | t) : ('inspectionRun.stats.expected' | t) }}</span></div>
                         <div><strong>{{ count(goodStatus) }}</strong><span>{{ goodLabel }}</span></div>
-                        <div><strong>{{ isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</strong><span>{{ isCheck ? 'Mängel' : 'Fehlen' }}</span></div>
+                        <div><strong>{{ isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</strong><span>{{ isCheck ? ('inspectionRun.stats.defects' | t) : ('inspectionRun.stats.missing' | t) }}</span></div>
                         @if (checkFunction) {
-                            <div><strong>{{ count('DEFECT') }}</strong><span>Defekt</span></div>
+                            <div><strong>{{ count('DEFECT') }}</strong><span>{{ 'inspectionCondition.DEFECT' | t }}</span></div>
                         }
                         @if (isCheck) {
-                            <div><strong>{{ count('PENDING') }}</strong><span>Nicht geprüft</span></div>
+                            <div><strong>{{ count('PENDING') }}</strong><span>{{ 'inspectionStatus.PENDING' | t }}</span></div>
                         } @else {
-                            <div><strong>{{ unexpectedItems.length }}</strong><span>Fremd / unbekannt</span></div>
+                            <div><strong>{{ unexpectedItems.length }}</strong><span>{{ 'inspectionRun.stats.unexpected' | t }}</span></div>
                         }
                     </div>
 
                     @if (detail.comment) {
                         <section class="print-section">
-                            <h2>Kommentar</h2>
+                            <h2>{{ 'inspectionRun.protocol.comment' | t }}</h2>
                             <p class="print-text">{{ detail.comment }}</p>
                         </section>
                     }
 
                     @if (isCheck) {
-                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Mängel', items: reportWith('FAILED'), empty: 'Keine Mängel.' }" />
-                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Nicht geprüft', items: reportWith('PENDING'), empty: 'Alle Geräte wurden geprüft.' }" />
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.defects' | t), items: reportWith('FAILED'), empty: ('inspectionRun.protocol.noDefects' | t) }" />
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.notChecked' | t), items: reportWith('PENDING'), empty: ('inspectionRun.protocol.allChecked' | t) }" />
                         @if (printPassed) {
-                            <ng-container *ngTemplateOutlet="printSection; context: { title: 'In Ordnung', items: reportWith('PASSED'), empty: 'Keine.' }" />
+                            <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.passed' | t), items: reportWith('PASSED'), empty: ('inspectionRun.protocol.none' | t) }" />
                         }
                     } @else {
                         @if (checkFunction) {
-                            <ng-container *ngTemplateOutlet="printSection; context: { title: 'Defekte Assets', items: reportDefect, empty: 'Keine defekten Assets.' }" />
+                            <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.defectAssets' | t), items: reportDefect, empty: ('inspectionRun.protocol.noDefectAssets' | t) }" />
                         }
-                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Fehlende Assets', items: reportMissing, empty: 'Keine – alle erwarteten Assets wurden gefunden.' }" />
-                        <ng-container *ngTemplateOutlet="printSection; context: { title: 'Fremde Gegenstände', items: unexpectedItems, empty: 'Keine.' }" />
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.missingAssets' | t), items: reportMissing, empty: ('inspectionRun.protocol.noMissing' | t) }" />
+                        <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.unexpected' | t), items: unexpectedItems, empty: ('inspectionRun.protocol.none' | t) }" />
                         @if (printPassed) {
-                            <ng-container *ngTemplateOutlet="printSection; context: { title: 'Gefundene Assets', items: reportPresent, empty: 'Keine.' }" />
+                            <ng-container *ngTemplateOutlet="printSection; context: { title: ('inspectionRun.print.foundAssets' | t), items: reportPresent, empty: ('inspectionRun.protocol.none' | t) }" />
                         }
                     }
 
                     @if (hasHierarchy) {
                         <section class="print-section">
-                            <h2>Asset-Struktur</h2>
+                            <h2>{{ 'inspectionRun.protocol.structure' | t }}</h2>
                             @for (row of hierarchyRows; track row.item.uuid) {
                                 <div class="print-tree-row" [style.--asset-depth]="row.ancestors.length">
                                     <span>{{ row.item.assetName }} <span class="print-muted">{{ row.item.parentAssetNote || row.item.invId }}</span></span>
@@ -660,12 +663,12 @@
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th>Asset</th>
-                        <th>Inventar-ID</th>
-                        <th>Typ</th>
-                        <th>Standort</th>
-                        <th>Status</th>
-                        <th>Notiz</th>
+                        <th>{{ 'terms.asset' | t }}</th>
+                        <th>{{ 'terms.invId' | t }}</th>
+                        <th>{{ 'terms.assetType' | t }}</th>
+                        <th>{{ 'terms.location' | t }}</th>
+                        <th>{{ 'inspectionRun.protocol.columns.status' | t }}</th>
+                        <th>{{ 'inspectionRun.protocol.columns.note' | t }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -676,7 +679,7 @@
                                 @if (item.photos.length) {
                                     <span class="report-photos">
                                         @for (photo of item.photos; track photo.uuid) {
-                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" alt="Foto" /></a>
+                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" /></a>
                                         }
                                     </span>
                                 }
@@ -708,14 +711,14 @@
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th>Asset</th>
-                        <th>Inventar-ID</th>
-                        <th>Typ</th>
+                        <th>{{ 'terms.asset' | t }}</th>
+                        <th>{{ 'terms.invId' | t }}</th>
+                        <th>{{ 'terms.assetType' | t }}</th>
                         @if (checkFunction) {
-                            <th>Funktion</th>
+                            <th>{{ 'inspectionRun.protocol.columns.function' | t }}</th>
                         }
-                        <th>Prüfwerte</th>
-                        <th>Geprüft</th>
+                        <th>{{ 'inspectionRun.protocol.columns.values' | t }}</th>
+                        <th>{{ 'inspectionRun.protocol.columns.checked' | t }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -724,12 +727,12 @@
                             <td>
                                 {{ item.assetName }}
                                 @if (item.note) {
-                                    <span class="note">Notiz: {{ item.note }}</span>
+                                    <span class="note">{{ 'inspectionRun.protocol.note' | t: { note: item.note } }}</span>
                                 }
                                 @if (item.photos.length) {
                                     <span class="report-photos">
                                         @for (photo of item.photos; track photo.uuid) {
-                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" alt="Foto" /></a>
+                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" /></a>
                                         }
                                     </span>
                                 }
@@ -757,7 +760,7 @@
                             </td>
                             <td>
                                 {{ item.checkedByName }}
-                                <span class="by">{{ item.checkedAt | date: 'dd.MM. HH:mm' }} · {{ item.method === 'SCAN' ? 'Scan' : 'manuell' }}</span>
+                                <span class="by">{{ item.checkedAt | date: 'dd.MM. HH:mm' }} · {{ item.method === 'SCAN' ? ('inspectionRun.protocol.methodScan' | t) : ('inspectionRun.protocol.methodManual' | t) }}</span>
                             </td>
                         </tr>
                     }
@@ -777,14 +780,14 @@
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th>Asset</th>
-                        <th>Inventar-ID</th>
-                        <th>Typ / Standort</th>
-                        <th>Ergebnis</th>
+                        <th>{{ 'terms.asset' | t }}</th>
+                        <th>{{ 'terms.invId' | t }}</th>
+                        <th>{{ 'inspectionRun.protocol.columns.typeLocation' | t }}</th>
+                        <th>{{ 'inspectionRun.protocol.columns.result' | t }}</th>
                         @if (detail?.fields?.length) {
-                            <th>Prüfwerte</th>
+                            <th>{{ 'inspectionRun.protocol.columns.values' | t }}</th>
                         }
-                        <th>Erfasst</th>
+                        <th>{{ 'inspectionRun.protocol.columns.recorded' | t }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -796,12 +799,12 @@
                                     <span class="print-muted print-block">{{ item.parentAssetNote }}</span>
                                 }
                                 @if (item.note) {
-                                    <span class="print-block">Notiz: {{ item.note }}</span>
+                                    <span class="print-block">{{ 'inspectionRun.protocol.note' | t: { note: item.note } }}</span>
                                 }
                                 @if (printPhotos && item.photos.length) {
                                     <span class="print-photos">
                                         @for (photo of item.photos; track photo.uuid) {
-                                            <img [src]="photo.thumbnailUrl" alt="Foto" />
+                                            <img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" />
                                         }
                                     </span>
                                 }
@@ -826,7 +829,7 @@
                             <td>
                                 @if (item.checkedAt) {
                                     {{ item.checkedByName }}
-                                    <span class="print-muted print-block">{{ item.checkedAt | date: 'dd.MM.yyyy HH:mm' }} · {{ item.method === 'SCAN' ? 'Scan' : 'manuell' }}</span>
+                                    <span class="print-muted print-block">{{ item.checkedAt | date: 'dd.MM.yyyy HH:mm' }} · {{ item.method === 'SCAN' ? ('inspectionRun.protocol.methodScan' | t) : ('inspectionRun.protocol.methodManual' | t) }}</span>
                                 } @else {
                                     <span class="print-muted">—</span>
                                 }

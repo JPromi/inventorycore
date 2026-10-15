@@ -2,20 +2,20 @@
     <div class="page-shell">
         <header class="page-header">
             <div>
-                <p class="eyebrow">Administration · Authentifizierung</p>
+                <p class="eyebrow">{{ 'adminOidc.eyebrow' | t }}</p>
                 <h1>
                     <svg lucideKeyRound size="20"></svg>
-                    <span>OpenID Connect (SSO)</span>
+                    <span>{{ 'adminOidc.title' | t }}</span>
                 </h1>
             </div>
             <div class="header-actions">
                 <button type="button" class="secondary-action" (click)="test()" [disabled]="!settings || testing">
                     <svg lucidePlugZap size="16"></svg>
-                    <span>{{ testing ? 'Teste...' : 'Verbindung testen' }}</span>
+                    <span>{{ (testing ? 'adminOidc.testing' : 'adminOidc.test') | t }}</span>
                 </button>
                 <button type="button" class="primary-action" (click)="save()" [disabled]="!settings || saving">
                     <svg lucideSave size="16"></svg>
-                    <span>{{ saving ? 'Speichert...' : saved ? 'Gespeichert' : 'Speichern' }}</span>
+                    <span>{{ (saving ? 'common.saving' : saved ? 'adminOidc.saved' : 'common.save') | t }}</span>
                 </button>
             </div>
         </header>
@@ -36,9 +36,9 @@
                 </div>
                 @if (result.success) {
                     <dl>
-                        <dt>Issuer</dt>
+                        <dt>{{ 'adminOidc.issuer' | t }}</dt>
                         <dd>{{ result.issuer }}</dd>
-                        <dt>Login-Endpunkt</dt>
+                        <dt>{{ 'adminOidc.authorizationEndpoint' | t }}</dt>
                         <dd>{{ result.authorizationEndpoint }}</dd>
                     </dl>
                 }
@@ -46,116 +46,113 @@
         }
 
         @if (loading) {
-            <p class="empty">Lade Einstellungen...</p>
+            <p class="empty">{{ 'adminOidc.loading' | t }}</p>
         } @else if (settings) {
             <form class="stack" (ngSubmit)="save()" (input)="changed()" (change)="changed()">
                 <section class="card">
                     <div class="card-title">
-                        <h2>Identity Provider</h2>
+                        <h2>{{ 'adminOidc.identityProvider' | t }}</h2>
                         <label class="toggle switch">
                             <input type="checkbox" [(ngModel)]="settings.enabled" name="enabled" />
-                            <span>{{ settings.enabled ? 'Aktiv' : 'Deaktiviert' }}</span>
+                            <span>{{ (settings.enabled ? 'adminOidc.enabled' : 'adminOidc.disabled') | t }}</span>
                         </label>
                     </div>
                     <div class="field-grid">
                         <label class="field wide">
-                            <span>Issuer-URL</span>
-                            <input type="url" [(ngModel)]="settings.issuerUri" name="issuerUri" placeholder="https://login.microsoftonline.com/<tenant-id>/v2.0" />
-                            <small>Keycloak: https://keycloak.firma.de/realms/&lt;realm&gt; · Entra ID: https://login.microsoftonline.com/&lt;tenant&gt;/v2.0</small>
+                            <span>{{ 'adminOidc.issuerUrl' | t }}</span>
+                            <input type="url" [(ngModel)]="settings.issuerUri" name="issuerUri" [placeholder]="'adminOidc.issuerUrlPlaceholder' | t" />
+                            <small>{{ 'adminOidc.issuerUrlHint' | t }}</small>
                         </label>
                         <label class="field">
-                            <span>Client-ID</span>
+                            <span>{{ 'adminOidc.clientId' | t }}</span>
                             <input type="text" [(ngModel)]="settings.clientId" name="clientId" autocomplete="off" />
                         </label>
                         <label class="field">
-                            <span>Client-Secret</span>
+                            <span>{{ 'adminOidc.clientSecret' | t }}</span>
                             <input
                                 type="password"
                                 [(ngModel)]="settings.clientSecret"
                                 name="clientSecret"
                                 autocomplete="new-password"
-                                [placeholder]="settings.clientSecretSet ? '•••••••• (gespeichert)' : ''"
+                                [placeholder]="settings.clientSecretSet ? ('adminOidc.secretStored' | t) : ''"
                             />
-                            <small>{{ settings.clientSecretSet ? 'Leer lassen, um das gespeicherte Secret zu behalten.' : 'Noch kein Secret gespeichert.' }}</small>
+                            <small>{{ (settings.clientSecretSet ? 'adminOidc.secretKeep' : 'adminOidc.secretMissing') | t }}</small>
                         </label>
                         <label class="field">
-                            <span>Scopes</span>
+                            <span>{{ 'adminOidc.scopes' | t }}</span>
                             <input type="text" [(ngModel)]="settings.scopes" name="scopes" />
                         </label>
                         <label class="field">
-                            <span>Text des Login-Buttons</span>
-                            <input type="text" [(ngModel)]="settings.buttonLabel" name="buttonLabel" placeholder="z. B. Microsoft" />
+                            <span>{{ 'adminOidc.buttonLabel' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.buttonLabel" name="buttonLabel" [placeholder]="'adminOidc.buttonLabelPlaceholder' | t" />
                         </label>
                         <label class="field wide">
-                            <span>Öffentliche URL der Anwendung</span>
-                            <input type="url" [(ngModel)]="settings.publicUrl" name="publicUrl" placeholder="Leer = automatisch, z. B. https://inventar.firma.de" />
-                            <small>Nötig, wenn die Anwendung hinter einem Reverse Proxy läuft.</small>
+                            <span>{{ 'adminOidc.publicUrl' | t }}</span>
+                            <input type="url" [(ngModel)]="settings.publicUrl" name="publicUrl" [placeholder]="'adminOidc.publicUrlPlaceholder' | t" />
+                            <small>{{ 'adminOidc.publicUrlHint' | t }}</small>
                         </label>
                     </div>
                     <div class="redirect">
-                        <span class="field-label">Redirect-URI (beim Identity Provider eintragen)</span>
+                        <span class="field-label">{{ 'adminOidc.redirectUri' | t }}</span>
                         <div class="redirect-row">
                             <code>{{ redirectUri }}</code>
                             <button type="button" class="secondary-action compact" (click)="copyRedirectUri()">
                                 <svg lucideCopy size="14"></svg>
-                                <span>{{ copied ? 'Kopiert' : 'Kopieren' }}</span>
+                                <span>{{ (copied ? 'adminOidc.copied' : 'adminOidc.copy') | t }}</span>
                             </button>
                         </div>
                     </div>
                 </section>
 
                 <section class="card">
-                    <h2>Claims</h2>
+                    <h2>{{ 'adminOidc.claims' | t }}</h2>
                     <div class="field-grid">
                         <label class="field">
-                            <span>Benutzername</span>
+                            <span>{{ 'adminOidc.usernameClaim' | t }}</span>
                             <input type="text" [(ngModel)]="settings.usernameClaim" name="usernameClaim" />
-                            <small>Muss zum Benutzernamen aus LDAP passen, wenn Provider-übergreifend angemeldet wird.</small>
+                            <small>{{ 'adminOidc.usernameClaimHint' | t }}</small>
                         </label>
                         <label class="field">
-                            <span>Anzeigename</span>
+                            <span>{{ 'adminOidc.displayNameClaim' | t }}</span>
                             <input type="text" [(ngModel)]="settings.displayNameClaim" name="displayNameClaim" />
                         </label>
                         <label class="field">
-                            <span>E-Mail</span>
+                            <span>{{ 'adminOidc.emailClaim' | t }}</span>
                             <input type="text" [(ngModel)]="settings.emailClaim" name="emailClaim" />
                         </label>
                         <label class="field">
-                            <span>Gruppen</span>
+                            <span>{{ 'terms.groups' | t }}</span>
                             <input type="text" [(ngModel)]="settings.groupsClaim" name="groupsClaim" />
                         </label>
                     </div>
                 </section>
 
                 <section class="card">
-                    <h2>Benutzer &amp; Gruppen</h2>
+                    <h2>{{ 'adminOidc.usersAndGroups' | t }}</h2>
                     <div class="options">
                         <label class="toggle option">
                             <input type="checkbox" [(ngModel)]="settings.autoCreateUsers" name="autoCreateUsers" />
                             <span>
-                                Benutzer automatisch anlegen
-                                <small>Unbekannte Benutzer werden beim ersten Login angelegt. Aus: Nur bereits vorhandene Benutzer (z. B. aus LDAP) dürfen sich anmelden.</small>
+                                {{ 'adminOidc.autoCreateUsers' | t }}
+                                <small>{{ 'adminOidc.autoCreateUsersHint' | t }}</small>
                             </span>
                         </label>
                         <label class="toggle option">
                             <input type="checkbox" [(ngModel)]="settings.syncGroups" name="syncGroups" />
                             <span>
-                                Gruppen automatisch anlegen und zuweisen
-                                <small>Gruppen aus dem Gruppen-Claim werden angelegt. Gilt nur für Benutzer, die über OIDC angelegt wurden.</small>
+                                {{ 'adminOidc.syncGroups' | t }}
+                                <small>{{ 'adminOidc.syncGroupsHint' | t }}</small>
                             </span>
                         </label>
                         <label class="toggle option">
                             <input type="checkbox" [(ngModel)]="settings.crossProviderLogin" name="crossProviderLogin" />
                             <span>
-                                Provider-übergreifende Anmeldung
-                                <small>Benutzer, die über LDAP importiert wurden, dürfen sich per OIDC anmelden (Zuordnung über den Benutzernamen).</small>
+                                {{ 'adminOidc.crossProviderLogin' | t }}
+                                <small>{{ 'adminOidc.crossProviderLoginHint' | t }}</small>
                             </span>
                         </label>
                     </div>
-                    <p class="note">
-                        Lokale Benutzer können sich nie über OIDC anmelden. Admin-Rechte vergibst du unter Administration → Gruppen
-                        mit „Admin-Gruppe“.
-                    </p>
+                    <p class="note">{{ 'adminOidc.note' | t }}</p>
                 </section>
             </form>
         }

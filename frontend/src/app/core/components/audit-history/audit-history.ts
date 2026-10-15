@@ -2,6 +2,8 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideChevronRight, LucideHistory } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AuditLog, AuditService } from '../../service/audit.service';
 import { InfiniteScroll } from '../infinite-scroll.directive';
 import { AuditTimeline } from '../audit-timeline/audit-timeline';
@@ -15,11 +17,11 @@ const PAGE_SIZE = 15;
  */
 @Component({
   selector: 'app-audit-history',
-  imports: [AuditTimeline, InfiniteScroll, RouterLink, LucideChevronRight, LucideHistory],
+  imports: [AuditTimeline, InfiniteScroll, RouterLink, TranslatePipe, LucideChevronRight, LucideHistory],
   template: `
     <section class="card">
       <div class="card-title">
-        <h2><svg lucideHistory size="16"></svg> Verlauf</h2>
+        <h2><svg lucideHistory size="16"></svg> {{ 'common.history' | t }}</h2>
         @if (total) {
           <span class="hint">{{ total }}</span>
         }
@@ -27,21 +29,21 @@ const PAGE_SIZE = 15;
       @if (error) {
         <p class="hint">{{ error }}</p>
       } @else if (loading && !entries.length) {
-        <p class="hint">Lade Verlauf...</p>
+        <p class="hint">{{ 'components.auditHistory.loading' | t }}</p>
       } @else if (!entries.length) {
-        <p class="hint">Noch keine Einträge. Änderungen, Scans und Prüfergebnisse erscheinen hier.</p>
+        <p class="hint">{{ 'components.auditHistory.empty' | t }}</p>
       } @else {
         <app-audit-timeline [entries]="entries" />
         @if (limit && moreLink && total > entries.length) {
           <a class="secondary-action compact more" [routerLink]="moreLink">
-            <span>Gesamten Verlauf anzeigen ({{ total }})</span>
+            <span>{{ 'components.auditHistory.showAll' | t: { count: total } }}</span>
             <svg lucideChevronRight size="15"></svg>
           </a>
         } @else if (!limit) {
           <!-- full history: older entries load while scrolling -->
           <div class="list-end" (appInfiniteScroll)="loadMore()" [scrollDisabled]="loading || entries.length >= total">
             @if (loading) {
-              <span>Lade ältere Einträge...</span>
+              <span>{{ 'components.auditHistory.loadingOlder' | t }}</span>
             }
           </div>
         }
@@ -100,7 +102,7 @@ export class AuditHistory implements OnChanges {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Verlauf konnte nicht geladen werden.';
+        this.error = t('components.auditHistory.loadError');
         this.loading = false;
       },
     });

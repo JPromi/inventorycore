@@ -2,7 +2,7 @@
     <div class="page-shell narrow">
         <header class="page-header">
             <div>
-                <p class="eyebrow">Administration</p>
+                <p class="eyebrow">{{ 'adminUserForm.eyebrow' | t }}</p>
                 <h1>
                     <svg lucideUser size="20"></svg>
                     <span>{{ title }}</span>
@@ -10,7 +10,7 @@
             </div>
             <a class="secondary-action" routerLink="/admin/users">
                 <svg lucideArrowLeft size="16"></svg>
-                <span>Zurück</span>
+                <span>{{ 'common.back' | t }}</span>
             </a>
         </header>
 
@@ -19,41 +19,40 @@
         }
 
         @if (loading) {
-            <p class="empty">Lade Daten...</p>
+            <p class="empty">{{ 'adminUserForm.loading' | t }}</p>
         } @else {
             <form class="stack" (ngSubmit)="save()">
                 <section class="card">
-                    <h2>Konto</h2>
+                    <h2>{{ 'adminUserForm.account' | t }}</h2>
                     <div class="field-grid">
                         <label class="field">
-                            <span>Benutzername *</span>
+                            <span>{{ 'adminUserForm.username' | t }} *</span>
                             <input type="text" [(ngModel)]="form.username" name="username" required autocomplete="off" />
                         </label>
                         <label class="field">
-                            <span>Anzeigename</span>
+                            <span>{{ 'adminUserForm.displayName' | t }}</span>
                             <input type="text" [(ngModel)]="form.displayName" name="displayName" />
                         </label>
                         <label class="field">
-                            <span>E-Mail</span>
+                            <span>{{ 'adminUserForm.email' | t }}</span>
                             <input type="email" [(ngModel)]="form.email" name="email" />
                         </label>
                         @if (sourceProvider === 'LOCAL') {
                             <label class="field">
-                                <span>Passwort {{ passwordRequired ? '*' : '' }}</span>
+                                <span>{{ 'adminUserForm.password' | t }} {{ passwordRequired ? '*' : '' }}</span>
                                 <input
                                     type="password"
                                     [(ngModel)]="form.password"
                                     name="password"
                                     autocomplete="new-password"
-                                    [placeholder]="passwordRequired ? '' : 'Leer lassen, um es nicht zu ändern'"
+                                    [placeholder]="passwordRequired ? '' : ('adminUserForm.passwordKeep' | t)"
                                 />
                             </label>
                         } @else {
                             <div class="field">
-                                <span class="field-label">Anmeldung</span>
+                                <span class="field-label">{{ 'adminUserForm.signIn' | t }}</span>
                                 <p class="hint provider-hint">
-                                    Konto aus {{ providerLabels[sourceProvider] }}. Das Passwort wird dort verwaltet;
-                                    Name und E-Mail werden bei der nächsten Synchronisation bzw. Anmeldung überschrieben.
+                                    {{ 'adminUserForm.providerHint' | t: { provider: providerLabels[sourceProvider] } }}
                                 </p>
                             </div>
                         }
@@ -61,46 +60,46 @@
                 </section>
 
                 <section class="card">
-                    <h2>Zugriff</h2>
+                    <h2>{{ 'adminUserForm.access' | t }}</h2>
                     <div class="field-grid">
                         <div class="field">
-                            <span class="field-label">Rolle</span>
-                            <div class="segmented" role="radiogroup" aria-label="Rolle">
+                            <span class="field-label">{{ 'adminUserForm.role' | t }}</span>
+                            <div class="segmented" role="radiogroup" [attr.aria-label]="'adminUserForm.role' | t">
                                 <label [class.active]="form.role === 'USER'">
                                     <input type="radio" name="role" value="USER" [(ngModel)]="form.role" [disabled]="isSelf" />
-                                    <span>Benutzer</span>
+                                    <span>{{ 'adminUserForm.roleUser' | t }}</span>
                                 </label>
                                 <label [class.active]="form.role === 'ADMIN'">
                                     <input type="radio" name="role" value="ADMIN" [(ngModel)]="form.role" [disabled]="isSelf" />
-                                    <span>Administrator</span>
+                                    <span>{{ 'adminUserForm.roleAdmin' | t }}</span>
                                 </label>
                             </div>
                             <small class="hint">
                                 @if (isSelf) {
-                                    Die eigene Rolle kann nicht geändert werden.
+                                    {{ 'adminUserForm.ownRoleHint' | t }}
                                 } @else {
-                                    Administratoren haben vollen Zugriff, unabhängig von Gruppen.
+                                    {{ 'adminUserForm.adminHint' | t }}
                                 }
                             </small>
                         </div>
                         <div class="field">
-                            <span class="field-label">Status</span>
+                            <span class="field-label">{{ 'adminUserForm.status' | t }}</span>
                             <label class="toggle">
                                 <input type="checkbox" [(ngModel)]="form.enabled" name="enabled" [disabled]="isSelf" />
-                                <span>{{ form.enabled ? 'Aktiv – kann sich anmelden' : 'Deaktiviert' }}</span>
+                                <span>{{ (form.enabled ? 'adminUserForm.enabled' : 'adminUserForm.disabled') | t }}</span>
                             </label>
                         </div>
                     </div>
                     <div class="field groups">
-                        <span class="field-label">Gruppen</span>
+                        <span class="field-label">{{ 'terms.groups' | t }}</span>
                         <app-multi-select
                             [options]="groupOptions"
                             [(ngModel)]="form.groupUuids"
                             name="groupUuids"
-                            placeholder="Gruppen suchen..."
-                            emptyText="Keine weiteren Gruppen"
+                            [placeholder]="'adminUserForm.groupsPlaceholder' | t"
+                            [emptyText]="'adminUserForm.noMoreGroups' | t"
                         />
-                        <small class="hint">Über Gruppen erhält der Benutzer seine Berechtigungen.</small>
+                        <small class="hint">{{ 'adminUserForm.groupsHint' | t }}</small>
                     </div>
                 </section>
 
@@ -108,13 +107,13 @@
                     @if (uuid && !isSelf) {
                         <button type="button" class="danger-action delete" (click)="remove()">
                             <svg lucideTrash2 size="16"></svg>
-                            <span>Löschen</span>
+                            <span>{{ 'common.delete' | t }}</span>
                         </button>
                     }
-                    <a class="secondary-action" routerLink="/admin/users">Abbrechen</a>
+                    <a class="secondary-action" routerLink="/admin/users">{{ 'common.cancel' | t }}</a>
                     <button type="submit" class="primary-action" [disabled]="saving">
                         <svg lucideSave size="17"></svg>
-                        <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+                        <span>{{ (saving ? 'common.saving' : 'common.save') | t }}</span>
                     </button>
                 </div>
             </form>

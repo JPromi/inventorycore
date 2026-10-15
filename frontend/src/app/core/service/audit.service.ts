@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { t } from '../i18n/i18n';
 
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'SCAN' | 'INSPECT' | 'PHOTO' | 'COMPLETE' | 'SYNC';
 export type AuditObjectType =
@@ -71,29 +72,29 @@ export interface AuditLogFilter {
 }
 
 export const AUDIT_ACTIONS: { value: AuditAction; label: string }[] = [
-  { value: 'CREATE', label: 'Erstellt' },
-  { value: 'UPDATE', label: 'Bearbeitet' },
-  { value: 'DELETE', label: 'Gelöscht' },
-  { value: 'SCAN', label: 'Gescannt' },
-  { value: 'INSPECT', label: 'Geprüft' },
-  { value: 'PHOTO', label: 'Foto' },
-  { value: 'COMPLETE', label: 'Abgeschlossen' },
-  { value: 'SYNC', label: 'Synchronisiert' },
+  { value: 'CREATE', label: t('audit.actions.CREATE') },
+  { value: 'UPDATE', label: t('audit.actions.UPDATE') },
+  { value: 'DELETE', label: t('audit.actions.DELETE') },
+  { value: 'SCAN', label: t('audit.actions.SCAN') },
+  { value: 'INSPECT', label: t('audit.actions.INSPECT') },
+  { value: 'PHOTO', label: t('audit.actions.PHOTO') },
+  { value: 'COMPLETE', label: t('audit.actions.COMPLETE') },
+  { value: 'SYNC', label: t('audit.actions.SYNC') },
 ];
 
 export const AUDIT_OBJECT_TYPES: { value: AuditObjectType; label: string }[] = [
-  { value: 'ASSET', label: 'Asset' },
-  { value: 'LOCATION', label: 'Standort' },
-  { value: 'ASSET_TYPE', label: 'Typ' },
-  { value: 'TAG', label: 'Tag' },
-  { value: 'INSPECTION', label: 'Prüfung' },
-  { value: 'INSPECTION_TYPE', label: 'Prüfungsvorlage' },
-  { value: 'LABEL_TEMPLATE', label: 'Label-Vorlage' },
-  { value: 'USER', label: 'Benutzer' },
-  { value: 'GROUP', label: 'Gruppe' },
-  { value: 'PERMISSION', label: 'Berechtigung' },
-  { value: 'AREA', label: 'Bereich' },
-  { value: 'SETTINGS', label: 'Einstellungen' },
+  { value: 'ASSET', label: t('terms.asset') },
+  { value: 'LOCATION', label: t('terms.location') },
+  { value: 'ASSET_TYPE', label: t('terms.assetType') },
+  { value: 'TAG', label: t('terms.tag') },
+  { value: 'INSPECTION', label: t('terms.inspection') },
+  { value: 'INSPECTION_TYPE', label: t('terms.inspectionTemplate') },
+  { value: 'LABEL_TEMPLATE', label: t('audit.objectTypes.LABEL_TEMPLATE') },
+  { value: 'USER', label: t('terms.user') },
+  { value: 'GROUP', label: t('terms.group') },
+  { value: 'PERMISSION', label: t('audit.objectTypes.PERMISSION') },
+  { value: 'AREA', label: t('terms.area') },
+  { value: 'SETTINGS', label: t('audit.objectTypes.SETTINGS') },
 ];
 
 export function auditActionLabel(action: AuditAction): string {

@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { renderBarcode } from '../barcode';
 import { LabelContext, LabelElement, resolveContent } from '../label.model';
 import { CustomizationService } from '../../service/customization.service';
@@ -22,6 +23,7 @@ interface DragState {
  */
 @Component({
   selector: 'app-label-renderer',
+  imports: [TranslatePipe],
   templateUrl: './label-renderer.html',
   styleUrl: './label-renderer.scss',
 })

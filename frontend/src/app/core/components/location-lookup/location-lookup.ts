@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { LucideLocateFixed, LucideMapPinned } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { GeocodingResult, GeocodingService } from '../../service/geocoding.service';
 import { LocationMap } from '../location-map/location-map';
 
@@ -20,7 +22,7 @@ export interface LocationPosition {
  */
 @Component({
   selector: 'app-location-lookup',
-  imports: [LocationMap, LucideLocateFixed, LucideMapPinned],
+  imports: [LocationMap, TranslatePipe, LucideLocateFixed, LucideMapPinned],
   templateUrl: './location-lookup.html',
   styleUrl: './location-lookup.scss',
 })
@@ -60,12 +62,12 @@ export class LocationLookup {
       next: (results) => {
         this.busy = null;
         if (!results.length) {
-          this.error = 'Zu dieser Adresse wurden keine Koordinaten gefunden.';
+          this.error = t('components.locationLookup.noCoordinates');
         } else if (results.length === 1) {
           this.choose(results[0]);
         } else {
           this.matches = results;
-          this.message = 'Mehrere Treffer – bitte den passenden Ort wählen:';
+          this.message = t('components.locationLookup.multipleMatches');
         }
       },
       error: (error) => this.fail(error),
@@ -79,16 +81,16 @@ export class LocationLookup {
       next: (result) => {
         this.busy = null;
         this.addressFound.emit(result);
-        this.message = `Adresse übernommen: ${result.label}`;
+        this.message = t('components.locationLookup.addressApplied', { label: result.label });
       },
-      error: (error) => this.fail(error, 'Zu diesen Koordinaten wurde keine Adresse gefunden.'),
+      error: (error) => this.fail(error, t('components.locationLookup.noAddress')),
     });
   }
 
   protected choose(match: GeocodingResult): void {
     this.matches = [];
     this.coordinatesFound.emit(match);
-    this.message = `Koordinaten übernommen: ${match.label}`;
+    this.message = t('components.locationLookup.coordinatesApplied', { label: match.label });
   }
 
   private start(kind: 'search' | 'reverse'): void {
@@ -98,10 +100,10 @@ export class LocationLookup {
     this.matches = [];
   }
 
-  private fail(error: { status?: number }, notFound = 'Nichts gefunden.'): void {
+  private fail(error: { status?: number }, notFound = t('components.locationLookup.nothingFound')): void {
     this.busy = null;
     this.error = error?.status === 404 ? notFound
-      : error?.status === 403 ? 'Keine Berechtigung für die Adresssuche.'
-      : 'Der Kartendienst ist gerade nicht erreichbar. Bitte später erneut versuchen.';
+      : error?.status === 403 ? t('components.locationLookup.forbidden')
+      : t('components.locationLookup.unavailable');
   }
 }

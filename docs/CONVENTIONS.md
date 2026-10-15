@@ -26,13 +26,31 @@ Every list page loads its entries from a `GET /api/<resource>/page` endpoint, 50
 - The plain list endpoints (`GET /api/assets` etc.) stay for pickers and lookups that need everything (location tree, parent asset, filter options); they apply the same permission filter.
 - Browser tests mock `/page` endpoints with `e2e/support/paging.ts`.
 
-## Language and Encoding
+## Language and Texts
 
-Write project documentation and technical identifiers in English. German user-facing text must use correct German characters: **ä, ö, ü, Ä, Ö, Ü, and ß**. Save text as UTF-8. For example, use “Prüfungen”, “löschen”, “größer”, and “Straße”, not “Pruefungen”, “loeschen”, “groesser”, or “Strasse”. Do not use ASCII-only spelling merely to simplify file editing.
+Write project documentation and technical identifiers in English. The user interface is German for now, but every user-visible text goes through i18n so further languages only need another JSON file.
+
+### i18n
+
+- Texts live in [frontend/public/i18n/de.json](../frontend/public/i18n/de.json), loaded at runtime by `main.ts` before the app modules are imported (`loadTranslations`, `core/i18n/i18n.ts`). Another language is another `<lang>.json` with the same keys; no rebuild is needed to change a text.
+- Never write user-visible text directly into templates or TypeScript. Templates use the pure pipes `{{ 'common.save' | t }}`, `{{ 'inventory.deleted' | t: { name: item.name } }}` and `{{ 'assets.selected' | tn: count }}`; TypeScript uses `t()` / `tn()` from `core/i18n/i18n`. Because the texts are loaded first, `t()` also works in constants such as navigation and form configurations.
+- Keys are dotted camelCase paths grouped by feature (`inspections.page.scanPlaceholder`). Reuse `common.*` (actions, generic errors), `terms.*` (domain nouns such as Asset, Standort, Prüfung) and enum texts such as `inspectionStatus.<STATUS>` instead of duplicating them. Placeholders are `{name}`; plurals use `<key>.one` / `<key>.other` with `{count}`. Do not build sentences by concatenating translated fragments; put the whole sentence with placeholders into one text.
+- Keys built at runtime (`'inspectionStatus.' + status`) must exist for every possible value. `npm run i18n:check` reports every literal key used in the sources that is missing in `de.json`; run it with the build.
+- Data entered by users (names, custom field labels, tag names) and values from the database are never translated.
+- Backend messages that reach the user (for example `ResponseStatusException` reasons shown after a failed save) are German only for now. Prefer showing a frontend text chosen by status code or outcome (as the inspection scan does with its `outcome`) and use the server message only as detail.
+
+### Tone and Wording
+
+- Formal, factual German in the impersonal style; where the user must be addressed, use "Sie" (never "du"). Prefer neutral instructions such as "Bitte einen Standort auswählen." over direct address.
+- Use precise terms instead of colloquial ones: "Vorhanden" / "Nicht vorhanden" instead of "Da" / "Fehlt", "Defekt" instead of "kaputt", "Funktionsfähig" instead of "geht". Keep one term per concept (see `terms.*`, `inspectionStatus.*`, `inspectionCondition.*`).
+- Example values in placeholders, hints and sample data are general and preferably from the fire-service domain, e.g. "z. B. Atemschutzgerät", "z. B. HLF 20", "z. B. Gerätehaus › Fahrzeughalle", "z. B. FW-2026-0042", "z. B. Atemschutz, Wasserführung". Do not use company-specific or IT-only examples (EDV, Laptop, firma.local) unless the field is technical (LDAP DNs, URLs), where neutral domains such as `example.org` are used.
+- Typography: "z. B." with a space, the ellipsis "…" for pending states and placeholders, German quotation marks „…“.
+
+### Encoding
+
+German user-facing text must use correct German characters: **ä, ö, ü, Ä, Ö, Ü, and ß**. Save text as UTF-8. For example, use “Prüfungen”, “löschen”, “größer”, and “Straße”, not “Pruefungen”, “loeschen”, “groesser”, or “Strasse”. This also applies to backend messages, log texts shown in the UI, and test expectations. Do not use ASCII-only spelling merely to simplify file editing.
 
 Generated machine identifiers are different: the backend deliberately normalizes custom-field keys into a restricted form. Preserve this normalization while displaying the original human-readable name. Do not rename existing API properties, database identifiers, or enum values to localize UI text.
-
-Older code contains inconsistent transliterations. Correct touched user-visible text when relevant, but do not mix a broad language rewrite into unrelated changes.
 
 ## Frontend State and Components
 

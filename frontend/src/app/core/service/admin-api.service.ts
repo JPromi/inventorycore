@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { Page, pageParams } from '../util/paged-list';
 import { PermissionResourceType } from '../entities/user.entity';
 import { AreaItem } from './area.service';
+import { t } from '../i18n/i18n';
 
 export interface AdminUser {
   uuid: string;
@@ -158,31 +159,31 @@ export interface AdminAreaRequest {
 }
 
 export function resourceTypeLabel(type: PermissionResourceType | null): string {
-  return type ? RESOURCE_TYPE_LABELS[type] : 'Alle Objektarten';
+  return type ? RESOURCE_TYPE_LABELS[type] : t('services.permissions.allResourceTypes');
 }
 
 export const RESOURCE_TYPE_LABELS: Record<PermissionResourceType, string> = {
-  ASSET: 'Inventar',
-  LOCATION: 'Standorte',
-  ASSET_TYPE: 'Typen & Tags',
+  ASSET: t('services.permissions.resourceTypes.ASSET'),
+  LOCATION: t('services.permissions.resourceTypes.LOCATION'),
+  ASSET_TYPE: t('services.permissions.resourceTypes.ASSET_TYPE'),
 };
 
 export type PermissionFlag = 'canView' | 'canCreate' | 'canEdit' | 'canDelete' | 'canInspect' | 'admin';
 
 export const PERMISSION_FLAGS: { key: PermissionFlag; label: string }[] = [
-  { key: 'canView', label: 'Ansehen' },
-  { key: 'canCreate', label: 'Erstellen' },
-  { key: 'canEdit', label: 'Bearbeiten' },
-  { key: 'canDelete', label: 'Löschen' },
-  { key: 'canInspect', label: 'Prüfen' },
-  { key: 'admin', label: 'Admin' },
+  { key: 'canView', label: t('services.permissions.flags.canView') },
+  { key: 'canCreate', label: t('services.permissions.flags.canCreate') },
+  { key: 'canEdit', label: t('services.permissions.flags.canEdit') },
+  { key: 'canDelete', label: t('services.permissions.flags.canDelete') },
+  { key: 'canInspect', label: t('services.permissions.flags.canInspect') },
+  { key: 'admin', label: t('services.permissions.flags.admin') },
 ];
 
 export const PERMISSION_PRESETS: { key: string; label: string; flags: PermissionFlag[] }[] = [
-  { key: 'read', label: 'Nur ansehen', flags: ['canView'] },
-  { key: 'write', label: 'Ansehen & bearbeiten', flags: ['canView', 'canCreate', 'canEdit'] },
-  { key: 'full', label: 'Vollzugriff', flags: ['canView', 'canCreate', 'canEdit', 'canDelete', 'canInspect'] },
-  { key: 'admin', label: 'Admin', flags: ['canView', 'canCreate', 'canEdit', 'canDelete', 'canInspect', 'admin'] },
+  { key: 'read', label: t('services.permissions.presets.read'), flags: ['canView'] },
+  { key: 'write', label: t('services.permissions.presets.write'), flags: ['canView', 'canCreate', 'canEdit'] },
+  { key: 'full', label: t('services.permissions.presets.full'), flags: ['canView', 'canCreate', 'canEdit', 'canDelete', 'canInspect'] },
+  { key: 'admin', label: t('services.permissions.presets.admin'), flags: ['canView', 'canCreate', 'canEdit', 'canDelete', 'canInspect', 'admin'] },
 ];
 
 export function applyPreset(permission: AdminPermissionRequest, presetKey: string): void {

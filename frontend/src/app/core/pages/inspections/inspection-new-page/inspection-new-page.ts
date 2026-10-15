@@ -12,11 +12,13 @@ import { PermissionService } from '../../../service/permission.service';
 import { InspectionFilter, InspectionService, InspectionType, intervalText } from '../../../service/inspection.service';
 import { InventoryApiService, InventoryItem, TagItem } from '../../../service/inventory-api.service';
 import { locationPath } from '../../../util/location-utils';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 
 /** Start an inspection: choose the type and filter which assets are expected. */
 @Component({
   selector: 'app-inspection-new-page',
-  imports: [FormsModule, RouterLink, MultiSelect, SearchSelect, LucideArrowLeft, LucideClipboardCheck, LucidePlay],
+  imports: [FormsModule, RouterLink, MultiSelect, SearchSelect, TranslatePipe, TranslateCountPipe, LucideArrowLeft, LucideClipboardCheck, LucidePlay],
   templateUrl: './inspection-new-page.html',
   styleUrl: './inspection-new-page.scss',
 })
@@ -113,7 +115,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
         });
       },
       error: () => {
-        this.error = 'Daten konnten nicht geladen werden.';
+        this.error = t('common.errors.load');
         this.loading = false;
       },
     });
@@ -251,11 +253,11 @@ export class InspectionNewPage implements OnInit, OnDestroy {
 
   protected start(): void {
     if (!this.protocolAreaUuid) {
-      this.error = 'Bitte einen Bereich für das Prüfprotokoll wählen.';
+      this.error = t('inspectionNew.errors.protocolAreaRequired');
       return;
     }
     if (!this.typeUuid || this.starting) {
-      this.error = this.typeUuid ? '' : 'Bitte eine Prüfungsvorlage wählen.';
+      this.error = this.typeUuid ? '' : t('inspectionNew.errors.templateRequired');
       return;
     }
     this.starting = true;
@@ -266,16 +268,16 @@ export class InspectionNewPage implements OnInit, OnDestroy {
       next: (inspection) => this.router.navigate(['/inspections', inspection.summary.uuid]),
       error: () => {
         this.starting = false;
-        this.error = 'Prüfung konnte nicht gestartet werden.';
+        this.error = t('inspectionNew.errors.start');
       },
     });
   }
 
-  /** "Fahrzeugprüfung – Garage – 14.10.2026" */
+  /** "Fahrzeugkontrolle – Fahrzeughalle – 14.10.2026" */
   private defaultTitle(): string {
     const locations = this.locations.filter(entry => entry.uuid === this.filter.locationUuid || this.filter.locationUuids?.includes(entry.uuid));
-    const due = this.onlyDue && this.selectedType?.intervalValue ? 'fällige' : null;
-    return [this.selectedType?.name ?? 'Prüfung', due, locations.map(location => location.name).join(', '), new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
+    const due = this.onlyDue && this.selectedType?.intervalValue ? t('inspectionNew.defaultTitle.due') : null;
+    return [this.selectedType?.name ?? t('terms.inspection'), due, locations.map(location => location.name).join(', '), new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
   }
 }
 

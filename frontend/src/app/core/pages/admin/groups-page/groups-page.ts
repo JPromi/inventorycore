@@ -10,10 +10,12 @@ import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { AdminApiService, AdminGroup, AdminGroupRow, AdminUser } from '../../../service/admin-api.service';
 import { AreaItem } from '../../../service/area.service';
 import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 
 @Component({
   selector: 'app-groups-page',
-  imports: [InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideUsers, LucideX],
+  imports: [TranslatePipe, TranslateCountPipe, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideUsers, LucideX],
   templateUrl: './groups-page.html',
   styleUrl: './groups-page.scss',
 })
@@ -66,10 +68,10 @@ export class GroupsPage implements OnInit, OnDestroy {
     return group.members;
   }
 
-  /** Areas the group has any permission in, e.g. "EDV", "Facility" or "Alle Bereiche". */
+  /** Areas the group has any permission in, e.g. "Atemschutzwerkstatt", "Gerätewarte" or "Alle Bereiche". */
   protected permissionAreas(group: AdminGroup): { name: string; color?: string | null }[] {
     if (group.permissions.some((permission) => !permission.areaUuid)) {
-      return [{ name: 'Alle Bereiche' }];
+      return [{ name: t('adminGroups.allAreas') }];
     }
     const uuids = new Set(group.permissions.map((permission) => permission.areaUuid));
     return this.areas.filter((area) => uuids.has(area.uuid)).map((area) => ({ name: area.name, color: area.color }));
@@ -91,7 +93,7 @@ export class GroupsPage implements OnInit, OnDestroy {
     this.api.deleteGroup(group.uuid).subscribe({
       next: () => this.removed([group.uuid]),
       error: () => {
-        this.error = 'Gruppe konnte nicht gelöscht werden.';
+        this.error = t('adminGroups.errors.delete');
       },
     });
   }

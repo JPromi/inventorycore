@@ -108,7 +108,7 @@ public class AuthController {
                 .username(null)
                 .displayName(null)
                 .role(null)
-                .message("Invalid credentials")
+                .message("Benutzername oder Passwort ist falsch.")
                 .build());
         }
     }

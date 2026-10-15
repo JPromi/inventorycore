@@ -3,10 +3,10 @@
         <div>
             <p class="eyebrow">
                 @if (list.loaded) {
-                    {{ list.total }} {{ hasActiveFilters ? 'Treffer' : list.total === 1 ? 'Eintrag' : 'Einträge' }}
+                    {{ (hasActiveFilters ? 'inventoryList.hits' : 'inventoryList.entries') | tn: list.total }}
                 }
                 @if (selectedAreaNames.length) {
-                    · Bereich: {{ selectedAreaNames.join(', ') }}
+                    · {{ 'inventoryList.areaFilter' | t: { names: selectedAreaNames.join(', ') } }}
                 }
             </p>
             <h1>
@@ -16,21 +16,21 @@
         </div>
 
         <div class="header-actions">
-            <div class="view-switch" role="group" aria-label="Ansicht">
-                <button type="button" title="Listenansicht" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
+            <div class="view-switch" role="group" [attr.aria-label]="'inventoryList.view' | t">
+                <button type="button" [title]="'inventoryList.listView' | t" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">
                     <svg lucideList size="17"></svg>
                 </button>
-                <button type="button" title="Kachelansicht" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'">
+                <button type="button" [title]="'inventoryList.gridView' | t" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'">
                     <svg lucideGrid2X2 size="17"></svg>
                 </button>
             </div>
-            <button type="button" class="icon-button" title="Aktualisieren" (click)="load()">
+            <button type="button" class="icon-button" [title]="'inventoryList.refresh' | t" (click)="load()">
                 <svg lucideRefreshCw size="17"></svg>
             </button>
             @if (config.createRoute && permissions.can(config.resourceType, 'create')) {
                 <button type="button" class="primary-action" (click)="startCreate()">
                     <svg lucidePlus size="18"></svg>
-                    <span>Neu</span>
+                    <span>{{ 'inventoryList.new' | t }}</span>
                 </button>
             }
         </div>
@@ -52,11 +52,11 @@
                     [(ngModel)]="search"
                     (ngModelChange)="onSearchChange()"
                     (keydown.escape)="clearSearch()"
-                    [placeholder]="filter.searchPlaceholder ?? 'Suchen...'"
-                    aria-label="Suchen"
+                    [placeholder]="filter.searchPlaceholder ?? ('common.searchPlaceholder' | t)"
+                    [attr.aria-label]="'common.search' | t"
                 />
                 @if (search) {
-                    <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                    <button type="button" class="clear" [title]="'inventoryList.clearSearch' | t" (click)="clearSearch()">
                         <svg lucideX size="15"></svg>
                     </button>
                 } @else {
@@ -69,9 +69,9 @@
                     [options]="areaOptions"
                     [(ngModel)]="areaFilter"
                     (ngModelChange)="onFilterChange()"
-                    placeholder="Alle Bereiche"
-                    clearLabel="Alle Bereiche"
-                    searchPlaceholder="Bereich suchen..."
+                    [placeholder]="'inventoryList.allAreas' | t"
+                    [clearLabel]="'inventoryList.allAreas' | t"
+                    [searchPlaceholder]="'inventoryList.searchArea' | t"
                 />
             }
             @if (filter.tags) {
@@ -80,9 +80,9 @@
                     [options]="tagOptions"
                     [(ngModel)]="tagFilter"
                     (ngModelChange)="onFilterChange()"
-                    placeholder="Alle Tags"
-                    clearLabel="Alle Tags"
-                    searchPlaceholder="Tag suchen..."
+                    [placeholder]="'inventoryList.allTags' | t"
+                    [clearLabel]="'inventoryList.allTags' | t"
+                    [searchPlaceholder]="'inventoryList.searchTag' | t"
                 />
             }
             @if (filter.locations) {
@@ -91,9 +91,9 @@
                     [options]="locationOptions"
                     [(ngModel)]="locationFilter"
                     (ngModelChange)="onFilterChange()"
-                    placeholder="Alle Standorte"
-                    clearLabel="Alle Standorte"
-                    searchPlaceholder="Standort suchen..."
+                    [placeholder]="'inventoryList.allLocations' | t"
+                    [clearLabel]="'inventoryList.allLocations' | t"
+                    [searchPlaceholder]="'inventoryList.searchLocation' | t"
                 />
             }
             @if (filter.assetTypes) {
@@ -102,9 +102,9 @@
                     [options]="assetTypeOptions"
                     [(ngModel)]="assetTypeFilter"
                     (ngModelChange)="onFilterChange()"
-                    placeholder="Alle Typen"
-                    clearLabel="Alle Typen"
-                    searchPlaceholder="Typ suchen..."
+                    [placeholder]="'inventoryList.allAssetTypes' | t"
+                    [clearLabel]="'inventoryList.allAssetTypes' | t"
+                    [searchPlaceholder]="'inventoryList.searchAssetType' | t"
                 />
             }
         </app-filter-bar>
@@ -118,20 +118,20 @@
     }
 
     @if (list.error && !list.items.length) {
-        <p class="error">Daten konnten nicht geladen werden.</p>
+        <p class="error">{{ 'common.errors.load' | t }}</p>
     } @else if (!list.loaded) {
-        <p class="empty">Lade Daten...</p>
+        <p class="empty">{{ 'common.loading' | t }}</p>
     } @else if (!list.items.length) {
         <div class="empty-state">
             @if (hasActiveFilters) {
-                <p>Keine Einträge passen zum Filter.</p>
-                <button type="button" class="secondary-action" (click)="resetFilters()">Filter zurücksetzen</button>
+                <p>{{ 'inventoryList.noFilterMatches' | t }}</p>
+                <button type="button" class="secondary-action" (click)="resetFilters()">{{ 'inventoryList.resetFilters' | t }}</button>
             } @else {
-                <p>Noch keine Einträge vorhanden.</p>
+                <p>{{ 'inventoryList.empty' | t }}</p>
                 @if (config.createRoute && permissions.can(config.resourceType, 'create')) {
                     <button type="button" class="primary-action" (click)="startCreate()">
                         <svg lucidePlus size="18"></svg>
-                        <span>Ersten Eintrag erstellen</span>
+                        <span>{{ 'inventoryList.createFirst' | t }}</span>
                     </button>
                 }
             }
@@ -157,7 +157,7 @@
                             {{ item.name }}
                             @if (dueByAsset.get(item.uuid); as due) {
                                 <span class="due-badge" [class.overdue]="due.state === 'OVERDUE'" [title]="dueTitle(due)">
-                                    {{ due.state === 'OVERDUE' ? 'Prüfung überfällig' : 'Prüfung fällig' }}
+                                    {{ (due.state === 'OVERDUE' ? 'inventoryList.inspectionOverdue' : 'inventoryList.inspectionDue') | t }}
                                 </span>
                             }
                         </strong>
@@ -190,12 +190,12 @@
                     </div>
                     <div class="item-actions">
                         @if (config.editRoutePrefix && permissions.can(config.resourceType, 'edit', item.areaUuids ?? [])) {
-                            <button type="button" class="icon-button" title="Bearbeiten" (click)="startEdit(item, $event)">
+                            <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="startEdit(item, $event)">
                                 <svg lucidePencil size="16"></svg>
                             </button>
                         }
                         @if (permissions.can(config.resourceType, 'delete', item.areaUuids ?? [])) {
-                            <button type="button" class="icon-button danger" title="Löschen" (click)="remove(item, $event)">
+                            <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(item, $event)">
                                 <svg lucideTrash2 size="16"></svg>
                             </button>
                         }
@@ -210,11 +210,11 @@
         <!-- loads the next page when scrolled near the end -->
         <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
             @if (list.loading) {
-                <span>Lade weitere Einträge...</span>
+                <span>{{ 'common.loadingMore' | t }}</span>
             } @else if (list.error) {
-                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'inventoryList.retry' | t }}</button>
             } @else if (!list.hasMore && list.total > list.items.length) {
-                <span>{{ list.items.length }} von {{ list.total }}</span>
+                <span>{{ 'inventoryList.loadedOf' | t: { count: list.items.length, total: list.total } }}</span>
             }
         </div>
     }

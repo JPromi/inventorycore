@@ -1,3 +1,4 @@
+import { currentLanguage, t } from '../i18n/i18n';
 import { InventoryItem } from '../service/inventory-api.service';
 import { locationPath } from '../util/location-utils';
 
@@ -49,7 +50,7 @@ export interface LabelTemplateRequest {
   elementsJson: string;
 }
 
-/** Values the placeholders are replaced with, e.g. `{ name: 'Laptop' }`. */
+/** Values the placeholders are replaced with, e.g. `{ name: 'Atemschutzgerät PA 1' }`. */
 export type LabelContext = Record<string, string>;
 
 export interface Symbology {
@@ -61,16 +62,16 @@ export interface Symbology {
 }
 
 export const SYMBOLOGIES: Symbology[] = [
-  { id: 'qrcode', label: 'QR-Code', twoDimensional: true },
-  { id: 'datamatrix', label: 'Data Matrix', twoDimensional: true },
-  { id: 'azteccode', label: 'Aztec', twoDimensional: true },
-  { id: 'pdf417', label: 'PDF417', twoDimensional: false },
-  { id: 'code128', label: 'Code 128', twoDimensional: false },
-  { id: 'code39', label: 'Code 39', twoDimensional: false, hint: 'Nur A–Z, 0–9 und - . $ / + % Leerzeichen' },
-  { id: 'ean13', label: 'EAN-13', twoDimensional: false, hint: '12 oder 13 Ziffern' },
-  { id: 'ean8', label: 'EAN-8', twoDimensional: false, hint: '7 oder 8 Ziffern' },
-  { id: 'upca', label: 'UPC-A', twoDimensional: false, hint: '11 oder 12 Ziffern' },
-  { id: 'interleaved2of5', label: 'Interleaved 2 of 5', twoDimensional: false, hint: 'Gerade Anzahl Ziffern' },
+  { id: 'qrcode', label: t('labels.symbologies.qrcode'), twoDimensional: true },
+  { id: 'datamatrix', label: t('labels.symbologies.datamatrix'), twoDimensional: true },
+  { id: 'azteccode', label: t('labels.symbologies.azteccode'), twoDimensional: true },
+  { id: 'pdf417', label: t('labels.symbologies.pdf417'), twoDimensional: false },
+  { id: 'code128', label: t('labels.symbologies.code128'), twoDimensional: false },
+  { id: 'code39', label: t('labels.symbologies.code39'), twoDimensional: false, hint: t('labels.symbologyHints.code39') },
+  { id: 'ean13', label: t('labels.symbologies.ean13'), twoDimensional: false, hint: t('labels.symbologyHints.ean13') },
+  { id: 'ean8', label: t('labels.symbologies.ean8'), twoDimensional: false, hint: t('labels.symbologyHints.ean8') },
+  { id: 'upca', label: t('labels.symbologies.upca'), twoDimensional: false, hint: t('labels.symbologyHints.upca') },
+  { id: 'interleaved2of5', label: t('labels.symbologies.interleaved2of5'), twoDimensional: false, hint: t('labels.symbologyHints.interleaved2of5') },
 ];
 
 export interface Placeholder {
@@ -78,27 +79,28 @@ export interface Placeholder {
   label: string;
 }
 
+/** `key` is the placeholder token (`{key}`) and is never translated, only its display name. */
 export const PLACEHOLDERS: Placeholder[] = [
-  { key: 'brandName', label: 'Markenname' },
-  { key: 'brandColor', label: 'Markenfarbe' },
-  { key: 'website', label: 'Website' },
-  { key: 'imprint', label: 'Impressum' },
-  { key: 'privacy', label: 'Datenschutz' },
-  { key: 'support', label: 'Support' },
-  { key: 'loginTitle', label: 'Login-Titel' },
-  { key: 'loginMessage', label: 'Login-Text' },
-  { key: 'name', label: 'Name' },
-  { key: 'invId', label: 'Inventar-ID' },
-  { key: 'serialNumber', label: 'Seriennummer' },
-  { key: 'inventoryNumber', label: 'Inventarnummer' },
-  { key: 'type', label: 'Typ' },
-  { key: 'location', label: 'Standort' },
-  { key: 'locationPath', label: 'Standort-Pfad' },
-  { key: 'areas', label: 'Bereiche' },
-  { key: 'description', label: 'Beschreibung' },
-  { key: 'url', label: 'Link zum Asset' },
-  { key: 'uuid', label: 'UUID' },
-  { key: 'date', label: 'Druckdatum' },
+  { key: 'brandName', label: t('labels.placeholders.brandName') },
+  { key: 'brandColor', label: t('labels.placeholders.brandColor') },
+  { key: 'website', label: t('labels.placeholders.website') },
+  { key: 'imprint', label: t('labels.placeholders.imprint') },
+  { key: 'privacy', label: t('labels.placeholders.privacy') },
+  { key: 'support', label: t('labels.placeholders.support') },
+  { key: 'loginTitle', label: t('labels.placeholders.loginTitle') },
+  { key: 'loginMessage', label: t('labels.placeholders.loginMessage') },
+  { key: 'name', label: t('common.name') },
+  { key: 'invId', label: t('terms.invId') },
+  { key: 'serialNumber', label: t('terms.serialNumber') },
+  { key: 'inventoryNumber', label: t('terms.inventoryNumber') },
+  { key: 'type', label: t('terms.assetType') },
+  { key: 'location', label: t('terms.location') },
+  { key: 'locationPath', label: t('labels.placeholders.locationPath') },
+  { key: 'areas', label: t('terms.areas') },
+  { key: 'description', label: t('common.description') },
+  { key: 'url', label: t('labels.placeholders.url') },
+  { key: 'uuid', label: t('labels.placeholders.uuid') },
+  { key: 'date', label: t('labels.placeholders.date') },
 ];
 
 export const LABEL_SIZE_PRESETS: { label: string; width: number; height: number }[] = [
@@ -109,22 +111,23 @@ export const LABEL_SIZE_PRESETS: { label: string; width: number; height: number 
   { label: '57 × 32 mm (Dymo 11354)', width: 57, height: 32 },
   { label: '89 × 36 mm (Dymo 99012)', width: 89, height: 36 },
   { label: '100 × 50 mm', width: 100, height: 50 },
-  { label: '24 mm Band, 60 mm lang', width: 60, height: 24 },
+  { label: t('labels.sizePresets.tape24'), width: 60, height: 24 },
 ];
 
+/** Preview data for label designs; the keys are placeholder tokens, only the values are texts. */
 export const SAMPLE_CONTEXT: LabelContext = {
-  name: 'Laptop Dell Latitude 5440',
-  invId: 'INV-2026-1A2B3C4D',
+  name: t('labels.sample.name'),
+  invId: 'FW-2026-0042',
   serialNumber: 'SN-7HX92K3',
   inventoryNumber: '100245',
-  type: 'Notebook',
-  location: 'Büro 2.14',
-  locationPath: 'Hauptgebäude / 2. OG / Büro 2.14',
-  areas: 'EDV',
-  description: 'Arbeitsplatzrechner Buchhaltung',
+  type: t('labels.sample.type'),
+  location: t('labels.sample.location'),
+  locationPath: t('labels.sample.locationPath'),
+  areas: t('labels.sample.areas'),
+  description: t('labels.sample.description'),
   url: `${globalThis.location?.origin ?? ''}/assets/00000000-0000-0000-0000-000000000000`,
   uuid: '00000000-0000-0000-0000-000000000000',
-  date: new Date().toLocaleDateString('de-DE'),
+  date: new Date().toLocaleDateString(currentLanguage()),
 };
 
 export function parseElements(json: string | null | undefined): LabelElement[] {
@@ -164,7 +167,7 @@ export function assetLabelContext(
     areas: (asset.areaUuids ?? []).map((uuid) => data.areaName?.(uuid) ?? '').filter(Boolean).join(', '),
     url: `${globalThis.location?.origin ?? ''}/assets/${asset.uuid}`,
     uuid: asset.uuid,
-    date: new Date().toLocaleDateString('de-DE'),
+    date: new Date().toLocaleDateString(currentLanguage()),
   };
   for (const field of asset.fieldValues ?? []) {
     context[`field:${field.fieldKey ?? field.name}`] = field.value ?? '';

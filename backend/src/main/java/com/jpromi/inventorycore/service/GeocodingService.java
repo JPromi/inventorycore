@@ -66,7 +66,7 @@ public class GeocodingService {
             return;
         }
         if (latitude == null || longitude == null || !isValid(latitude, longitude)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid coordinates");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ungültige Koordinaten.");
         }
     }
 
@@ -79,7 +79,7 @@ public class GeocodingService {
     public List<GeocodingResult> search(String query) {
         String text = query == null ? "" : query.trim();
         if (text.isEmpty() || text.length() > MAX_QUERY_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid address");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine Adresse angeben.");
         }
         return cached("search:" + text.toLowerCase(), () -> {
             Place[] places = call(uri -> uri.path("/search").queryParam("q", text).queryParam("limit", 5), Place[].class);
@@ -128,7 +128,7 @@ public class GeocodingService {
                 .body(type);
         } catch (RestClientException e) {
             log.warn("Geocoding request failed: {}", e.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Geocoding service unavailable");
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Die Adresssuche ist derzeit nicht erreichbar.");
         }
     }
 

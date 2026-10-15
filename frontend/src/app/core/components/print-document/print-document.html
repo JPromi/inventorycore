@@ -4,7 +4,7 @@
         <header class="doc-header">
             <div class="brand">
                 @if (customization.settings.logoUrl) {
-                    <img class="logo" [src]="customization.settings.logoUrl" alt="Logo" />
+                    <img class="logo" [src]="customization.settings.logoUrl" [alt]="'components.printDocument.logoAlt' | t" />
                 }
                 <span class="brand-name">{{ customization.brandName }}</span>
             </div>
@@ -36,7 +36,7 @@
                     <div class="signature">
                         <span class="line"></span>
                         <span class="caption">{{ caption }}</span>
-                        <span class="hint-text">Datum, Unterschrift</span>
+                        <span class="hint-text">{{ 'components.printDocument.signatureHint' | t }}</span>
                     </div>
                 }
             </section>
@@ -51,25 +51,25 @@
             <header class="dialog-header">
                 <h2 id="print-settings-title">
                     <svg lucidePrinter size="18"></svg>
-                    <span>{{ kind || 'Dokument' }} drucken</span>
+                    <span>{{ 'components.printDocument.dialogTitle' | t: { kind: kind || ('components.printDocument.defaultKind' | t) } }}</span>
                 </h2>
-                <button type="button" class="icon-button" title="Schließen" aria-label="Schließen" (click)="close()">
+                <button type="button" class="icon-button" [title]="'common.close' | t" [attr.aria-label]="'common.close' | t" (click)="close()">
                     <svg lucideX size="16"></svg>
                 </button>
             </header>
 
             <div class="field-grid">
                 <div class="field">
-                    <span>Papierformat</span>
-                    <app-search-select name="size" [options]="sizes" [(ngModel)]="settings.size" searchPlaceholder="Format suchen..." />
+                    <span>{{ 'components.printDocument.paperSize' | t }}</span>
+                    <app-search-select name="size" [options]="sizes" [(ngModel)]="settings.size" [searchPlaceholder]="'components.printDocument.paperSizeSearch' | t" />
                 </div>
                 <div class="field">
-                    <span>Ausrichtung</span>
-                    <app-search-select name="orientation" [options]="orientations" [(ngModel)]="settings.orientation" searchPlaceholder="Ausrichtung suchen..." />
+                    <span>{{ 'components.printDocument.orientation' | t }}</span>
+                    <app-search-select name="orientation" [options]="orientations" [(ngModel)]="settings.orientation" [searchPlaceholder]="'components.printDocument.orientationSearch' | t" />
                 </div>
                 <div class="field">
-                    <span>Seitenränder</span>
-                    <app-search-select name="margin" [options]="margins" [(ngModel)]="settings.margin" searchPlaceholder="Ränder suchen..." />
+                    <span>{{ 'components.printDocument.margins' | t }}</span>
+                    <app-search-select name="margin" [options]="margins" [(ngModel)]="settings.margin" [searchPlaceholder]="'components.printDocument.marginsSearch' | t" />
                 </div>
             </div>
 
@@ -78,16 +78,16 @@
                 @if (signatures.length) {
                     <label class="toggle">
                         <input type="checkbox" name="signatures" [(ngModel)]="settings.signatures" />
-                        <span>Unterschriftsfelder</span>
+                        <span>{{ 'components.printDocument.signatures' | t }}</span>
                     </label>
                 }
             </div>
 
             <div class="dialog-actions">
-                <button type="button" class="secondary-action" (click)="close()">Abbrechen</button>
+                <button type="button" class="secondary-action" (click)="close()">{{ 'common.cancel' | t }}</button>
                 <button type="button" class="primary-action" [disabled]="preparing" (click)="print()">
                     <svg lucidePrinter size="16"></svg>
-                    <span>{{ preparing ? 'Bereitet vor...' : 'Drucken' }}</span>
+                    <span>{{ (preparing ? 'components.printDocument.preparing' : 'common.print') | t }}</span>
                 </button>
             </div>
         </div>

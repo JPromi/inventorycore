@@ -2,6 +2,8 @@ import { Component, ElementRef, HostListener, Input, forwardRef } from '@angular
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LucideBan, LucideCheck, LucideChevronDown } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { Hsv, hexToHsv, hsvToHex, normalizeHex, readableTextColor } from './color-utils';
 import { DropdownPosition } from '../dropdown-position.directive';
 
@@ -20,7 +22,7 @@ type DragTarget = 'area' | 'hue';
  */
 @Component({
   selector: 'app-color-picker',
-  imports: [DropdownPosition, LucideBan, LucideCheck, LucideChevronDown],
+  imports: [DropdownPosition, TranslatePipe, LucideBan, LucideCheck, LucideChevronDown],
   templateUrl: './color-picker.html',
   styleUrl: './color-picker.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => ColorPicker), multi: true }],
@@ -29,7 +31,7 @@ export class ColorPicker implements ControlValueAccessor {
   @Input() allowEmpty = true;
   /** Only the swatch, without the hex text (for tight rows). */
   @Input() compact = false;
-  @Input() label = 'Farbe';
+  @Input() label = t('components.colorPicker.label');
 
   protected readonly presets = PRESET_COLORS;
   protected value: string | null = null;

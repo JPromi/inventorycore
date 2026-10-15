@@ -5,6 +5,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Page, pageParams } from '../util/paged-list';
 import { AssetFieldType } from './inventory-api.service';
+import { t, tn } from '../i18n/i18n';
 
 export type InspectionStatus = 'OPEN' | 'COMPLETED';
 /** Inventory: PRESENT/MISSING; single checks: PASSED (in order) / FAILED (defect). */
@@ -29,10 +30,10 @@ export type IntervalUnit = 'DAYS' | 'WEEKS' | 'MONTHS' | 'YEARS';
 export type DueState = 'OVERDUE' | 'DUE' | 'OK';
 
 export const INTERVAL_UNITS: { value: IntervalUnit; label: string; singular: string }[] = [
-  { value: 'DAYS', label: 'Tage', singular: 'Tag' },
-  { value: 'WEEKS', label: 'Wochen', singular: 'Woche' },
-  { value: 'MONTHS', label: 'Monate', singular: 'Monat' },
-  { value: 'YEARS', label: 'Jahre', singular: 'Jahr' },
+  { value: 'DAYS', label: t('services.intervalUnits.DAYS.plural'), singular: t('services.intervalUnits.DAYS.singular') },
+  { value: 'WEEKS', label: t('services.intervalUnits.WEEKS.plural'), singular: t('services.intervalUnits.WEEKS.singular') },
+  { value: 'MONTHS', label: t('services.intervalUnits.MONTHS.plural'), singular: t('services.intervalUnits.MONTHS.singular') },
+  { value: 'YEARS', label: t('services.intervalUnits.YEARS.plural'), singular: t('services.intervalUnits.YEARS.singular') },
 ];
 
 /** "alle 6 Wochen", "jährlich" */
@@ -40,21 +41,18 @@ export function intervalText(value: number | null | undefined, unit: IntervalUni
   if (!value || !unit) {
     return '';
   }
-  if (value === 1) {
-    return { DAYS: 'täglich', WEEKS: 'wöchentlich', MONTHS: 'monatlich', YEARS: 'jährlich' }[unit];
-  }
-  return `alle ${value} ${INTERVAL_UNITS.find((entry) => entry.value === unit)?.label ?? ''}`;
+  return tn(`services.interval.${unit}`, value);
 }
 
 /** "überfällig seit 3 Tagen", "heute fällig", "in 12 Tagen" */
 export function dueText(days: number): string {
   if (days < 0) {
-    return `überfällig seit ${-days} ${-days === 1 ? 'Tag' : 'Tagen'}`;
+    return tn('services.due.overdue', -days);
   }
   if (days === 0) {
-    return 'heute fällig';
+    return t('services.due.today');
   }
-  return days === 1 ? 'morgen fällig' : `fällig in ${days} Tagen`;
+  return days === 1 ? t('services.due.tomorrow') : t('services.due.inDays', { count: days });
 }
 
 /** Due date of one recurring inspection for one asset. */
@@ -81,14 +79,14 @@ export interface InspectionDue {
 }
 
 export const CHECK_FIELD_TYPES: { value: AssetFieldType; label: string }[] = [
-  { value: 'BOOLEAN', label: 'Ja / Nein' },
-  { value: 'TEXT', label: 'Text' },
-  { value: 'NUMBER', label: 'Zahl' },
-  { value: 'SELECT', label: 'Auswahl' },
-  { value: 'DATE', label: 'Datum' },
-  { value: 'DATETIME', label: 'Datum & Zeit' },
-  { value: 'URL', label: 'Link' },
-  { value: 'EMAIL', label: 'E-Mail' },
+  { value: 'BOOLEAN', label: t('services.fieldTypes.BOOLEAN') },
+  { value: 'TEXT', label: t('services.fieldTypes.TEXT') },
+  { value: 'NUMBER', label: t('services.fieldTypes.NUMBER') },
+  { value: 'SELECT', label: t('services.fieldTypes.SELECT') },
+  { value: 'DATE', label: t('services.fieldTypes.DATE') },
+  { value: 'DATETIME', label: t('services.fieldTypes.DATETIME') },
+  { value: 'URL', label: t('services.fieldTypes.URL') },
+  { value: 'EMAIL', label: t('services.fieldTypes.EMAIL') },
 ];
 
 export interface InspectionField {
@@ -317,7 +315,7 @@ export function formatCheckValue(value: string | null | undefined, type: AssetFi
   }
   switch (type) {
     case 'BOOLEAN':
-      return value === 'true' ? 'Ja' : value === 'false' ? 'Nein' : value;
+      return value === 'true' ? t('common.yes') : value === 'false' ? t('common.no') : value;
     case 'DATE':
       return new Date(value).toLocaleDateString('de-AT');
     case 'DATETIME':

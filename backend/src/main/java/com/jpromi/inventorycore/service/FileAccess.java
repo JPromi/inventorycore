@@ -55,7 +55,7 @@ public class FileAccess {
     @Transactional(readOnly = true)
     public StoredFile attachable(UUID uuid, Collection<UUID> attachedHere) {
         StoredFile file = files.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown file " + uuid));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannte Datei: " + uuid));
         boolean attachedElsewhere = !files.assetsUsing(file).isEmpty() || !files.locationsUsing(file).isEmpty()
             || !files.assetTypesUsing(file).isEmpty() || !files.inspectionItemsUsing(file).isEmpty();
         if (!attachedHere.contains(uuid) && attachedElsewhere) {

@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideCircleCheck, LucideCircleX, LucideCopy, LucideKeyRound, LucidePlugZap, LucideSave } from '@lucide/angular';
 
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { AdminApiService, OidcSettings, OidcTestResult } from '../../../service/admin-api.service';
 
 @Component({
   selector: 'app-oidc-settings-page',
-  imports: [FormsModule, LucideCircleCheck, LucideCircleX, LucideCopy, LucideKeyRound, LucidePlugZap, LucideSave],
+  imports: [FormsModule, TranslatePipe, LucideCircleCheck, LucideCircleX, LucideCopy, LucideKeyRound, LucidePlugZap, LucideSave],
   templateUrl: './oidc-settings-page.html',
   styleUrl: './oidc-settings-page.scss',
 })
@@ -30,7 +32,7 @@ export class OidcSettingsPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Einstellungen konnten nicht geladen werden.';
+        this.error = t('adminOidc.errors.load');
         this.loading = false;
       },
     });
@@ -70,7 +72,7 @@ export class OidcSettingsPage implements OnInit {
       },
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen.';
+        this.error = t('common.errors.save');
       },
     });
   }
@@ -87,7 +89,7 @@ export class OidcSettingsPage implements OnInit {
         this.testing = false;
       },
       error: () => {
-        this.testResult = { success: false, message: 'Test konnte nicht ausgeführt werden.', issuer: null, authorizationEndpoint: null };
+        this.testResult = { success: false, message: t('adminOidc.errors.test'), issuer: null, authorizationEndpoint: null };
         this.testing = false;
       },
     });

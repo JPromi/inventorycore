@@ -15,7 +15,7 @@
     }
     <span class="label">{{ selected?.label ?? placeholder }}</span>
     @if (selected && clearLabel !== null) {
-        <span class="clear" role="button" title="Auswahl entfernen" (click)="clear($event)">
+        <span class="clear" role="button" [title]="'components.searchSelect.clearSelection' | t" (click)="clear($event)">
             <svg lucideX size="14"></svg>
         </span>
     }
@@ -33,7 +33,7 @@
                 (input)="onQueryChange(searchInput.value)"
                 (keydown)="onKeydown($event)"
                 [placeholder]="searchPlaceholder"
-                aria-label="Optionen durchsuchen"
+                [attr.aria-label]="'components.searchSelect.searchLabel' | t"
             />
         </div>
         <ul class="options" role="listbox">

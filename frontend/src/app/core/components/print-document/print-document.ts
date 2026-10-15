@@ -3,6 +3,8 @@ import { AfterViewInit, Component, ElementRef, HostListener, Inject, Input, OnDe
 import { FormsModule } from '@angular/forms';
 import { LucidePrinter, LucideX } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { CustomizationService } from '../../service/customization.service';
 import { SearchSelect, SelectOption } from '../search-select/search-select';
 
@@ -54,7 +56,7 @@ const SPLITTABLE = new Set(['DIV', 'SECTION', 'ARTICLE', 'MAIN', 'UL', 'OL', 'TA
  */
 @Component({
   selector: 'app-print-document',
-  imports: [FormsModule, SearchSelect, LucidePrinter, LucideX],
+  imports: [FormsModule, SearchSelect, TranslatePipe, LucidePrinter, LucideX],
   templateUrl: './print-document.html',
   styleUrl: './print-document.scss',
   // the pages are built in code; all selectors are scoped by .print-document / .print-settings
@@ -79,15 +81,15 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
     { value: 'A4', label: 'A4', hint: '210 × 297 mm' },
     { value: 'A3', label: 'A3', hint: '297 × 420 mm' },
     { value: 'A5', label: 'A5', hint: '148 × 210 mm' },
-    { value: 'letter', label: 'US Letter', hint: '216 × 279 mm' },
+    { value: 'letter', label: t('components.printDocument.sizes.letter'), hint: '216 × 279 mm' },
   ];
   protected readonly orientations: SelectOption[] = [
-    { value: 'portrait', label: 'Hochformat' },
-    { value: 'landscape', label: 'Querformat' },
+    { value: 'portrait', label: t('components.printDocument.orientations.portrait') },
+    { value: 'landscape', label: t('components.printDocument.orientations.landscape') },
   ];
   protected readonly margins: SelectOption[] = [
-    { value: 'normal', label: 'Normal', hint: '15 mm' },
-    { value: 'narrow', label: 'Schmal', hint: '8 mm' },
+    { value: 'normal', label: t('components.printDocument.marginOptions.normal'), hint: '15 mm' },
+    { value: 'narrow', label: t('components.printDocument.marginOptions.narrow'), hint: '8 mm' },
   ];
 
   constructor(
@@ -197,7 +199,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
         page.append(this.element('div', 'print-page-header', [this.customization.brandName, [this.kind, this.title].filter(Boolean).join(' · ')]));
       }
       content = this.element('div', 'print-page-content');
-      const footer = this.element('div', 'print-page-footer', [`Gedruckt am ${printedAt}`, '']);
+      const footer = this.element('div', 'print-page-footer', [t('components.printDocument.printedAt', { date: printedAt }), '']);
       footers.push(footer);
       page.append(content, footer);
       target.append(page);
@@ -278,7 +280,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
 
     newPage();
     Array.from(this.source.nativeElement.childNodes).forEach(place);
-    footers.forEach((footer, index) => (footer.lastElementChild!.textContent = `Seite ${index + 1} von ${footers.length}`));
+    footers.forEach((footer, index) => (footer.lastElementChild!.textContent = t('components.printDocument.pageOf', { page: index + 1, pages: footers.length })));
   }
 
   private element(tag: string, className: string, texts: string[] = []): HTMLElement {

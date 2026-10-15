@@ -2,7 +2,7 @@
     <div class="page-shell">
         <header class="page-header">
             <div>
-                <p class="eyebrow">Administration</p>
+                <p class="eyebrow">{{ 'adminGroupForm.eyebrow' | t }}</p>
                 <h1>
                     <svg lucideUsers size="20"></svg>
                     <span>{{ title }}</span>
@@ -10,7 +10,7 @@
             </div>
             <a class="secondary-action" routerLink="/admin/groups">
                 <svg lucideArrowLeft size="16"></svg>
-                <span>Zurück</span>
+                <span>{{ 'common.back' | t }}</span>
             </a>
         </header>
 
@@ -19,35 +19,35 @@
         }
 
         @if (loading) {
-            <p class="empty">Lade Daten...</p>
+            <p class="empty">{{ 'adminGroupForm.loading' | t }}</p>
         } @else {
             <form class="stack" (ngSubmit)="save()">
                 <section class="card">
-                    <h2>Allgemein</h2>
+                    <h2>{{ 'adminGroupForm.general' | t }}</h2>
                     <div class="field-grid">
                         <label class="field">
-                            <span>Name *</span>
+                            <span>{{ 'common.name' | t }} *</span>
                             <input type="text" [(ngModel)]="name" name="name" required [readonly]="readOnlyName" />
                             @if (readOnlyName) {
-                                <small>Name wird vom externen Anbieter verwaltet.</small>
+                                <small>{{ 'adminGroupForm.nameExternal' | t }}</small>
                             }
                         </label>
                     </div>
                     <label class="toggle admin-toggle" [class.on]="adminGroup">
                         <input type="checkbox" [(ngModel)]="adminGroup" name="adminGroup" />
                         <span>
-                            Admin-Gruppe
-                            <small>Mitglieder haben vollen Zugriff auf alles, auch auf die Administration, unabhängig von den Berechtigungen unten.</small>
+                            {{ 'adminGroupForm.adminGroup' | t }}
+                            <small>{{ 'adminGroupForm.adminGroupHint' | t }}</small>
                         </span>
                     </label>
                     <div class="field members">
-                        <span class="field-label">Mitglieder</span>
+                        <span class="field-label">{{ 'adminGroupForm.members' | t }}</span>
                         <app-multi-select
                             [options]="userOptions"
                             [(ngModel)]="memberUuids"
                             name="members"
-                            placeholder="Benutzer suchen..."
-                            emptyText="Keine weiteren Benutzer"
+                            [placeholder]="'adminGroupForm.membersPlaceholder' | t"
+                            [emptyText]="'adminGroupForm.noMoreUsers' | t"
                         />
                     </div>
                 </section>
@@ -55,32 +55,32 @@
                 <section class="card">
                     <div class="card-title">
                         <div>
-                            <h2>Berechtigungen</h2>
-                            <p class="hint">Rechte gelten für Objekte im gewählten Bereich. Wer einen Standort sehen darf, sieht auch alle Unter-Standorte und Assets darin.</p>
+                            <h2>{{ 'adminGroupForm.permissions' | t }}</h2>
+                            <p class="hint">{{ 'adminGroupForm.permissionsHint' | t }}</p>
                         </div>
                         <button type="button" class="secondary-action compact" (click)="addPermission()">
                             <svg lucidePlus size="15"></svg>
-                            <span>Berechtigung</span>
+                            <span>{{ 'adminGroupForm.addPermission' | t }}</span>
                         </button>
                     </div>
 
                     <div class="quick-grant">
-                        <span class="field-label">Bereich freigeben</span>
+                        <span class="field-label">{{ 'adminGroupForm.grantArea' | t }}</span>
                         <app-search-select
                             class="quick-area"
                             [options]="areaOptions"
                             [(ngModel)]="quickAreaUuid"
                             name="quickArea"
-                            placeholder="Bereich wählen"
-                            searchPlaceholder="Bereich suchen..."
+                            [placeholder]="'adminGroupForm.chooseArea' | t"
+                            [searchPlaceholder]="'adminGroupForm.searchArea' | t"
                         />
-                        <select [(ngModel)]="quickPreset" name="quickPreset" aria-label="Rechte">
+                        <select [(ngModel)]="quickPreset" name="quickPreset" [attr.aria-label]="'adminGroupForm.rights' | t">
                             @for (preset of presets; track preset.key) {
                                 <option [value]="preset.key">{{ preset.label }}</option>
                             }
                         </select>
                         <button type="button" class="secondary-action" [disabled]="!quickAreaUuid" (click)="grantArea()">
-                            Für alle Objektarten setzen
+                            {{ 'adminGroupForm.grantAll' | t }}
                         </button>
                     </div>
 
@@ -89,9 +89,9 @@
                             <table class="data-table permission-table">
                                 <thead>
                                     <tr>
-                                        <th>Bereich</th>
-                                        <th>Objektart</th>
-                                        <th>Vorlage</th>
+                                        <th>{{ 'terms.area' | t }}</th>
+                                        <th>{{ 'adminGroupForm.objectType' | t }}</th>
+                                        <th>{{ 'adminGroupForm.preset' | t }}</th>
                                         @for (flag of flags; track flag.key) {
                                             <th class="center">{{ flag.label }}</th>
                                         }
@@ -106,21 +106,21 @@
                                                     [options]="areaOptions"
                                                     [(ngModel)]="permission.areaUuid"
                                                     name="area{{ index }}"
-                                                    placeholder="Alle Bereiche"
-                                                    clearLabel="Alle Bereiche"
-                                                    searchPlaceholder="Bereich suchen..."
+                                                    [placeholder]="'adminGroupForm.allAreas' | t"
+                                                    [clearLabel]="'adminGroupForm.allAreas' | t"
+                                                    [searchPlaceholder]="'adminGroupForm.searchArea' | t"
                                                 />
                                                 @if (isDuplicate(index)) {
-                                                    <small class="duplicate-note">Doppelter Eintrag</small>
+                                                    <small class="duplicate-note">{{ 'adminGroupForm.duplicateEntry' | t }}</small>
                                                 }
                                             </td>
                                             <td>
                                                 <select
                                                     [(ngModel)]="permission.resourceType"
                                                     name="type{{ index }}"
-                                                    aria-label="Objektart"
+                                                    [attr.aria-label]="'adminGroupForm.objectType' | t"
                                                 >
-                                                    <option [ngValue]="null">Alle Objektarten</option>
+                                                    <option [ngValue]="null">{{ 'adminGroupForm.allObjectTypes' | t }}</option>
                                                     @for (type of resourceTypes; track type[0]) {
                                                         <option [ngValue]="type[0]">{{ type[1] }}</option>
                                                     }
@@ -130,9 +130,9 @@
                                                 <select
                                                     #presetSelect
                                                     (change)="applyPreset(permission, presetSelect.value); presetSelect.value = ''"
-                                                    aria-label="Vorlage anwenden"
+                                                    [attr.aria-label]="'adminGroupForm.applyPreset' | t"
                                                 >
-                                                    <option value="" disabled selected>Anwenden...</option>
+                                                    <option value="" disabled selected>{{ 'adminGroupForm.applyPlaceholder' | t }}</option>
                                                     @for (preset of presets; track preset.key) {
                                                         <option [value]="preset.key">{{ preset.label }}</option>
                                                     }
@@ -150,7 +150,7 @@
                                                 </td>
                                             }
                                             <td class="actions">
-                                                <button type="button" class="icon-button danger" title="Entfernen" (click)="removePermission(index)">
+                                                <button type="button" class="icon-button danger" [title]="'common.remove' | t" (click)="removePermission(index)">
                                                     <svg lucideTrash2 size="15"></svg>
                                                 </button>
                                             </td>
@@ -161,7 +161,7 @@
                         </div>
                     } @else {
                         <div class="empty-state">
-                            Diese Gruppe hat noch keine Berechtigungen.
+                            {{ 'adminGroupForm.noPermissions' | t }}
                         </div>
                     }
                 </section>
@@ -170,13 +170,13 @@
                     @if (uuid) {
                         <button type="button" class="danger-action delete" (click)="remove()">
                             <svg lucideTrash2 size="16"></svg>
-                            <span>Löschen</span>
+                            <span>{{ 'common.delete' | t }}</span>
                         </button>
                     }
-                    <a class="secondary-action" routerLink="/admin/groups">Abbrechen</a>
+                    <a class="secondary-action" routerLink="/admin/groups">{{ 'common.cancel' | t }}</a>
                     <button type="submit" class="primary-action" [disabled]="saving">
                         <svg lucideSave size="17"></svg>
-                        <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>
+                        <span>{{ (saving ? 'common.saving' : 'common.save') | t }}</span>
                     </button>
                 </div>
             </form>

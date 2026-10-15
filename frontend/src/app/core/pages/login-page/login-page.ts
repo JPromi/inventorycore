@@ -15,23 +15,25 @@ import {
   LucideUser,
 } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AuthService, LoginProviders } from '../../service/auth.service';
 import { CustomizationService } from '../../service/customization.service';
 
 /** Messages for the ?error= codes the backend sends after a rejected SSO login. */
 const SSO_ERRORS: Record<string, string> = {
-  oidc_local_user: 'Lokale Konten können sich nicht per SSO anmelden. Bitte mit Benutzername und Passwort anmelden.',
-  oidc_unknown_user: 'Für dieses SSO-Konto gibt es keinen Benutzer. Bitte an einen Administrator wenden.',
-  oidc_provider_mismatch: 'Dieses Konto stammt aus einem anderen Verzeichnis und darf sich nicht per SSO anmelden.',
-  oidc_disabled_user: 'Dieses Konto ist deaktiviert.',
-  oidc_no_username: 'Der Identity Provider hat keinen Benutzernamen geliefert.',
-  oidc_failed: 'SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
+  oidc_local_user: t('login.ssoErrors.localUser'),
+  oidc_unknown_user: t('login.ssoErrors.unknownUser'),
+  oidc_provider_mismatch: t('login.ssoErrors.providerMismatch'),
+  oidc_disabled_user: t('login.ssoErrors.disabledUser'),
+  oidc_no_username: t('login.ssoErrors.noUsername'),
+  oidc_failed: t('login.ssoErrors.failed'),
 };
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [FormsModule, LucideBoxes, LucideEye, LucideEyeOff, LucideKeyRound, LucideLayers, LucideLoaderCircle, LucideLock, LucideLogIn, LucideMapPin, LucideQrCode, LucideUser],
+  imports: [FormsModule, LucideBoxes, LucideEye, LucideEyeOff, LucideKeyRound, LucideLayers, LucideLoaderCircle, LucideLock, LucideLogIn, LucideMapPin, LucideQrCode, LucideUser, TranslatePipe],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
 })
@@ -84,7 +86,7 @@ export class LoginPage implements OnInit {
     }
     const username = this.username.trim();
     if (!username || !this.password) {
-      this.error = 'Bitte Benutzername und Passwort eingeben.';
+      this.error = t('login.errors.missingCredentials');
       return;
     }
 
@@ -97,8 +99,8 @@ export class LoginPage implements OnInit {
         this.password = '';
         this.error =
           error?.status === 0
-            ? 'Server nicht erreichbar. Bitte später erneut versuchen.'
-            : 'Anmeldung fehlgeschlagen. Bitte Benutzername und Passwort prüfen.';
+            ? t('login.errors.unreachable')
+            : t('login.errors.failed');
       },
     });
   }

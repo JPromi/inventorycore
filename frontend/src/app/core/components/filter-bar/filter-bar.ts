@@ -1,6 +1,8 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { LucideChevronDown, LucideSlidersHorizontal, LucideX } from '@lucide/angular';
 
+import { TranslatePipe } from '../../i18n/translate.pipe';
+
 /**
  * Toolbar for overview pages: search plus filters. On desktops everything is in one row; on
  * phones only the search stays visible and the filters fold away behind a "Filter" button that
@@ -11,7 +13,7 @@ import { LucideChevronDown, LucideSlidersHorizontal, LucideX } from '@lucide/ang
  */
 @Component({
   selector: 'app-filter-bar',
-  imports: [LucideChevronDown, LucideSlidersHorizontal, LucideX],
+  imports: [TranslatePipe, LucideChevronDown, LucideSlidersHorizontal, LucideX],
   templateUrl: './filter-bar.html',
   styleUrl: './filter-bar.scss',
 })

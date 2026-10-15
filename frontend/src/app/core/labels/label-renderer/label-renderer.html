@@ -22,7 +22,7 @@
             @switch (element.type) {
                 @case ('logo') {
                     @if (customization.settings.logoUrl) {
-                        <img [src]="customization.settings.logoUrl" alt="Logo" draggable="false"
+                        <img [src]="customization.settings.logoUrl" [alt]="'labels.logo' | t" draggable="false"
                             style="width: 100%; height: 100%; object-fit: contain; display: block" />
                     }
                 }

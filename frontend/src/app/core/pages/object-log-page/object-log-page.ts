@@ -5,6 +5,8 @@ import { catchError, of } from 'rxjs';
 
 import { AssetInspectionList } from '../../components/asset-inspection-list/asset-inspection-list';
 import { AuditHistory } from '../../components/audit-history/audit-history';
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AssetInspection, InspectionService } from '../../service/inspection.service';
 import { InventoryApiService, InventoryItem } from '../../service/inventory-api.service';
 
@@ -17,13 +19,13 @@ type View = 'history' | 'inspections';
  */
 @Component({
   selector: 'app-object-log-page',
-  imports: [RouterLink, AssetInspectionList, AuditHistory, LucideArrowLeft, LucideClipboardCheck, LucideHistory],
+  imports: [RouterLink, AssetInspectionList, AuditHistory, LucideArrowLeft, LucideClipboardCheck, LucideHistory, TranslatePipe],
   template: `
     <section class="page">
       <div class="page-shell">
         <a class="back-link" [routerLink]="['/', endpoint, uuid]">
           <svg lucideArrowLeft size="16"></svg>
-          <span>Zurück zu {{ name || objectLabel }}</span>
+          <span>{{ 'objectLog.backTo' | t: { name: name || objectLabel } }}</span>
         </a>
         <header class="page-header">
           <div>
@@ -31,10 +33,10 @@ type View = 'history' | 'inspections';
             <h1>
               @if (view === 'history') {
                 <svg lucideHistory size="20"></svg>
-                <span>Verlauf</span>
+                <span>{{ 'common.history' | t }}</span>
               } @else {
                 <svg lucideClipboardCheck size="20"></svg>
-                <span>Prüfungen</span>
+                <span>{{ 'terms.inspections' | t }}</span>
               }
             </h1>
           </div>
@@ -45,11 +47,11 @@ type View = 'history' | 'inspections';
         } @else {
           <section class="card">
             @if (loading) {
-              <p class="hint">Lade Prüfungen...</p>
+              <p class="hint">{{ 'objectLog.loadingInspections' | t }}</p>
             } @else if (error) {
               <p class="hint">{{ error }}</p>
             } @else if (!inspections.length) {
-              <p class="hint">Dieses Asset war noch in keiner Prüfung.</p>
+              <p class="hint">{{ 'objectLog.noInspections' | t }}</p>
             } @else {
               <app-asset-inspection-list [entries]="inspections" />
             }
@@ -85,7 +87,7 @@ export class ObjectLogPage implements OnInit {
   ) {}
 
   protected get objectLabel(): string {
-    return this.endpoint === 'assets' ? 'Asset' : 'Standort';
+    return this.endpoint === 'assets' ? t('terms.asset') : t('terms.location');
   }
 
   ngOnInit(): void {
@@ -112,7 +114,7 @@ export class ObjectLogPage implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.error = 'Prüfungen konnten nicht geladen werden.';
+          this.error = t('objectLog.errors.loadInspections');
           this.loading = false;
         },
       });

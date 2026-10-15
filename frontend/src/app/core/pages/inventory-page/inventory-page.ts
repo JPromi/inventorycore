@@ -25,6 +25,8 @@ import { FilterBar } from '../../components/filter-bar/filter-bar';
 import { InfiniteScroll } from '../../components/infinite-scroll.directive';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
+import { t, tn } from '../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { AreaService } from '../../service/area.service';
 import { InspectionDue, InspectionService, dueText } from '../../service/inspection.service';
@@ -91,6 +93,8 @@ interface FieldConfig {
     LucideShapes,
     LucideTrash2,
     LucideX,
+    TranslatePipe,
+    TranslateCountPipe,
   ],
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.scss',
@@ -139,7 +143,7 @@ export class InventoryPage implements OnInit, OnDestroy {
       const endpoint = this.config.endpoint;
       this.bulkDelete = item => this.api.delete(endpoint, item.uuid);
       this.bulkActions = endpoint === 'assets'
-        ? [{ label: 'Labels drucken', icon: LucidePrinter, run: items => (this.printAssets = items) }]
+        ? [{ label: t('inventoryList.printLabels'), icon: LucidePrinter, run: items => (this.printAssets = items) }]
         : [];
       this.resetFilters();
       this.loadFilterOptions();
@@ -256,7 +260,7 @@ export class InventoryPage implements OnInit, OnDestroy {
 
   /** "Prüfung überfällig seit 3 Tagen (Bremsen)" */
   protected dueTitle(due: InspectionDue): string {
-    return `${due.inspectionTypeName}: ${dueText(due.daysUntilDue)}`;
+    return t('inventoryList.dueTitle', { type: due.inspectionTypeName, due: dueText(due.daysUntilDue) });
   }
 
   private loadDueInspections(): void {
@@ -315,7 +319,7 @@ export class InventoryPage implements OnInit, OnDestroy {
       next: () => this.removed([item.uuid]),
       error: (error) => {
         this.error = this.config.endpoint === 'assets' && error.status === 409
-          ? 'Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.' : 'Löschen fehlgeschlagen.';
+          ? t('inventoryList.assetHasChildren') : t('common.errors.delete');
       },
     });
   }
@@ -338,13 +342,13 @@ export class InventoryPage implements OnInit, OnDestroy {
     if (this.config.endpoint === 'locations') {
       const parent = this.locations.find((location) => location.uuid === item.parentLocationUuid);
       const type = item.locationType && item.locationType !== 'OTHER' ? locationTypeInfo(item.locationType).label : '';
-      return [type, parent ? `in ${locationPath(this.locations, parent)}` : '', item.address ?? ''].filter(Boolean).join(' · ');
+      return [type, parent ? t('inventoryList.inParent', { path: locationPath(this.locations, parent) }) : '', item.address ?? ''].filter(Boolean).join(' · ');
     }
     if (item.address) {
       return item.address;
     }
     if (item.inspectionIntervalDays) {
-      return `Prüfung alle ${item.inspectionIntervalDays} Tage`;
+      return tn('inventoryList.inspectionInterval', item.inspectionIntervalDays);
     }
     return '';
   }

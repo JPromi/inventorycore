@@ -29,6 +29,8 @@ import { PermissionService } from '../../../service/permission.service';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 
 type StatusFilter = InspectionStatus | 'ALL' | 'DUE';
 
@@ -52,6 +54,7 @@ interface DueGroup {
     SelectionCheckbox,
     FormsModule,
     RouterLink,
+    TranslatePipe,
     LucideCalendarClock,
     LucideChevronDown,
     LucideClipboardCheck,
@@ -125,7 +128,7 @@ export class InspectionsPage implements OnInit, OnDestroy {
         this.list.reload();
       },
       error: () => {
-        this.error = 'Prüfungen konnten nicht geladen werden.';
+        this.error = t('inspectionList.loadError');
         this.loading = false;
       },
     });

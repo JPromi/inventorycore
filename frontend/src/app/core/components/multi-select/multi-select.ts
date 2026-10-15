@@ -2,12 +2,14 @@ import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewC
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LucideLock, LucidePlus, LucideX } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { SelectOption } from '../search-select/search-select';
 import { DropdownPosition } from '../dropdown-position.directive';
 
 @Component({
   selector: 'app-multi-select',
-  imports: [DropdownPosition, LucideLock, LucidePlus, LucideX],
+  imports: [DropdownPosition, TranslatePipe, LucideLock, LucidePlus, LucideX],
   templateUrl: './multi-select.html',
   styleUrl: './multi-select.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => MultiSelect), multi: true }],
@@ -17,8 +19,8 @@ export class MultiSelect implements ControlValueAccessor {
   /** Options that are always selected and cannot be removed (e.g. tags inherited from the type). */
   @Input() lockedOptions: SelectOption[] = [];
   @Input() lockedHint = '';
-  @Input() placeholder = 'Hinzufügen...';
-  @Input() emptyText = 'Keine weiteren Einträge';
+  @Input() placeholder = t('components.multiSelect.placeholder');
+  @Input() emptyText = t('components.multiSelect.emptyText');
   /** Shows a "create" entry for unknown input. The parent handles creation via (create). */
   @Input() allowCreate = false;
   @Output() readonly create = new EventEmitter<string>();

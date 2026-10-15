@@ -50,7 +50,7 @@
                         }
                     </ul>
                 }
-                <small class="meta">{{ log.userName ?? 'System' }} · {{ log.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</small>
+                <small class="meta">{{ log.userName ?? ('components.auditTimeline.system' | t) }} · {{ log.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</small>
             </div>
         </li>
     }

@@ -11,11 +11,13 @@ import { InspectionService, InspectionType, intervalText } from '../../../servic
 import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
 import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
+import { t, tn } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 
 /** Configuration list of the inspection types. */
 @Component({
   selector: 'app-inspection-types-page',
-  imports: [FormsModule, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, RouterLink, LucideClipboardList, LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideX],
+  imports: [FormsModule, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, RouterLink, TranslatePipe, TranslateCountPipe, LucideClipboardList, LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideX],
   templateUrl: './inspection-types-page.html',
   styleUrl: './inspection-types-page.scss',
 })
@@ -77,12 +79,12 @@ export class InspectionTypesPage implements OnInit, OnDestroy {
     return type.fields.filter((field) => !field.assetTypeUuid).length;
   }
 
-  /** "Laptop (2), Fahrzeug (5)" */
+  /** "Atemschutzgerät (2), Fahrzeug (5)" */
   protected typeFieldSummary(type: InspectionType): string[] {
     const counts = new Map<string, number>();
     for (const field of type.fields) {
       if (field.assetTypeUuid) {
-        const name = field.assetTypeName ?? 'Typ';
+        const name = field.assetTypeName ?? t('terms.assetType');
         counts.set(name, (counts.get(name) ?? 0) + 1);
       }
     }
@@ -96,11 +98,11 @@ export class InspectionTypesPage implements OnInit, OnDestroy {
   protected async remove(type: InspectionType, event: Event): Promise<void> {
     event.stopPropagation();
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Prüfungsvorlage löschen?',
+      title: t('inspectionTemplateList.deleteConfirm.title'),
       message: type.inspectionCount
-        ? `„${type.name}“ wird gelöscht. Die ${type.inspectionCount} Prüfungen dieser Art bleiben mit allen Werten erhalten.`
-        : `„${type.name}“ wird gelöscht.`,
-      confirmLabel: 'Löschen',
+        ? tn('inspectionTemplateList.deleteConfirm.messageWithInspections', type.inspectionCount, { name: type.name })
+        : t('inspectionTemplateList.deleteConfirm.message', { name: type.name }),
+      confirmLabel: t('common.delete'),
       danger: true,
     });
     if (!confirmed) {
@@ -108,7 +110,7 @@ export class InspectionTypesPage implements OnInit, OnDestroy {
     }
     this.api.deleteType(type.uuid).subscribe({
       next: () => this.removed([type.uuid]),
-      error: () => (this.error = 'Prüfungsvorlage konnte nicht gelöscht werden.'),
+      error: () => (this.error = t('inspectionTemplateList.deleteError')),
     });
   }
 }

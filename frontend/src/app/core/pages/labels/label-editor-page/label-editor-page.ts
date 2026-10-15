@@ -20,6 +20,8 @@ import { catchError } from 'rxjs/operators';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { LabelRenderer } from '../../../labels/label-renderer/label-renderer';
 import { LabelTemplateService } from '../../../labels/label-template.service';
 import {
@@ -49,6 +51,7 @@ const MM_TO_PX = 96 / 25.4;
     RouterLink,
     SearchSelect,
     LabelRenderer,
+    TranslatePipe,
     LucideArrowLeft,
     LucideChevronDown,
     LucideChevronUp,
@@ -107,7 +110,7 @@ export class LabelEditorPage implements OnInit {
   // ---- derived state ----
 
   protected get title(): string {
-    return this.uuid ? 'Label-Vorlage bearbeiten' : 'Label-Vorlage erstellen';
+    return t(this.uuid ? 'labelEditor.titleEdit' : 'labelEditor.titleCreate');
   }
 
   protected get selected(): LabelElement | null {
@@ -118,7 +121,7 @@ export class LabelEditorPage implements OnInit {
     const action = this.uuid ? 'edit' : 'create';
     return this.areaService.areas
       .filter((area) => this.permissions.canInArea('ASSET_TYPE', action, area.uuid))
-      .map((area) => ({ value: area.uuid, label: area.name, color: area.color, hint: area.defaultArea ? 'Standardbereich' : undefined }));
+      .map((area) => ({ value: area.uuid, label: area.name, color: area.color, hint: area.defaultArea ? t('labelEditor.defaultArea') : undefined }));
   }
 
   protected get assetOptions(): SelectOption[] {
@@ -266,13 +269,13 @@ export class LabelEditorPage implements OnInit {
   protected elementLabel(element: LabelElement): string {
     switch (element.type) {
       case 'text':
-        return element.content || 'Text';
+        return element.content || t('labelEditor.elementTypes.text');
       case 'barcode':
-        return `${SYMBOLOGIES.find((entry) => entry.id === element.symbology)?.label ?? 'Code'}: ${element.content ?? ''}`;
+        return `${SYMBOLOGIES.find((entry) => entry.id === element.symbology)?.label ?? t('labelEditor.codeFallback')}: ${element.content ?? ''}`;
       case 'box':
-        return 'Rahmen';
+        return t('labelEditor.elementTypes.box');
       case 'logo':
-        return 'Logo';
+        return t('labelEditor.elementTypes.logo');
     }
   }
 
@@ -324,7 +327,7 @@ export class LabelEditorPage implements OnInit {
       return;
     }
     if (!this.name.trim()) {
-      this.error = 'Bitte einen Namen vergeben.';
+      this.error = t('labelEditor.nameMissing');
       return;
     }
     this.saving = true;
@@ -343,7 +346,7 @@ export class LabelEditorPage implements OnInit {
       next: () => this.router.navigate(['/config/labels']),
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen.';
+        this.error = t('common.errors.save');
       },
     });
   }
@@ -354,7 +357,7 @@ export class LabelEditorPage implements OnInit {
     }
     this.api.delete(this.uuid).subscribe({
       next: () => this.router.navigate(['/config/labels']),
-      error: () => (this.error = 'Vorlage konnte nicht gelöscht werden.'),
+      error: () => (this.error = t('labelTemplates.deleteFailed')),
     });
   }
 
@@ -399,7 +402,7 @@ export class LabelEditorPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Vorlage konnte nicht geladen werden.';
+        this.error = t('labelEditor.loadFailed');
         this.loading = false;
       },
     });

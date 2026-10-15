@@ -327,7 +327,7 @@ public class LdapService {
             "%d Benutzer gefunden (%d neu, %d aktualisiert, %d deaktiviert, %d übersprungen), %d Gruppen (%d neu).",
             userEntries.size(), created, updated, disabled, skipped, groupEntries.size(), groupsCreated
         );
-        message += " " + missingGroups.size() + " LDAP-Gruppen geloescht.";
+        message += " " + missingGroups.size() + " LDAP-Gruppen gelöscht.";
         return new SyncResult(true, message, created, updated, disabled, skipped, groupsCreated, groupsUpdated, missingGroups.size());
     }
 

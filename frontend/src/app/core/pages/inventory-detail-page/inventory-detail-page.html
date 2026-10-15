@@ -2,7 +2,7 @@
     <div class="page-shell">
         <a class="back-link" [routerLink]="config.listRoute">
             <svg lucideArrowLeft size="16"></svg>
-            <span>Zurück zur Übersicht</span>
+            <span>{{ 'inventoryDetail.backToList' | t }}</span>
         </a>
 
         @if (error) {
@@ -10,7 +10,7 @@
         }
 
         @if (loading) {
-            <p class="empty">Lade Daten...</p>
+            <p class="empty">{{ 'common.loading' | t }}</p>
         } @else if (item) {
             <header class="page-header">
                 <div class="title">
@@ -26,7 +26,7 @@
                         </p>
                         <h1>{{ item.name }}</h1>
                         @if (locationChain.length) {
-                            <nav class="breadcrumb" aria-label="Standort">
+                            <nav class="breadcrumb" [attr.aria-label]="'terms.location' | t">
                                 <svg lucideMapPin size="14"></svg>
                                 @for (location of locationChain; track location.uuid; let last = $last) {
                                     <a [routerLink]="['/locations', location.uuid]">{{ location.name }}</a>
@@ -43,23 +43,23 @@
                     @if (config.endpoint === 'assets') {
                         <button type="button" class="secondary-action" (click)="printSheet()">
                             <svg lucideFileText size="16"></svg>
-                            <span>Drucken</span>
+                            <span>{{ 'common.print' | t }}</span>
                         </button>
                         <button type="button" class="secondary-action" (click)="showPrintDialog = true">
                             <svg lucidePrinter size="16"></svg>
-                            <span>Label drucken</span>
+                            <span>{{ 'inventoryDetail.printLabel' | t }}</span>
                         </button>
                     }
                     @if (canDelete) {
                         <button type="button" class="danger-action" (click)="remove()">
                             <svg lucideTrash2 size="16"></svg>
-                            <span>Löschen</span>
+                            <span>{{ 'common.delete' | t }}</span>
                         </button>
                     }
                     @if (canEdit) {
                         <button type="button" class="primary-action" (click)="edit()">
                             <svg lucidePencil size="16"></svg>
-                            <span>Bearbeiten</span>
+                            <span>{{ 'common.edit' | t }}</span>
                         </button>
                     }
                 </div>
@@ -68,7 +68,7 @@
             <div class="layout">
                 <div class="stack">
                     <section class="card">
-                        <h2>Details</h2>
+                        <h2>{{ 'common.details' | t }}</h2>
                         <dl class="details">
                             @for (field of config.fields; track field.key) {
                                 <div [class.wide]="field.key === 'description'">
@@ -90,13 +90,13 @@
                             }
                             @if (locationType; as type) {
                                 <div>
-                                    <dt>Art</dt>
+                                    <dt>{{ 'inventoryDetail.fields.kind' | t }}</dt>
                                     <dd>{{ type.label }}</dd>
                                 </div>
                             }
                             @if (config.endpoint === 'assets') {
                                 <div>
-                                    <dt>Typ</dt>
+                                    <dt>{{ 'terms.assetType' | t }}</dt>
                                     <dd>
                                         @if (assetType) {
                                             <a class="inline-link" [routerLink]="['/config/types', assetType.uuid]">
@@ -109,7 +109,7 @@
                                 </div>
                             }
                             <div>
-                                <dt>Bereiche</dt>
+                                <dt>{{ 'terms.areas' | t }}</dt>
                                 <dd>
                                     <span class="chip-list">
                                         @for (area of areas; track $index) {
@@ -120,7 +120,7 @@
                             </div>
                             @if (item.createdAt) {
                                 <div>
-                                    <dt>Erstellt am</dt>
+                                    <dt>{{ 'inventoryDetail.fields.createdAt' | t }}</dt>
                                     <dd>{{ item.createdAt | date: 'dd.MM.yyyy HH:mm' }}</dd>
                                 </div>
                             }
@@ -129,36 +129,36 @@
 
                     @if (config.endpoint !== 'locations') {
                         <section class="card">
-                            <h2>Tags</h2>
+                            <h2>{{ 'terms.tags' | t }}</h2>
                             @if (ownTags.length || inheritedTags.length) {
                                 <div class="chip-list">
                                     @for (tag of ownTags; track tag.uuid) {
                                         <span class="chip"><span class="dot" [style.background]="tag.color || null"></span>{{ tag.name }}</span>
                                     }
                                     @for (tag of inheritedTags; track tag.uuid) {
-                                        <span class="chip inherited" title="Vom Typ übernommen">
+                                        <span class="chip inherited" [title]="'inventoryDetail.tags.inheritedTitle' | t">
                                             <span class="dot" [style.background]="tag.color || null"></span>{{ tag.name }}
-                                            <small>Typ</small>
+                                            <small>{{ 'inventoryDetail.tags.inheritedBadge' | t }}</small>
                                         </span>
                                     }
                                 </div>
                             } @else {
-                                <p class="hint">Keine Tags vergeben.</p>
+                                <p class="hint">{{ 'inventoryDetail.tags.none' | t }}</p>
                             }
                         </section>
                     }
 
                     @if (config.endpoint === 'asset-types') {
                         <section class="card">
-                            <h2>Felddefinitionen</h2>
+                            <h2>{{ 'inventoryDetail.fieldDefinitions.title' | t }}</h2>
                             @if (item.fieldDefinitions?.length) {
                                 <div class="data-table-wrap flat">
                                     <table class="data-table">
                                         <thead>
                                             <tr>
-                                                <th>Name</th>
-                                                <th>Typ</th>
-                                                <th>Pflichtfeld</th>
+                                                <th>{{ 'common.name' | t }}</th>
+                                                <th>{{ 'terms.assetType' | t }}</th>
+                                                <th>{{ 'common.required' | t }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -168,9 +168,9 @@
                                                     <td>{{ fieldTypeLabels[field.fieldType] ?? field.fieldType }}</td>
                                                     <td>
                                                         @if (field.required) {
-                                                            <span class="badge accent">Pflicht</span>
+                                                            <span class="badge accent">{{ 'inventoryDetail.fieldDefinitions.requiredBadge' | t }}</span>
                                                         } @else {
-                                                            <span class="muted">optional</span>
+                                                            <span class="muted">{{ 'common.optional' | t }}</span>
                                                         }
                                                     </td>
                                                 </tr>
@@ -179,7 +179,7 @@
                                     </table>
                                 </div>
                             } @else {
-                                <p class="hint">Keine Felder definiert.</p>
+                                <p class="hint">{{ 'inventoryDetail.fieldDefinitions.none' | t }}</p>
                             }
                         </section>
                     }
@@ -187,7 +187,7 @@
                     @if (config.endpoint === 'locations') {
                         <section class="card">
                             <div class="card-title">
-                                <h2>Unter-Standorte</h2>
+                                <h2>{{ 'inventoryDetail.childLocations.title' | t }}</h2>
                                 <span class="badge">{{ childLocations.length }}</span>
                             </div>
                             @if (childLocations.length) {
@@ -208,7 +208,7 @@
                                     }
                                 </ul>
                             } @else {
-                                <p class="hint">Keine Unter-Standorte.</p>
+                                <p class="hint">{{ 'inventoryDetail.childLocations.none' | t }}</p>
                             }
                         </section>
                     }
@@ -216,7 +216,13 @@
                     @if (config.endpoint !== 'assets' && permissions.can('ASSET', 'view')) {
                         <section class="card">
                             <div class="card-title">
-                                <h2>{{ config.endpoint === 'locations' ? 'Assets an diesem Standort' : 'Assets dieses Typs' }}</h2>
+                                <h2>
+                                    @if (config.endpoint === 'locations') {
+                                        {{ 'inventoryDetail.linkedAssets.atLocation' | t }}
+                                    } @else {
+                                        {{ 'inventoryDetail.linkedAssets.ofType' | t }}
+                                    }
+                                </h2>
                                 <span class="badge">{{ linkedAssets.length }}</span>
                             </div>
                             @if (linkedAssets.length) {
@@ -237,7 +243,7 @@
                                     }
                                 </ul>
                             } @else {
-                                <p class="hint">Keine Assets zugeordnet.</p>
+                                <p class="hint">{{ 'inventoryDetail.linkedAssets.none' | t }}</p>
                             }
                         </section>
                     }
@@ -245,15 +251,15 @@
                     @if (config.endpoint === 'assets') {
                         <section class="card">
                             <div class="card-title">
-                                <h2>Asset-Verknüpfungen</h2>
+                                <h2>{{ 'inventoryDetail.assetLinks.title' | t }}</h2>
                                 @if (permissions.can('ASSET', 'create')) {
                                     <a class="secondary-action" routerLink="/assets/new" [queryParams]="{ parentAssetUuid: item.uuid }">
-                                        <svg lucidePlus size="16"></svg><span>Untergeordnetes Asset</span>
+                                        <svg lucidePlus size="16"></svg><span>{{ 'inventoryDetail.assetLinks.addChild' | t }}</span>
                                     </a>
                                 }
                             </div>
                             @if (item.parentAssetUuid) {
-                                <h3>Übergeordnetes Asset</h3>
+                                <h3>{{ 'inventoryDetail.assetLinks.parent' | t }}</h3>
                                 <ul class="link-list">
                                     <li>
                                         @if (parentAsset; as parent) {
@@ -265,12 +271,12 @@
                                                 <svg lucideChevronRight size="15"></svg>
                                             </a>
                                         } @else {
-                                            <span class="hint">Übergeordnetes Asset nicht verfügbar.</span>
+                                            <span class="hint">{{ 'inventoryDetail.assetLinks.parentUnavailable' | t }}</span>
                                         }
                                     </li>
                                 </ul>
                             }
-                            <h3>Untergeordnete Assets</h3>
+                            <h3>{{ 'inventoryDetail.assetLinks.children' | t }}</h3>
                             @if (childAssets.length) {
                                 <ul class="link-list">
                                     @for (child of childAssets; track child.uuid) {
@@ -284,7 +290,7 @@
                                     }
                                 </ul>
                             } @else {
-                                <p class="hint">Keine untergeordneten Assets.</p>
+                                <p class="hint">{{ 'inventoryDetail.assetLinks.noChildren' | t }}</p>
                             }
                         </section>
                     }
@@ -292,19 +298,19 @@
                     @if (canSeeInspections) {
                         <section class="card">
                             <div class="card-title">
-                                <h2>Prüfungen</h2>
+                                <h2>{{ 'terms.inspections' | t }}</h2>
                                 <span class="hint">{{ inspections.length }}</span>
                             </div>
                             @if (inspections.length) {
                                 <app-asset-inspection-list [entries]="inspections.slice(0, 3)" />
                                 @if (inspections.length > 3) {
                                     <a class="secondary-action compact show-all" [routerLink]="['/assets', item.uuid, 'inspections']">
-                                        <span>Alle Prüfungen anzeigen ({{ inspections.length }})</span>
+                                        <span>{{ 'inventoryDetail.inspections.showAll' | t: { count: inspections.length } }}</span>
                                         <svg lucideChevronRight size="15"></svg>
                                     </a>
                                 }
                             } @else {
-                                <p class="hint">Dieses Asset war noch in keiner Prüfung.</p>
+                                <p class="hint">{{ 'inventoryDetail.inspections.none' | t }}</p>
                             }
                         </section>
                     }
@@ -322,7 +328,7 @@
                 <aside class="stack">
                     @if (schedules.length) {
                         <section class="card schedules">
-                            <h2><svg lucideCalendarClock size="16"></svg> Prüftermine</h2>
+                            <h2><svg lucideCalendarClock size="16"></svg> {{ 'inventoryDetail.schedules.title' | t }}</h2>
                             @for (entry of schedules; track entry.inspectionTypeUuid) {
                                 <div class="schedule" [class]="'schedule ' + entry.state.toLowerCase()">
                                     <div class="schedule-head">
@@ -333,35 +339,39 @@
                                     <p class="due">
                                         {{ dueText(entry.daysUntilDue) }} · {{ entry.nextDueDate | date: 'dd.MM.yyyy' }}
                                         @if (entry.fixedDueDate) {
-                                            <small>(festes Datum)</small>
+                                            <small>{{ 'inventoryDetail.schedules.fixedDate' | t }}</small>
                                         }
                                     </p>
                                     <p class="last">
                                         @if (entry.lastCheckedAt) {
-                                            Zuletzt {{ entry.lastCheckedAt | date: 'dd.MM.yyyy' }} von {{ entry.lastCheckedByName }}
+                                            {{ 'inventoryDetail.schedules.lastChecked' | t: { date: (entry.lastCheckedAt | date: 'dd.MM.yyyy'), name: entry.lastCheckedByName } }}
                                             @if (entry.lastResult === 'FAILED') {
-                                                – <span class="defect">Mangel</span>
+                                                – <span class="defect">{{ 'inspectionStatus.FAILED' | t }}</span>
                                             }
                                         } @else {
-                                            Noch nie geprüft
+                                            {{ 'inventoryDetail.schedules.neverChecked' | t }}
                                         }
                                     </p>
                                     @if (canPlanInspections) {
                                         @if (editingSchedule === entry.inspectionTypeUuid) {
                                             <div class="fixed-date">
-                                                <input type="date" [(ngModel)]="fixedDateInput" aria-label="Nächste Prüfung am" />
+                                                <input type="date" [(ngModel)]="fixedDateInput" [attr.aria-label]="'inventoryDetail.schedules.dateLabel' | t" />
                                                 <button type="button" class="primary-action compact" [disabled]="!fixedDateInput" (click)="saveFixedDate(entry, fixedDateInput)">
-                                                    Setzen
+                                                    {{ 'inventoryDetail.schedules.set' | t }}
                                                 </button>
-                                                <button type="button" class="icon-button" title="Abbrechen" (click)="editingSchedule = null">✕</button>
+                                                <button type="button" class="icon-button" [title]="'common.cancel' | t" (click)="editingSchedule = null">✕</button>
                                             </div>
                                         } @else {
                                             <div class="schedule-actions">
                                                 <button type="button" class="link-button" (click)="editSchedule(entry)">
-                                                    {{ entry.fixedDueDate ? 'Datum ändern' : 'Festes Datum setzen' }}
+                                                    @if (entry.fixedDueDate) {
+                                                        {{ 'inventoryDetail.schedules.changeDate' | t }}
+                                                    } @else {
+                                                        {{ 'inventoryDetail.schedules.setFixedDate' | t }}
+                                                    }
                                                 </button>
                                                 @if (entry.fixedDueDate) {
-                                                    <button type="button" class="link-button" (click)="saveFixedDate(entry, null)">Wieder Intervall verwenden</button>
+                                                    <button type="button" class="link-button" (click)="saveFixedDate(entry, null)">{{ 'inventoryDetail.schedules.useInterval' | t }}</button>
                                                 }
                                             </div>
                                         }
@@ -374,13 +384,13 @@
                     <section class="card gallery">
                         <div class="main-image">
                             @if (activeImage) {
-                                <a [href]="activeImage.url" target="_blank" rel="noopener" title="In Originalgröße öffnen">
+                                <a [href]="activeImage.url" target="_blank" rel="noopener" [title]="'inventoryDetail.gallery.openOriginal' | t">
                                     <img [src]="activeImage.url" [alt]="activeImage.fileName || item.name" />
                                 </a>
                             } @else {
                                 <div class="no-image">
                                     <ng-container *ngComponentOutlet="icon; inputs: placeholderIconInputs"></ng-container>
-                                    <span>Kein Bild</span>
+                                    <span>{{ 'inventoryDetail.gallery.noImage' | t }}</span>
                                 </div>
                             }
                         </div>
@@ -397,7 +407,7 @@
 
                     @if (config.endpoint === 'locations' && item.latitude != null && item.longitude != null) {
                         <section class="card">
-                            <h2>Karte</h2>
+                            <h2>{{ 'inventoryDetail.map' | t }}</h2>
                             <app-location-map [latitude]="item.latitude" [longitude]="item.longitude" [title]="item.name" />
                         </section>
                     }

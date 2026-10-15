@@ -1,34 +1,31 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Vorlage' : 'Vorlagen' }} }</p>
+            <p class="eyebrow">@if (list.loaded) { {{ 'labelTemplates.count' | tn: list.total }} }</p>
             <h1>
                 <svg lucideQrCode size="20"></svg>
-                <span>Label-Vorlagen</span>
+                <span>{{ 'terms.labelTemplates' | t }}</span>
             </h1>
         </div>
         @if (canCreate) {
             <div class="header-actions">
                 <button type="button" class="primary-action" (click)="create()">
                     <svg lucidePlus size="17"></svg>
-                    <span>Neue Vorlage</span>
+                    <span>{{ 'labelTemplates.newTemplate' | t }}</span>
                 </button>
             </div>
         }
     </header>
 
-    <p class="hint intro">
-        Vorlagen gehören zu einem Bereich. Beim Drucken eines Assets wird die Standard-Vorlage seines Bereichs vorgeschlagen,
-        ohne eigene Vorlage die Standard-Vorlage des Standardbereichs.
-    </p>
+    <p class="hint intro">{{ 'labelTemplates.intro' | t }}</p>
 
     <div class="toolbar">
         <div class="search-box">
             <svg class="search-icon" lucideSearch size="18"></svg>
             <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
-                placeholder="Vorlage oder Bereich suchen..." aria-label="Suchen" />
+                [placeholder]="'labelTemplates.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                <button type="button" class="clear" [title]="'labelTemplates.clearSearch' | t" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -42,11 +39,11 @@
     }
 
     @if (list.error && !templates.length) {
-        <p class="error">Vorlagen konnten nicht geladen werden.</p>
+        <p class="error">{{ 'labelTemplates.loadFailed' | t }}</p>
     } @else if (!list.loaded) {
-        <p class="empty">Lade Vorlagen...</p>
+        <p class="empty">{{ 'labelTemplates.loading' | t }}</p>
     } @else if (!templates.length) {
-        <div class="empty-state">{{ search.trim() ? 'Keine Vorlagen gefunden.' : 'Noch keine Vorlagen vorhanden.' }}</div>
+        <div class="empty-state">{{ (search.trim() ? 'labelTemplates.noneFound' : 'labelTemplates.empty') | t }}</div>
     } @else {
         @for (group of groups; track group.areaUuid) {
             <section class="area-group">
@@ -70,22 +67,22 @@
                                     <span class="muted">{{ template.widthMm }} × {{ template.heightMm }} mm</span>
                                 </div>
                                 @if (template.defaultForArea) {
-                                    <span class="badge accent">Standard</span>
+                                    <span class="badge accent">{{ 'labelTemplates.default' | t }}</span>
                                 }
                             </div>
                             <div class="actions">
                                 @if (canEdit(template)) {
-                                    <button type="button" class="icon-button" title="Bearbeiten" (click)="$event.stopPropagation(); edit(template)">
+                                    <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); edit(template)">
                                         <svg lucidePencil size="15"></svg>
                                     </button>
                                 }
                                 @if (canCreate) {
-                                    <button type="button" class="icon-button" title="Duplizieren" (click)="duplicate(template, $event)">
+                                    <button type="button" class="icon-button" [title]="'labelTemplates.duplicate' | t" (click)="duplicate(template, $event)">
                                         <svg lucideCopy size="15"></svg>
                                     </button>
                                 }
                                 @if (canDelete(template)) {
-                                    <button type="button" class="icon-button danger" title="Löschen" (click)="remove(template, $event)">
+                                    <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(template, $event)">
                                         <svg lucideTrash2 size="15"></svg>
                                     </button>
                                 }
@@ -97,9 +94,9 @@
         }
         <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
             @if (list.loading) {
-                <span>Lade weitere Vorlagen...</span>
+                <span>{{ 'labelTemplates.loadingMore' | t }}</span>
             } @else if (list.error) {
-                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'labelTemplates.retry' | t }}</button>
             }
         </div>
     }

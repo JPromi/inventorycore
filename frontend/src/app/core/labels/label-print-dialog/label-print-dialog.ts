@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { LucideChevronLeft, LucideChevronRight, LucidePrinter, LucideX } from '@lucide/angular';
 
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
+import { t } from '../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../i18n/translate.pipe';
 import { AreaService } from '../../service/area.service';
 import { InventoryItem } from '../../service/inventory-api.service';
 import { LabelRenderer } from '../label-renderer/label-renderer';
@@ -16,7 +18,7 @@ const MM_TO_PX = 96 / 25.4;
 /** Lets the user pick a label template for one or more assets, shows a preview and prints them. */
 @Component({
   selector: 'app-label-print-dialog',
-  imports: [FormsModule, RouterLink, SearchSelect, LabelRenderer, LucideChevronLeft, LucideChevronRight, LucidePrinter, LucideX],
+  imports: [FormsModule, RouterLink, SearchSelect, LabelRenderer, TranslatePipe, TranslateCountPipe, LucideChevronLeft, LucideChevronRight, LucidePrinter, LucideX],
   templateUrl: './label-print-dialog.html',
   styleUrl: './label-print-dialog.scss',
 })
@@ -66,7 +68,7 @@ export class LabelPrintDialog implements OnInit, OnChanges {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Vorlagen konnten nicht geladen werden.';
+        this.error = t('labelPrint.loadFailed');
         this.loading = false;
       },
     });
@@ -80,7 +82,13 @@ export class LabelPrintDialog implements OnInit, OnChanges {
     return this.templates.map((template) => ({
       value: template.uuid,
       label: template.name,
-      hint: `${this.areaService.name(template.areaUuid)} · ${template.widthMm} × ${template.heightMm} mm${template.defaultForArea ? ' · Standard' : ''}`,
+      hint: [
+        this.areaService.name(template.areaUuid),
+        t('labels.size', { width: template.widthMm, height: template.heightMm }),
+        template.defaultForArea ? t('labelTemplates.default') : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
     }));
   }
 
@@ -113,7 +121,7 @@ export class LabelPrintDialog implements OnInit, OnChanges {
     try {
       await printLabels(this.renderers.map((renderer) => renderer.nativeLabel), template.widthMm, template.heightMm, this.clampedCopies);
     } catch {
-      this.error = 'Das Logo konnte für den Druck nicht geladen werden.';
+      this.error = t('labels.print.logoFailed');
     }
   }
 

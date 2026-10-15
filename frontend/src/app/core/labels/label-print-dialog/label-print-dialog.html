@@ -1,11 +1,11 @@
 <div class="backdrop" (click)="close()">
-    <div class="dialog" role="dialog" aria-modal="true" aria-label="Label drucken" (click)="$event.stopPropagation()">
+    <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="'labelPrint.dialogLabel' | t" (click)="$event.stopPropagation()">
         <header>
             <h2>
                 <svg lucidePrinter size="18"></svg>
-                <span>{{ assets.length > 1 ? assets.length + ' Labels drucken' : 'Label drucken' }}</span>
+                <span>{{ 'labelPrint.title' | tn: assets.length }}</span>
             </h2>
-            <button type="button" class="close" title="Schließen" (click)="close()">
+            <button type="button" class="close" [title]="'common.close' | t" (click)="close()">
                 <svg lucideX size="16"></svg>
             </button>
         </header>
@@ -15,26 +15,26 @@
         }
 
         @if (loading) {
-            <p class="hint">Lade Vorlagen...</p>
+            <p class="hint">{{ 'labelPrint.loading' | t }}</p>
         } @else if (!templates.length) {
             <p class="hint">
-                Es gibt noch keine Label-Vorlagen.
-                <a routerLink="/config/labels/new" (click)="close()">Vorlage anlegen</a>
+                {{ 'labelPrint.noTemplates' | t }}
+                <a routerLink="/config/labels/new" (click)="close()">{{ 'labelPrint.createTemplate' | t }}</a>
             </p>
         } @else {
             <div class="controls">
                 <div class="field grow">
-                    <span>Vorlage</span>
+                    <span>{{ 'labelPrint.template' | t }}</span>
                     <app-search-select
                         [options]="options"
                         [ngModel]="templateUuid"
                         (ngModelChange)="select($event)"
-                        placeholder="Vorlage wählen"
-                        searchPlaceholder="Vorlage suchen..."
+                        [placeholder]="'labelPrint.templatePlaceholder' | t"
+                        [searchPlaceholder]="'labelPrint.templateSearch' | t"
                     />
                 </div>
                 <label class="field copies">
-                    <span>{{ assets.length > 1 ? 'Anzahl je Asset' : 'Anzahl' }}</span>
+                    <span>{{ (assets.length > 1 ? 'labelPrint.copiesPerAsset' : 'labelPrint.copies') | t }}</span>
                     <input type="number" min="1" max="100" [(ngModel)]="copies" />
                 </label>
             </div>
@@ -52,11 +52,11 @@
             </div>
             @if (assets.length > 1) {
                 <div class="pager">
-                    <button type="button" title="Vorheriges Asset" aria-label="Vorheriges Asset" [disabled]="index === 0" (click)="index = index - 1">
+                    <button type="button" [title]="'labelPrint.previousAsset' | t" [attr.aria-label]="'labelPrint.previousAsset' | t" [disabled]="index === 0" (click)="index = index - 1">
                         <svg lucideChevronLeft size="16"></svg>
                     </button>
                     <span>{{ assets[index].name }} · {{ index + 1 }} / {{ assets.length }}</span>
-                    <button type="button" title="Nächstes Asset" aria-label="Nächstes Asset" [disabled]="index === assets.length - 1" (click)="index = index + 1">
+                    <button type="button" [title]="'labelPrint.nextAsset' | t" [attr.aria-label]="'labelPrint.nextAsset' | t" [disabled]="index === assets.length - 1" (click)="index = index + 1">
                         <svg lucideChevronRight size="16"></svg>
                     </button>
                 </div>
@@ -69,18 +69,18 @@
                 </div>
                 <p class="hint">
                     @if (assets.length > 1) {
-                        {{ total }} Labels insgesamt.
+                        {{ 'labelPrint.total' | tn: total }}
                     }
-                    {{ current.widthMm }} × {{ current.heightMm }} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.
+                    {{ 'labelPrint.printHint' | t: { width: current.widthMm, height: current.heightMm } }}
                 </p>
             }
         }
 
         <footer>
-            <button type="button" class="secondary" (click)="close()">Abbrechen</button>
+            <button type="button" class="secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
             <button type="button" class="primary" [disabled]="!template" (click)="print()">
                 <svg lucidePrinter size="16"></svg>
-                <span>Drucken</span>
+                <span>{{ 'common.print' | t }}</span>
             </button>
         </footer>
     </div>

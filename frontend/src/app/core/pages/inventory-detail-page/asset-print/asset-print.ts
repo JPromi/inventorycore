@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { inspectionResult } from '../../../components/asset-inspection-list/asset-inspection-list';
 import { PrintDocument, PrintMeta } from '../../../components/print-document/print-document';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { AssetInspection, InspectionDue, formatCheckValue, intervalText } from '../../../service/inspection.service';
 import { InventoryImage, InventoryItem } from '../../../service/inventory-api.service';
 
@@ -23,7 +25,7 @@ type ImageMode = 'none' | 'main' | 'all';
  */
 @Component({
   selector: 'app-asset-print',
-  imports: [DatePipe, FormsModule, PrintDocument, SearchSelect],
+  imports: [DatePipe, FormsModule, PrintDocument, SearchSelect, TranslatePipe],
   templateUrl: './asset-print.html',
 })
 export class AssetPrint {
@@ -43,9 +45,9 @@ export class AssetPrint {
 
   protected imageMode: ImageMode = 'all';
   protected readonly imageModes: SelectOption[] = [
-    { value: 'all', label: 'Alle Bilder' },
-    { value: 'main', label: 'Nur Hauptbild' },
-    { value: 'none', label: 'Keine Bilder' },
+    { value: 'all', label: t('assetPrint.imageModes.all') },
+    { value: 'main', label: t('assetPrint.imageModes.main') },
+    { value: 'none', label: t('assetPrint.imageModes.none') },
   ];
   protected printInspection = true;
   protected printSchedules = true;
@@ -70,12 +72,17 @@ export class AssetPrint {
     const date = (value: string | null | undefined) => (value ? formatDate(value, 'dd.MM.yyyy', 'en-US') : '');
     const last = this.lastInspection;
     return [
-      { label: 'Inventar-ID', value: this.asset.invId },
-      { label: 'Typ', value: this.typeName },
-      { label: 'Standort', value: this.locationPath },
-      { label: 'Bereich', value: this.areaNames.join(', ') },
-      { label: 'Erfasst am', value: date(this.asset.createdAt) },
-      { label: 'Letzte Prüfung', value: last ? [date(last.checkedAt ?? last.completedAt), this.result(last).label].filter(Boolean).join(' · ') : 'Noch nie geprüft' },
+      { label: t('terms.invId'), value: this.asset.invId },
+      { label: t('terms.assetType'), value: this.typeName },
+      { label: t('terms.location'), value: this.locationPath },
+      { label: t('terms.area'), value: this.areaNames.join(', ') },
+      { label: t('assetPrint.meta.createdAt'), value: date(this.asset.createdAt) },
+      {
+        label: t('assetPrint.meta.lastInspection'),
+        value: last
+          ? [date(last.checkedAt ?? last.completedAt), this.result(last).label].filter(Boolean).join(' · ')
+          : t('assetPrint.meta.neverChecked'),
+      },
     ];
   }
 

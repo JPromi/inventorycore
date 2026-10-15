@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
+import { t } from '../../i18n/i18n';
+
 export interface ConfirmOptions {
   title: string;
   message: string;
@@ -24,9 +26,9 @@ export class ConfirmDialogService {
   /** Shortcut for the common "really delete?" question. */
   confirmDelete(name: string): Promise<boolean> {
     return this.confirm({
-      title: 'Wirklich löschen?',
-      message: `„${name}“ wird gelöscht. Das kann nicht rückgängig gemacht werden.`,
-      confirmLabel: 'Löschen',
+      title: t('components.confirmDialog.deleteTitle'),
+      message: t('components.confirmDialog.deleteMessage', { name }),
+      confirmLabel: t('common.delete'),
       danger: true,
     });
   }

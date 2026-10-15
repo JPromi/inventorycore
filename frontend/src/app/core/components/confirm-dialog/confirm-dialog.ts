@@ -2,11 +2,12 @@ import { AsyncPipe } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { LucideTriangleAlert } from '@lucide/angular';
 
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { ConfirmDialogService } from './confirm-dialog.service';
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [AsyncPipe, LucideTriangleAlert],
+  imports: [AsyncPipe, TranslatePipe, LucideTriangleAlert],
   template: `
     @if (dialog.request$ | async; as request) {
       <div class="backdrop" (click)="dialog.close(false)">
@@ -21,9 +22,9 @@ import { ConfirmDialogService } from './confirm-dialog.service';
             </div>
           </div>
           <div class="actions">
-            <button type="button" class="secondary" (click)="dialog.close(false)">Abbrechen</button>
+            <button type="button" class="secondary" (click)="dialog.close(false)">{{ 'common.cancel' | t }}</button>
             <button type="button" class="primary" [class.danger]="request.danger" (click)="dialog.close(true)" autofocus>
-              {{ request.confirmLabel ?? 'Bestätigen' }}
+              {{ request.confirmLabel ?? ('common.confirm' | t) }}
             </button>
           </div>
         </div>

@@ -2,6 +2,8 @@ import { Component, ElementRef, HostListener, Input, ViewChild, forwardRef } fro
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { LucideCheck, LucideChevronDown, LucideSearch, LucideX } from '@lucide/angular';
 import { DropdownPosition } from '../dropdown-position.directive';
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 
 export interface SelectOption {
   value: string;
@@ -12,18 +14,18 @@ export interface SelectOption {
 
 @Component({
   selector: 'app-search-select',
-  imports: [DropdownPosition, LucideCheck, LucideChevronDown, LucideSearch, LucideX],
+  imports: [DropdownPosition, TranslatePipe, LucideCheck, LucideChevronDown, LucideSearch, LucideX],
   templateUrl: './search-select.html',
   styleUrl: './search-select.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => SearchSelect), multi: true }],
 })
 export class SearchSelect implements ControlValueAccessor {
   @Input() options: SelectOption[] = [];
-  @Input() placeholder = 'Auswählen';
-  @Input() searchPlaceholder = 'Suchen...';
+  @Input() placeholder = t('common.select');
+  @Input() searchPlaceholder = t('common.searchPlaceholder');
   /** When set, the selection can be cleared and this label is shown as the empty option. */
   @Input() clearLabel: string | null = null;
-  @Input() emptyText = 'Keine Treffer';
+  @Input() emptyText = t('common.noResults');
 
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 

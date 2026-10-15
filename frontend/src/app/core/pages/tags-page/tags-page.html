@@ -1,24 +1,24 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Tag' : 'Tags' }} }</p>
+            <p class="eyebrow">@if (list.loaded) { {{ 'tags.count' | tn: list.total }} }</p>
             <h1>
                 <svg lucideTags size="20"></svg>
-                <span>Tags</span>
+                <span>{{ 'terms.tags' | t }}</span>
             </h1>
         </div>
     </header>
 
     @if (canCreate) {
         <form class="card create-row" (ngSubmit)="create()">
-            <app-color-picker [(ngModel)]="newColor" name="newColor" label="Farbe des neuen Tags" />
+            <app-color-picker [(ngModel)]="newColor" name="newColor" [label]="'tags.newColorLabel' | t" />
             <input
                 type="text"
                 class="name-input"
                 [(ngModel)]="newName"
                 name="newName"
-                placeholder="Neuer Tag, z. B. Defekt"
-                aria-label="Name des neuen Tags"
+                [placeholder]="'tags.newPlaceholder' | t"
+                [attr.aria-label]="'tags.newNameLabel' | t"
                 maxlength="80"
             />
             <span
@@ -26,11 +26,11 @@
                 [style.background]="newColor || 'var(--surface-active)'"
                 [style.color]="newColor ? textColor(newColor) : 'var(--text)'"
             >
-                {{ newName.trim() || 'Vorschau' }}
+                {{ newName.trim() || ('tags.preview' | t) }}
             </span>
             <button type="submit" class="primary-action" [disabled]="!newName.trim() || creating">
                 <svg lucidePlus size="17"></svg>
-                <span>{{ creating ? 'Legt an...' : 'Anlegen' }}</span>
+                <span>{{ (creating ? 'tags.creating' : 'common.create') | t }}</span>
             </button>
         </form>
     }
@@ -38,9 +38,9 @@
     <div class="toolbar">
         <div class="search-box">
             <svg class="search-icon" lucideSearch size="18"></svg>
-            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" placeholder="Tag suchen..." aria-label="Tag suchen" />
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" [placeholder]="'tags.searchPlaceholder' | t" [attr.aria-label]="'tags.searchLabel' | t" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                <button type="button" class="clear" [title]="'tags.clearSearch' | t" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -54,11 +54,11 @@
     }
 
     @if (list.error && !rows.length) {
-        <p class="error">Tags konnten nicht geladen werden.</p>
+        <p class="error">{{ 'tags.loadError' | t }}</p>
     } @else if (!list.loaded) {
-        <p class="empty">Lade Tags...</p>
+        <p class="empty">{{ 'tags.loading' | t }}</p>
     } @else if (!rows.length) {
-        <div class="empty-state">{{ search.trim() ? 'Keine Tags gefunden.' : 'Noch keine Tags angelegt.' }}</div>
+        <div class="empty-state">{{ (search.trim() ? 'tags.noneFound' : 'tags.empty') | t }}</div>
     } @else {
         <div class="tag-list">
             @for (row of rows; track row.uuid) {
@@ -68,7 +68,7 @@
                         [ngModel]="row.color"
                         (ngModelChange)="colorChanged(row, $event)"
                         [disabled]="!canEdit || selection.active"
-                        [label]="'Farbe von ' + row.name"
+                        [label]="'tags.colorOf' | t: { name: row.name }"
                     />
                     <input
                         type="text"
@@ -79,7 +79,7 @@
                         (blur)="saveName(row)"
                         (keydown.enter)="$any($event.target).blur()"
                         (keydown.escape)="row.name = row.savedName; $any($event.target).blur()"
-                        [attr.aria-label]="'Name von ' + row.savedName"
+                        [attr.aria-label]="'tags.nameOf' | t: { name: row.savedName }"
                         maxlength="80"
                     />
                     <span
@@ -89,23 +89,23 @@
                     >
                         {{ row.name || row.savedName }}
                     </span>
-                    <span class="usage">{{ usageText(row) || 'Nicht verwendet' }}</span>
+                    <span class="usage">{{ usageText(row) || ('tags.notUsed' | t) }}</span>
                     <span class="state" [class.failed]="row.state === 'error'">
                         @switch (row.state) {
                             @case ('saving') {
-                                Speichert...
+                                {{ 'common.saving' | t }}
                             }
                             @case ('saved') {
                                 <svg lucideCheck size="14"></svg>
-                                Gespeichert
+                                {{ 'tags.saved' | t }}
                             }
                             @case ('error') {
-                                Fehler beim Speichern
+                                {{ 'tags.saveError' | t }}
                             }
                         }
                     </span>
                     @if (canDelete) {
-                        <button type="button" class="icon-button danger" title="Löschen" (click)="remove(row)">
+                        <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(row)">
                             <svg lucideTrash2 size="15"></svg>
                         </button>
                     }
@@ -114,9 +114,9 @@
         </div>
         <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
             @if (list.loading) {
-                <span>Lade weitere Tags...</span>
+                <span>{{ 'tags.loadingMore' | t }}</span>
             } @else if (list.error) {
-                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'tags.retry' | t }}</button>
             }
         </div>
     }

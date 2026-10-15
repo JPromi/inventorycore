@@ -12,8 +12,8 @@
         @switch (field.fieldType) {
             @case ('BOOLEAN') {
                 <div class="yes-no">
-                    <button type="button" class="yes" [class.active]="value(field) === 'true'" (click)="toggle(field, 'true')">Ja</button>
-                    <button type="button" class="no" [class.active]="value(field) === 'false'" (click)="toggle(field, 'false')">Nein</button>
+                    <button type="button" class="yes" [class.active]="value(field) === 'true'" (click)="toggle(field, 'true')">{{ 'common.yes' | t }}</button>
+                    <button type="button" class="no" [class.active]="value(field) === 'false'" (click)="toggle(field, 'false')">{{ 'common.no' | t }}</button>
                 </div>
             }
             @case ('SELECT') {
@@ -45,31 +45,31 @@
 }
 
 <label class="check-field wide">
-    <span class="check-label">Notiz</span>
-    <input type="text" [ngModel]="item.note ?? ''" #note (blur)="noteChange.emit(note.value)" placeholder="Optional" />
+    <span class="check-label">{{ 'inspectionItemEditor.note' | t }}</span>
+    <input type="text" [ngModel]="item.note ?? ''" #note (blur)="noteChange.emit(note.value)" [placeholder]="'common.optional' | t" />
 </label>
 
 <div class="check-field wide">
-    <span class="check-label">Fotos</span>
+    <span class="check-label">{{ 'inspectionItemEditor.photos' | t }}</span>
     <div class="photos">
         @for (photo of item.photos; track photo.uuid) {
             <div class="photo">
-                <a [href]="photo.url" target="_blank" [title]="'Aufgenommen von ' + (photo.takenByName ?? '?')">
-                    <img [src]="photo.thumbnailUrl" alt="Foto" loading="lazy" />
+                <a [href]="photo.url" target="_blank" [title]="'inspectionItemEditor.takenBy' | t: { name: photo.takenByName ?? ('common.unknown' | t) }">
+                    <img [src]="photo.thumbnailUrl" [alt]="'inspectionItemEditor.photo' | t" loading="lazy" />
                 </a>
-                <button type="button" class="remove" title="Foto entfernen" aria-label="Foto entfernen" (click)="photoRemove.emit(photo)">
+                <button type="button" class="remove" [title]="'inspectionItemEditor.removePhoto' | t" [attr.aria-label]="'inspectionItemEditor.removePhoto' | t" (click)="photoRemove.emit(photo)">
                     <svg lucideX size="13"></svg>
                 </button>
             </div>
         }
         <button type="button" class="add" (click)="takePhoto('INSPECTION')">
             <svg lucideCamera size="18"></svg>
-            <span>Zur Prüfung</span>
+            <span>{{ 'inspectionItemEditor.toInspection' | t }}</span>
         </button>
         @if (item.assetUuid) {
-            <button type="button" class="add" title="Foto in die Bilder des Assets übernehmen" (click)="takePhoto('ASSET')">
+            <button type="button" class="add" [title]="'inspectionItemEditor.toAssetTitle' | t" (click)="takePhoto('ASSET')">
                 <svg lucideImagePlus size="18"></svg>
-                <span>Zum Asset</span>
+                <span>{{ 'inspectionItemEditor.toAsset' | t }}</span>
             </button>
         }
     </div>

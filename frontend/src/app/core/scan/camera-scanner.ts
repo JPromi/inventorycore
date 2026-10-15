@@ -6,6 +6,8 @@
  * Supported: QR, DataMatrix, Aztec, PDF417, Code 128/39/93, EAN-8/13, UPC-A/E, ITF, Codabar.
  */
 
+import { t } from '../i18n/i18n';
+
 export interface CameraDevice {
   deviceId: string;
   label: string;
@@ -49,7 +51,7 @@ export class CameraScanner {
     const devices = await navigator.mediaDevices.enumerateDevices();
     return devices
       .filter((device) => device.kind === 'videoinput')
-      .map((device, index) => ({ deviceId: device.deviceId, label: device.label || `Kamera ${index + 1}` }));
+      .map((device, index) => ({ deviceId: device.deviceId, label: device.label || t('scan.cameraDevice', { number: index + 1 }) }));
   }
 
   /** Starts the camera (the back camera by default) and scans until {@link stop} is called. */

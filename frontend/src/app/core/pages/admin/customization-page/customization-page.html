@@ -1,32 +1,32 @@
 <section class="page">
     <div class="page-shell">
-        <header class="page-header"><div><p class="eyebrow">Administration</p><h1><svg lucidePalette size="20"></svg> Customization</h1></div></header>
+        <header class="page-header"><div><p class="eyebrow">{{ 'adminCustomization.eyebrow' | t }}</p><h1><svg lucidePalette size="20"></svg> {{ 'adminCustomization.title' | t }}</h1></div></header>
         @if (error) { <p class="error" role="alert">{{ error }}</p> }
         @if (success) { <p class="saved" role="status">{{ success }}</p> }
-        @if (loading) { <p class="empty">Lade Anpassungen...</p> } @else if (form) {
+        @if (loading) { <p class="empty">{{ 'adminCustomization.loading' | t }}</p> } @else if (form) {
             <form class="stack" (ngSubmit)="save()">
-                <section><h2>Marke</h2><div class="fields">
-                    <label class="field"><span>Markenname</span><input name="brandName" [(ngModel)]="form.brandName" maxlength="100" placeholder="InventoryCore" /></label>
-                    <div class="field"><span>Markenfarbe</span><app-color-picker name="brandColor" [(ngModel)]="form.brandColor" /></div>
-                    <div class="field logo-field"><span>Logo</span>
-                        @if (form.logoUrl) { <img class="logo-preview" [src]="form.logoUrl" alt="Aktuelles Logo" /> }
+                <section><h2>{{ 'adminCustomization.brand' | t }}</h2><div class="fields">
+                    <label class="field"><span>{{ 'adminCustomization.brandName' | t }}</span><input name="brandName" [(ngModel)]="form.brandName" maxlength="100" [placeholder]="'adminCustomization.brandNamePlaceholder' | t" /></label>
+                    <div class="field"><span>{{ 'adminCustomization.brandColor' | t }}</span><app-color-picker name="brandColor" [(ngModel)]="form.brandColor" /></div>
+                    <div class="field logo-field"><span>{{ 'adminCustomization.logo' | t }}</span>
+                        @if (form.logoUrl) { <img class="logo-preview" [src]="form.logoUrl" [alt]="'adminCustomization.currentLogo' | t" /> }
                         <div class="logo-actions">
-                            <button type="button" class="secondary-action" (click)="logoInput.click()" [disabled]="uploading || saving"><svg lucideUpload size="16"></svg><span>{{ uploading ? 'Wird gespeichert...' : 'Logo hochladen' }}</span></button>
-                            @if (form.logoUrl) { <button type="button" class="icon-button danger" title="Logo entfernen" aria-label="Logo entfernen" (click)="changeLogo()" [disabled]="uploading || saving"><svg lucideTrash2 size="16"></svg></button> }
+                            <button type="button" class="secondary-action" (click)="logoInput.click()" [disabled]="uploading || saving"><svg lucideUpload size="16"></svg><span>{{ (uploading ? 'common.saving' : 'adminCustomization.uploadLogo') | t }}</span></button>
+                            @if (form.logoUrl) { <button type="button" class="icon-button danger" [title]="'adminCustomization.removeLogo' | t" [attr.aria-label]="'adminCustomization.removeLogo' | t" (click)="changeLogo()" [disabled]="uploading || saving"><svg lucideTrash2 size="16"></svg></button> }
                         </div>
                         <input #logoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden (change)="upload($event)" />
                     </div>
                 </div></section>
-                <section><h2>Anmeldung</h2><div class="fields">
-                    <label class="field"><span>Login-Titel</span><input name="loginTitle" [(ngModel)]="form.loginTitle" maxlength="200" placeholder="Willkommen zurück" /></label>
-                    <label class="field wide"><span>Login-Text</span><textarea name="loginMessage" [(ngModel)]="form.loginMessage" maxlength="1000" placeholder="Melde dich mit deinem Konto an."></textarea></label>
+                <section><h2>{{ 'adminCustomization.login' | t }}</h2><div class="fields">
+                    <label class="field"><span>{{ 'adminCustomization.loginTitle' | t }}</span><input name="loginTitle" [(ngModel)]="form.loginTitle" maxlength="200" [placeholder]="'adminCustomization.loginTitlePlaceholder' | t" /></label>
+                    <label class="field wide"><span>{{ 'adminCustomization.loginMessage' | t }}</span><textarea name="loginMessage" [(ngModel)]="form.loginMessage" maxlength="1000" [placeholder]="'adminCustomization.loginMessagePlaceholder' | t"></textarea></label>
                 </div></section>
-                <section><h2>Rechtliches &amp; Kontakt</h2><div class="fields">
+                <section><h2>{{ 'adminCustomization.legal' | t }}</h2><div class="fields">
                     @for (link of links; track link.key) {
-                        <label class="field"><span>{{ link.label }}</span><input type="url" [name]="link.key" [(ngModel)]="form[link.key]" maxlength="2000" placeholder="https://..." /></label>
+                        <label class="field"><span>{{ link.label }}</span><input type="url" [name]="link.key" [(ngModel)]="form[link.key]" maxlength="2000" [placeholder]="'adminCustomization.urlPlaceholder' | t" /></label>
                     }
                 </div></section>
-                <div class="editor-actions"><button type="submit" class="primary-action" [disabled]="saving || uploading"><svg lucideSave size="16"></svg><span>{{ saving ? 'Speichert...' : 'Speichern' }}</span></button></div>
+                <div class="editor-actions"><button type="submit" class="primary-action" [disabled]="saving || uploading"><svg lucideSave size="16"></svg><span>{{ (saving ? 'common.saving' : 'common.save') | t }}</span></button></div>
             </form>
         }
     </div>

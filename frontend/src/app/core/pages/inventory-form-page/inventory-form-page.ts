@@ -10,6 +10,8 @@ import { MultiSelect } from '../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 
 import { PermissionResourceType } from '../../entities/user.entity';
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AreaService } from '../../service/area.service';
 import { GeocodingResult } from '../../service/geocoding.service';
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
@@ -19,6 +21,8 @@ import { LOCATION_TYPES, locationTypeInfo } from '../../util/location-types';
 
 interface FormConfig {
   title: string;
+  createTitle: string;
+  editTitle: string;
   endpoint: string;
   listRoute: string;
   detailRoutePrefix?: string;
@@ -31,7 +35,7 @@ interface FormConfig {
   selectAssetType?: boolean;
   selectLocation?: boolean;
   selectParentLocation?: boolean;
-  /** fixed location kind (Gebäude, Regal, ...) */
+  /** fixed location kind (building, shelf, ...) */
   locationType?: boolean;
   /** address parts and latitude/longitude with lookups (locations) */
   coordinates?: boolean;
@@ -47,7 +51,7 @@ interface FieldConfig {
 
 @Component({
   selector: 'app-inventory-form-page',
-  imports: [CommonModule, FormsModule, RouterLink, ImageUpload, LocationLookup, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUpload, LocationLookup, MultiSelect, SearchSelect, LucideArrowLeft, LucidePlus, LucideSave, LucideTrash2, TranslatePipe],
   templateUrl: './inventory-form-page.html',
   styleUrl: './inventory-form-page.scss',
 })
@@ -96,7 +100,7 @@ export class InventoryFormPage implements OnInit {
       if (this.config.endpoint === 'assets') {
         this.api.list<InventoryItem>('assets').subscribe({
           next: (assets) => (this.assets = assets),
-          error: () => (this.error = 'Assets konnten nicht geladen werden.'),
+          error: () => (this.error = t('inventoryForm.errors.loadAssets')),
         });
         if (!this.uuid) this.form.parentAssetUuid = this.route.snapshot.queryParamMap.get('parentAssetUuid');
       }
@@ -128,7 +132,7 @@ export class InventoryFormPage implements OnInit {
   }
 
   protected get title(): string {
-    return this.uuid ? `${this.config.title} bearbeiten` : `${this.config.title} erstellen`;
+    return this.uuid ? this.config.editTitle : this.config.createTitle;
   }
 
   protected get canSave(): boolean {
@@ -145,7 +149,7 @@ export class InventoryFormPage implements OnInit {
   protected get areaOptions(): SelectOption[] {
     return this.areaService.areas
       .filter((area) => this.permissions.canInArea(this.config.resourceType, this.areaAction, area.uuid))
-      .map((area) => ({ value: area.uuid, label: area.name, color: area.color, hint: area.defaultArea ? 'Standardbereich' : undefined }));
+      .map((area) => ({ value: area.uuid, label: area.name, color: area.color, hint: area.defaultArea ? t('inventoryForm.defaultArea') : undefined }));
   }
 
   protected get lockedAreaOptions(): SelectOption[] {
@@ -177,7 +181,7 @@ export class InventoryFormPage implements OnInit {
       return;
     }
     if (!this.selectedAreaUuids.length && !this.lockedAreaUuids.length) {
-      this.error = 'Bitte mindestens einen Bereich auswählen.';
+      this.error = t('inventoryForm.errors.areaRequired');
       return;
     }
     this.saving = true;
@@ -200,7 +204,7 @@ export class InventoryFormPage implements OnInit {
       },
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen. Bitte Eingaben prüfen.';
+        this.error = t('inventoryForm.errors.save');
       },
     });
   }
@@ -288,7 +292,7 @@ export class InventoryFormPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Eintrag konnte nicht geladen werden.';
+        this.error = t('common.errors.load');
         this.loading = false;
       },
     });
@@ -359,9 +363,9 @@ export class InventoryFormPage implements OnInit {
   protected get coordinatesError(): string {
     const { latitude, longitude } = this.form;
     if (!this.config.coordinates || (latitude == null && longitude == null)) return '';
-    if (latitude == null || longitude == null) return 'Bitte Breiten- und Längengrad angeben.';
-    if (latitude < -90 || latitude > 90) return 'Der Breitengrad muss zwischen -90 und 90 liegen.';
-    if (longitude < -180 || longitude > 180) return 'Der Längengrad muss zwischen -180 und 180 liegen.';
+    if (latitude == null || longitude == null) return t('inventoryForm.errors.coordinatesIncomplete');
+    if (latitude < -90 || latitude > 90) return t('inventoryForm.errors.latitudeRange');
+    if (longitude < -180 || longitude > 180) return t('inventoryForm.errors.longitudeRange');
     return '';
   }
 
@@ -465,7 +469,7 @@ export class InventoryFormPage implements OnInit {
         this.selectedTagUuids = [...this.selectedTagUuids, tag.uuid];
       },
       error: () => {
-        this.error = 'Tag konnte nicht erstellt werden.';
+        this.error = t('inventoryForm.errors.createTag');
       },
     });
   }
@@ -518,7 +522,7 @@ export class InventoryFormPage implements OnInit {
         this.applySelectedAssetType(false);
       },
       error: () => {
-        this.error = 'Typen konnten nicht geladen werden.';
+        this.error = t('inventoryForm.errors.loadAssetTypes');
       },
     });
   }
@@ -529,7 +533,7 @@ export class InventoryFormPage implements OnInit {
         this.locations = locations;
       },
       error: () => {
-        this.error = 'Standorte konnten nicht geladen werden.';
+        this.error = t('inventoryForm.errors.loadLocations');
       },
     });
   }
@@ -540,7 +544,7 @@ export class InventoryFormPage implements OnInit {
         this.tags = tags.sort((a, b) => a.name.localeCompare(b.name));
       },
       error: () => {
-        this.error = 'Tags konnten nicht geladen werden.';
+        this.error = t('inventoryForm.errors.loadTags');
       },
     });
   }

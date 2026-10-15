@@ -6,13 +6,15 @@ import { LucideCircleCheck, LucideCircleX, LucideFolderSync, LucideNetwork, Luci
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SelectOption } from '../../../components/search-select/search-select';
+import { t } from '../../../i18n/i18n';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { AdminApiService, LdapSettings, LdapSyncResult, LdapTestResult } from '../../../service/admin-api.service';
 
 type LdapPreset = 'ad' | 'openldap' | 'ucs';
 
 @Component({
   selector: 'app-ldap-settings-page',
-  imports: [DatePipe, FormsModule, MultiSelect, LucideCircleCheck, LucideCircleX, LucideFolderSync, LucideNetwork, LucidePlugZap, LucideSave],
+  imports: [DatePipe, FormsModule, MultiSelect, TranslatePipe, LucideCircleCheck, LucideCircleX, LucideFolderSync, LucideNetwork, LucidePlugZap, LucideSave],
   templateUrl: './ldap-settings-page.html',
   styleUrl: './ldap-settings-page.scss',
 })
@@ -48,7 +50,7 @@ export class LdapSettingsPage implements OnInit {
     if (!settings) return;
     const attribute = settings.groupNameAttribute ?? '';
     if (!/^[a-zA-Z][a-zA-Z0-9-]*$/.test(attribute)) {
-      this.error = 'Ungueltiges Attribut fuer Gruppennamen.';
+      this.error = t('adminLdap.errors.invalidGroupNameAttribute');
       return;
     }
     this.groupFilterBase ??= settings.groupFilter ?? '(objectClass=*)';
@@ -79,7 +81,7 @@ export class LdapSettingsPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Einstellungen konnten nicht geladen werden.';
+        this.error = t('adminLdap.errors.load');
         this.loading = false;
       },
     });
@@ -144,7 +146,7 @@ export class LdapSettingsPage implements OnInit {
     }
     if (!Number.isInteger(this.settings.syncIntervalValue)
       || this.settings.syncIntervalValue < 1 || this.settings.syncIntervalValue > this.maxSyncInterval) {
-      this.error = 'Das Sync-Intervall muss mindestens eine Einheit und maximal 365 Tage betragen.';
+      this.error = t('adminLdap.errors.syncInterval');
       return;
     }
     this.saving = true;
@@ -158,7 +160,7 @@ export class LdapSettingsPage implements OnInit {
       },
       error: () => {
         this.saving = false;
-        this.error = 'Speichern fehlgeschlagen.';
+        this.error = t('common.errors.save');
       },
     });
   }
@@ -176,7 +178,7 @@ export class LdapSettingsPage implements OnInit {
         this.testing = false;
       },
       error: () => {
-        this.testResult = { success: false, message: 'Test konnte nicht ausgeführt werden.', userCount: null, groupCount: null, sampleUsers: [], sampleGroups: [] };
+        this.testResult = { success: false, message: t('adminLdap.errors.test'), userCount: null, groupCount: null, sampleUsers: [], sampleGroups: [] };
         this.testing = false;
       },
     });
@@ -187,12 +189,11 @@ export class LdapSettingsPage implements OnInit {
       return;
     }
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Jetzt synchronisieren?',
-      message: (this.settings.disableMissingUsers
-        ? 'Benutzer und Gruppen werden aus LDAP importiert. LDAP-Benutzer, die nicht mehr gefunden werden, werden deaktiviert.'
-        : 'Benutzer und Gruppen werden aus LDAP importiert und aktualisiert.')
-        + ' Nicht mehr gefundene LDAP-Gruppen werden mit ihren Zuordnungen und Berechtigungen geloescht.',
-      confirmLabel: 'Synchronisieren',
+      title: t('adminLdap.syncConfirm.title'),
+      message: this.settings.disableMissingUsers
+        ? t('adminLdap.syncConfirm.messageDisableMissing')
+        : t('adminLdap.syncConfirm.message'),
+      confirmLabel: t('adminLdap.sync'),
     });
     if (!confirmed) {
       return;
@@ -211,7 +212,7 @@ export class LdapSettingsPage implements OnInit {
       error: () => {
         this.syncResult = {
           success: false,
-          message: 'Synchronisation fehlgeschlagen.',
+          message: t('adminLdap.errors.sync'),
           usersCreated: 0,
           usersUpdated: 0,
           usersDisabled: 0,

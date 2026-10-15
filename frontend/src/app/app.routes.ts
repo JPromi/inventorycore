@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LucideBoxes, LucideMapPin, LucideShapes } from '@lucide/angular';
 
 import { adminGuard } from './core/guards/admin.guard';
+import { t } from './core/i18n/i18n';
 import { AuthGuard } from './core/guards/auth.guard';
 import { LoginRedirectGuard } from './core/guards/login-redirect.guard';
 import { InventoryFormPage } from './core/pages/inventory-form-page/inventory-form-page';
@@ -12,7 +13,9 @@ import { MainRoute } from './core/routes/main-route/main-route';
 import { ASSET_DETAIL_CONFIG, LOCATION_DETAIL_CONFIG } from './core/pages/inventory-detail-page/detail-configs';
 
 const assetFormConfig = {
-  title: 'Asset',
+  title: t('terms.asset'),
+  createTitle: t('inventory.assets.createTitle'),
+  editTitle: t('inventory.assets.editTitle'),
   endpoint: 'assets',
   listRoute: '/assets',
   detailRoutePrefix: '/assets',
@@ -25,15 +28,17 @@ const assetFormConfig = {
   images: true,
   tags: true,
   fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
-    { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
-    { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
+    { key: 'name', label: t('common.name'), type: 'text', required: true },
+    { key: 'description', label: t('common.description'), type: 'textarea' },
+    { key: 'serialNumber', label: t('terms.serialNumber'), type: 'text' },
+    { key: 'inventoryNumber', label: t('terms.inventoryNumber'), type: 'text' },
   ],
 };
 
 const locationFormConfig = {
-  title: 'Standort',
+  title: t('terms.location'),
+  createTitle: t('inventory.locations.createTitle'),
+  editTitle: t('inventory.locations.editTitle'),
   endpoint: 'locations',
   listRoute: '/locations',
   detailRoutePrefix: '/locations',
@@ -44,13 +49,15 @@ const locationFormConfig = {
   coordinates: true,
   images: true,
   fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+    { key: 'name', label: t('common.name'), type: 'text', required: true },
+    { key: 'description', label: t('common.description'), type: 'textarea' },
   ],
 };
 
 const assetTypeFormConfig = {
-  title: 'Typ',
+  title: t('terms.assetType'),
+  createTitle: t('inventory.assetTypes.createTitle'),
+  editTitle: t('inventory.assetTypes.editTitle'),
   endpoint: 'asset-types',
   listRoute: '/config/types',
   detailRoutePrefix: '/config/types',
@@ -60,8 +67,8 @@ const assetTypeFormConfig = {
   images: true,
   tags: true,
   fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+    { key: 'name', label: t('common.name'), type: 'text', required: true },
+    { key: 'description', label: t('common.description'), type: 'textarea' },
   ],
 };
 
@@ -93,7 +100,7 @@ export const routes: Routes = [
         component: InventoryPage,
         data: {
           inventoryConfig: {
-            title: 'Inventar',
+            title: t('inventory.assets.listTitle'),
             endpoint: 'assets',
             resourceType: 'ASSET',
             icon: LucideBoxes,
@@ -102,7 +109,7 @@ export const routes: Routes = [
             detailRoutePrefix: '/assets',
             filter: {
               searchFields: ['name', 'description', 'tags'],
-              searchPlaceholder: 'Name, Beschreibung oder Tag suchen...',
+              searchPlaceholder: t('inventory.assets.searchPlaceholder'),
               areas: true,
               tags: true,
               locations: true,
@@ -136,7 +143,7 @@ export const routes: Routes = [
         component: InventoryPage,
         data: {
           inventoryConfig: {
-            title: 'Standorte',
+            title: t('terms.locations'),
             endpoint: 'locations',
             resourceType: 'LOCATION',
             icon: LucideMapPin,
@@ -145,7 +152,7 @@ export const routes: Routes = [
             detailRoutePrefix: '/locations',
             filter: {
               searchFields: ['name', 'address'],
-              searchPlaceholder: 'Name oder Adresse suchen...',
+              searchPlaceholder: t('inventory.locations.searchPlaceholder'),
               areas: true,
             },
             fields: locationFormConfig.fields,
@@ -171,7 +178,7 @@ export const routes: Routes = [
         component: InventoryPage,
         data: {
           inventoryConfig: {
-            title: 'Typen',
+            title: t('terms.assetTypes'),
             endpoint: 'asset-types',
             resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
@@ -180,7 +187,7 @@ export const routes: Routes = [
             detailRoutePrefix: '/config/types',
             filter: {
               searchFields: ['name', 'description', 'tags'],
-              searchPlaceholder: 'Typ oder Tag suchen...',
+              searchPlaceholder: t('inventory.assetTypes.searchPlaceholder'),
               areas: true,
             },
             fields: assetTypeFormConfig.fields,
@@ -194,14 +201,14 @@ export const routes: Routes = [
         loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
         data: {
           inventoryDetailConfig: {
-            title: 'Typ',
+            title: t('terms.assetType'),
             endpoint: 'asset-types',
             listRoute: '/config/types',
             editRoutePrefix: '/config/types',
             resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
             fields: [
-              { key: 'description', label: 'Beschreibung' },
+              { key: 'description', label: t('common.description') },
             ],
           },
         },
@@ -296,7 +303,7 @@ export const routes: Routes = [
       {
         path: '**',
         component: PlaceholderPage,
-        data: { title: 'Placeholder' },
+        data: { title: t('inventory.pageNotFound') },
       },
     ],
   },

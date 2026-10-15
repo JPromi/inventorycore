@@ -11,11 +11,13 @@ import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AdminApiService, AdminGroup, AdminUser, PROVIDER_LABELS } from '../../../service/admin-api.service';
 import { AuthStateService } from '../../../service/auth-state.service';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
 
 @Component({
   selector: 'app-users-page',
-  imports: [InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
+  imports: [TranslatePipe, TranslateCountPipe, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss',
 })
@@ -32,9 +34,9 @@ export class UsersPage implements OnInit, OnDestroy {
   protected groupFilter: string | null = null;
   protected statusFilter: string | null = null;
   protected readonly statusOptions: SelectOption[] = [
-    { value: 'enabled', label: 'Aktiv' },
-    { value: 'disabled', label: 'Deaktiviert' },
-    { value: 'admin', label: 'Administratoren' },
+    { value: 'enabled', label: t('adminUsers.status.enabled') },
+    { value: 'disabled', label: t('adminUsers.status.disabled') },
+    { value: 'admin', label: t('adminUsers.status.admin') },
   ];
   private readonly searchChanges = new Subject<void>();
   private readonly searchSubscription = this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload());
@@ -124,7 +126,7 @@ export class UsersPage implements OnInit, OnDestroy {
     this.api.deleteUser(user.uuid).subscribe({
       next: () => this.removed([user.uuid]),
       error: () => {
-        this.error = 'Benutzer konnte nicht gelöscht werden.';
+        this.error = t('adminUsers.errors.delete');
       },
     });
   }
@@ -135,7 +137,7 @@ export class UsersPage implements OnInit, OnDestroy {
     // for the group filter and the group names in the table
     this.api.groups().subscribe({
       next: (groups) => (this.groups = groups),
-      error: () => (this.error = 'Gruppen konnten nicht geladen werden.'),
+      error: () => (this.error = t('adminUsers.errors.loadGroups')),
     });
   }
 }

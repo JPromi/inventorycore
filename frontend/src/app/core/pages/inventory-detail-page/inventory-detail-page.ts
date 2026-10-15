@@ -26,6 +26,8 @@ import { AuditHistory } from '../../components/audit-history/audit-history';
 import { LocationMap } from '../../components/location-map/location-map';
 import { AssetPrint, AssetPrintDetail } from './asset-print/asset-print';
 import { PermissionResourceType } from '../../entities/user.entity';
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AreaService } from '../../service/area.service';
 import {
   AssetInspection,
@@ -71,14 +73,14 @@ interface LinkedItem {
 }
 
 const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
-  TEXT: 'Text',
-  NUMBER: 'Nummer',
-  BOOLEAN: 'Ja/Nein',
-  DATE: 'Datum',
-  DATETIME: 'Datum & Zeit',
-  URL: 'URL',
-  EMAIL: 'E-Mail',
-  SELECT: 'Auswahl',
+  TEXT: t('inventoryDetail.fieldTypes.TEXT'),
+  NUMBER: t('inventoryDetail.fieldTypes.NUMBER'),
+  BOOLEAN: t('inventoryDetail.fieldTypes.BOOLEAN'),
+  DATE: t('inventoryDetail.fieldTypes.DATE'),
+  DATETIME: t('inventoryDetail.fieldTypes.DATETIME'),
+  URL: t('inventoryDetail.fieldTypes.URL'),
+  EMAIL: t('inventoryDetail.fieldTypes.EMAIL'),
+  SELECT: t('inventoryDetail.fieldTypes.SELECT'),
 };
 
 @Component({
@@ -103,6 +105,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     LucidePrinter,
     LucideShapes,
     LucideTrash2,
+    TranslatePipe,
   ],
   templateUrl: './inventory-detail-page.html',
   styleUrl: './inventory-detail-page.scss',
@@ -178,7 +181,7 @@ export class InventoryDetailPage implements OnInit {
         this.schedules = this.schedules.map((schedule) => (schedule.inspectionTypeUuid === updated.inspectionTypeUuid ? updated : schedule));
         this.editingSchedule = null;
       },
-      error: () => (this.error = 'Prüftermin konnte nicht gespeichert werden.'),
+      error: () => (this.error = t('inventoryDetail.errors.saveSchedule')),
     });
   }
 
@@ -234,7 +237,7 @@ export class InventoryDetailPage implements OnInit {
   protected get areas(): { name: string; color?: string | null }[] {
     return (this.item?.areaUuids ?? []).map((uuid) => {
       const area = this.areaService.areas.find((entry) => entry.uuid === uuid);
-      return { name: area?.name ?? 'Bereich ohne Zugriff', color: area?.color };
+      return { name: area?.name ?? t('inventoryDetail.areaWithoutAccess'), color: area?.color };
     });
   }
 
@@ -305,7 +308,7 @@ export class InventoryDetailPage implements OnInit {
       .map((field) => ({ label: field.label, value: this.fieldValue(field), wide: field.key === 'description' }));
     const custom = this.customFields.map((field) => ({ label: field.name, value: field.value ? this.formatCustomValue(field.value, field.fieldType) : null }));
     const tags = [...this.ownTags, ...this.inheritedTags].map((tag) => tag.name).join(', ');
-    return [...fields, ...custom, { label: 'Tags', value: tags, wide: true }]
+    return [...fields, ...custom, { label: t('terms.tags'), value: tags, wide: true }]
       .filter((detail): detail is AssetPrintDetail => !!detail.value);
   }
 
@@ -348,7 +351,7 @@ export class InventoryDetailPage implements OnInit {
       next: () => this.router.navigate([this.config.listRoute]),
       error: (error) => {
         this.error = this.config.endpoint === 'assets' && error.status === 409
-          ? 'Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.' : 'Löschen fehlgeschlagen.';
+          ? t('inventoryDetail.errors.hasChildren') : t('common.errors.delete');
       },
     });
   }
@@ -395,7 +398,7 @@ export class InventoryDetailPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Eintrag konnte nicht geladen werden.';
+        this.error = t('inventoryDetail.errors.load');
         this.loading = false;
       },
     });

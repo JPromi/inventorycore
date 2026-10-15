@@ -39,14 +39,14 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
         scans.push(body);
         const chosen = (body as { assetUuid: string | null }).assetUuid;
         if (!chosen) {
-          return { outcome: 'AMBIGUOUS', message: '2 Assets passen zu „SN-7“. Welches ist es?', item: null, candidates: [
+          return { outcome: 'AMBIGUOUS', message: '2 Assets passen zu „SN-7“. Bitte das richtige Asset auswählen.', item: null, candidates: [
             { uuid: 'laptop', name: 'Laptop', invId: 'EDV-1', assetTypeName: 'Notebook', locationName: 'Büro',
               matchedBy: 'SERIAL_NUMBER', inInspection: true },
             { uuid: 'monitor', name: 'Monitor', invId: 'SN-7', assetTypeName: null, locationName: 'Lager',
               matchedBy: 'INV_ID', inInspection: false },
           ] };
         }
-        return { outcome: 'CHECKED', message: 'Laptop ist da.', item: { ...item, status: 'PRESENT', method: 'SCAN' } };
+        return { outcome: 'CHECKED', message: 'Laptop ist vorhanden.', item: { ...item, status: 'PRESENT', method: 'SCAN' } };
       }
       return path === '/api/inspections/run' ? detail : [];
     });
@@ -59,13 +59,13 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
     const choices = page.getByRole('group', { name: 'Asset auswählen' });
     await expect(page.getByText('2 Assets passen zu „SN-7“')).toBeVisible();
     await expect(choices.getByRole('button')).toHaveCount(2);
-    await expect(choices.getByRole('button', { name: /Laptop/ })).toContainText('passt über Seriennummer');
+    await expect(choices.getByRole('button', { name: /Laptop/ })).toContainText('Treffer über Seriennummer');
     await expect(choices.getByRole('button', { name: /Laptop/ })).toContainText('In dieser Prüfung');
-    await expect(choices.getByRole('button', { name: /Monitor/ })).toContainText('passt über Inventar-ID · SN-7 · Lager');
+    await expect(choices.getByRole('button', { name: /Monitor/ })).toContainText('Treffer über Inventar-ID · SN-7 · Lager');
     await expect(page.locator('#item-item-laptop')).not.toHaveClass(/present/);
 
     await choices.getByRole('button', { name: /Laptop/ }).click();
-    await expect(page.getByText('Laptop ist da.')).toBeVisible();
+    await expect(page.getByText('Laptop ist vorhanden.')).toBeVisible();
     await expect(choices).toHaveCount(0);
     await expect(page.locator('#item-item-laptop')).toHaveClass(/present/);
     expect(scans).toEqual([{ code: 'SN-7', assetUuid: null }, { code: 'SN-7', assetUuid: 'laptop' }]);

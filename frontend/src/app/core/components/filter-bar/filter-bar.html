@@ -3,7 +3,7 @@
 @if (hasFilters) {
     <button type="button" class="filter-toggle" [class.active]="activeCount" [attr.aria-expanded]="open" (click)="open = !open">
         <svg lucideSlidersHorizontal size="17"></svg>
-        <span>Filter</span>
+        <span>{{ 'common.filter' | t }}</span>
         @if (activeCount) {
             <span class="count">{{ activeCount }}</span>
         }
@@ -16,7 +16,7 @@
     @if (canReset) {
         <button type="button" class="reset" (click)="reset.emit()">
             <svg lucideX size="15"></svg>
-            <span>Filter zurücksetzen</span>
+            <span>{{ 'components.filterBar.reset' | t }}</span>
         </button>
     }
 </div>

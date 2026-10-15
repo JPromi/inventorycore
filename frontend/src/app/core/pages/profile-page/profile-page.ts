@@ -4,12 +4,14 @@ import { Component } from '@angular/core';
 import { LucideUpload, LucideTrash2 } from '@lucide/angular';
 import { switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AuthService } from '../../service/auth.service';
 import { AuthStateService } from '../../service/auth-state.service';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [AsyncPipe, LucideUpload, LucideTrash2],
+  imports: [AsyncPipe, LucideUpload, LucideTrash2, TranslatePipe],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
 })
@@ -30,7 +32,7 @@ export class ProfilePage {
     input.value = '';
     if (!file || this.busy) return;
     if (file.size > 5 * 1024 * 1024) {
-      this.error = 'Das Profilbild darf maximal 5 MB gross sein.';
+      this.error = t('profile.tooLarge');
       return;
     }
     const data = new FormData();
@@ -48,7 +50,7 @@ export class ProfilePage {
     this.error = '';
     request.pipe(switchMap(() => this.auth.me())).subscribe({
       next: () => { this.busy = false; this.imageFailed = false; },
-      error: () => { this.busy = false; this.error = 'Das Profilbild konnte nicht gespeichert werden.'; },
+      error: () => { this.busy = false; this.error = t('profile.saveError'); },
     });
   }
 }

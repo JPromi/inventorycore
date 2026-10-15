@@ -7,12 +7,12 @@
         </div>
 
         <div class="brand-text">
-            <h2>Inventar, Standorte und Prüfungen an einem Ort.</h2>
+            <h2>{{ 'login.tagline' | t }}</h2>
             <ul>
-                <li><svg lucideBoxes size="18"></svg><span>Geräte und Assets mit eigenen Feldern verwalten</span></li>
-                <li><svg lucideMapPin size="18"></svg><span>Standorte verschachtelt abbilden</span></li>
-                <li><svg lucideLayers size="18"></svg><span>Zugriff pro Bereich und Gruppe steuern</span></li>
-                <li><svg lucideQrCode size="18"></svg><span>Labels mit QR- und Barcodes drucken</span></li>
+                <li><svg lucideBoxes size="18"></svg><span>{{ 'login.features.assets' | t }}</span></li>
+                <li><svg lucideMapPin size="18"></svg><span>{{ 'login.features.locations' | t }}</span></li>
+                <li><svg lucideLayers size="18"></svg><span>{{ 'login.features.access' | t }}</span></li>
+                <li><svg lucideQrCode size="18"></svg><span>{{ 'login.features.labels' | t }}</span></li>
             </ul>
         </div>
 
@@ -27,8 +27,8 @@
                 <span>{{ customization.brandName }}</span>
             </div>
 
-            <h1>{{ customization.settings.loginTitle || 'Willkommen zurück' }}</h1>
-            <p class="subtitle">{{ customization.settings.loginMessage || 'Melde dich mit deinem Konto an.' }}</p>
+            <h1>{{ customization.settings.loginTitle || ('login.welcome' | t) }}</h1>
+            <p class="subtitle">{{ customization.settings.loginMessage || ('login.subtitle' | t) }}</p>
 
             @if (error) {
                 <p class="error" role="alert">{{ error }}</p>
@@ -36,7 +36,7 @@
 
             <form class="login-form" (ngSubmit)="loginWithLocal()">
                 <label class="field">
-                    <span>Benutzername</span>
+                    <span>{{ 'login.username' | t }}</span>
                     <span class="input-wrap">
                         <svg class="input-icon" lucideUser size="17"></svg>
                         <input
@@ -51,7 +51,7 @@
                 </label>
 
                 <label class="field">
-                    <span>Passwort</span>
+                    <span>{{ 'login.password' | t }}</span>
                     <span class="input-wrap">
                         <svg class="input-icon" lucideLock size="17"></svg>
                         <input
@@ -64,8 +64,8 @@
                         <button
                             type="button"
                             class="toggle-password"
-                            [title]="showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'"
-                            [attr.aria-label]="showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'"
+                            [title]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t"
+                            [attr.aria-label]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t"
                             (click)="showPassword = !showPassword"
                         >
                             @if (showPassword) {
@@ -80,26 +80,26 @@
                 <button type="submit" class="login-button" [disabled]="loading">
                     @if (loading) {
                         <svg class="spin" lucideLoaderCircle size="18"></svg>
-                        <span>Anmelden...</span>
+                        <span>{{ 'login.submitting' | t }}</span>
                     } @else {
                         <svg lucideLogIn size="18"></svg>
-                        <span>Anmelden</span>
+                        <span>{{ 'login.submit' | t }}</span>
                     }
                 </button>
             </form>
 
             @if (providers?.oidcEnabled) {
-                <div class="divider"><span>oder</span></div>
+                <div class="divider"><span>{{ 'login.or' | t }}</span></div>
                 <button type="button" class="sso-button" [disabled]="loading" (click)="loginWithSso()">
                     <svg lucideKeyRound size="18"></svg>
-                    <span>Mit {{ providers?.oidcLabel }} anmelden</span>
+                    <span>{{ 'login.sso' | t: { provider: providers?.oidcLabel } }}</span>
                 </button>
             }
             <footer class="legal-links">
-                @if (customization.settings.imprintUrl) { <a [href]="customization.settings.imprintUrl" target="_blank" rel="noopener noreferrer">Impressum</a> }
-                @if (customization.settings.privacyUrl) { <a [href]="customization.settings.privacyUrl" target="_blank" rel="noopener noreferrer">Datenschutz</a> }
-                @if (customization.settings.websiteUrl) { <a [href]="customization.settings.websiteUrl" target="_blank" rel="noopener noreferrer">Website</a> }
-                @if (customization.settings.supportUrl) { <a [href]="customization.settings.supportUrl" target="_blank" rel="noopener noreferrer">Support</a> }
+                @if (customization.settings.imprintUrl) { <a [href]="customization.settings.imprintUrl" target="_blank" rel="noopener noreferrer">{{ 'login.imprint' | t }}</a> }
+                @if (customization.settings.privacyUrl) { <a [href]="customization.settings.privacyUrl" target="_blank" rel="noopener noreferrer">{{ 'login.privacy' | t }}</a> }
+                @if (customization.settings.websiteUrl) { <a [href]="customization.settings.websiteUrl" target="_blank" rel="noopener noreferrer">{{ 'login.website' | t }}</a> }
+                @if (customization.settings.supportUrl) { <a [href]="customization.settings.supportUrl" target="_blank" rel="noopener noreferrer">{{ 'login.support' | t }}</a> }
             </footer>
         </div>
     </main>

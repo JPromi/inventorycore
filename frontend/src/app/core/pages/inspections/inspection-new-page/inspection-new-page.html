@@ -2,15 +2,15 @@
     <div class="page-shell narrow">
         <header class="page-header">
             <div>
-                <p class="eyebrow">Prüfungen</p>
+                <p class="eyebrow">{{ 'terms.inspections' | t }}</p>
                 <h1>
                     <svg lucideClipboardCheck size="20"></svg>
-                    <span>Neue Prüfung</span>
+                    <span>{{ 'inspectionNew.title' | t }}</span>
                 </h1>
             </div>
             <a class="secondary-action" routerLink="/inspections">
                 <svg lucideArrowLeft size="16"></svg>
-                <span>Zurück</span>
+                <span>{{ 'common.back' | t }}</span>
             </a>
         </header>
 
@@ -19,48 +19,48 @@
         }
 
         @if (loading) {
-            <p class="empty">Lade Daten...</p>
+            <p class="empty">{{ 'common.loading' | t }}</p>
         } @else if (!types.length) {
             <div class="empty-state">
-                Es gibt noch keine Prüfungsvorlage.
-                <a routerLink="/config/inspection-templates/new">Jetzt unter Konfiguration anlegen</a>
+                {{ 'inspectionNew.noTemplates' | t }}
+                <a routerLink="/config/inspection-templates/new">{{ 'inspectionNew.createTemplate' | t }}</a>
             </div>
         } @else {
             <form class="stack" (ngSubmit)="start()">
                 <section class="card">
-                    <h2>Prüfung</h2>
+                    <h2>{{ 'terms.inspection' | t }}</h2>
                     <div class="fields">
                         <div class="field">
-                            <span>Prüfungsvorlage *</span>
+                            <span>{{ 'inspectionNew.templateLabel' | t }}</span>
                             <app-search-select
                                 [options]="typeOptions"
                                 [ngModel]="typeUuid"
                                 (ngModelChange)="selectType($event)"
                                 name="type"
-                                placeholder="Prüfungsvorlage wählen"
-                                searchPlaceholder="Prüfungsvorlage suchen..."
+                                [placeholder]="'inspectionNew.templatePlaceholder' | t"
+                                [searchPlaceholder]="'inspectionNew.templateSearch' | t"
                             />
                             @if (selectedType; as type) {
                                 <small class="hint">
-                                    {{ type.mode === 'CHECK' ? 'Einzelprüfung' : 'Inventur' }} · {{ type.fields.length }} Prüffelder
+                                    {{ type.mode === 'CHECK' ? ('inspectionNew.mode.CHECK' | t) : ('inspectionNew.mode.INVENTORY' | t) }} · {{ 'inspectionNew.fieldCount' | tn: type.fields.length }}
                                     @if (type.intervalValue) {
                                         · {{ intervalText(type.intervalValue, type.intervalUnit) }}
                                     }
                                     @if (type.assetTypeNames.length) {
-                                        · nur {{ type.assetTypeNames.join(', ') }}
+                                        · {{ 'inspectionNew.onlyTypes' | t: { types: type.assetTypeNames.join(', ') } }}
                                     }
                                 </small>
                             }
                         </div>
                         <label class="field">
-                            <span>Titel</span>
+                            <span>{{ 'inspectionNew.titleLabel' | t }}</span>
                             <input type="text" [(ngModel)]="title" (ngModelChange)="titleChanged()" name="title" />
                         </label>
                         <div class="field">
-                            <span>Bereich des Prüfprotokolls *</span>
+                            <span>{{ 'inspectionNew.protocolArea' | t }}</span>
                             <app-search-select [options]="protocolAreaOptions" [(ngModel)]="protocolAreaUuid"
                                 [disabled]="!!selectedType?.protocolAreaUuid"
-                                name="protocolArea" placeholder="Bereich wählen" />
+                                name="protocolArea" [placeholder]="'inspectionNew.protocolAreaPlaceholder' | t" />
                         </div>
                     </div>
                 </section>
@@ -69,9 +69,9 @@
                     <section class="card due-card">
                         <label class="toggle">
                             <input type="checkbox" [(ngModel)]="checkFunction" name="checkFunction" />
-                            <span>Funktion prüfen – vorhandene Assets auch als „In Ordnung“ oder „Defekt“ erfassen</span>
+                            <span>{{ 'inspectionNew.checkFunction' | t }}</span>
                         </label>
-                        <p class="hint">Vorgabe der Prüfungsvorlage: {{ selectedType?.checkFunction ? 'mit' : 'ohne' }} Funktionsprüfung</p>
+                        <p class="hint">{{ selectedType?.checkFunction ? ('inspectionNew.checkFunctionDefault.with' | t) : ('inspectionNew.checkFunctionDefault.without' | t) }}</p>
                     </section>
                 }
 
@@ -79,32 +79,32 @@
                     <section class="card due-card">
                         <label class="toggle">
                             <input type="checkbox" [(ngModel)]="onlyDue" (ngModelChange)="filterChanged()" name="onlyDue" />
-                            <span>Nur fällige Assets prüfen</span>
+                            <span>{{ 'inspectionNew.onlyDue' | t }}</span>
                         </label>
                         @if (onlyDue) {
                             <div class="due-days">
-                                <span>überfällig oder fällig in den nächsten</span>
+                                <span>{{ 'inspectionNew.dueWithin.before' | t }}</span>
                                 <input type="number" min="0" [(ngModel)]="dueWithinDays" (ngModelChange)="filterChanged()" name="dueWithinDays" />
-                                <span>Tagen</span>
+                                <span>{{ 'inspectionNew.dueWithin.after' | t }}</span>
                             </div>
                         }
                     </section>
                 }
 
                 <section class="card">
-                    <h2>Welche Assets werden geprüft?</h2>
-                    <p class="hint">Leer gelassene Filter schränken nicht ein. Innerhalb eines Filters reicht eine Übereinstimmung.</p>
+                    <h2>{{ 'inspectionNew.assetsHeading' | t }}</h2>
+                    <p class="hint">{{ 'inspectionNew.filterHint' | t }}</p>
                     <div class="fields">
                         <div class="field">
-                            <span>Standorte</span>
+                            <span>{{ 'terms.locations' | t }}</span>
                             <app-multi-select
                                 [options]="locationOptions"
                                 [lockedOptions]="lockedLocations"
-                                lockedHint="Durch die Prüfvorlage vorgegeben"
+                                [lockedHint]="'inspectionNew.lockedHint' | t"
                                 [(ngModel)]="filter.locationUuids"
                                 (ngModelChange)="filterChanged()"
                                 name="location"
-                                placeholder="Alle Standorte"
+                                [placeholder]="'inspectionNew.allLocations' | t"
                             />
                             <label class="toggle">
                                 <input
@@ -114,48 +114,48 @@
                                     name="includeSub"
                                     [disabled]="!filter.locationUuids?.length"
                                 />
-                                <span>Unterstandorte einschließen</span>
+                                <span>{{ 'inspectionNew.includeSubLocations' | t }}</span>
                             </label>
                             <label class="toggle">
                                 <input type="checkbox" [(ngModel)]="includeChildAssets"
                                     (ngModelChange)="filterChanged()" name="includeChildAssets" />
-                                <span>Untergeordnete Assets mitprüfen</span>
+                                <span>{{ 'inspectionNew.includeChildAssets' | t }}</span>
                             </label>
                         </div>
                         <div class="field">
-                            <span>Tags</span>
+                            <span>{{ 'terms.tags' | t }}</span>
                             <app-multi-select
                                 [options]="tagOptions"
                                 [lockedOptions]="lockedTags"
-                                lockedHint="Durch die Prüfvorlage vorgegeben"
+                                [lockedHint]="'inspectionNew.lockedHint' | t"
                                 [(ngModel)]="filter.tagUuids"
                                 (ngModelChange)="filterChanged()"
                                 name="tags"
-                                placeholder="Tag hinzufügen..."
+                                [placeholder]="'inspectionNew.addTag' | t"
                             />
                         </div>
                         <div class="field">
-                            <span>Typen</span>
+                            <span>{{ 'terms.assetTypes' | t }}</span>
                             <app-multi-select
                                 [options]="assetTypeOptions"
                                 [lockedOptions]="lockedTypes"
-                                lockedHint="Durch die Prüfvorlage vorgegeben"
+                                [lockedHint]="'inspectionNew.lockedHint' | t"
                                 [(ngModel)]="filter.assetTypeUuids"
                                 (ngModelChange)="filterChanged()"
                                 name="assetTypes"
-                                placeholder="Typ hinzufügen..."
+                                [placeholder]="'inspectionNew.addType' | t"
                             />
                         </div>
                         <div class="field">
-                            <span>Bereiche</span>
+                            <span>{{ 'terms.areas' | t }}</span>
                             <app-multi-select
                                 [options]="areaOptions"
                                 [(ngModel)]="filter.areaUuids"
                                 (ngModelChange)="areasChanged()"
                                 name="areas"
-                                placeholder="Alle Bereiche"
+                                [placeholder]="'inspectionNew.allAreas' | t"
                             />
-                            <small class="hint">Vorbelegt mit dem links gewählten Bereich. Typen, Tags und Standorte zeigen nur, was es dort gibt.</small>
+                            <small class="hint">{{ 'inspectionNew.areasHint' | t }}</small>
                         </div>
                     </div>
                 </section>
@@ -163,15 +163,15 @@
                 <div class="start-bar card">
                     <div class="preview">
                         @if (previewLoading) {
-                            <span class="hint">Zähle Assets...</span>
+                            <span class="hint">{{ 'inspectionNew.counting' | t }}</span>
                         } @else if (previewCount !== null) {
                             <strong>{{ previewCount }}</strong>
-                            <span>{{ previewCount === 1 ? 'Asset wird' : 'Assets werden' }} erwartet</span>
+                            <span>{{ 'inspectionNew.expected' | tn: previewCount }}</span>
                         }
                     </div>
                     <button type="submit" class="primary-action" [disabled]="!typeUuid || !protocolAreaUuid || starting">
                         <svg lucidePlay size="16"></svg>
-                        <span>{{ starting ? 'Startet...' : 'Prüfung starten' }}</span>
+                        <span>{{ starting ? ('inspectionNew.starting' | t) : ('inspectionNew.start' | t) }}</span>
                     </button>
                 </div>
             </form>

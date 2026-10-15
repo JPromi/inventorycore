@@ -1,32 +1,32 @@
-<app-print-document kind="Asset-Datenblatt" [title]="asset.name" [meta]="meta">
+<app-print-document [kind]="'assetPrint.kind' | t" [title]="asset.name" [meta]="meta">
     @if (images.length) {
         <div printOptions class="field">
-            <span>Bilder</span>
-            <app-search-select name="printImages" [options]="imageModes" [(ngModel)]="imageMode" searchPlaceholder="Suchen..." />
+            <span>{{ 'assetPrint.images' | t }}</span>
+            <app-search-select name="printImages" [options]="imageModes" [(ngModel)]="imageMode" [searchPlaceholder]="'common.searchPlaceholder' | t" />
         </div>
     }
     @if (lastInspection) {
         <label printOptions class="toggle">
             <input type="checkbox" name="printInspection" [(ngModel)]="printInspection" />
-            <span>Letzte Prüfung mit Prüfwerten</span>
+            <span>{{ 'assetPrint.options.inspection' | t }}</span>
         </label>
     }
     @if (schedules.length) {
         <label printOptions class="toggle">
             <input type="checkbox" name="printSchedules" [(ngModel)]="printSchedules" />
-            <span>Prüftermine</span>
+            <span>{{ 'assetPrint.options.schedules' | t }}</span>
         </label>
     }
     @if (parent || children.length) {
         <label printOptions class="toggle">
             <input type="checkbox" name="printLinks" [(ngModel)]="printLinks" />
-            <span>Verknüpfte Assets</span>
+            <span>{{ 'assetPrint.options.links' | t }}</span>
         </label>
     }
 
     <div class="print-columns">
         <section class="print-section">
-            <h2>Details</h2>
+            <h2>{{ 'common.details' | t }}</h2>
             @if (details.length) {
                 <div class="print-details">
                     @for (detail of details; track $index) {
@@ -37,7 +37,7 @@
                     }
                 </div>
             } @else {
-                <p class="print-muted">Keine weiteren Angaben.</p>
+                <p class="print-muted">{{ 'assetPrint.noDetails' | t }}</p>
             }
         </section>
         @if (mainImage; as image) {
@@ -49,7 +49,7 @@
 
     @if (moreImages.length) {
         <section class="print-section">
-            <h2>Bilder <span class="print-muted">({{ images.length }})</span></h2>
+            <h2>{{ 'assetPrint.images' | t }} <span class="print-muted">({{ images.length }})</span></h2>
             <div class="print-gallery">
                 @for (image of moreImages; track $index) {
                     <figure>
@@ -65,42 +65,46 @@
 
     @if (printInspection && lastInspection; as entry) {
         <section class="print-section">
-            <h2>Letzte Prüfung</h2>
+            <h2>{{ 'assetPrint.lastInspection.title' | t }}</h2>
             <div class="print-details print-together">
-                <div><span class="print-label">Prüfung</span><span>{{ entry.title }}</span></div>
-                <div><span class="print-label">Vorlage</span><span>{{ entry.typeName }}</span></div>
+                <div><span class="print-label">{{ 'terms.inspection' | t }}</span><span>{{ entry.title }}</span></div>
+                <div><span class="print-label">{{ 'assetPrint.lastInspection.template' | t }}</span><span>{{ entry.typeName }}</span></div>
                 <div>
-                    <span class="print-label">Geprüft</span>
+                    <span class="print-label">{{ 'assetPrint.lastInspection.checked' | t }}</span>
                     <span>
                         {{ entry.checkedAt ?? entry.completedAt | date: 'dd.MM.yyyy HH:mm' }}
                         @if (entry.checkedByName) {
                             · {{ entry.checkedByName }}
                         }
                         @if (entry.method) {
-                            · {{ entry.method === 'SCAN' ? 'Scan' : 'manuell' }}
+                            @if (entry.method === 'SCAN') {
+                                · {{ 'assetPrint.lastInspection.methodScan' | t }}
+                            } @else {
+                                · {{ 'assetPrint.lastInspection.methodManual' | t }}
+                            }
                         }
                     </span>
                 </div>
                 <div>
-                    <span class="print-label">Ergebnis</span>
+                    <span class="print-label">{{ 'assetPrint.lastInspection.result' | t }}</span>
                     <span [class.print-alert]="result(entry).tone === 'bad' || result(entry).tone === 'warn'">{{ result(entry).label }}</span>
                 </div>
                 @if (entry.locationName) {
-                    <div><span class="print-label">Standort bei der Prüfung</span><span>{{ entry.locationName }}</span></div>
+                    <div><span class="print-label">{{ 'assetPrint.lastInspection.locationAtInspection' | t }}</span><span>{{ entry.locationName }}</span></div>
                 }
                 @if (entry.inspectionStatus === 'OPEN') {
-                    <div><span class="print-label">Status</span><span>Prüfung läuft noch</span></div>
+                    <div><span class="print-label">{{ 'assetPrint.lastInspection.status' | t }}</span><span>{{ 'assetPrint.lastInspection.running' | t }}</span></div>
                 }
                 @if (entry.note) {
-                    <div class="wide"><span class="print-label">Notiz</span><span class="print-text">{{ entry.note }}</span></div>
+                    <div class="wide"><span class="print-label">{{ 'assetPrint.lastInspection.note' | t }}</span><span class="print-text">{{ entry.note }}</span></div>
                 }
             </div>
             @if (entry.values.length) {
                 <table class="print-table">
                     <thead>
                         <tr>
-                            <th>Prüfwert</th>
-                            <th>Ergebnis</th>
+                            <th>{{ 'assetPrint.lastInspection.checkValue' | t }}</th>
+                            <th>{{ 'assetPrint.lastInspection.result' | t }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -120,14 +124,14 @@
 
     @if (printSchedules && schedules.length) {
         <section class="print-section">
-            <h2>Prüftermine</h2>
+            <h2>{{ 'assetPrint.schedules.title' | t }}</h2>
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th>Prüfung</th>
-                        <th>Intervall</th>
-                        <th>Nächste Prüfung</th>
-                        <th>Zuletzt geprüft</th>
+                        <th>{{ 'terms.inspection' | t }}</th>
+                        <th>{{ 'assetPrint.schedules.interval' | t }}</th>
+                        <th>{{ 'assetPrint.schedules.nextDue' | t }}</th>
+                        <th>{{ 'assetPrint.schedules.lastChecked' | t }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,15 +142,15 @@
                             <td [class.print-alert]="entry.daysUntilDue < 0">
                                 {{ entry.nextDueDate | date: 'dd.MM.yyyy' }}
                                 @if (entry.fixedDueDate) {
-                                    <span class="print-muted">(festes Datum)</span>
+                                    <span class="print-muted">{{ 'assetPrint.schedules.fixedDate' | t }}</span>
                                 }
                             </td>
                             <td>
                                 @if (entry.lastCheckedAt) {
                                     {{ entry.lastCheckedAt | date: 'dd.MM.yyyy' }}
-                                    <span class="print-muted print-block">{{ entry.lastCheckedByName }}{{ entry.lastResult === 'FAILED' ? ' · Mangel' : '' }}</span>
+                                    <span class="print-muted print-block">{{ entry.lastCheckedByName }}@if (entry.lastResult === 'FAILED') { · {{ 'inspectionStatus.FAILED' | t }}}</span>
                                 } @else {
-                                    <span class="print-muted">Noch nie</span>
+                                    <span class="print-muted">{{ 'assetPrint.schedules.never' | t }}</span>
                                 }
                             </td>
                         </tr>
@@ -158,20 +162,20 @@
 
     @if (printLinks && (parent || children.length)) {
         <section class="print-section">
-            <h2>Verknüpfte Assets</h2>
+            <h2>{{ 'assetPrint.links.title' | t }}</h2>
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th>Beziehung</th>
-                        <th>Asset</th>
-                        <th>Inventar-ID</th>
-                        <th>Notiz</th>
+                        <th>{{ 'assetPrint.links.relation' | t }}</th>
+                        <th>{{ 'terms.asset' | t }}</th>
+                        <th>{{ 'terms.invId' | t }}</th>
+                        <th>{{ 'assetPrint.links.note' | t }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (parent) {
                         <tr>
-                            <td>Übergeordnet</td>
+                            <td>{{ 'assetPrint.links.parent' | t }}</td>
                             <td><strong>{{ parent.name }}</strong></td>
                             <td class="print-mono">{{ parent.invId || '—' }}</td>
                             <td>{{ asset.parentAssetNote || '' }}</td>
@@ -179,7 +183,7 @@
                     }
                     @for (child of children; track child.uuid) {
                         <tr>
-                            <td>Untergeordnet</td>
+                            <td>{{ 'assetPrint.links.child' | t }}</td>
                             <td><strong>{{ child.name }}</strong></td>
                             <td class="print-mono">{{ child.invId || '—' }}</td>
                             <td>{{ child.parentAssetNote || '' }}</td>

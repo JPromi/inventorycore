@@ -10,10 +10,10 @@
             @if (state === 'error') {
                 <svg lucideCircleAlert size="30"></svg>
                 <span>{{ error }}</span>
-                <button type="button" class="retry" (click)="start(null); $event.stopPropagation()">Erneut versuchen</button>
+                <button type="button" class="retry" (click)="start(null); $event.stopPropagation()">{{ 'components.cameraView.retry' | t }}</button>
             } @else {
                 <svg lucideCamera size="30"></svg>
-                <span>Kamera wird gestartet...</span>
+                <span>{{ 'components.cameraView.starting' | t }}</span>
             }
         </div>
     }
@@ -22,15 +22,15 @@
         <button
             type="button"
             class="round"
-            [title]="photoMode ? 'Foto abbrechen' : 'Kamera schließen'"
-            [attr.aria-label]="photoMode ? 'Foto abbrechen' : 'Kamera schließen'"
+            [title]="(photoMode ? 'components.cameraView.cancelPhoto' : 'components.cameraView.close') | t"
+            [attr.aria-label]="(photoMode ? 'components.cameraView.cancelPhoto' : 'components.cameraView.close') | t"
             (click)="close()"
         >
             <svg lucideX size="22"></svg>
         </button>
         <span class="title">{{ title }}</span>
         @if (torchSupported && state === 'running') {
-            <button type="button" class="round" [class.on]="torchOn" [title]="torchOn ? 'Licht aus' : 'Licht an'" (click)="toggleTorch()">
+            <button type="button" class="round" [class.on]="torchOn" [title]="(torchOn ? 'components.cameraView.torchOff' : 'components.cameraView.torchOn') | t" (click)="toggleTorch()">
                 @if (torchOn) {
                     <svg lucideZapOff size="20"></svg>
                 } @else {
@@ -39,7 +39,7 @@
             </button>
         }
         @if (cameras.length > 1) {
-            <button type="button" class="round" title="Kamera wechseln" aria-label="Kamera wechseln" (click)="switchCamera()">
+            <button type="button" class="round" [title]="'components.cameraView.switchCamera' | t" [attr.aria-label]="'components.cameraView.switchCamera' | t" (click)="switchCamera()">
                 <svg lucideSwitchCamera size="20"></svg>
             </button>
         }
@@ -47,7 +47,7 @@
 
     @if (state === 'running' && photoMode) {
         <p class="hint photo-hint">{{ error || photoHint }}</p>
-        <button type="button" class="shutter" title="Foto aufnehmen" aria-label="Foto aufnehmen" [disabled]="capturing" (click)="shoot(); $event.stopPropagation()"></button>
+        <button type="button" class="shutter" [title]="'components.cameraView.takePhoto' | t" [attr.aria-label]="'components.cameraView.takePhoto' | t" [disabled]="capturing" (click)="shoot(); $event.stopPropagation()"></button>
     } @else if (state === 'running' && !(sheetOpen && immersive)) {
         <p class="hint">{{ hint }}</p>
     }
@@ -55,7 +55,7 @@
 
 @if (sheetOpen && immersive && !photoMode) {
     <div #sheet class="sheet" role="dialog" aria-modal="false" [attr.aria-label]="title">
-        <button type="button" class="sheet-close" title="Schließen" aria-label="Schließen" (click)="sheetClose.emit()">
+        <button type="button" class="sheet-close" [title]="'common.close' | t" [attr.aria-label]="'common.close' | t" (click)="sheetClose.emit()">
             <svg lucideX size="18"></svg>
         </button>
         <ng-content />

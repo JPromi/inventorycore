@@ -29,6 +29,10 @@ npm test -- --watch=false
 
 Known baseline: this command fails during compilation in the existing login-page spec. It has an outdated service import, Jasmine-style `spyOn` calls, and direct access to protected component members. This was verified while preparing this documentation; it is not a passing test suite. Correct these tests in a separate application/test maintenance task rather than hiding the failure.
 
+## Texts
+
+From `frontend/`, `npm run i18n:check` verifies that every literal text key used in templates and TypeScript (`'key' | t`, `t('key')`, `tn(...)`) exists in `public/i18n/de.json`; keys built at runtime are not covered. Unit tests that render components without the texts see the keys instead; call `setTranslations()` from `core/i18n/i18n` in such specs. Browser regressions load the real `de.json` from the dev server, so their text assertions follow the current German wording.
+
 ## Browser Regressions
 
 `touch-selection.spec.ts` uses touch-enabled Edge and CDP touch input to cover hold/drag/reverse selection, deselection, edge auto-scroll in list/grid views, stopping on release/cancellation, and native quick-swipe scrolling. These browser regressions do not replace a physical iPhone/Safari check.

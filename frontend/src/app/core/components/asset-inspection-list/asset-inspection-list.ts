@@ -3,6 +3,8 @@ import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideClipboardCheck } from '@lucide/angular';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
 import { AssetInspection, formatCheckValue } from '../../service/inspection.service';
 
 export type InspectionResultTone = 'good' | 'bad' | 'warn' | 'neutral';
@@ -10,28 +12,35 @@ export type InspectionResultTone = 'good' | 'bad' | 'warn' | 'neutral';
 /** Result of an asset in one inspection, as text and tone. */
 export function inspectionResult(entry: AssetInspection): { label: string; tone: InspectionResultTone } {
   if (!entry.expected) {
-    return { label: 'Als fremder Gegenstand gefunden', tone: 'warn' };
+    return { label: t('assetInspections.result.foreign'), tone: 'warn' };
   }
   switch (entry.status) {
     case 'PRESENT':
-      return entry.condition === 'DEFECT'
-        ? { label: 'Da, defekt', tone: 'bad' }
-        : { label: entry.condition === 'OK' ? 'Da, in Ordnung' : 'Da', tone: 'good' };
+      if (entry.condition === 'OK' || entry.condition === 'DEFECT') {
+        const label = t('assetInspections.result.withCondition', {
+          status: t('inspectionStatus.PRESENT'),
+          condition: t(`inspectionCondition.${entry.condition}`),
+        });
+        return { label, tone: entry.condition === 'DEFECT' ? 'bad' : 'good' };
+      }
+      return { label: t('inspectionStatus.PRESENT'), tone: 'good' };
     case 'MISSING':
-      return { label: 'Fehlt', tone: 'bad' };
+      return { label: t('inspectionStatus.MISSING'), tone: 'bad' };
     case 'PASSED':
-      return { label: 'In Ordnung', tone: 'good' };
+      return { label: t('inspectionStatus.PASSED'), tone: 'good' };
     case 'FAILED':
-      return { label: 'Mangel', tone: 'bad' };
+      return { label: t('inspectionStatus.FAILED'), tone: 'bad' };
     default:
-      return entry.inspectionStatus === 'OPEN' ? { label: 'Noch nicht geprüft', tone: 'neutral' } : { label: 'Nicht geprüft', tone: 'bad' };
+      return entry.inspectionStatus === 'OPEN'
+        ? { label: t('assetInspections.result.notYetChecked'), tone: 'neutral' }
+        : { label: t('inspectionStatus.PENDING'), tone: 'bad' };
   }
 }
 
 /** Inspections an asset was part of, with its result and check values. */
 @Component({
   selector: 'app-asset-inspection-list',
-  imports: [DatePipe, RouterLink, LucideClipboardCheck],
+  imports: [DatePipe, RouterLink, LucideClipboardCheck, TranslatePipe],
   templateUrl: './asset-inspection-list.html',
   styleUrl: './asset-inspection-list.scss',
 })

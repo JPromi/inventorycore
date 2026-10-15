@@ -1,9 +1,9 @@
-<div #map class="map" role="img" [attr.aria-label]="'Karte: ' + title"></div>
+<div #map class="map" role="img" [attr.aria-label]="'components.locationMap.ariaLabel' | t: { title: title }"></div>
 <div class="map-footer">
     <span class="coordinates">{{ latitude.toFixed(6) }}, {{ longitude.toFixed(6) }}</span>
     @if (shown) {
         <a [href]="linkUrl" target="_blank" rel="noopener">
-            <span>In OpenStreetMap öffnen</span>
+            <span>{{ 'components.locationMap.openInOsm' | t }}</span>
             <svg lucideExternalLink size="13"></svg>
         </a>
     }

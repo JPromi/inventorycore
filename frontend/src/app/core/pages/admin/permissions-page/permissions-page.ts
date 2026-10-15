@@ -21,6 +21,8 @@ import {
   resourceTypeLabel,
 } from '../../../service/admin-api.service';
 import { AreaItem } from '../../../service/area.service';
+import { t } from '../../../i18n/i18n';
+import { TranslateCountPipe, TranslatePipe } from '../../../i18n/translate.pipe';
 
 interface PermissionRow {
   group: AdminGroup;
@@ -32,7 +34,7 @@ const ALL = '__all__';
 
 @Component({
   selector: 'app-permissions-page',
-  imports: [FormsModule, FilterBar, RouterLink, SearchSelect, LucidePlus, LucideShield, LucideTrash2, LucideX],
+  imports: [TranslatePipe, TranslateCountPipe, FormsModule, FilterBar, RouterLink, SearchSelect, LucidePlus, LucideShield, LucideTrash2, LucideX],
   templateUrl: './permissions-page.html',
   styleUrl: './permissions-page.scss',
 })
@@ -41,7 +43,7 @@ export class PermissionsPage implements OnInit {
   protected readonly presets = PERMISSION_PRESETS;
   protected readonly typeLabel = resourceTypeLabel;
   protected readonly typeOptions: SelectOption[] = [
-    { value: ALL, label: 'Alle Objektarten' },
+    { value: ALL, label: t('adminPermissions.allObjectTypes') },
     ...Object.entries(RESOURCE_TYPE_LABELS).map(([value, label]) => ({ value, label })),
   ];
   protected groups: AdminGroup[] = [];
@@ -77,7 +79,7 @@ export class PermissionsPage implements OnInit {
   }
 
   protected get areaFilterOptions(): SelectOption[] {
-    return [{ value: ALL, label: 'Gilt für alle Bereiche' }, ...this.areaOptions];
+    return [{ value: ALL, label: t('adminPermissions.appliesToAllAreas') }, ...this.areaOptions];
   }
 
   protected get rows(): PermissionRow[] {
@@ -104,9 +106,9 @@ export class PermissionsPage implements OnInit {
 
   protected areaName(areaUuid: string | null): string {
     if (!areaUuid) {
-      return 'Alle Bereiche';
+      return t('adminPermissions.allAreas');
     }
-    return this.areas.find((area) => area.uuid === areaUuid)?.name ?? 'Unbekannter Bereich';
+    return this.areas.find((area) => area.uuid === areaUuid)?.name ?? t('adminPermissions.unknownArea');
   }
 
   protected areaColor(areaUuid: string | null): string | null {
@@ -133,9 +135,13 @@ export class PermissionsPage implements OnInit {
 
   protected async remove(row: PermissionRow): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Berechtigung entfernen?',
-      message: `Gruppe „${row.group.name}“ verliert den Zugriff auf ${this.typeLabel(row.permission.resourceType)} in „${this.areaName(row.permission.areaUuid)}“.`,
-      confirmLabel: 'Entfernen',
+      title: t('adminPermissions.removeConfirm.title'),
+      message: t('adminPermissions.removeConfirm.message', {
+        group: row.group.name,
+        type: this.typeLabel(row.permission.resourceType),
+        area: this.areaName(row.permission.areaUuid),
+      }),
+      confirmLabel: t('common.remove'),
       danger: true,
     });
     if (!confirmed) {
@@ -144,7 +150,7 @@ export class PermissionsPage implements OnInit {
     this.api.deletePermission(row.permission.uuid).subscribe({
       next: () => (row.group.permissions = row.group.permissions.filter((entry) => entry !== row.permission)),
       error: () => {
-        this.error = 'Berechtigung konnte nicht entfernt werden.';
+        this.error = t('adminPermissions.errors.remove');
       },
     });
   }
@@ -194,7 +200,7 @@ export class PermissionsPage implements OnInit {
         this.load();
       },
       error: () => {
-        this.error = 'Berechtigung konnte nicht hinzugefügt werden.';
+        this.error = t('adminPermissions.errors.add');
       },
     });
   }
@@ -207,7 +213,7 @@ export class PermissionsPage implements OnInit {
       error: () => {
         rollback();
         this.savingUuids.delete(uuid);
-        this.error = 'Änderung konnte nicht gespeichert werden.';
+        this.error = t('adminPermissions.errors.update');
       },
     });
   }
@@ -222,7 +228,7 @@ export class PermissionsPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Berechtigungen konnten nicht geladen werden.';
+        this.error = t('adminPermissions.errors.load');
         this.loading = false;
       },
     });

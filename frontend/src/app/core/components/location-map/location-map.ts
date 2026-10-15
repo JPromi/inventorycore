@@ -2,6 +2,9 @@ import { AfterViewInit, Component, ElementRef, Input, NgZone, OnChanges, OnDestr
 import { LucideExternalLink } from '@lucide/angular';
 import type * as Leaflet from 'leaflet';
 
+import { t } from '../../i18n/i18n';
+import { TranslatePipe } from '../../i18n/translate.pipe';
+
 const ZOOM = 16;
 /** Coordinates typed into a form: move the map only after a short pause. */
 const SETTLE_MS = 700;
@@ -13,7 +16,7 @@ const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
  */
 @Component({
   selector: 'app-location-map',
-  imports: [LucideExternalLink],
+  imports: [TranslatePipe, LucideExternalLink],
   templateUrl: './location-map.html',
   styleUrl: './location-map.scss',
   // Leaflet builds its own DOM; the styles are scoped by .location-map instead
@@ -23,7 +26,7 @@ const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 export class LocationMap implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) latitude!: number;
   @Input({ required: true }) longitude!: number;
-  @Input() title = 'Standort';
+  @Input() title = t('terms.location');
   /** false while the coordinates are being typed (form preview): wait for a pause before showing them */
   @Input() immediate = true;
 

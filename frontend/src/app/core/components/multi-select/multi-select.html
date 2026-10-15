@@ -15,7 +15,7 @@
             }
             <span>{{ option.label }}</span>
             @if (!disabled) {
-                <button type="button" [attr.aria-label]="option.label + ' entfernen'" (click)="remove(option.value, $event)">
+                <button type="button" [attr.aria-label]="'components.multiSelect.removeOption' | t: { label: option.label }" (click)="remove(option.value, $event)">
                     <svg lucideX size="13"></svg>
                 </button>
             }
@@ -29,7 +29,7 @@
         (focus)="onFocus()"
         (input)="onQueryChange(input.value)"
         (keydown)="onKeydown($event)"
-        aria-label="Eintrag suchen"
+        [attr.aria-label]="'components.multiSelect.searchLabel' | t"
     />
 </div>
 
@@ -70,7 +70,7 @@
                         (click)="requestCreate()"
                     >
                         <svg lucidePlus size="15"></svg>
-                        <span class="label">„{{ query.trim() }}“ erstellen</span>
+                        <span class="label">{{ 'components.multiSelect.create' | t: { name: query.trim() } }}</span>
                     </button>
                 </li>
             }
