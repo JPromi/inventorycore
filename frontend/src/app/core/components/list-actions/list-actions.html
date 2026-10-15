@@ -13,7 +13,7 @@
         </span>
         </span>
         <span>{{ selected.size }} ausgewählt</span></label>
-    <button #trigger type="button" class="secondary-action" [disabled]="disabled || busy || !selected.size"
+    <button #trigger type="button" class="primary-action" [disabled]="disabled || busy || !selected.size"
         [attr.aria-expanded]="open" aria-haspopup="menu" (click)="showMenu()" (keydown.arrowdown)="$event.preventDefault(); showMenu()">
         <span>{{ busy ? 'Löscht...' : 'Aktionen' }}</span><svg lucideChevronDown size="16"></svg>
     </button>
@@ -22,7 +22,12 @@
     }
 @if (open) {
     <div #menu class="action-menu" role="menu" [appDropdownPosition]="trigger">
-        <button type="button" role="menuitem" [disabled]="!deletable" (click)="remove()"
+        @for (action of actions; track action.label) {
+            <button type="button" role="menuitem" (click)="run(action)">
+                <ng-container *ngComponentOutlet="action.icon; inputs: actionIconInputs"></ng-container><span>{{ action.label }}</span>
+            </button>
+        }
+        <button type="button" role="menuitem" class="danger" [disabled]="!deletable" (click)="remove()"
             [title]="deletable ? 'Ausgewählte Einträge löschen' : 'Nicht alle ausgewählten Einträge dürfen gelöscht werden'">
             <svg lucideTrash2 size="16"></svg><span>Löschen</span>
         </button>

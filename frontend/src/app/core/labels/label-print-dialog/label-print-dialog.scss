@@ -133,6 +133,60 @@
         }
     }
 
+    .pager {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        margin-top: .5rem;
+        color: var(--text-muted);
+        font-size: .85rem;
+
+        span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        button {
+            width: 2rem;
+            height: 2rem;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            color: var(--text);
+            cursor: pointer;
+
+            &:disabled {
+                cursor: default;
+                opacity: .55;
+            }
+
+            &:hover:not(:disabled) {
+                background: var(--surface-hover);
+            }
+
+            @include bp.phone {
+                width: 2.6rem;
+                height: 2.6rem;
+            }
+        }
+    }
+
+    // labels are only rendered here to be copied into the print document
+    .print-source {
+        position: fixed;
+        left: -10000px;
+        top: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
     .hint {
         margin-top: .6rem;
         color: var(--text-muted);

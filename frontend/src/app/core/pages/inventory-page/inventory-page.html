@@ -113,7 +113,7 @@
     }
 
     <app-list-actions #selection [items]="visibleItems" [pageItems]="pageItems" [disabled]="loading"
-        [canDelete]="canBulkDelete" [deleteItem]="bulkDelete" (deleted)="load()" />
+        [canDelete]="canBulkDelete" [deleteItem]="bulkDelete" [actions]="bulkActions" (deleted)="load()" />
 
     @if (error) {
         <p class="error">{{ error }}</p>
@@ -216,3 +216,7 @@
         }
     }
 </section>
+
+@if (printAssets) {
+    <app-label-print-dialog [assets]="printAssets" [locations]="locations" [assetTypes]="assetTypes" (closed)="printAssets = null" />
+}

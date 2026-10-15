@@ -391,5 +391,5 @@
 </section>
 
 @if (showPrintDialog && item) {
-    <app-label-print-dialog [asset]="item" [locations]="locations" [assetTypes]="assetTypes" (closed)="showPrintDialog = false" />
+    <app-label-print-dialog [assets]="[item]" [locations]="locations" [assetTypes]="assetTypes" (closed)="showPrintDialog = false" />
 }

@@ -1,5 +1,6 @@
+import { NgComponentOutlet } from '@angular/common';
 import { Component, Directive, ElementRef, EventEmitter, HostBinding, HostListener, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX } from '@lucide/angular';
+import { LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX, type LucideIcon } from '@lucide/angular';
 import { Observable, firstValueFrom } from 'rxjs';
 import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
 import { DropdownPosition } from '../dropdown-position.directive';
@@ -15,9 +16,16 @@ export interface SelectableItem {
   parentLocationUuid?: string | null;
 }
 
+/** Extra entry in the actions menu, run with the currently selected items. */
+export interface ListAction<T> {
+  label: string;
+  icon: LucideIcon;
+  run: (items: T[]) => void;
+}
+
 @Component({
   selector: 'app-list-actions',
-  imports: [DropdownPosition, LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX],
+  imports: [NgComponentOutlet, DropdownPosition, LucideCheck, LucideChevronDown, LucideListChecks, LucideMinus, LucideTrash2, LucideX],
   templateUrl: './list-actions.html', styleUrl: './list-actions.scss',
 })
 export class ListActions<T extends SelectableItem> implements OnChanges, OnDestroy {
@@ -27,12 +35,14 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
   @Input({ required: true }) deleteItem!: (item: T) => Observable<unknown>;
   @Input() disabled = false;
   @Input() deleteWarning = '';
+  @Input() actions: ListAction<T>[] = [];
   @Output() readonly deleted = new EventEmitter<string[]>();
   readonly selected = new Set<string>();
   active = false;
   readonly touch: TouchSelection<T>;
   busy = false;
   protected open = false;
+  protected readonly actionIconInputs = { size: 16 };
   protected error = '';
   private anchor: string | null = null;
   private destroyed = false;
@@ -89,6 +99,11 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
     const selected = (event.target as HTMLInputElement).checked;
     for (const item of this.currentPage) selected ? this.selected.add(item.uuid) : this.selected.delete(item.uuid);
     this.anchor = null;
+  }
+
+  protected run(action: ListAction<T>): void {
+    this.open = false;
+    action.run(this.items.filter(item => this.isSelected(item)));
   }
 
   protected clear(): void { this.selected.clear(); this.anchor = null; this.open = false; }

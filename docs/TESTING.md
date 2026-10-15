@@ -33,7 +33,7 @@ Known baseline: this command fails during compilation in the existing login-page
 
 `touch-selection.spec.ts` uses touch-enabled Edge and CDP touch input to cover hold/drag/reverse selection, deselection, edge auto-scroll in list/grid views, stopping on release/cancellation, and native quick-swipe scrolling. These browser regressions do not replace a physical iPhone/Safari check.
 
-`list-selection.spec.ts` covers shared multi-selection across inventory, tags, label/inspection templates, protocols, and admin user/group/area lists. It exercises explicit selection mode, hidden inactive controls, whole-row/card clicks, restoring navigation on exit, keyboard selection, Shift ranges, page selection and indeterminate state, cross-page selection, grid/mobile menus, filter pruning, cancellation, permission restrictions, partial failures, and child-before-parent deletion. APIs are mocked; existing backend delete authorization remains authoritative.
+`list-selection.spec.ts` covers shared multi-selection across inventory, tags, label/inspection templates, protocols, and admin user/group/area lists. It exercises explicit selection mode, hidden inactive controls, whole-row/card clicks, restoring navigation on exit, keyboard selection, Shift ranges, page selection and indeterminate state, cross-page selection, grid/mobile menus, filter pruning, cancellation, permission restrictions, partial failures, child-before-parent deletion, and batch label printing (template, copies per asset, print pages). APIs are mocked; existing backend delete authorization remains authoritative.
 
 ```sh
 npm run test:e2e

@@ -10,6 +10,7 @@ import {
   LucideMapPin,
   LucidePencil,
   LucidePlus,
+  LucidePrinter,
   LucideRefreshCw,
   LucideSearch,
   LucideShapes,
@@ -19,10 +20,11 @@ import {
 } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
-import { ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
+import { ListAction, ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
 import { FilterBar } from '../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
+import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
 import { AreaService } from '../../service/area.service';
 import { InspectionDue, InspectionService, dueText } from '../../service/inspection.service';
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
@@ -71,6 +73,7 @@ interface FieldConfig {
     SelectionCheckbox,
     FormsModule,
     FilterBar,
+    LabelPrintDialog,
     SearchSelect,
     LucideChevronRight,
     LucideLayers,
@@ -95,6 +98,9 @@ export class InventoryPage implements OnInit {
   protected items: InventoryItem[] = [];
   protected readonly canBulkDelete = (item: InventoryItem) => this.permissions.can(this.config.resourceType, 'delete', item.areaUuids ?? []);
   protected bulkDelete!: (item: InventoryItem) => Observable<unknown>;
+  protected bulkActions: ListAction<InventoryItem>[] = [];
+  /** Assets whose labels are being printed (dialog open while set). */
+  protected printAssets: InventoryItem[] | null = null;
   protected loading = false;
   protected error = '';
   protected viewMode: ViewMode = 'list';
@@ -128,6 +134,9 @@ export class InventoryPage implements OnInit {
       this.config = data['inventoryConfig'];
       const endpoint = this.config.endpoint;
       this.bulkDelete = item => this.api.delete(endpoint, item.uuid);
+      this.bulkActions = endpoint === 'assets'
+        ? [{ label: 'Labels drucken', icon: LucidePrinter, run: items => (this.printAssets = items) }]
+        : [];
       this.items = [];
       this.resetFilters();
       this.load();

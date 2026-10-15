@@ -115,7 +115,37 @@ test('users without delete permission cannot trigger batch deletion', async ({ p
   expect(state.deleted).toHaveLength(0);
 });
 
-test('mobile tile selection and actions menu remain within viewport', async ({ page }, testInfo) => {
+test('batch label printing uses the chosen template and copies per asset', async ({ page }) => {
+  await setup(page, 'assets');
+  await page.route('**/api/label-templates', route => route.fulfill({ json: [
+    { uuid: 'tpl', name: 'Inventarlabel', areaUuid: 'area', defaultForArea: true, widthMm: 62, heightMm: 29,
+      elementsJson: JSON.stringify([{ id: 'n', type: 'text', x: 1, y: 1, width: 60, height: 8, content: '{name}' }]) },
+  ] }));
+  await page.goto('/assets');
+  await page.getByRole('button', { name: 'Auswählen', exact: true }).click();
+  const checks = page.locator('app-selection-checkbox .selection-checkbox');
+  await checks.nth(0).click();
+  await checks.nth(2).click();
+  await page.getByRole('button', { name: 'Aktionen', exact: true }).click();
+  const printItem = page.getByRole('menuitem', { name: 'Labels drucken', exact: true });
+  const deleteColor = await page.getByRole('menuitem', { name: 'Löschen', exact: true }).evaluate(el => getComputedStyle(el).color);
+  expect(await printItem.evaluate(el => getComputedStyle(el).color)).not.toBe(deleteColor);
+  await printItem.click();
+  const dialog = page.getByRole('dialog', { name: 'Label drucken' });
+  await expect(dialog).toContainText('2 Labels drucken');
+  await expect(dialog.locator('.pager')).toContainText('Eintrag 01 · 1 / 2');
+  await dialog.getByRole('button', { name: 'Nächstes Asset', exact: true }).click();
+  await expect(dialog.locator('.pager')).toContainText('Eintrag 03 · 2 / 2');
+  await dialog.getByRole('spinbutton').fill('3');
+  await expect(dialog).toContainText('6 Labels insgesamt');
+  await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();
+  const pages = page.frameLocator('iframe').locator('.page');
+  await expect(pages).toHaveCount(6);
+  await expect(pages.nth(2)).toContainText('Eintrag 01');
+  await expect(pages.nth(3)).toContainText('Eintrag 03');
+});
+
+test('mobile tile selection and actions menu remain within viewport',async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setup(page, 'assets');
   await page.goto('/assets');

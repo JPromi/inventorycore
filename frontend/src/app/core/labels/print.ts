@@ -1,8 +1,8 @@
 /**
- * Prints a rendered label through a hidden iframe whose page size equals the label size,
+ * Prints rendered labels (each `copies` times) through a hidden iframe whose page size equals the label size,
  * so label printers (Brother, Dymo, Zebra, ...) get exactly one label per page.
  */
-export async function printLabel(label: HTMLElement, widthMm: number, heightMm: number, copies = 1): Promise<void> {
+export async function printLabels(labels: HTMLElement[], widthMm: number, heightMm: number, copies = 1): Promise<void> {
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
   iframe.style.right = '0';
@@ -20,8 +20,9 @@ export async function printLabel(label: HTMLElement, widthMm: number, heightMm: 
   }
 
   // the label carries only inline styles; drop the editor shadow for print
-  const markup = label.outerHTML.replace(/box-shadow:[^;"]*;?/g, '');
-  const pages = Array.from({ length: Math.max(1, copies) }, () => `<div class="page">${markup}</div>`).join('');
+  const pages = labels
+    .map(label => `<div class="page">${label.outerHTML.replace(/box-shadow:[^;"]*;?/g, '')}</div>`.repeat(Math.max(1, copies)))
+    .join('');
   doc.open();
   doc.write(`<!doctype html>
 <html>

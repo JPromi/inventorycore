@@ -3,7 +3,7 @@
         <header>
             <h2>
                 <svg lucidePrinter size="18"></svg>
-                <span>Label drucken</span>
+                <span>{{ assets.length > 1 ? assets.length + ' Labels drucken' : 'Label drucken' }}</span>
             </h2>
             <button type="button" class="close" title="Schließen" (click)="close()">
                 <svg lucideX size="16"></svg>
@@ -34,7 +34,7 @@
                     />
                 </div>
                 <label class="field copies">
-                    <span>Anzahl</span>
+                    <span>{{ assets.length > 1 ? 'Anzahl je Asset' : 'Anzahl' }}</span>
                     <input type="number" min="1" max="100" [(ngModel)]="copies" />
                 </label>
             </div>
@@ -46,12 +46,31 @@
                         [widthMm]="current.widthMm"
                         [heightMm]="current.heightMm"
                         [elements]="elements"
-                        [context]="context"
+                        [context]="contexts[index]"
                     />
                 }
             </div>
+            @if (assets.length > 1) {
+                <div class="pager">
+                    <button type="button" title="Vorheriges Asset" aria-label="Vorheriges Asset" [disabled]="index === 0" (click)="index = index - 1">
+                        <svg lucideChevronLeft size="16"></svg>
+                    </button>
+                    <span>{{ assets[index].name }} · {{ index + 1 }} / {{ assets.length }}</span>
+                    <button type="button" title="Nächstes Asset" aria-label="Nächstes Asset" [disabled]="index === assets.length - 1" (click)="index = index + 1">
+                        <svg lucideChevronRight size="16"></svg>
+                    </button>
+                </div>
+            }
             @if (template; as current) {
+                <div class="print-source" aria-hidden="true">
+                    @for (context of contexts; track $index) {
+                        <app-label-renderer #printLabel [widthMm]="current.widthMm" [heightMm]="current.heightMm" [elements]="elements" [context]="context" />
+                    }
+                </div>
                 <p class="hint">
+                    @if (assets.length > 1) {
+                        {{ total }} Labels insgesamt.
+                    }
                     {{ current.widthMm }} × {{ current.heightMm }} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.
                 </p>
             }
