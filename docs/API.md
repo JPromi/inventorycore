@@ -1,6 +1,14 @@
 # API
 
+Inspection templates accept and return `defaultTagUuids` and `includeChildAssets` (default false). Starting an inspection locks the template tags; users may add selections but cannot remove template defaults. Preview and creation always merge template defaults into supplied filters, including empty lists. They accept a nullable `includeChildAssets` override; null uses the template default. With child inclusion enabled, all descendants of matching roots are added regardless of tag, location, type, area, or due-date filters, but each child still requires view/inspect permission and must not be excluded from inspections. Assets are deduplicated; the resulting run items and filter summary preserve the selection independently of later template edits.
+
 ## Contract
+
+Inspection templates expose nullable `protocolAreaUuid`. A configured area is mandatory for runs created from that template and overrides the run request's `areaUuid`. Without it, the current sidebar/default-area behavior is retained. Template assignment requires ASSET_TYPE create/edit permission in the target area; starting a run additionally requires ASSET/INSPECT there. Existing runs retain their own area when a template changes. Deleting an area moves both template protocol-area assignments and runs to the default area.
+
+New inspection requests accept `areaUuid` for the protocol's own area, independently of template applicability and asset filters. If omitted, the backend uses the configured default area. Assignment requires ASSET/INSPECT in that area. Summary `areaUuids`/`areaNames` describe the protocol area; listing, detail access, and mutations enforce its inspection permission. The new-inspection form preselects a permitted sidebar-selected area, otherwise the default or first permitted area. Deleting an area moves its protocols to the default area.
+
+Template defaults also include `defaultAssetTypeUuids` and `defaultLocationUuids`. These are locked starting selections, independent of the existing applicability types/areas. Additional selections remain removable. `InspectionFilter.locationUuids` supports multiple locations (OR), including their descendants when `includeSubLocations` is true; the legacy singular `locationUuid` remains supported and is combined with the list. Runs snapshot the location list. `recurringTagUuids` separately limits recurring due dates to assets matching at least one direct or inherited tag, in addition to applicability types/areas. An empty recurring-tag list imposes no tag restriction. Standard tags do not restrict recurring scheduling.
 
 Spring MVC controllers expose JSON under `/api`. Requests and responses are defined in the backend `dto` package; TypeScript service interfaces mirror them. Public object references use UUID strings. Enum values use their Java enum names, such as `ASSET_TYPE` and `HOURS`.
 

@@ -43,6 +43,8 @@ import com.jpromi.inventorycore.repository.LabelTemplateRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
 import com.jpromi.inventorycore.repository.GroupPermissionRepository;
 import com.jpromi.inventorycore.repository.GroupRepository;
+import com.jpromi.inventorycore.repository.InspectionRepository;
+import com.jpromi.inventorycore.repository.InspectionTypeRepository;
 import com.jpromi.inventorycore.service.ApiMapper;
 import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
@@ -63,6 +65,8 @@ public class AdminController {
     private final PasswordEncoder passwordEncoder;
     private final ApiMapper mapper;
     private final AuditService audit;
+    private final InspectionRepository inspectionRepository;
+    private final InspectionTypeRepository inspectionTypeRepository;
 
     public AdminController(
         AppUserRepository userRepository,
@@ -75,7 +79,9 @@ public class AdminController {
         LabelTemplateRepository labelTemplateRepository,
         PasswordEncoder passwordEncoder,
         ApiMapper mapper,
-        AuditService audit
+        AuditService audit,
+        InspectionRepository inspectionRepository,
+        InspectionTypeRepository inspectionTypeRepository
     ) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -88,6 +94,8 @@ public class AdminController {
         this.passwordEncoder = passwordEncoder;
         this.mapper = mapper;
         this.audit = audit;
+        this.inspectionRepository = inspectionRepository;
+        this.inspectionTypeRepository = inspectionTypeRepository;
     }
 
     // ---- areas ----
@@ -149,6 +157,8 @@ public class AdminController {
         });
         permissionRepository.findByArea(area).forEach(permission -> permission.getGroup().getPermissions().remove(permission));
         permissionRepository.flush();
+        inspectionRepository.moveArea(area, defaultArea);
+        inspectionTypeRepository.moveProtocolArea(area, defaultArea);
         areaRepository.delete(area);
         audit.log(AuditAction.DELETE, AuditObjectType.AREA, area.getUuid(), area.getName(),
             AuditDetail.event("OBJECTS_MOVED_TO_DEFAULT_AREA", "defaultArea", defaultArea.getName()));

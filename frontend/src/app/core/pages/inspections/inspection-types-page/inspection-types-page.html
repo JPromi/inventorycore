@@ -1,24 +1,24 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ visibleTypes.length }} Prüfungsarten</p>
+            <p class="eyebrow">{{ visibleTypes.length }} Prüfungsvorlagen</p>
             <h1>
                 <svg lucideClipboardList size="20"></svg>
-                <span>Prüfungsarten</span>
+                <span>Prüfungsvorlagen</span>
             </h1>
         </div>
         @if (canEdit) {
             <div class="header-actions">
-                <a class="primary-action" routerLink="/config/inspection-types/new">
+                <a class="primary-action" routerLink="/config/inspection-templates/new">
                     <svg lucidePlus size="17"></svg>
-                    <span>Neue Prüfungsart</span>
+                    <span>Neue Prüfungsvorlage</span>
                 </a>
             </div>
         }
     </header>
 
     <p class="hint intro">
-        Eine Prüfungsart legt fest, was bei jedem Asset geprüft wird: Felder für alle Assets
+        Eine Prüfungsvorlage legt fest, was bei jedem Asset geprüft wird: Felder für alle Assets
         und zusätzliche Felder nur für bestimmte Typen, z. B. „Bildschirm funktioniert“ bei Laptops.
     </p>
 
@@ -27,10 +27,10 @@
     }
 
     @if (loading) {
-        <p class="empty">Lade Prüfungsarten...</p>
+        <p class="empty">Lade Prüfungsvorlagen...</p>
     } @else if (!visibleTypes.length) {
         <div class="empty-state">
-            {{ types.length ? 'Keine Prüfungsart für die links gewählten Bereiche.' : 'Noch keine Prüfungsart angelegt.' }}
+            {{ types.length ? 'Keine Prüfungsvorlage für die links gewählten Bereiche.' : 'Noch keine Prüfungsvorlage angelegt.' }}
         </div>
     } @else {
         <div class="type-grid">

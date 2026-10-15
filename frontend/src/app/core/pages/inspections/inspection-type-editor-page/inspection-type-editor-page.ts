@@ -7,6 +7,7 @@ import {
   LucideArrowUp,
   LucideClipboardList,
   LucideListChecks,
+  LucideListFilter,
   LucidePackageSearch,
   LucideRepeat,
   LucidePlus,
@@ -21,7 +22,8 @@ import { ColorPicker } from '../../../components/color-picker/color-picker';
 import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AreaItem, AreaService } from '../../../service/area.service';
-import { AssetFieldType, InventoryApiService, InventoryItem } from '../../../service/inventory-api.service';
+import { locationPath } from '../../../util/location-utils';
+import { AssetFieldType, InventoryApiService, InventoryItem, TagItem } from '../../../service/inventory-api.service';
 import {
   CHECK_FIELD_TYPES,
   INTERVAL_UNITS,
@@ -61,6 +63,7 @@ interface FieldGroup {
     LucideArrowUp,
     LucideClipboardList,
     LucideListChecks,
+    LucideListFilter,
     LucidePackageSearch,
     LucideRepeat,
     LucidePlus,
@@ -77,6 +80,13 @@ export class InspectionTypeEditorPage implements OnInit {
   protected readonly intervalUnits = INTERVAL_UNITS;
   protected mode: InspectionMode = 'INVENTORY';
   protected recurring = false;
+  protected defaultTagUuids: string[] = [];
+  protected defaultAssetTypeUuids: string[] = [];
+  protected defaultLocationUuids: string[] = [];
+  protected recurringTagUuids: string[] = [];
+  protected locations: InventoryItem[] = [];
+  protected includeChildAssets = false;
+  protected tags: TagItem[] = [];
   /** inventory: also in order / defect */
   protected checkFunction = false;
   protected intervalValue = 6;
@@ -85,6 +95,7 @@ export class InspectionTypeEditorPage implements OnInit {
   protected assetTypeUuids: string[] = [];
   /** empty = all areas */
   protected areaUuids: string[] = [];
+  protected protocolAreaUuid: string | null = null;
   protected areas: AreaItem[] = [];
   protected uuid: string | null = null;
   protected name = '';
@@ -110,14 +121,23 @@ export class InspectionTypeEditorPage implements OnInit {
     this.loading = true;
     forkJoin({
       assetTypes: this.inventory.list<InventoryItem>('asset-types'),
+      tags: this.inventory.list<TagItem>('tags'),
+      locations: this.inventory.list<InventoryItem>('locations'),
       areas: this.areaService.load(),
       type: this.uuid ? this.api.type(this.uuid) : of(null),
     }).subscribe({
-      next: ({ assetTypes, areas, type }) => {
+      next: ({ assetTypes, areas, tags, locations, type }) => {
+        this.locations = locations;
+        this.tags = tags;
         this.areas = [...areas].sort((a, b) => a.name.localeCompare(b.name));
         this.assetTypes = assetTypes.sort((a, b) => a.name.localeCompare(b.name));
         if (type) {
           this.name = type.name;
+          this.defaultTagUuids = [...(type.defaultTagUuids ?? [])];
+          this.defaultAssetTypeUuids = [...(type.defaultAssetTypeUuids ?? [])];
+          this.defaultLocationUuids = [...(type.defaultLocationUuids ?? [])];
+          this.recurringTagUuids = [...(type.recurringTagUuids ?? [])];
+          this.includeChildAssets = !!type.includeChildAssets;
           this.description = type.description ?? '';
           this.color = type.color ?? null;
           this.mode = type.mode ?? 'INVENTORY';
@@ -127,7 +147,11 @@ export class InspectionTypeEditorPage implements OnInit {
           this.intervalUnit = type.intervalUnit ?? 'WEEKS';
           this.assetTypeUuids = [...(type.assetTypeUuids ?? [])];
           this.areaUuids = [...(type.areaUuids ?? [])];
+          this.protocolAreaUuid = type.protocolAreaUuid ?? null;
           this.groups = this.toGroups(type.fields);
+        } else {
+          this.protocolAreaUuid = this.areaService.selected.find(uuid => areas.some(area => area.uuid === uuid))
+            ?? areas.find(area => area.defaultArea)?.uuid ?? areas[0]?.uuid ?? null;
         }
         this.loading = false;
       },
@@ -139,11 +163,21 @@ export class InspectionTypeEditorPage implements OnInit {
   }
 
   protected get title(): string {
-    return this.uuid ? 'Prüfungsart bearbeiten' : 'Neue Prüfungsart';
+    return this.uuid ? 'Prüfungsvorlage bearbeiten' : 'Neue Prüfungsvorlage';
   }
 
   protected get areaOptions(): SelectOption[] {
     return this.areas.map((area) => ({ value: area.uuid, label: area.name, color: area.color }));
+  }
+
+  protected get tagOptions(): SelectOption[] {
+    return this.tags.map(tag => ({ value: tag.uuid, label: tag.name, color: tag.color }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  protected get locationOptions(): SelectOption[] {
+    return this.locations.map(location => ({ value: location.uuid, label: locationPath(this.locations, location) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   protected get allTypeOptions(): SelectOption[] {
@@ -225,6 +259,11 @@ export class InspectionTypeEditorPage implements OnInit {
     }
     const request = {
       name: this.name.trim(),
+      defaultTagUuids: this.defaultTagUuids,
+      defaultAssetTypeUuids: this.defaultAssetTypeUuids,
+      defaultLocationUuids: this.defaultLocationUuids,
+      recurringTagUuids: this.recurringTagUuids,
+      includeChildAssets: this.includeChildAssets,
       description: this.description.trim() || null,
       color: this.color,
       mode: this.mode,
@@ -233,13 +272,14 @@ export class InspectionTypeEditorPage implements OnInit {
       intervalUnit: this.recurring ? this.intervalUnit : null,
       assetTypeUuids: this.assetTypeUuids,
       areaUuids: this.areaUuids,
+      protocolAreaUuid: this.protocolAreaUuid,
       fields,
     };
     this.saving = true;
     this.error = '';
     const save$ = this.uuid ? this.api.updateType(this.uuid, request) : this.api.createType(request);
     save$.subscribe({
-      next: () => this.router.navigate(['/config/inspection-types']),
+      next: () => this.router.navigate(['/config/inspection-templates']),
       error: (error) => {
         this.saving = false;
         this.error = error?.error?.message ?? 'Speichern fehlgeschlagen.';

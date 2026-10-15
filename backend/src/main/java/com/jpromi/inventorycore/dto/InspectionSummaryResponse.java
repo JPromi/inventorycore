@@ -12,7 +12,7 @@ public record InspectionSummaryResponse(
     String title,
     UUID inspectionTypeUuid,
     String typeName,
-    /** Areas of the inspection type (empty = all). */
+    /** Assigned protocol area; legacy runs fall back to template areas. */
     List<UUID> areaUuids,
     List<String> areaNames,
     InspectionStatus status,

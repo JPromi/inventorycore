@@ -2,13 +2,13 @@
     <div class="page-shell">
         <header class="page-header">
             <div>
-                <p class="eyebrow">Konfiguration · Prüfungsarten</p>
+                <p class="eyebrow">Konfiguration · Prüfungsvorlagen</p>
                 <h1>
                     <svg lucideClipboardList size="20"></svg>
                     <span>{{ title }}</span>
                 </h1>
             </div>
-            <a class="secondary-action" routerLink="/config/inspection-types">
+            <a class="secondary-action" routerLink="/config/inspection-templates">
                 <svg lucideArrowLeft size="16"></svg>
                 <span>Zurück</span>
             </a>
@@ -37,6 +37,12 @@
                             <span>Beschreibung</span>
                             <textarea [(ngModel)]="description" name="description" rows="2" placeholder="Wofür ist diese Prüfung?"></textarea>
                         </label>
+                        <div class="field wide">
+                            <span class="field-label">Bereich der Prüfprotokolle</span>
+                            <app-search-select [options]="areaOptions" [(ngModel)]="protocolAreaUuid"
+                                name="protocolArea" placeholder="Aktuell ausgewählter Bereich"
+                                clearLabel="Aktuell ausgewählter Bereich" />
+                        </div>
                     </div>
                 </section>
 
@@ -81,10 +87,37 @@
                 </section>
 
                 <section class="card">
-                    <h2><svg lucideRepeat size="16"></svg> Gilt für &amp; Wiederholung</h2>
+                    <h2><svg lucideListFilter size="16"></svg> Filter</h2>
                     <div class="general">
                         <div class="field wide">
-                            <span class="field-label">Gilt für Typen</span>
+                            <span class="field-label">Standard-Tags</span>
+                            <app-multi-select [options]="tagOptions" [(ngModel)]="defaultTagUuids"
+                                name="defaultTagUuids" placeholder="Tag hinzufügen..." />
+                        </div>
+                        <div class="field wide">
+                            <span class="field-label">Standard-Typen</span>
+                            <app-multi-select [options]="allTypeOptions" [(ngModel)]="defaultAssetTypeUuids"
+                                name="defaultAssetTypeUuids" placeholder="Typ hinzufügen..." />
+                        </div>
+                        <div class="field wide">
+                            <span class="field-label">Standard-Standorte</span>
+                            <app-multi-select [options]="locationOptions" [(ngModel)]="defaultLocationUuids"
+                                name="defaultLocationUuids" placeholder="Standort hinzufügen..." />
+                        </div>
+                        <div class="field wide">
+                            <label class="toggle">
+                                <input type="checkbox" [(ngModel)]="includeChildAssets" name="includeChildAssets" />
+                                <span>Untergeordnete Assets mitprüfen</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><svg lucideShapes size="16"></svg> Anwendungsbereich</h2>
+                    <div class="general">
+                        <div class="field wide">
+                            <span class="field-label">Typen</span>
                             <app-multi-select
                                 [options]="allTypeOptions"
                                 [(ngModel)]="assetTypeUuids"
@@ -92,12 +125,11 @@
                                 placeholder="Alle Assets – Typ hinzufügen, um einzuschränken..."
                             />
                             <small class="hint">
-                                Leer = alle Assets. Mit Typen werden beim Start nur Assets dieser Typen übernommen,
-                                und nur diese bekommen einen Prüftermin.
+                                Leer = alle Assets. Typen schränken die Ausgangsauswahl und die wiederkehrenden Prüftermine ein.
                             </small>
                         </div>
                         <div class="field wide">
-                            <span class="field-label">Gilt für Bereiche</span>
+                            <span class="field-label">Bereiche</span>
                             <app-multi-select
                                 [options]="areaOptions"
                                 [(ngModel)]="areaUuids"
@@ -106,15 +138,26 @@
                             />
                             <small class="hint">
                                 Leer = alle Bereiche. Mit Bereichen, z. B. „EDV“, sehen und starten nur Benutzer mit dem Recht
-                                „Prüfen“ in diesen Bereichen die Prüfung, und es werden nur Assets aus diesen Bereichen geprüft.
+                                „Prüfen“ in diesen Bereichen die Prüfung. Die Bereiche begrenzen die Ausgangsauswahl.
                             </small>
                         </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2><svg lucideRepeat size="16"></svg> Wiederholung</h2>
+                    <div class="general">
                         <div class="field wide">
                             <label class="toggle">
                                 <input type="checkbox" [(ngModel)]="recurring" name="recurring" />
                                 <span>Wiederkehrende Prüfung</span>
                             </label>
                             @if (recurring) {
+                                <div class="field wide">
+                                    <span class="field-label">Wiederholung für Tags</span>
+                                    <app-multi-select [options]="tagOptions" [(ngModel)]="recurringTagUuids"
+                                        name="recurringTagUuids" placeholder="Alle Tags" />
+                                </div>
                                 <div class="interval">
                                     <span>Alle</span>
                                     <input type="number" min="1" step="1" [(ngModel)]="intervalValue" name="intervalValue" aria-label="Intervall" />
@@ -230,7 +273,7 @@
                 </section>
 
                 <div class="editor-actions">
-                    <a class="secondary-action" routerLink="/config/inspection-types">Abbrechen</a>
+                    <a class="secondary-action" routerLink="/config/inspection-templates">Abbrechen</a>
                     <button type="submit" class="primary-action" [disabled]="saving">
                         <svg lucideSave size="17"></svg>
                         <span>{{ saving ? 'Speichert...' : 'Speichern' }}</span>

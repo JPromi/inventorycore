@@ -35,7 +35,7 @@ export class InspectionTypesPage implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.error = 'Prüfungsarten konnten nicht geladen werden.';
+        this.error = 'Prüfungsvorlagen konnten nicht geladen werden.';
         this.loading = false;
       },
     });
@@ -69,13 +69,13 @@ export class InspectionTypesPage implements OnInit {
   }
 
   protected edit(type: InspectionType): void {
-    this.router.navigate(['/config/inspection-types', type.uuid]);
+    this.router.navigate(['/config/inspection-templates', type.uuid]);
   }
 
   protected async remove(type: InspectionType, event: Event): Promise<void> {
     event.stopPropagation();
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Prüfungsart löschen?',
+      title: 'Prüfungsvorlage löschen?',
       message: type.inspectionCount
         ? `„${type.name}“ wird gelöscht. Die ${type.inspectionCount} Prüfungen dieser Art bleiben mit allen Werten erhalten.`
         : `„${type.name}“ wird gelöscht.`,
@@ -87,7 +87,7 @@ export class InspectionTypesPage implements OnInit {
     }
     this.api.deleteType(type.uuid).subscribe({
       next: () => (this.types = this.types.filter((entry) => entry !== type)),
-      error: () => (this.error = 'Prüfungsart konnte nicht gelöscht werden.'),
+      error: () => (this.error = 'Prüfungsvorlage konnte nicht gelöscht werden.'),
     });
   }
 }

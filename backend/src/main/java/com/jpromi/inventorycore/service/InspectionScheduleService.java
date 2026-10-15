@@ -116,7 +116,7 @@ public class InspectionScheduleService {
         PermissionService.require(access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas())
             || access.can(PermissionResourceType.ASSET, PermissionAction.EDIT, asset.getAreas()));
         InspectionType type = typeRepository.findByUuid(typeUuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfungsart nicht gefunden"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfungsvorlage nicht gefunden"));
 
         AssetInspectionSchedule schedule = scheduleRepository.findByAssetAndInspectionType(asset, type).orElse(null);
         if (date == null) {
@@ -136,7 +136,7 @@ public class InspectionScheduleService {
         return compute(List.of(asset)).stream()
             .filter(entry -> entry.inspectionTypeUuid().equals(typeUuid))
             .findFirst()
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Diese Prüfungsart gilt nicht für dieses Asset."));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Diese Prüfungsvorlage gilt nicht für dieses Asset."));
     }
 
     /** Ids of the assets for which the type is due within {@code withinDays} (overdue included). */
@@ -170,7 +170,7 @@ public class InspectionScheduleService {
         for (Asset asset : assets) {
             if (!asset.isInspectionRequired()) continue;
             for (InspectionType type : types) {
-                if (type.appliesTo(asset)) {
+                if (type.appliesToSchedule(asset)) {
                     Key key = new Key(asset.getId(), type.getId());
                     result.add(entry(asset, type, checks.get(key), overrides.get(key), locations, today));
                 }

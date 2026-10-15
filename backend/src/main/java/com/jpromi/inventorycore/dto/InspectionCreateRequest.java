@@ -13,5 +13,13 @@ public record InspectionCreateRequest(
     Boolean onlyDue,
     Integer dueWithinDays,
     /** inventory: function check for this run; null = default of the type */
-    Boolean checkFunction
-) {}
+    Boolean checkFunction,
+    /** Null uses the template default; independent of location descendants. */
+    Boolean includeChildAssets,
+    UUID areaUuid
+) {
+    public InspectionCreateRequest(UUID inspectionTypeUuid, String title, InspectionFilter filter,
+        Boolean onlyDue, Integer dueWithinDays, Boolean checkFunction, Boolean includeChildAssets) {
+        this(inspectionTypeUuid, title, filter, onlyDue, dueWithinDays, checkFunction, includeChildAssets, null);
+    }
+}

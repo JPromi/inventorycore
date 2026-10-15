@@ -21,4 +21,12 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     @Modifying
     @Query(value = "delete from asset_type_tags where tag_id = :tagId", nativeQuery = true)
     void detachFromAssetTypes(@Param("tagId") Long tagId);
+
+    @Modifying
+    @Query(value = "delete from inspection_type_default_tags where tag_id = :tagId", nativeQuery = true)
+    void detachFromInspectionTypes(@Param("tagId") Long tagId);
+
+    @Modifying
+    @Query(value = "delete from inspection_type_recurring_tags where tag_id = :tagId", nativeQuery = true)
+    void detachFromRecurringInspections(@Param("tagId") Long tagId);
 }

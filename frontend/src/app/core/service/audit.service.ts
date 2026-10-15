@@ -87,7 +87,7 @@ export const AUDIT_OBJECT_TYPES: { value: AuditObjectType; label: string }[] = [
   { value: 'ASSET_TYPE', label: 'Typ' },
   { value: 'TAG', label: 'Tag' },
   { value: 'INSPECTION', label: 'Prüfung' },
-  { value: 'INSPECTION_TYPE', label: 'Prüfungsart' },
+  { value: 'INSPECTION_TYPE', label: 'Prüfungsvorlage' },
   { value: 'LABEL_TEMPLATE', label: 'Label-Vorlage' },
   { value: 'USER', label: 'Benutzer' },
   { value: 'GROUP', label: 'Gruppe' },
@@ -119,7 +119,7 @@ export function auditObjectRoute(log: AuditLog): string[] | null {
     case 'INSPECTION':
       return ['/inspections', log.objectUuid];
     case 'INSPECTION_TYPE':
-      return ['/config/inspection-types', log.objectUuid];
+      return ['/config/inspection-templates', log.objectUuid];
     case 'LABEL_TEMPLATE':
       return ['/config/labels', log.objectUuid, 'edit'];
     case 'USER':

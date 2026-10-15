@@ -38,6 +38,7 @@ export class MultiSelect implements ControlValueAccessor {
 
   protected get selectedOptions(): SelectOption[] {
     return this.value
+      .filter(value => !this.lockedOptions.some(option => option.value === value))
       .map((value) => this.options.find((option) => option.value === value))
       .filter((option): option is SelectOption => !!option);
   }
@@ -117,6 +118,7 @@ export class MultiSelect implements ControlValueAccessor {
 
   protected remove(value: string, event?: Event): void {
     event?.stopPropagation();
+    if (this.lockedOptions.some(option => option.value === value)) return;
     this.value = this.value.filter((entry) => entry !== value);
     this.onChange(this.value);
   }
@@ -150,8 +152,8 @@ export class MultiSelect implements ControlValueAccessor {
         break;
       }
       case 'Backspace':
-        if (!this.query && this.value.length) {
-          this.remove(this.value[this.value.length - 1]);
+        if (!this.query && this.selectedOptions.length) {
+          this.remove(this.selectedOptions[this.selectedOptions.length - 1].value);
         }
         break;
       case 'Escape':

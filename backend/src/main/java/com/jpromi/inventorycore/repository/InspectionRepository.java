@@ -10,9 +10,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.jpromi.inventorycore.entity.Inspection;
+import com.jpromi.inventorycore.entity.Area;
 import com.jpromi.inventorycore.entity.InspectionType;
 
 public interface InspectionRepository extends JpaRepository<Inspection, Long> {
+    @Modifying
+    @Query("update Inspection i set i.area = :replacement where i.area = :area")
+    void moveArea(@Param("area") Area area, @Param("replacement") Area replacement);
     Optional<Inspection> findByUuid(UUID uuid);
 
     List<Inspection> findAllByOrderByCreatedAtDesc();

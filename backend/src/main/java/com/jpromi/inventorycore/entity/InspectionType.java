@@ -21,6 +21,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
@@ -61,6 +63,10 @@ public class InspectionType {
 
     private String color;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "protocol_area_id")
+    private Area protocolArea;
+
     /** Null for rows created before modes existed; see {@link #getMode()}. */
     @Enumerated(EnumType.STRING)
     private InspectionMode mode;
@@ -76,6 +82,41 @@ public class InspectionType {
      * Default for new inspections; nullable, so the column can be added to existing tables.
      */
     private Boolean checkFunction;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean includeChildAssets;
+
+    @ManyToMany
+    @JoinTable(name = "inspection_type_default_tags",
+        joinColumns = @JoinColumn(name = "inspection_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @Builder.Default
+    private Set<Tag> defaultTags = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "inspection_type_default_asset_types", joinColumns = @JoinColumn(name = "inspection_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "asset_type_id"))
+    @Builder.Default
+    private Set<AssetType> defaultAssetTypes = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "inspection_type_default_locations", joinColumns = @JoinColumn(name = "inspection_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "location_id"))
+    @Builder.Default
+    private Set<Location> defaultLocations = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "inspection_type_recurring_tags", joinColumns = @JoinColumn(name = "inspection_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @Builder.Default
+    private Set<Tag> recurringTags = new HashSet<>();
+
+    public boolean appliesToSchedule(Asset asset) {
+        return appliesTo(asset) && (recurringTags.isEmpty()
+            || asset.getTags().stream().anyMatch(tag -> recurringTags.stream().anyMatch(own -> own.getUuid().equals(tag.getUuid())))
+            || (asset.getAssetType() != null && asset.getAssetType().getTags().stream()
+                .anyMatch(tag -> recurringTags.stream().anyMatch(own -> own.getUuid().equals(tag.getUuid())))));
+    }
 
     /** Asset types this inspection is for; empty = all assets. */
     @ManyToMany

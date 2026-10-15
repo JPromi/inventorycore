@@ -60,6 +60,11 @@ public class Inspection {
     @JoinColumn(name = "inspection_type_id")
     private InspectionType inspectionType;
 
+    /** Independent of the template and asset filters; null only for legacy runs. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area area;
+
     @Column(nullable = false)
     private String typeName;
 
@@ -80,6 +85,9 @@ public class Inspection {
 
     // filters used to select the expected assets (uuid lists comma separated) and as readable text
     private UUID filterLocationUuid;
+
+    @Column(columnDefinition = "text")
+    private String filterLocationUuids;
     private boolean filterIncludeSubLocations;
     @Column(columnDefinition = "text")
     private String filterTagUuids;

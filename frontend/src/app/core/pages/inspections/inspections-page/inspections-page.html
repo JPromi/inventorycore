@@ -56,7 +56,7 @@
         <p class="empty">Lade Prüfungen...</p>
     } @else if (statusFilter === 'DUE') {
         @if (!dueGroups.length) {
-            <div class="empty-state">Keine fälligen Prüfungen. Wiederkehrende Prüfungen legst du unter Konfiguration → Prüfungsarten an.</div>
+            <div class="empty-state">Keine fälligen Prüfungen. Wiederkehrende Prüfungen legst du unter Konfiguration → Prüfungsvorlagen an.</div>
         }
         <div class="due-groups">
             @for (group of dueGroups; track group.typeUuid) {
@@ -113,7 +113,7 @@
             @if (inspections.length) {
                 Keine Prüfungen gefunden. Eventuell ist links ein anderer Bereich ausgewählt.
             } @else {
-                Noch keine Prüfungen. Lege zuerst unter Konfiguration eine Prüfungsart an und starte dann eine Prüfung.
+                Noch keine Prüfungen. Lege zuerst unter Konfiguration eine Prüfungsvorlage an und starte dann eine Prüfung.
             }
         </div>
     } @else {

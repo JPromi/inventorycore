@@ -92,7 +92,7 @@ export class MainRoute implements OnInit {
         { label: 'Tags', route: '/config/tags', icon: LucideTags },
         { label: 'Typen', route: '/config/types', icon: LucideShapes },
         { label: 'Labels', route: '/config/labels', icon: LucideQrCode },
-        { label: 'Prüfungsarten', route: '/config/inspection-types', icon: LucideClipboardList },
+        { label: 'Prüfungsvorlagen', route: '/config/inspection-templates', icon: LucideClipboardList },
       ],
     },
     {

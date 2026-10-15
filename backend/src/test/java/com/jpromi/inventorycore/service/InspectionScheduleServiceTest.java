@@ -60,6 +60,22 @@ class InspectionScheduleServiceTest {
     }
 
     @Test
+    void recurringTagsMatchDirectAndInheritedTagsButNotDefaultTags() {
+        var tag = com.jpromi.inventorycore.entity.Tag.builder().name("Safety").build();
+        brakes.getRecurringTags().add(tag);
+        brakes.getDefaultTags().add(tag);
+        assertTrue(service.all(admin).isEmpty());
+        car.getTags().add(tag);
+        assertEquals(1, service.all(admin).size());
+        car.getTags().clear();
+        vehicle.getTags().add(tag);
+        assertEquals(1, service.all(admin).size());
+        vehicle.getTags().clear();
+        brakes.getRecurringTags().clear();
+        assertEquals(1, service.all(admin).size());
+    }
+
+    @Test
     void excludedAssetsHaveNoDueDatesWhileManualAssetsRemainScheduled() {
         car.setInspectionPolicy(com.jpromi.inventorycore.enums.AssetInspectionPolicy.EXCLUDED);
         assertTrue(service.all(admin).isEmpty());

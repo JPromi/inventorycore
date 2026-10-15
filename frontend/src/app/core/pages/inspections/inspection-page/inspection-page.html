@@ -32,6 +32,9 @@
                         <span>{{ detail.summary.title }}</span>
                     </h1>
                     <p class="filter-summary">{{ detail.summary.filterSummary }}</p>
+                    @if (detail.summary.areaNames.length) {
+                        <p class="filter-summary">Bereich: {{ detail.summary.areaNames.join(', ') }}</p>
+                    }
                 </div>
                 <div class="header-actions no-print">
                     @if (canDelete) {
@@ -483,7 +486,7 @@
                 }
                 <section class="card protocol-meta">
                     <dl>
-                        <div><dt>Prüfungsart</dt><dd>{{ detail.summary.typeName }} ({{ isCheck ? 'Einzelprüfung' : 'Inventur' }})</dd></div>
+                        <div><dt>Prüfungsvorlage</dt><dd>{{ detail.summary.typeName }} ({{ isCheck ? 'Einzelprüfung' : 'Inventur' }})</dd></div>
                         <div><dt>Umfang</dt><dd>{{ detail.summary.filterSummary }}</dd></div>
                         <div>
                             <dt>Gestartet</dt>

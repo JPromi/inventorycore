@@ -219,17 +219,20 @@ export const routes: Routes = [
         loadComponent: () => import('./core/pages/inspections/inspection-page/inspection-page').then((m) => m.InspectionPage),
       },
       {
-        path: 'config/inspection-types',
+        path: 'config/inspection-templates',
         loadComponent: () =>
           import('./core/pages/inspections/inspection-types-page/inspection-types-page').then((m) => m.InspectionTypesPage),
       },
+      { path: 'config/inspection-types', redirectTo: 'config/inspection-templates', pathMatch: 'full' },
+      { path: 'config/inspection-types/new', redirectTo: 'config/inspection-templates/new', pathMatch: 'full' },
+      { path: 'config/inspection-types/:uuid', redirectTo: 'config/inspection-templates/:uuid', pathMatch: 'full' },
       {
-        path: 'config/inspection-types/new',
+        path: 'config/inspection-templates/new',
         loadComponent: () =>
           import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
       },
       {
-        path: 'config/inspection-types/:uuid',
+        path: 'config/inspection-templates/:uuid',
         loadComponent: () =>
           import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
       },

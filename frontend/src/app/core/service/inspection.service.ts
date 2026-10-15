@@ -124,9 +124,21 @@ export interface InspectionType {
   deletable: boolean;
   fields: InspectionField[];
   inspectionCount: number;
+  protocolAreaUuid: string | null;
+  defaultTagUuids: string[];
+  defaultAssetTypeUuids: string[];
+  defaultLocationUuids: string[];
+  recurringTagUuids: string[];
+  includeChildAssets: boolean;
 }
 
 export interface InspectionTypeRequest {
+  protocolAreaUuid: string | null;
+  defaultAssetTypeUuids: string[];
+  defaultLocationUuids: string[];
+  recurringTagUuids: string[];
+  defaultTagUuids: string[];
+  includeChildAssets: boolean;
   name: string;
   description?: string | null;
   color?: string | null;
@@ -140,6 +152,7 @@ export interface InspectionTypeRequest {
 }
 
 export interface InspectionFilter {
+  locationUuids?: string[];
   locationUuid: string | null;
   includeSubLocations: boolean;
   tagUuids: string[];
@@ -332,9 +345,9 @@ export class InspectionService {
   }
 
   /** Number of assets an inspection would start with. */
-  preview(inspectionTypeUuid: string | null, filter: InspectionFilter, onlyDue = false, dueWithinDays = 7): Observable<number> {
+  preview(inspectionTypeUuid: string | null, filter: InspectionFilter, onlyDue = false, dueWithinDays = 7, includeChildAssets: boolean | null = null): Observable<number> {
     return this.http
-      .post<{ count: number }>(`${this.apiUrl}/inspections/preview`, { inspectionTypeUuid, filter, onlyDue, dueWithinDays }, this.options)
+      .post<{ count: number }>(`${this.apiUrl}/inspections/preview`, { inspectionTypeUuid, filter, onlyDue, dueWithinDays, includeChildAssets }, this.options)
       .pipe(map((response) => response.count));
   }
 
@@ -346,10 +359,12 @@ export class InspectionService {
     onlyDue = false,
     dueWithinDays = 7,
     checkFunction: boolean | null = null,
+    includeChildAssets: boolean | null = null,
+    areaUuid: string | null = null,
   ): Observable<InspectionDetail> {
     return this.http.post<InspectionDetail>(
       `${this.apiUrl}/inspections`,
-      { inspectionTypeUuid, title, filter, onlyDue, dueWithinDays, checkFunction },
+      { inspectionTypeUuid, title, filter, onlyDue, dueWithinDays, checkFunction, includeChildAssets, areaUuid },
       this.options,
     );
   }

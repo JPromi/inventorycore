@@ -21,5 +21,11 @@ public record InspectionTypeRequest(
     Boolean checkFunction,
     List<UUID> assetTypeUuids,
     List<UUID> areaUuids,
-    List<InspectionFieldRequest> fields
+    List<InspectionFieldRequest> fields,
+    List<UUID> defaultTagUuids,
+    boolean includeChildAssets,
+    List<UUID> defaultAssetTypeUuids,
+    List<UUID> defaultLocationUuids,
+    List<UUID> recurringTagUuids,
+    UUID protocolAreaUuid
 ) {}

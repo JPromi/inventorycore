@@ -46,6 +46,16 @@ public class SchemaMigration implements CommandLineRunner {
             return;
         }
 
+        if (columnExists("inspections", "area_id") && tableExists("inspection_type_areas")) {
+            jdbc.update("""
+                update inspections i set area_id = coalesce(
+                    (select min(ita.area_id) from inspection_type_areas ita
+                     where ita.inspection_type_id = i.inspection_type_id having count(*) = 1),
+                    (select a.id from areas a where a.default_area = true order by a.id limit 1))
+                where i.area_id is null
+                """);
+        }
+
         // the enum check constraint created by Hibernate still lists old values (e.g. CATEGORY)
         jdbc.execute("alter table group_permissions drop constraint if exists group_permissions_resource_type_check");
         int renamed = jdbc.update("update group_permissions set resource_type = 'ASSET_TYPE' where resource_type = 'CATEGORY'");

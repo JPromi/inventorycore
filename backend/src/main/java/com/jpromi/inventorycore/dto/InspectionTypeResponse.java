@@ -25,5 +25,11 @@ public record InspectionTypeResponse(
     boolean editable,
     boolean deletable,
     List<InspectionFieldResponse> fields,
-    long inspectionCount
+    long inspectionCount,
+    List<UUID> defaultTagUuids,
+    boolean includeChildAssets,
+    List<UUID> defaultAssetTypeUuids,
+    List<UUID> defaultLocationUuids,
+    List<UUID> recurringTagUuids,
+    UUID protocolAreaUuid
 ) {}

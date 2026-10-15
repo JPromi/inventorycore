@@ -9,5 +9,11 @@ public record InspectionFilter(
     boolean includeSubLocations,
     List<UUID> tagUuids,
     List<UUID> assetTypeUuids,
-    List<UUID> areaUuids
-) {}
+    List<UUID> areaUuids,
+    List<UUID> locationUuids
+) {
+    public InspectionFilter(UUID locationUuid, boolean includeSubLocations, List<UUID> tagUuids,
+        List<UUID> assetTypeUuids, List<UUID> areaUuids) {
+        this(locationUuid, includeSubLocations, tagUuids, assetTypeUuids, areaUuids, List.of());
+    }
+}

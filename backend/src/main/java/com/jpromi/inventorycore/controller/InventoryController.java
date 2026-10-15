@@ -261,6 +261,8 @@ public class InventoryController {
         Tag tag = tagOr404(uuid);
         tagRepository.detachFromAssets(tag.getId());
         tagRepository.detachFromAssetTypes(tag.getId());
+        tagRepository.detachFromInspectionTypes(tag.getId());
+        tagRepository.detachFromRecurringInspections(tag.getId());
         tagRepository.delete(tag);
         audit.log(AuditAction.DELETE, AuditObjectType.TAG, tag.getUuid(), tag.getName());
     }

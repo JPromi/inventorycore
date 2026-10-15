@@ -22,8 +22,8 @@
             <p class="empty">Lade Daten...</p>
         } @else if (!types.length) {
             <div class="empty-state">
-                Es gibt noch keine Prüfungsart.
-                <a routerLink="/config/inspection-types/new">Jetzt unter Konfiguration anlegen</a>
+                Es gibt noch keine Prüfungsvorlage.
+                <a routerLink="/config/inspection-templates/new">Jetzt unter Konfiguration anlegen</a>
             </div>
         } @else {
             <form class="stack" (ngSubmit)="start()">
@@ -31,14 +31,14 @@
                     <h2>Prüfung</h2>
                     <div class="fields">
                         <div class="field">
-                            <span>Prüfungsart *</span>
+                            <span>Prüfungsvorlage *</span>
                             <app-search-select
                                 [options]="typeOptions"
                                 [ngModel]="typeUuid"
                                 (ngModelChange)="selectType($event)"
                                 name="type"
-                                placeholder="Prüfungsart wählen"
-                                searchPlaceholder="Prüfungsart suchen..."
+                                placeholder="Prüfungsvorlage wählen"
+                                searchPlaceholder="Prüfungsvorlage suchen..."
                             />
                             @if (selectedType; as type) {
                                 <small class="hint">
@@ -56,6 +56,12 @@
                             <span>Titel</span>
                             <input type="text" [(ngModel)]="title" (ngModelChange)="titleChanged()" name="title" />
                         </label>
+                        <div class="field">
+                            <span>Bereich des Prüfprotokolls *</span>
+                            <app-search-select [options]="protocolAreaOptions" [(ngModel)]="protocolAreaUuid"
+                                [disabled]="!!selectedType?.protocolAreaUuid"
+                                name="protocolArea" placeholder="Bereich wählen" />
+                        </div>
                     </div>
                 </section>
 
@@ -65,7 +71,7 @@
                             <input type="checkbox" [(ngModel)]="checkFunction" name="checkFunction" />
                             <span>Funktion prüfen – vorhandene Assets auch als „In Ordnung“ oder „Defekt“ erfassen</span>
                         </label>
-                        <p class="hint">Vorgabe der Prüfungsart: {{ selectedType?.checkFunction ? 'mit' : 'ohne' }} Funktionsprüfung</p>
+                        <p class="hint">Vorgabe der Prüfungsvorlage: {{ selectedType?.checkFunction ? 'mit' : 'ohne' }} Funktionsprüfung</p>
                     </section>
                 }
 
@@ -90,15 +96,15 @@
                     <p class="hint">Leer gelassene Filter schränken nicht ein. Innerhalb eines Filters reicht eine Übereinstimmung.</p>
                     <div class="fields">
                         <div class="field">
-                            <span>Standort</span>
-                            <app-search-select
+                            <span>Standorte</span>
+                            <app-multi-select
                                 [options]="locationOptions"
-                                [(ngModel)]="filter.locationUuid"
+                                [lockedOptions]="lockedLocations"
+                                lockedHint="Durch die Prüfvorlage vorgegeben"
+                                [(ngModel)]="filter.locationUuids"
                                 (ngModelChange)="filterChanged()"
                                 name="location"
                                 placeholder="Alle Standorte"
-                                clearLabel="Alle Standorte"
-                                searchPlaceholder="Standort suchen..."
                             />
                             <label class="toggle">
                                 <input
@@ -106,15 +112,22 @@
                                     [(ngModel)]="filter.includeSubLocations"
                                     (ngModelChange)="filterChanged()"
                                     name="includeSub"
-                                    [disabled]="!filter.locationUuid"
+                                    [disabled]="!filter.locationUuids?.length"
                                 />
                                 <span>Unterstandorte einschließen</span>
+                            </label>
+                            <label class="toggle">
+                                <input type="checkbox" [(ngModel)]="includeChildAssets"
+                                    (ngModelChange)="filterChanged()" name="includeChildAssets" />
+                                <span>Untergeordnete Assets mitprüfen</span>
                             </label>
                         </div>
                         <div class="field">
                             <span>Tags</span>
                             <app-multi-select
                                 [options]="tagOptions"
+                                [lockedOptions]="lockedTags"
+                                lockedHint="Durch die Prüfvorlage vorgegeben"
                                 [(ngModel)]="filter.tagUuids"
                                 (ngModelChange)="filterChanged()"
                                 name="tags"
@@ -125,6 +138,8 @@
                             <span>Typen</span>
                             <app-multi-select
                                 [options]="assetTypeOptions"
+                                [lockedOptions]="lockedTypes"
+                                lockedHint="Durch die Prüfvorlage vorgegeben"
                                 [(ngModel)]="filter.assetTypeUuids"
                                 (ngModelChange)="filterChanged()"
                                 name="assetTypes"
@@ -154,7 +169,7 @@
                             <span>{{ previewCount === 1 ? 'Asset wird' : 'Assets werden' }} erwartet</span>
                         }
                     </div>
-                    <button type="submit" class="primary-action" [disabled]="!typeUuid || starting">
+                    <button type="submit" class="primary-action" [disabled]="!typeUuid || !protocolAreaUuid || starting">
                         <svg lucidePlay size="16"></svg>
                         <span>{{ starting ? 'Startet...' : 'Prüfung starten' }}</span>
                     </button>

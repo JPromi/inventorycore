@@ -8,6 +8,7 @@ import { catchError, debounceTime, switchMap } from 'rxjs/operators';
 import { MultiSelect } from '../../../components/multi-select/multi-select';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AreaService } from '../../../service/area.service';
+import { PermissionService } from '../../../service/permission.service';
 import { InspectionFilter, InspectionService, InspectionType, intervalText } from '../../../service/inspection.service';
 import { InventoryApiService, InventoryItem, TagItem } from '../../../service/inventory-api.service';
 import { locationPath } from '../../../util/location-utils';
@@ -23,6 +24,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   protected types: InspectionType[] = [];
   protected typeUuid: string | null = null;
   protected title = '';
+  protected protocolAreaUuid: string | null = null;
   private titleTouched = false;
   protected filter: InspectionFilter = { locationUuid: null, includeSubLocations: true, tagUuids: [], assetTypeUuids: [], areaUuids: [] };
 
@@ -40,6 +42,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
 
   /** Only assets whose recurring inspection is overdue or due within {@link dueWithinDays}. */
   protected onlyDue = false;
+  protected includeChildAssets = false;
   /** inventory: also in order / defect (default from the type) */
   protected checkFunction = false;
   protected dueWithinDays = 7;
@@ -55,6 +58,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
     protected readonly areaService: AreaService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly permissions: PermissionService,
   ) {}
 
   ngOnInit(): void {
@@ -63,7 +67,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
         debounceTime(250),
         switchMap(() =>
           this.api
-            .preview(this.typeUuid, { ...this.filter }, this.onlyDue && !!this.selectedType?.intervalValue, this.dueWithinDays)
+            .preview(this.typeUuid, { ...this.filter }, this.onlyDue && !!this.selectedType?.intervalValue, this.dueWithinDays, this.includeChildAssets)
             .pipe(catchError(() => of(null))),
         ),
       )
@@ -91,6 +95,9 @@ export class InspectionNewPage implements OnInit, OnDestroy {
         this.assets = assets;
         // start with the areas chosen in the sidebar
         this.filter.areaUuids = [...this.areaService.selected];
+        this.protocolAreaUuid = this.protocolAreaOptions.find(option => this.areaService.selected.includes(option.value))?.value
+          ?? this.protocolAreaOptions.find(option => option.value === this.areaService.defaultArea?.uuid)?.value
+          ?? this.protocolAreaOptions[0]?.value ?? null;
         // "?type=...&due=1" (from the overview of due inspections) preselects
         const preset = this.route.snapshot.queryParamMap.get('type');
         this.onlyDue = this.route.snapshot.queryParamMap.get('due') === '1';
@@ -126,7 +133,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   protected get locationOptions(): SelectOption[] {
     const used = new Set(this.scopedAssets.map((asset) => asset.locationUuid));
     return this.locations
-      .filter((location) => this.inScope(location.areaUuids) || used.has(location.uuid) || location.uuid === this.filter.locationUuid)
+      .filter((location) => this.inScope(location.areaUuids) || used.has(location.uuid) || location.uuid === this.filter.locationUuid || this.filter.locationUuids?.includes(location.uuid))
       .map((location) => ({ value: location.uuid, label: locationPath(this.locations, location), hint: location.address ?? undefined }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
@@ -135,7 +142,7 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   protected get assetTypeOptions(): SelectOption[] {
     const used = new Set(this.scopedAssets.map((asset) => asset.assetTypeUuid));
     return this.assetTypes
-      .filter((type) => (this.filter.areaUuids.length ? used.has(type.uuid) || this.inScope(type.areaUuids, false) : true))
+      .filter((type) => (this.filter.areaUuids.length ? used.has(type.uuid) || this.inScope(type.areaUuids, false) || this.filter.assetTypeUuids.includes(type.uuid) : true))
       .map((type) => ({ value: type.uuid, label: type.name })).sort((a, b) => a.label.localeCompare(b.label));
   }
 
@@ -143,12 +150,16 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   protected get tagOptions(): SelectOption[] {
     const used = new Set(this.scopedAssets.flatMap((asset) => asset.tags ?? []).map((tag) => tag.uuid));
     return this.tags
-      .filter((tag) => !this.filter.areaUuids.length || used.has(tag.uuid))
+      .filter((tag) => !this.filter.areaUuids.length || used.has(tag.uuid) || this.filter.tagUuids.includes(tag.uuid))
       .map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color })).sort((a, b) => a.label.localeCompare(b.label));
   }
 
   protected get areaOptions(): SelectOption[] {
     return this.areaService.areas.map((area) => ({ value: area.uuid, label: area.name, color: area.color }));
+  }
+
+  protected get protocolAreaOptions(): SelectOption[] {
+    return this.areaOptions.filter(option => this.permissions.canInArea('ASSET', 'inspect', option.value));
   }
 
   /** Assets in the chosen areas (all when no area is chosen). */
@@ -194,9 +205,30 @@ export class InspectionNewPage implements OnInit, OnDestroy {
     return this.types.find((type) => type.uuid === this.typeUuid) ?? null;
   }
 
+  protected get lockedTags(): SelectOption[] {
+    return this.tagOptions.filter(option => this.selectedType?.defaultTagUuids?.includes(option.value));
+  }
+
+  protected get lockedTypes(): SelectOption[] {
+    return this.assetTypeOptions.filter(option => this.selectedType?.defaultAssetTypeUuids?.includes(option.value));
+  }
+
+  protected get lockedLocations(): SelectOption[] {
+    return this.locationOptions.filter(option => this.selectedType?.defaultLocationUuids?.includes(option.value));
+  }
+
   protected selectType(uuid: string | null): void {
     this.typeUuid = uuid;
+    this.protocolAreaUuid = this.selectedType?.protocolAreaUuid
+      ?? this.protocolAreaOptions.find(option => this.areaService.selected.includes(option.value))?.value
+      ?? this.protocolAreaOptions.find(option => option.value === this.areaService.defaultArea?.uuid)?.value
+      ?? this.protocolAreaOptions[0]?.value ?? null;
     this.checkFunction = !!this.selectedType?.checkFunction;
+    this.filter.tagUuids = [...(this.selectedType?.defaultTagUuids ?? [])];
+    this.filter.assetTypeUuids = [...(this.selectedType?.defaultAssetTypeUuids ?? [])];
+    this.filter.locationUuid = null;
+    this.filter.locationUuids = [...(this.selectedType?.defaultLocationUuids ?? [])];
+    this.includeChildAssets = !!this.selectedType?.includeChildAssets;
     if (!this.titleTouched) {
       this.title = this.defaultTitle();
     }
@@ -218,15 +250,19 @@ export class InspectionNewPage implements OnInit, OnDestroy {
   }
 
   protected start(): void {
+    if (!this.protocolAreaUuid) {
+      this.error = 'Bitte einen Bereich für das Prüfprotokoll wählen.';
+      return;
+    }
     if (!this.typeUuid || this.starting) {
-      this.error = this.typeUuid ? '' : 'Bitte eine Prüfungsart wählen.';
+      this.error = this.typeUuid ? '' : 'Bitte eine Prüfungsvorlage wählen.';
       return;
     }
     this.starting = true;
     this.error = '';
     const onlyDue = this.onlyDue && !!this.selectedType?.intervalValue;
     const checkFunction = this.selectedType?.mode === 'INVENTORY' ? this.checkFunction : null;
-    this.api.create(this.typeUuid, this.title.trim(), this.filter, onlyDue, this.dueWithinDays, checkFunction).subscribe({
+    this.api.create(this.typeUuid, this.title.trim(), this.filter, onlyDue, this.dueWithinDays, checkFunction, this.includeChildAssets, this.protocolAreaUuid).subscribe({
       next: (inspection) => this.router.navigate(['/inspections', inspection.summary.uuid]),
       error: () => {
         this.starting = false;
@@ -237,9 +273,9 @@ export class InspectionNewPage implements OnInit, OnDestroy {
 
   /** "Fahrzeugprüfung – Garage – 14.10.2026" */
   private defaultTitle(): string {
-    const location = this.locations.find((entry) => entry.uuid === this.filter.locationUuid);
+    const locations = this.locations.filter(entry => entry.uuid === this.filter.locationUuid || this.filter.locationUuids?.includes(entry.uuid));
     const due = this.onlyDue && this.selectedType?.intervalValue ? 'fällige' : null;
-    return [this.selectedType?.name ?? 'Prüfung', due, location?.name, new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
+    return [this.selectedType?.name ?? 'Prüfung', due, locations.map(location => location.name).join(', '), new Date().toLocaleDateString('de-AT')].filter(Boolean).join(' – ');
   }
 }
 

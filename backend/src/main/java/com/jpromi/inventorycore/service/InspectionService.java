@@ -151,7 +151,7 @@ public class InspectionService {
         require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT)
             || access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE));
         InspectionType type = InspectionType.builder().name(requireName(request.name())).build();
-        applyType(type, request);
+        applyType(type, request, access);
         // only for areas the user manages; without areas (= all) only with a right for all areas
         requireAreas(canManage(access, type, PermissionAction.CREATE) || canManage(access, type, PermissionAction.EDIT));
         InspectionTypeResponse created = toResponse(typeRepository.save(type), access);
@@ -164,7 +164,7 @@ public class InspectionService {
         InspectionType type = typeOr404(uuid);
         require(canManage(access, type, PermissionAction.EDIT));
         InspectionTypeResponse before = toResponse(type, access);
-        applyType(type, request);
+        applyType(type, request, access);
         // also for the new areas (rolls back the changes otherwise)
         requireAreas(canManage(access, type, PermissionAction.EDIT));
         InspectionTypeResponse after = toResponse(typeRepository.save(type), access);
@@ -182,10 +182,46 @@ public class InspectionService {
         audit.log(AuditAction.DELETE, AuditObjectType.INSPECTION_TYPE, type.getUuid(), type.getName());
     }
 
-    private void applyType(InspectionType type, InspectionTypeRequest request) {
+    private void applyType(InspectionType type, InspectionTypeRequest request, AccessContext access) {
+        Area protocolArea = request.protocolAreaUuid() == null ? null : areaRepository.findByUuid(request.protocolAreaUuid())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Bereich"));
+        if (protocolArea != null) {
+            require(access.can(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT, Set.of(protocolArea))
+                || access.can(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE, Set.of(protocolArea)));
+        }
+        type.setProtocolArea(protocolArea);
         type.setName(requireName(request.name()));
         type.setDescription(blankToNull(request.description()));
         type.setColor(blankToNull(request.color()));
+        type.setIncludeChildAssets(request.includeChildAssets());
+        type.getDefaultAssetTypes().clear();
+        if (request.defaultAssetTypeUuids() != null) {
+            for (UUID uuid : request.defaultAssetTypeUuids()) {
+                type.getDefaultAssetTypes().add(assetTypeRepository.findByUuid(uuid).filter(entry -> !entry.isDeleted())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Typ " + uuid)));
+            }
+        }
+        type.getDefaultLocations().clear();
+        if (request.defaultLocationUuids() != null) {
+            for (UUID uuid : request.defaultLocationUuids()) {
+                type.getDefaultLocations().add(locationRepository.findByUuid(uuid).filter(entry -> !entry.isDeleted())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Standort " + uuid)));
+            }
+        }
+        type.getRecurringTags().clear();
+        if (request.recurringTagUuids() != null) {
+            for (UUID uuid : request.recurringTagUuids()) {
+                type.getRecurringTags().add(tagRepository.findByUuid(uuid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Tag " + uuid)));
+            }
+        }
+        type.getDefaultTags().clear();
+        if (request.defaultTagUuids() != null) {
+            for (UUID tagUuid : request.defaultTagUuids()) {
+                type.getDefaultTags().add(tagRepository.findByUuid(tagUuid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Tag " + tagUuid)));
+            }
+        }
         type.setMode(request.mode() == null ? InspectionMode.INVENTORY : request.mode());
         // single checks are always about whether the device is in order
         type.setCheckFunction(type.getMode() == InspectionMode.INVENTORY && Boolean.TRUE.equals(request.checkFunction()));
@@ -240,7 +276,7 @@ public class InspectionService {
     public List<InspectionSummaryResponse> inspections(AccessContext access) {
         requireInspect(access);
         return inspectionRepository.findAllByOrderByCreatedAtDesc().stream()
-            .filter(inspection -> canUse(access, inspection.getInspectionType()))
+            .filter(inspection -> canUseInspection(access, inspection))
             .map(this::toSummary)
             .toList();
     }
@@ -256,11 +292,11 @@ public class InspectionService {
     public int preview(AccessContext access, InspectionCreateRequest request) {
         requireInspect(access);
         InspectionType type = request.inspectionTypeUuid() == null ? null : usableType(access, request.inspectionTypeUuid());
-        return selectAssets(access, type, filterOf(request), onlyDue(request, type), request.dueWithinDays()).size();
+        return selectAssets(access, type, filterOf(request, type), onlyDue(request, type), request.dueWithinDays(), includeChildren(request, type)).size();
     }
 
     /** Assets an inspection starts with: the filters, the types of the inspection and optionally only due ones. */
-    private List<Asset> selectAssets(AccessContext access, InspectionType type, InspectionFilter filter, boolean onlyDue, Integer dueWithinDays) {
+    private List<Asset> selectAssets(AccessContext access, InspectionType type, InspectionFilter filter, boolean onlyDue, Integer dueWithinDays, boolean includeChildAssets) {
         List<Asset> assets = expectedAssets(access, filter).stream()
             .filter(asset -> type == null || type.appliesTo(asset))
             .toList();
@@ -269,11 +305,53 @@ public class InspectionService {
                 dueWithinDays == null ? InspectionScheduleService.DUE_SOON_DAYS : dueWithinDays);
             assets = assets.stream().filter(asset -> due.contains(asset.getUuid())).toList();
         }
-        return assets;
+        if (!includeChildAssets || assets.isEmpty()) {
+            return assets;
+        }
+        Map<UUID, List<Asset>> children = new HashMap<>();
+        for (Asset asset : assetRepository.findByDeletedFalse()) {
+            if (asset.getParentAsset() != null) {
+                children.computeIfAbsent(asset.getParentAsset().getUuid(), key -> new ArrayList<>()).add(asset);
+            }
+        }
+        List<Asset> selected = new ArrayList<>(assets);
+        Set<UUID> visited = new HashSet<>();
+        assets.forEach(asset -> visited.add(asset.getUuid()));
+        List<Asset> queue = new ArrayList<>(assets);
+        for (int index = 0; index < queue.size(); index++) {
+            for (Asset child : children.getOrDefault(queue.get(index).getUuid(), List.of())) {
+                if (!visited.add(child.getUuid())) {
+                    continue;
+                }
+                queue.add(child);
+                if (child.isInspectionRequired() && access.canViewAsset(child)
+                    && access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, child.getAreas())) {
+                    selected.add(child);
+                }
+            }
+        }
+        return selected;
     }
 
-    private static InspectionFilter filterOf(InspectionCreateRequest request) {
-        return request.filter() == null ? new InspectionFilter(null, true, List.of(), List.of(), List.of()) : request.filter();
+    private static InspectionFilter filterOf(InspectionCreateRequest request, InspectionType type) {
+        InspectionFilter filter = request.filter() == null
+            ? new InspectionFilter(null, true, List.of(), List.of(), List.of()) : request.filter();
+        if (type == null) return filter;
+        return new InspectionFilter(filter.locationUuid(), filter.includeSubLocations(),
+            mergeDefaults(filter.tagUuids(), type.getDefaultTags().stream().map(Tag::getUuid).toList()),
+            mergeDefaults(filter.assetTypeUuids(), type.getDefaultAssetTypes().stream().filter(entry -> !entry.isDeleted()).map(AssetType::getUuid).toList()),
+            filter.areaUuids(),
+            mergeDefaults(filter.locationUuids(), type.getDefaultLocations().stream().filter(entry -> !entry.isDeleted()).map(Location::getUuid).toList()));
+    }
+
+    private static List<UUID> mergeDefaults(List<UUID> values, List<UUID> defaults) {
+        Set<UUID> result = new java.util.LinkedHashSet<>(defaults);
+        if (values != null) result.addAll(values);
+        return new ArrayList<>(result);
+    }
+
+    private static boolean includeChildren(InspectionCreateRequest request, InspectionType type) {
+        return request.includeChildAssets() == null ? type != null && type.isIncludeChildAssets() : request.includeChildAssets();
     }
 
     private static boolean onlyDue(InspectionCreateRequest request, InspectionType type) {
@@ -285,13 +363,20 @@ public class InspectionService {
         requireInspect(access);
         InspectionType type = request.inspectionTypeUuid() == null ? null : usableType(access, request.inspectionTypeUuid());
         if (type == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine Prüfungsart wählen.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine Prüfungsvorlage wählen.");
         }
-        InspectionFilter filter = filterOf(request);
+        InspectionFilter filter = filterOf(request, type);
+        Area area = type.getProtocolArea() != null ? type.getProtocolArea() : request.areaUuid() == null
+            ? areaRepository.findFirstByDefaultAreaTrue().orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Bereich wählen."))
+            : areaRepository.findByUuid(request.areaUuid()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Bereich"));
+        require(access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, Set.of(area)));
         boolean onlyDue = onlyDue(request, type);
-        List<Asset> assets = selectAssets(access, type, filter, onlyDue, request.dueWithinDays());
+        List<Asset> assets = selectAssets(access, type, filter, onlyDue, request.dueWithinDays(), includeChildren(request, type));
         Map<Long, Location> locations = locationsById();
         String summary = describe(filter, locations);
+        if (includeChildren(request, type)) {
+            summary += " · einschließlich untergeordneter Assets";
+        }
         if (!type.getAssetTypes().isEmpty()) {
             summary = summary + " · nur " + type.getAssetTypes().stream().map(AssetType::getName).sorted().collect(Collectors.joining(", "));
         }
@@ -302,6 +387,7 @@ public class InspectionService {
             summary = summary + " · nur fällige";
         }
         Inspection inspection = Inspection.builder()
+            .area(area)
             .inspectionType(type)
             .mode(type.getMode())
             .checkFunction(type.getMode() == InspectionMode.INVENTORY
@@ -309,6 +395,7 @@ public class InspectionService {
             .typeName(type.getName())
             .title(blankToNull(request.title()) == null ? type.getName() : request.title().trim())
             .filterLocationUuid(filter.locationUuid())
+            .filterLocationUuids(join(filter.locationUuids()))
             .filterIncludeSubLocations(filter.includeSubLocations())
             .filterTagUuids(join(filter.tagUuids()))
             .filterAssetTypeUuids(join(filter.assetTypeUuids()))
@@ -324,6 +411,7 @@ public class InspectionService {
         audit.log(AuditAction.CREATE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(
             "INSPECTION_STARTED",
             "inspectionType", type.getName(),
+            "protocolArea", area.getName(),
             "mode", type.getMode().name(),
             "checkFunction", inspection.isCheckFunction() ? true : null,
             "expected", assets.size(),
@@ -666,6 +754,7 @@ public class InspectionService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden"));
         require(access.canViewAsset(asset));
         return itemRepository.findByAsset(asset).stream()
+            .filter(item -> canUseInspection(access, item.getInspection()))
             .map(item -> {
                 Inspection inspection = item.getInspection();
                 return new AssetInspectionResponse(
@@ -695,10 +784,15 @@ public class InspectionService {
 
     private List<Asset> expectedAssets(AccessContext access, InspectionFilter filter) {
         Set<Long> locationIds = null;
-        if (filter.locationUuid() != null) {
-            Location location = locationRepository.findByUuid(filter.locationUuid())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Standort"));
-            locationIds = filter.includeSubLocations() ? withDescendants(location) : Set.of(location.getId());
+        Set<UUID> selectedLocations = new HashSet<>(toSet(filter.locationUuids()));
+        if (filter.locationUuid() != null) selectedLocations.add(filter.locationUuid());
+        if (!selectedLocations.isEmpty()) {
+            locationIds = new HashSet<>();
+            for (UUID uuid : selectedLocations) {
+                Location location = locationRepository.findByUuid(uuid).filter(entry -> !entry.isDeleted())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Standort"));
+                locationIds.addAll(filter.includeSubLocations() ? withDescendants(location) : Set.of(location.getId()));
+            }
         }
         Set<UUID> tags = toSet(filter.tagUuids());
         Set<UUID> types = toSet(filter.assetTypeUuids());
@@ -710,7 +804,8 @@ public class InspectionService {
             .filter(access::canViewAsset)
             .filter(asset -> access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas()))
             .filter(asset -> finalLocationIds == null || (asset.getLocation() != null && finalLocationIds.contains(asset.getLocation().getId())))
-            .filter(asset -> tags.isEmpty() || asset.getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid())))
+            .filter(asset -> tags.isEmpty() || asset.getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid()))
+                || (asset.getAssetType() != null && asset.getAssetType().getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid()))))
             .filter(asset -> types.isEmpty() || (asset.getAssetType() != null && types.contains(asset.getAssetType().getUuid())))
             .filter(asset -> areas.isEmpty() || asset.getAreas().stream().anyMatch(area -> areas.contains(area.getUuid())))
             .toList();
@@ -736,6 +831,9 @@ public class InspectionService {
 
     private String describe(InspectionFilter filter, Map<Long, Location> locations) {
         List<String> parts = new ArrayList<>();
+        names(filter.locationUuids(), uuid -> locationRepository.findByUuid(uuid)
+            .map(location -> locationPath(location, locations)).orElse(null))
+            .ifPresent(text -> parts.add("Standorte: " + text + (filter.includeSubLocations() ? " (inkl. Unterstandorte)" : "")));
         if (filter.locationUuid() != null) {
             locationRepository.findByUuid(filter.locationUuid()).ifPresent(location ->
                 parts.add("Standort: " + locationPath(location, locations) + (filter.includeSubLocations() ? " (inkl. Unterstandorte)" : "")));
@@ -832,7 +930,13 @@ public class InspectionService {
             canManage(access, type, PermissionAction.EDIT),
             canManage(access, type, PermissionAction.DELETE),
             type.getFields().stream().map(InspectionService::toResponse).toList(),
-            inspectionRepository.countByInspectionType(type)
+            inspectionRepository.countByInspectionType(type),
+            type.getDefaultTags().stream().map(Tag::getUuid).toList(),
+            type.isIncludeChildAssets(),
+            type.getDefaultAssetTypes().stream().filter(entry -> !entry.isDeleted()).map(AssetType::getUuid).toList(),
+            type.getDefaultLocations().stream().filter(entry -> !entry.isDeleted()).map(Location::getUuid).toList(),
+            type.getRecurringTags().stream().map(Tag::getUuid).toList(),
+            type.getProtocolArea() == null ? null : type.getProtocolArea().getUuid()
         );
     }
 
@@ -884,8 +988,8 @@ public class InspectionService {
             inspection.getTitle(),
             inspection.getInspectionType() == null ? null : inspection.getInspectionType().getUuid(),
             inspection.getTypeName(),
-            inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getUuid).toList(),
-            inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getName).sorted().toList(),
+            inspection.getArea() != null ? List.of(inspection.getArea().getUuid()) : inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getUuid).toList(),
+            inspection.getArea() != null ? List.of(inspection.getArea().getName()) : inspection.getInspectionType() == null ? List.of() : inspection.getInspectionType().getAreas().stream().map(Area::getName).sorted().toList(),
             inspection.getStatus(),
             inspection.getMode(),
             inspection.isCheckFunction(),
@@ -908,7 +1012,8 @@ public class InspectionService {
             inspection.isFilterIncludeSubLocations(),
             split(inspection.getFilterTagUuids()),
             split(inspection.getFilterAssetTypeUuids()),
-            split(inspection.getFilterAreaUuids())
+            split(inspection.getFilterAreaUuids()),
+            split(inspection.getFilterLocationUuids())
         );
         return new InspectionDetailResponse(
             toSummary(inspection),
@@ -990,10 +1095,15 @@ public class InspectionService {
     /** The inspection, if its type may be used by the user (404 otherwise, like for others' areas). */
     private Inspection usableInspection(AccessContext access, UUID uuid) {
         Inspection inspection = inspectionOr404(uuid);
-        if (!canUse(access, inspection.getInspectionType())) {
+        if (!canUseInspection(access, inspection)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfung nicht gefunden");
         }
         return inspection;
+    }
+
+    private static boolean canUseInspection(AccessContext access, Inspection inspection) {
+        return inspection.getArea() == null ? canUse(access, inspection.getInspectionType())
+            : access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, Set.of(inspection.getArea()));
     }
 
     /**
@@ -1003,7 +1113,9 @@ public class InspectionService {
      * inspect in "EDV" sees nothing but the EDV inspections.
      */
     public static boolean canUse(AccessContext access, InspectionType type) {
-        return allows(access, type, PermissionResourceType.ASSET, PermissionAction.INSPECT);
+        return allows(access, type, PermissionResourceType.ASSET, PermissionAction.INSPECT)
+            && (type == null || type.getProtocolArea() == null
+                || access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, Set.of(type.getProtocolArea())));
     }
 
     /** Configuring a type (ASSET_TYPE rights) follows the same rule: in its areas, or for all areas. */
@@ -1019,7 +1131,7 @@ public class InspectionService {
     private static void requireAreas(boolean allowed) {
         if (!allowed) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                "Wähle Bereiche, in denen du Prüfungsarten bearbeiten darfst. Ohne Bereich gilt die Prüfungsart für alle Bereiche, "
+                "Wähle Bereiche, in denen du Prüfungsvorlagen bearbeiten darfst. Ohne Bereich gilt die Prüfungsvorlage für alle Bereiche, "
                     + "dafür ist ein Recht für alle Bereiche nötig.");
         }
     }
@@ -1038,13 +1150,13 @@ public class InspectionService {
     private InspectionType usableType(AccessContext access, UUID uuid) {
         InspectionType type = typeOr404(uuid);
         if (!canUse(access, type)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Für diese Prüfungsart fehlt das Recht zum Prüfen in ihrem Bereich.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Für diese Prüfungsvorlage fehlt das Recht zum Prüfen in ihrem Bereich.");
         }
         return type;
     }
 
     private InspectionType typeOr404(UUID uuid) {
-        return typeRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfungsart nicht gefunden"));
+        return typeRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Prüfungsvorlage nicht gefunden"));
     }
 
     private static InspectionItem itemOr404(Inspection inspection, UUID itemUuid) {
