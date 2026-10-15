@@ -4,6 +4,7 @@ import { LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideTrash2 } from
 import { forkJoin } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { LabelRenderer } from '../../../labels/label-renderer/label-renderer';
 import { LabelTemplateService } from '../../../labels/label-template.service';
 import { LabelElement, LabelTemplate, SAMPLE_CONTEXT, parseElements } from '../../../labels/label.model';
@@ -12,13 +13,16 @@ import { PermissionService } from '../../../service/permission.service';
 
 @Component({
   selector: 'app-label-templates-page',
-  imports: [LabelRenderer, LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideTrash2],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, LabelRenderer, LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideTrash2],
   templateUrl: './label-templates-page.html',
   styleUrl: './label-templates-page.scss',
 })
 export class LabelTemplatesPage implements OnInit {
   protected readonly sample = SAMPLE_CONTEXT;
   protected templates: LabelTemplate[] = [];
+  protected readonly canBulkDelete = (item: LabelTemplate) => this.canDelete(item);
+  protected readonly bulkDelete = (item: LabelTemplate) => this.api.delete(item.uuid);
+  protected get selectionItems(): LabelTemplate[] { return this.groups.flatMap(group => group.templates); }
   protected loading = false;
   protected error = '';
   private readonly elementCache = new Map<string, LabelElement[]>();
@@ -114,7 +118,7 @@ export class LabelTemplatesPage implements OnInit {
     });
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading = true;
     this.error = '';
     this.elementCache.clear();

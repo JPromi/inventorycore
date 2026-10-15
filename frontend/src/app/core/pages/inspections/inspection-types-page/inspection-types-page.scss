@@ -18,6 +18,7 @@
 }
 
 .type-card {
+    > app-selection-checkbox { margin-bottom: .5rem; }
     position: relative;
     display: flex;
     flex-direction: column;

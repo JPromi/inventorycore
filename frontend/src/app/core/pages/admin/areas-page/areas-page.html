@@ -76,6 +76,9 @@
         </form>
     }
 
+    <app-list-actions #selection [items]="areas" [disabled]="loading || saving" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="load()"
+        deleteWarning="Einträge wandern bei Bedarf in den Standardbereich. Die Gruppen-Berechtigungen dieser Bereiche werden entfernt." />
     @if (loading) {
         <p class="empty">Lade Bereiche...</p>
     } @else {
@@ -83,6 +86,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        @if (selection.active) { <th class="selection-column"></th> }
                         <th>Bereich</th>
                         <th class="center">Inventar</th>
                         <th class="center">Standorte</th>
@@ -92,7 +96,8 @@
                 </thead>
                 <tbody>
                     @for (area of areas; track area.uuid) {
-                        <tr class="clickable" (click)="startEdit(area)">
+                        <tr class="clickable" [appSelectableRow]="selection" [selectionItem]="area" [class.is-selected]="selection.isSelected(area)" (click)="startEdit(area)">
+                            @if (selection.active) { <td><app-selection-checkbox [selection]="selection" [item]="area" /></td> }
                             <td>
                                 <div class="area-cell">
                                     <span class="area-dot" [style.background]="area.color || 'var(--text-subtle)'"></span>

@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { ColorPicker, PRESET_COLORS } from '../../components/color-picker/color-picker';
 import { readableTextColor } from '../../components/color-picker/color-utils';
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
 import { InventoryApiService, InventoryItem, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 
@@ -24,12 +25,17 @@ interface TagRow extends TagItem {
 /** Tags are global (not bound to areas); name and color are edited inline and saved right away. */
 @Component({
   selector: 'app-tags-page',
-  imports: [FormsModule, ColorPicker, LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, ColorPicker, LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX],
   templateUrl: './tags-page.html',
   styleUrl: './tags-page.scss',
 })
 export class TagsPage implements OnInit, OnDestroy {
   protected rows: TagRow[] = [];
+  protected readonly canBulkDelete = (_row: TagRow) => this.canDelete;
+  protected readonly bulkDelete = (row: TagRow) => {
+    clearTimeout(this.colorTimers.get(row.uuid));
+    return this.api.delete('tags', row.uuid);
+  };
   protected search = '';
   protected loading = false;
   protected error = '';
@@ -204,7 +210,7 @@ export class TagsPage implements OnInit, OnDestroy {
     row.state = state;
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading = true;
     // usage counts are a nice extra; the page also works without them
     const optional = <T>(request: ReturnType<InventoryApiService['list']>) => request.pipe(catchError(() => of([] as T[])));

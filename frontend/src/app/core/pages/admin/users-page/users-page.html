@@ -42,6 +42,8 @@
         />
     </app-filter-bar>
 
+    <app-list-actions #selection [items]="filteredUsers" [disabled]="loading" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="load()" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -55,6 +57,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        @if (selection.active) { <th class="selection-column"></th> }
                         <th>Benutzer</th>
                         <th>E-Mail</th>
                         <th>Gruppen</th>
@@ -64,7 +67,8 @@
                 </thead>
                 <tbody>
                     @for (user of filteredUsers; track user.uuid) {
-                        <tr class="clickable" (click)="edit(user)">
+                        <tr class="clickable" [appSelectableRow]="selection" [selectionItem]="user" [class.is-selected]="selection.isSelected(user)" (click)="edit(user)">
+                            @if (selection.active) { <td><app-selection-checkbox [selection]="selection" [item]="user" /></td> }
                             <td>
                                 <div class="user-cell">
                                     <span class="avatar">

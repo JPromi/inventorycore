@@ -95,6 +95,10 @@ body {
     --dropdown-select-min-width: 16rem;
     --dropdown-color-width: 15.5rem;
     --inspection-tree-indent: 1.25rem;
+    --selection-control-size: 2rem;
+    --selection-mark-size: 1.2rem;
+    --selection-image-inset: .25rem;
+    --selection-scroll-edge: 64px;
 
     @include bp.phone {
         --page-padding: 1rem;
@@ -609,6 +613,22 @@ label.field {
         }
     }
 }
+
+app-selection-checkbox { display: inline-flex; align-items: center; flex: 0 0 auto; }
+app-selection-checkbox.selection-hidden { display: none; }
+.selection-control { display: inline-flex; align-items: center; justify-content: center; position: relative; width: var(--selection-control-size); height: var(--selection-control-size); flex-shrink: 0; cursor: pointer; }
+.selection-control > input.selection-checkbox { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; z-index: 1; cursor: pointer; }
+.selection-mark { display: inline-flex; align-items: center; justify-content: center; width: var(--selection-mark-size); height: var(--selection-mark-size); border: 1px solid var(--border-strong); border-radius: var(--radius-xs); background: var(--surface); color: var(--on-accent); transition: background-color .15s, border-color .15s; }
+.selection-control:hover .selection-mark { border-color: var(--accent); }
+.selection-control > input:is(:checked, :indeterminate) + .selection-mark { background: var(--accent); border-color: var(--accent); }
+.selection-control > input:focus-visible + .selection-mark { outline: 2px solid var(--accent); outline-offset: 3px; }
+.selection-control > input:disabled { cursor: default; }
+.selection-control > input:disabled + .selection-mark { opacity: .5; }
+.selecting { cursor: pointer; user-select: none; }
+.selecting, .touch-selecting { -webkit-touch-callout: none; }
+.touch-selecting { scroll-behavior: auto; }
+.selection-column { width: 2.75rem; }
+.is-selected { outline: 1px solid var(--accent); outline-offset: -1px; background-color: var(--accent-soft) !important; }
 
 // Cover the scroll container's bottom padding below sticky form actions.
 .sticky-editor-actions::after {

@@ -112,6 +112,9 @@
         </app-filter-bar>
     }
 
+    <app-list-actions #selection [items]="visibleItems" [pageItems]="pageItems" [disabled]="loading"
+        [canDelete]="canBulkDelete" [deleteItem]="bulkDelete" (deleted)="load()" />
+
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -136,7 +139,8 @@
     } @else {
         <div [class.grid]="viewMode === 'grid'" [class.list]="viewMode === 'list'" class="items">
             @for (item of pageItems; track item.uuid) {
-                <article class="item" [class.clickable]="itemsClickable" (click)="open(item)">
+                <article class="item" [appSelectableRow]="selection" [selectionItem]="item" [class.is-selected]="selection.isSelected(item)" [class.clickable]="itemsClickable" (click)="open(item)">
+                    <app-selection-checkbox [selection]="selection" [item]="item" />
                     @if (config.endpoint !== 'tags') {
                         <div class="thumb">
                             @if (thumbnail(item); as url) {

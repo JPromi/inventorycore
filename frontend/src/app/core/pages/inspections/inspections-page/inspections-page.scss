@@ -22,7 +22,8 @@
 .inspection-row {
     width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem);
+    grid-template-columns: minmax(0, 1fr);
+    &.selecting { grid-template-columns: auto minmax(0, 1fr); }
     align-items: center;
     gap: 1.25rem;
     color: var(--text);
@@ -118,9 +119,25 @@
     }
 
     @include bp.phone {
-        grid-template-columns: minmax(0, 1fr);
         gap: .75rem;
     }
+}
+
+.inspection-open {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem);
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    @include bp.phone { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
 }
 
 // ---- due assets, grouped by inspection type ----

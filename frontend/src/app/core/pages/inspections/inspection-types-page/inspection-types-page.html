@@ -22,6 +22,8 @@
         und zusätzliche Felder nur für bestimmte Typen, z. B. „Bildschirm funktioniert“ bei Laptops.
     </p>
 
+    <app-list-actions #selection [items]="visibleTypes" [disabled]="loading" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="ngOnInit()" deleteWarning="Bestehende Prüfprotokolle bleiben erhalten." />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -35,7 +37,8 @@
     } @else {
         <div class="type-grid">
             @for (type of visibleTypes; track type.uuid) {
-                <article class="card type-card" [class.clickable]="type.editable" (click)="type.editable && edit(type)">
+                <article class="card type-card" [appSelectableRow]="selection" [selectionItem]="type" [class.is-selected]="selection.isSelected(type)" [class.clickable]="type.editable" (click)="type.editable && edit(type)">
+                    <app-selection-checkbox [selection]="selection" [item]="type" />
                     <span class="stripe" [style.background]="type.color || 'var(--border-strong)'"></span>
                     <div class="type-head">
                         <h2>{{ type.name }}</h2>

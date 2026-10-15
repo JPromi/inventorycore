@@ -47,6 +47,8 @@
         </div>
     </div>
 
+    <app-list-actions #selection [items]="visibleRows" [disabled]="loading" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="load()" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -58,17 +60,19 @@
     } @else {
         <div class="tag-list">
             @for (row of visibleRows; track row.uuid) {
-                <div class="tag-row">
+                <div class="tag-row" [appSelectableRow]="selection" [selectionItem]="row" [class.is-selected]="selection.isSelected(row)">
+                    <app-selection-checkbox [selection]="selection" [item]="row" />
                     <app-color-picker
                         [ngModel]="row.color"
                         (ngModelChange)="colorChanged(row, $event)"
-                        [disabled]="!canEdit"
+                        [disabled]="!canEdit || selection.active"
                         [label]="'Farbe von ' + row.name"
                     />
                     <input
                         type="text"
                         class="name-input"
                         [(ngModel)]="row.name"
+                        [readOnly]="selection.active"
                         [disabled]="!canEdit"
                         (blur)="saveName(row)"
                         (keydown.enter)="$any($event.target).blur()"

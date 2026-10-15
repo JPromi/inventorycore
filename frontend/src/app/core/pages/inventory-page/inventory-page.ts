@@ -19,6 +19,7 @@ import {
 } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
 import { FilterBar } from '../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
@@ -27,6 +28,7 @@ import { InspectionDue, InspectionService, dueText } from '../../service/inspect
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
 import { locationPath, locationWithDescendants } from '../../util/location-utils';
+import { Observable } from 'rxjs';
 
 type ViewMode = 'grid' | 'list';
 
@@ -64,6 +66,9 @@ interface FieldConfig {
   selector: 'app-inventory-page',
   imports: [
     CommonModule,
+    ListActions,
+    SelectableRow,
+    SelectionCheckbox,
     FormsModule,
     FilterBar,
     SearchSelect,
@@ -88,6 +93,8 @@ export class InventoryPage implements OnInit {
   protected readonly placeholderIconInputs = { size: 22 };
   protected config!: PageConfig;
   protected items: InventoryItem[] = [];
+  protected readonly canBulkDelete = (item: InventoryItem) => this.permissions.can(this.config.resourceType, 'delete', item.areaUuids ?? []);
+  protected bulkDelete!: (item: InventoryItem) => Observable<unknown>;
   protected loading = false;
   protected error = '';
   protected viewMode: ViewMode = 'list';
@@ -119,6 +126,9 @@ export class InventoryPage implements OnInit {
   ngOnInit(): void {
     this.route.data.subscribe((data) => {
       this.config = data['inventoryConfig'];
+      const endpoint = this.config.endpoint;
+      this.bulkDelete = item => this.api.delete(endpoint, item.uuid);
+      this.items = [];
       this.resetFilters();
       this.load();
       this.loadFilterOptions();

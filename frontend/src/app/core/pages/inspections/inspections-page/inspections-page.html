@@ -48,6 +48,8 @@
         </div>
     </div>
 
+    <app-list-actions #selection [items]="visible" [disabled]="loading || statusFilter === 'DUE'" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="bulkDeleted($event)" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -119,7 +121,9 @@
     } @else {
         <div class="inspection-list">
             @for (inspection of visible; track inspection.uuid) {
-                <button type="button" class="card inspection-row" (click)="open(inspection)">
+                <article class="card inspection-row" [appSelectableRow]="selection" [selectionItem]="inspection" [class.is-selected]="selection.isSelected(inspection)">
+                    <app-selection-checkbox [selection]="selection" [item]="inspection" />
+                    <button type="button" class="inspection-open" (click)="open(inspection)">
                     <div class="main">
                         <div class="title-line">
                             @if (inspection.status === 'OPEN') {
@@ -170,7 +174,8 @@
                             }
                         </div>
                     </div>
-                </button>
+                    </button>
+                </article>
             }
         </div>
     }

@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { LucideClipboardList, LucidePencil, LucidePlus, LucideTrash2 } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { InspectionService, InspectionType, intervalText } from '../../../service/inspection.service';
 import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
@@ -10,12 +11,14 @@ import { PermissionService } from '../../../service/permission.service';
 /** Configuration list of the inspection types. */
 @Component({
   selector: 'app-inspection-types-page',
-  imports: [RouterLink, LucideClipboardList, LucidePencil, LucidePlus, LucideTrash2],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, RouterLink, LucideClipboardList, LucidePencil, LucidePlus, LucideTrash2],
   templateUrl: './inspection-types-page.html',
   styleUrl: './inspection-types-page.scss',
 })
 export class InspectionTypesPage implements OnInit {
   protected types: InspectionType[] = [];
+  protected readonly canBulkDelete = (item: InspectionType) => item.deletable;
+  protected readonly bulkDelete = (item: InspectionType) => this.api.deleteType(item.uuid);
   protected loading = false;
   protected error = '';
 

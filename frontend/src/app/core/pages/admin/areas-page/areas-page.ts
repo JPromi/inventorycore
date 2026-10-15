@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideLayers, LucidePencil, LucidePlus, LucideSave, LucideTrash2, LucideX } from '@lucide/angular';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { AdminApiService, AdminAreaRequest } from '../../../service/admin-api.service';
 import { AreaItem, AreaService } from '../../../service/area.service';
 
@@ -10,11 +11,13 @@ const COLORS = ['#b62f2f', '#d97706', '#15803d', '#0f766e', '#2563eb', '#7c3aed'
 
 @Component({
   selector: 'app-areas-page',
-  imports: [FormsModule, LucideLayers, LucidePencil, LucidePlus, LucideSave, LucideTrash2, LucideX],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, LucideLayers, LucidePencil, LucidePlus, LucideSave, LucideTrash2, LucideX],
   templateUrl: './areas-page.html',
   styleUrl: './areas-page.scss',
 })
 export class AreasPage implements OnInit {
+  protected readonly canBulkDelete = (item: AreaItem) => !item.defaultArea;
+  protected readonly bulkDelete = (item: AreaItem) => this.api.deleteArea(item.uuid);
   protected readonly colors = COLORS;
   protected areas: AreaItem[] = [];
   protected loading = false;
@@ -99,7 +102,7 @@ export class AreasPage implements OnInit {
     });
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading = true;
     this.api.areas().subscribe({
       next: (areas) => {

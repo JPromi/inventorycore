@@ -25,6 +25,7 @@ import {
 } from '../../../service/inspection.service';
 import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 
 type StatusFilter = InspectionStatus | 'ALL' | 'DUE';
 
@@ -42,6 +43,9 @@ interface DueGroup {
   selector: 'app-inspections-page',
   imports: [
     DatePipe,
+    ListActions,
+    SelectableRow,
+    SelectionCheckbox,
     FormsModule,
     RouterLink,
     LucideCalendarClock,
@@ -57,6 +61,10 @@ interface DueGroup {
   styleUrl: './inspections-page.scss',
 })
 export class InspectionsPage implements OnInit {
+  protected readonly canBulkDelete = (item: InspectionSummary) => this.permissions.isAdmin
+    || (item.status === 'OPEN' && this.permissions.can('ASSET', 'inspect', item.areaUuids));
+  protected readonly bulkDelete = (item: InspectionSummary) => this.api.delete(item.uuid);
+  protected bulkDeleted(uuids: string[]): void { this.inspections = this.inspections.filter(item => !uuids.includes(item.uuid)); }
   protected inspections: InspectionSummary[] = [];
   /** Recurring inspections that are overdue or due soon. */
   protected due: InspectionDue[] = [];

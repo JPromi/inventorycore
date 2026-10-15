@@ -5,6 +5,7 @@ import { LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, L
 import { forkJoin } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { FilterBar } from '../../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AdminApiService, AdminGroup, AdminUser, PROVIDER_LABELS } from '../../../service/admin-api.service';
@@ -12,11 +13,13 @@ import { AuthStateService } from '../../../service/auth-state.service';
 
 @Component({
   selector: 'app-users-page',
-  imports: [FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss',
 })
 export class UsersPage implements OnInit {
+  protected readonly canBulkDelete = (user: AdminUser) => !this.isSelf(user);
+  protected readonly bulkDelete = (user: AdminUser) => this.api.deleteUser(user.uuid);
   protected readonly providerLabels = PROVIDER_LABELS;
   protected users: AdminUser[] = [];
   protected groups: AdminGroup[] = [];
@@ -120,7 +123,7 @@ export class UsersPage implements OnInit {
     });
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading = true;
     this.error = '';
     forkJoin({ users: this.api.users(), groups: this.api.groups() }).subscribe({

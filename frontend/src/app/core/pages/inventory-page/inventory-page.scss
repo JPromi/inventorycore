@@ -89,6 +89,13 @@
         .item {
             flex-direction: column;
             align-items: stretch;
+            position: relative;
+            > app-selection-checkbox {
+                position: absolute;
+                top: calc(var(--inventory-item-padding) + var(--selection-image-inset));
+                left: calc(var(--inventory-item-padding) + var(--selection-image-inset));
+                z-index: 1;
+            }
         }
 
         .thumb {
@@ -109,10 +116,11 @@
 }
 
 .item {
+    --inventory-item-padding: .75rem;
     display: flex;
     align-items: center;
     gap: .9rem;
-    padding: .75rem;
+    padding: var(--inventory-item-padding);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -129,7 +137,7 @@
 
     @include bp.phone {
         gap: .65rem;
-        padding: .65rem;
+        --inventory-item-padding: .65rem;
     }
 
     .thumb {

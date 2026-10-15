@@ -22,6 +22,8 @@
         ohne eigene Vorlage die Standard-Vorlage des Standardbereichs.
     </p>
 
+    <app-list-actions #selection [items]="selectionItems" [disabled]="loading" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="load()" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -36,7 +38,8 @@
                 <h2>{{ group.areaName }}</h2>
                 <div class="cards">
                     @for (template of group.templates; track template.uuid) {
-                        <article class="template-card" [class.clickable]="canEdit(template)" (click)="edit(template)">
+                        <article class="template-card" [appSelectableRow]="selection" [selectionItem]="template" [class.is-selected]="selection.isSelected(template)" [class.clickable]="canEdit(template)" (click)="edit(template)">
+                            <app-selection-checkbox [selection]="selection" [item]="template" />
                             <div class="preview">
                                 <app-label-renderer
                                     [style.zoom]="zoom(template)"

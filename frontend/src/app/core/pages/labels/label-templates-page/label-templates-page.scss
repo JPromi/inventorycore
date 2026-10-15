@@ -30,6 +30,8 @@
 }
 
 .template-card {
+    position: relative;
+    > app-selection-checkbox { position: absolute; top: .5rem; left: .5rem; z-index: 1; padding: .25rem; background: var(--surface); border-radius: var(--radius-xs); }
     min-width: 0;
     display: flex;
     flex-direction: column;

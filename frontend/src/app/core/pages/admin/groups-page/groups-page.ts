@@ -5,16 +5,19 @@ import { LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideUsers, Luci
 import { forkJoin } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { AdminApiService, AdminGroup, AdminUser } from '../../../service/admin-api.service';
 import { AreaItem } from '../../../service/area.service';
 
 @Component({
   selector: 'app-groups-page',
-  imports: [FormsModule, LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideUsers, LucideX],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, LucidePencil, LucidePlus, LucideSearch, LucideTrash2, LucideUsers, LucideX],
   templateUrl: './groups-page.html',
   styleUrl: './groups-page.scss',
 })
 export class GroupsPage implements OnInit {
+  protected readonly canBulkDelete = (_item: AdminGroup) => true;
+  protected readonly bulkDelete = (item: AdminGroup) => this.api.deleteGroup(item.uuid);
   protected groups: AdminGroup[] = [];
   protected users: AdminUser[] = [];
   protected areas: AreaItem[] = [];
@@ -75,7 +78,7 @@ export class GroupsPage implements OnInit {
     });
   }
 
-  private load(): void {
+  protected load(): void {
     this.loading = true;
     this.error = '';
     forkJoin({ groups: this.api.groups(), users: this.api.users(), areas: this.api.areas() }).subscribe({

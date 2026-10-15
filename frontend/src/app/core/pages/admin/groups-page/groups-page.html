@@ -27,6 +27,8 @@
         </div>
     </div>
 
+    <app-list-actions #selection [items]="filteredGroups" [disabled]="loading" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="load()" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
@@ -40,6 +42,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        @if (selection.active) { <th class="selection-column"></th> }
                         <th>Gruppe</th>
                         <th>Mitglieder</th>
                         <th>Bereiche</th>
@@ -48,7 +51,8 @@
                 </thead>
                 <tbody>
                     @for (group of filteredGroups; track group.uuid) {
-                        <tr class="clickable" (click)="edit(group)">
+                        <tr class="clickable" [appSelectableRow]="selection" [selectionItem]="group" [class.is-selected]="selection.isSelected(group)" (click)="edit(group)">
+                            @if (selection.active) { <td><app-selection-checkbox [selection]="selection" [item]="group" /></td> }
                             <td>
                                 <strong>{{ group.name }}</strong>
                                 @if (group.adminGroup) {
