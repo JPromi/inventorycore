@@ -1,14 +1,17 @@
 import { expect, test } from '@playwright/test';
+import { pageOf } from './support/paging';
 
 test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+const assets = Array.from({ length: 20 }, (_, index) => ({ uuid: `asset-${index}`,
+  name: `Asset ${String(index + 1).padStart(2, '0')}`, areaUuids: ['area'], description: 'Touch-Auswahl' }));
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     const body = path === '/api/auth/me' ? { authenticated: true, username: 'admin', role: 'ADMIN', permissions: [] }
       : path === '/api/areas' ? [{ uuid: 'area', name: 'EDV', defaultArea: true }]
-      : path === '/api/assets' ? Array.from({ length: 20 }, (_, index) => ({ uuid: `asset-${index}`,
-        name: `Asset ${String(index + 1).padStart(2, '0')}`, areaUuids: ['area'], description: 'Touch-Auswahl' })) : [];
+      : path === '/api/assets/page' ? pageOf(assets, route.request().url()) : [];
     return route.fulfill({ json: body });
   });
   await page.goto('/assets');

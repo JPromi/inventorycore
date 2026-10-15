@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -12,11 +12,12 @@ import {
   LucideTriangleAlert,
   LucideX,
 } from '@lucide/angular';
-import { forkJoin, of } from 'rxjs';
+import { Subject, Subscription, debounceTime, forkJoin, of, skip } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import {
   InspectionDue,
+  InspectionPage,
   InspectionService,
   InspectionStatus,
   InspectionSummary,
@@ -26,6 +27,8 @@ import {
 import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
+import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
+import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
 
 type StatusFilter = InspectionStatus | 'ALL' | 'DUE';
 
@@ -43,6 +46,7 @@ interface DueGroup {
   selector: 'app-inspections-page',
   imports: [
     DatePipe,
+    InfiniteScroll,
     ListActions,
     SelectableRow,
     SelectionCheckbox,
@@ -60,12 +64,23 @@ interface DueGroup {
   templateUrl: './inspections-page.html',
   styleUrl: './inspections-page.scss',
 })
-export class InspectionsPage implements OnInit {
+export class InspectionsPage implements OnInit, OnDestroy {
   protected readonly canBulkDelete = (item: InspectionSummary) => this.permissions.isAdmin
     || (item.status === 'OPEN' && this.permissions.can('ASSET', 'inspect', item.areaUuids));
   protected readonly bulkDelete = (item: InspectionSummary) => this.api.delete(item.uuid);
-  protected bulkDeleted(uuids: string[]): void { this.inspections = this.inspections.filter(item => !uuids.includes(item.uuid)); }
-  protected inspections: InspectionSummary[] = [];
+  protected bulkDeleted(uuids: string[]): void {
+    const open = this.list.items.filter((item) => uuids.includes(item.uuid) && item.status === 'OPEN').length;
+    const removed = this.list.items.filter((item) => uuids.includes(item.uuid)).length;
+    this.list.remove((item) => uuids.includes(item.uuid));
+    this.openCount -= open;
+    this.completedCount -= removed - open;
+  }
+  /** Protocols of the chosen tab, searched on the server and loaded page by page while scrolling. */
+  protected readonly list = new PagedList<InspectionSummary, InspectionPage>((page, size) =>
+    this.api.inspectionPage({ q: this.search, status: this.statusFilter === 'ALL' || this.statusFilter === 'DUE' ? null : this.statusFilter, areas: this.areaService.selected }, page, size));
+  /** tab counts, from the server (within the sidebar areas, independent of the search) */
+  protected openCount = 0;
+  protected completedCount = 0;
   /** Recurring inspections that are overdue or due soon. */
   protected due: InspectionDue[] = [];
   protected expandedGroups = new Set<string>();
@@ -74,6 +89,8 @@ export class InspectionsPage implements OnInit {
   protected search = '';
   protected loading = false;
   protected error = '';
+  private readonly searchChanges = new Subject<void>();
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private readonly api: InspectionService,
@@ -84,20 +101,26 @@ export class InspectionsPage implements OnInit {
 
   ngOnInit(): void {
     this.loading = true;
+    this.subscriptions.add(this.areaService.selected$.pipe(skip(1)).subscribe(() => this.list.reload()));
+    this.subscriptions.add(this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload()));
+    // the counts come with every page
+    this.subscriptions.add(this.list.loadedPages.subscribe((page) => this.setCounts(page)));
     forkJoin({
-      inspections: this.api.inspections(),
+      // one entry is enough for the tab counts
+      counts: this.api.inspectionPage({ areas: this.areaService.selected }, 0, 1),
       schedules: this.api.schedules().pipe(catchError(() => of([] as InspectionDue[]))),
     }).subscribe({
-      next: ({ inspections, schedules }) => {
-        this.inspections = inspections;
+      next: ({ counts, schedules }) => {
+        this.setCounts(counts);
         this.due = schedules.filter((entry) => entry.state !== 'OK');
         // overdue first, then open inspections, then everything
         if (this.overdueCount) {
           this.statusFilter = 'DUE';
-        } else if (!inspections.some((inspection) => inspection.status === 'OPEN')) {
+        } else if (!counts.openCount) {
           this.statusFilter = this.due.length ? 'DUE' : 'ALL';
         }
         this.loading = false;
+        this.list.reload();
       },
       error: () => {
         this.error = 'Prüfungen konnten nicht geladen werden.';
@@ -106,9 +129,30 @@ export class InspectionsPage implements OnInit {
     });
   }
 
-  /** Inspections of the areas chosen in the sidebar (by the areas of their type). */
-  protected get areaInspections(): InspectionSummary[] {
-    return this.inspections.filter((inspection) => this.areaService.overlapsSelection(inspection.areaUuids));
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+    this.list.destroy();
+  }
+
+  protected setStatus(status: StatusFilter): void {
+    this.statusFilter = status;
+    if (status !== 'DUE') {
+      this.list.reload();
+    }
+  }
+
+  protected onSearchChange(): void {
+    this.searchChanges.next();
+  }
+
+  protected clearSearch(): void {
+    this.search = '';
+    this.list.reload();
+  }
+
+  private setCounts(page: InspectionPage): void {
+    this.openCount = page.openCount;
+    this.completedCount = page.completedCount;
   }
 
   /** Due entries of assets in the areas chosen in the sidebar. */
@@ -124,7 +168,7 @@ export class InspectionsPage implements OnInit {
     if (status === 'DUE') {
       return this.areaDue.length;
     }
-    return status === 'ALL' ? this.areaInspections.length : this.areaInspections.filter((inspection) => inspection.status === status).length;
+    return status === 'ALL' ? this.openCount + this.completedCount : status === 'OPEN' ? this.openCount : this.completedCount;
   }
 
   protected get overdueCount(): number {
@@ -173,12 +217,7 @@ export class InspectionsPage implements OnInit {
   }
 
   protected get visible(): InspectionSummary[] {
-    const term = this.search.trim().toLowerCase();
-    return this.areaInspections.filter(
-      (inspection) =>
-        (this.statusFilter === 'ALL' || inspection.status === this.statusFilter) &&
-        (!term || [inspection.title, inspection.typeName, inspection.filterSummary, inspection.createdByName].some((value) => value?.toLowerCase().includes(term))),
-    );
+    return this.list.items;
   }
 
   /** Share of the assets that were checked. */

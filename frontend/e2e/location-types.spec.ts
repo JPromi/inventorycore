@@ -1,4 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
+import { pageOf } from './support/paging';
 
 const locations = [
   { uuid: 'hq', name: 'Zentrale', locationType: 'BUILDING', images: [], areaUuids: ['area'] },
@@ -23,6 +24,7 @@ async function setup(page: Page) {
     const body = path === '/api/auth/me' ? { authenticated: true, username: 'admin', displayName: 'Admin', role: 'ADMIN', permissions: [] }
       : location ? location
       : path === '/api/locations' ? locations
+      : path === '/api/locations/page' ? pageOf(locations, request.url())
       : path === '/api/areas' ? [{ uuid: 'area', name: 'EDV', defaultArea: true }]
       : path === '/api/customization' ? {} : [];
     return route.fulfill({ json: body });

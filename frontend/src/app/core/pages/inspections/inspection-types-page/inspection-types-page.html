@@ -1,7 +1,7 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ visibleTypes.length }} Prüfungsvorlagen</p>
+            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Prüfungsvorlage' : 'Prüfungsvorlagen' }} }</p>
             <h1>
                 <svg lucideClipboardList size="20"></svg>
                 <span>Prüfungsvorlagen</span>
@@ -22,17 +22,32 @@
         und zusätzliche Felder nur für bestimmte Typen, z. B. „Bildschirm funktioniert“ bei Laptops.
     </p>
 
-    <app-list-actions #selection [items]="visibleTypes" [disabled]="loading" [canDelete]="canBulkDelete"
-        [deleteItem]="bulkDelete" (deleted)="ngOnInit()" deleteWarning="Bestehende Prüfprotokolle bleiben erhalten." />
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Vorlage oder Typ suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="visibleTypes" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" deleteWarning="Bestehende Prüfprotokolle bleiben erhalten." />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
 
-    @if (loading) {
+    @if (list.error && !visibleTypes.length) {
+        <p class="error">Prüfungsvorlagen konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
         <p class="empty">Lade Prüfungsvorlagen...</p>
     } @else if (!visibleTypes.length) {
         <div class="empty-state">
-            {{ types.length ? 'Keine Prüfungsvorlage für die links gewählten Bereiche.' : 'Noch keine Prüfungsvorlage angelegt.' }}
+            {{ search.trim() ? 'Keine Prüfungsvorlage gefunden.' : 'Keine Prüfungsvorlage – eventuell ist links ein anderer Bereich gewählt, sonst zuerst eine anlegen.' }}
         </div>
     } @else {
         <div class="type-grid">
@@ -90,6 +105,13 @@
                         </div>
                     }
                 </article>
+            }
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Einträge...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
             }
         </div>
     }

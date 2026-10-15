@@ -30,7 +30,6 @@ export interface ListAction<T> {
 })
 export class ListActions<T extends SelectableItem> implements OnChanges, OnDestroy {
   @Input({ required: true }) items: T[] = [];
-  @Input() pageItems?: T[];
   @Input({ required: true }) canDelete!: (item: T) => boolean;
   @Input({ required: true }) deleteItem!: (item: T) => Observable<unknown>;
   @Input() disabled = false;
@@ -75,7 +74,8 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
     this.clear();
     this.error = '';
   }
-  protected get currentPage(): T[] { return this.pageItems ?? this.items; }
+  /** the loaded entries (lists load more while scrolling) */
+  protected get currentPage(): T[] { return this.items; }
   protected get allSelected(): boolean { return !!this.currentPage.length && this.currentPage.every(item => this.isSelected(item)); }
   protected get partlySelected(): boolean { return !this.allSelected && this.currentPage.some(item => this.isSelected(item)); }
   protected get deletable(): boolean {

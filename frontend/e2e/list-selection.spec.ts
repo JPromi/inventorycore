@@ -1,4 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
+import { pageOf } from './support/paging';
 
 const routes = [
   ['/assets', 'assets'], ['/locations', 'locations'], ['/config/types', 'asset-types'],
@@ -20,6 +21,7 @@ async function setup(page: Page, endpoint: string, options: { size?: number; fai
     widthMm: 62, heightMm: 29, elementsJson: '[]',
     parentAssetUuid: options.nested && i === 1 ? 'id-0' : null,
     images: options.image ? [{ kind: 'THUMBNAIL', url: '/icons/icon-192x192.png' }] : [],
+    memberCount: 0, members: [],
   }));
   const deleted: string[] = [];
   await page.route('**/api/**', async route => {
@@ -36,6 +38,7 @@ async function setup(page: Page, endpoint: string, options: { size?: number; fai
     const body = path === 'auth/me' ? { authenticated: true, username: 'admin', role: options.admin === false ? 'USER' : 'ADMIN',
       permissions: [{ resourceType: 'ASSET', areaUuid: 'area', canView: true, canDelete: false }] }
       : path === endpoint ? entries
+      : path === `${endpoint}/page` ? pageOf(entries, request.url())
       : path === 'areas' || path === 'admin/areas' ? [{ uuid: 'area', name: 'EDV', defaultArea: true }]
       : path === 'customization' ? {} : [];
     return route.fulfill({ json: body });
@@ -68,19 +71,28 @@ for (const [route, endpoint] of routes) {
   });
 }
 
-test('cross-page selection, indeterminate state, filtering and grid view', async ({ page }) => {
-  await setup(page, 'assets', { size: 16 });
+test('selection across loaded pages, indeterminate state, server search and grid view', async ({ page }) => {
+  await setup(page, 'assets', { size: 70 });
   await page.goto('/assets');
   await page.getByRole('button', { name: 'Auswählen', exact: true }).click();
-  await page.locator('app-selection-checkbox .selection-checkbox').nth(1).click();
-  await expect(page.getByRole('checkbox', { name: 'Alle auf dieser Seite auswählen' })).toHaveJSProperty('indeterminate', true);
-  await page.getByRole('button', { name: 'Weiter', exact: true }).click();
-  await page.locator('app-selection-checkbox .selection-checkbox').nth(1).click({ modifiers: ['Shift'] });
-  await expect(page.locator('app-list-actions')).toContainText('13 ausgewählt');
+  const checks = page.locator('app-selection-checkbox .selection-checkbox');
+  // the first page has 50 entries, scrolling to the end loads the rest
+  await expect(checks).toHaveCount(50);
+  await expect(page.locator('.eyebrow')).toContainText('70 Einträge');
+  await checks.nth(1).click();
+  await expect(page.getByRole('checkbox', { name: 'Alle geladenen auswählen' })).toHaveJSProperty('indeterminate', true);
+  await page.locator('.list-end').scrollIntoViewIfNeeded();
+  await expect(checks).toHaveCount(70);
+  await checks.nth(61).click({ modifiers: ['Shift'] });
+  await expect(page.locator('app-list-actions')).toContainText('61 ausgewählt');
   await page.getByRole('button', { name: 'Kachelansicht', exact: true }).click();
-  await expect(page.locator('.items.grid .selection-checkbox:checked')).toHaveCount(2);
+  await expect(page.locator('.items.grid .selection-checkbox:checked')).toHaveCount(61);
+  // the search runs on the server; hidden selections are dropped
   await page.getByRole('textbox', { name: 'Suchen', exact: true }).fill('Eintrag 14');
-  await expect(page.locator('app-selection-checkbox .selection-checkbox')).toHaveCount(1);
+  await expect(checks).toHaveCount(1);
+  await expect(page.locator('.eyebrow')).toContainText('1 Treffer');
+  await expect(page.locator('app-list-actions')).toContainText('0 ausgewählt');
+  await checks.first().click();
   await expect(page.locator('app-list-actions')).toContainText('1 ausgewählt');
   await page.getByRole('button', { name: 'Auswahl aufheben', exact: true }).click();
   await expect(page.locator('app-list-actions')).toContainText('0 ausgewählt');
@@ -90,7 +102,7 @@ test('cancel, partial failure and child-before-parent deletion', async ({ page }
   const state = await setup(page, 'assets', { nested: true, fail: 'id-2' });
   await page.goto('/assets');
   await page.getByRole('button', { name: 'Auswählen', exact: true }).click();
-  await page.getByRole('checkbox', { name: 'Alle auf dieser Seite auswählen' }).check();
+  await page.getByRole('checkbox', { name: 'Alle geladenen auswählen' }).check();
   const openDelete = async () => {
     await page.getByRole('button', { name: 'Aktionen', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Löschen', exact: true }).click();
@@ -109,7 +121,7 @@ test('users without delete permission cannot trigger batch deletion', async ({ p
   const state = await setup(page, 'assets', { admin: false });
   await page.goto('/assets');
   await page.getByRole('button', { name: 'Auswählen', exact: true }).click();
-  await page.getByRole('checkbox', { name: 'Alle auf dieser Seite auswählen' }).check();
+  await page.getByRole('checkbox', { name: 'Alle geladenen auswählen' }).check();
   await page.getByRole('button', { name: 'Aktionen', exact: true }).click();
   await expect(page.getByRole('menuitem', { name: 'Löschen', exact: true })).toBeDisabled();
   expect(state.deleted).toHaveLength(0);

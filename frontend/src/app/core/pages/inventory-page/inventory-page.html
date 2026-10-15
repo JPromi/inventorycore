@@ -2,10 +2,8 @@
     <header class="page-header">
         <div>
             <p class="eyebrow">
-                @if (hasActiveFilters) {
-                    {{ visibleItems.length }} von {{ totalVisibleCount }} Einträgen
-                } @else {
-                    {{ visibleItems.length }} Einträge
+                @if (list.loaded) {
+                    {{ list.total }} {{ hasActiveFilters ? 'Treffer' : list.total === 1 ? 'Eintrag' : 'Einträge' }}
                 }
                 @if (selectedAreaNames.length) {
                     · Bereich: {{ selectedAreaNames.join(', ') }}
@@ -52,7 +50,7 @@
                     #searchInput
                     type="text"
                     [(ngModel)]="search"
-                    (ngModelChange)="onFilterChange()"
+                    (ngModelChange)="onSearchChange()"
                     (keydown.escape)="clearSearch()"
                     [placeholder]="filter.searchPlaceholder ?? 'Suchen...'"
                     aria-label="Suchen"
@@ -112,16 +110,18 @@
         </app-filter-bar>
     }
 
-    <app-list-actions #selection [items]="visibleItems" [pageItems]="pageItems" [disabled]="loading"
-        [canDelete]="canBulkDelete" [deleteItem]="bulkDelete" [actions]="bulkActions" (deleted)="load()" />
+    <app-list-actions #selection [items]="list.items" [disabled]="!list.loaded"
+        [canDelete]="canBulkDelete" [deleteItem]="bulkDelete" [actions]="bulkActions" (deleted)="removed($event)" />
 
     @if (error) {
         <p class="error">{{ error }}</p>
     }
 
-    @if (loading) {
+    @if (list.error && !list.items.length) {
+        <p class="error">Daten konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
         <p class="empty">Lade Daten...</p>
-    } @else if (!pageItems.length) {
+    } @else if (!list.items.length) {
         <div class="empty-state">
             @if (hasActiveFilters) {
                 <p>Keine Einträge passen zum Filter.</p>
@@ -138,7 +138,7 @@
         </div>
     } @else {
         <div [class.grid]="viewMode === 'grid'" [class.list]="viewMode === 'list'" class="items">
-            @for (item of pageItems; track item.uuid) {
+            @for (item of list.items; track item.uuid) {
                 <article class="item" [appSelectableRow]="selection" [selectionItem]="item" [class.is-selected]="selection.isSelected(item)" [class.clickable]="itemsClickable" (click)="open(item)">
                     <app-selection-checkbox [selection]="selection" [item]="item" />
                     @if (config.endpoint !== 'tags') {
@@ -207,13 +207,16 @@
             }
         </div>
 
-        @if (pageCount > 1) {
-            <footer class="pagination">
-                <button type="button" (click)="setPage(page - 1)" [disabled]="page === 1">Zurück</button>
-                <span>Seite {{ page }} von {{ pageCount }}</span>
-                <button type="button" (click)="setPage(page + 1)" [disabled]="page === pageCount">Weiter</button>
-            </footer>
-        }
+        <!-- loads the next page when scrolled near the end -->
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Einträge...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+            } @else if (!list.hasMore && list.total > list.items.length) {
+                <span>{{ list.items.length }} von {{ list.total }}</span>
+            }
+        </div>
     }
 </section>
 

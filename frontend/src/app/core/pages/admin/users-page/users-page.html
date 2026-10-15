@@ -1,7 +1,7 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ filteredUsers.length }} von {{ users.length }} Benutzern</p>
+            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ hasActiveFilters ? 'Treffer' : list.total === 1 ? 'Benutzer' : 'Benutzer' }} }</p>
             <h1>
                 <svg lucideUser size="20"></svg>
                 <span>Benutzer</span>
@@ -18,9 +18,10 @@
     <app-filter-bar class="toolbar" [activeCount]="activeFilterCount" [canReset]="hasActiveFilters" (reset)="resetFilters()">
         <div class="search-box" filterSearch>
             <svg class="search-icon" lucideSearch size="18"></svg>
-            <input type="text" [(ngModel)]="search" placeholder="Name, Benutzername oder E-Mail suchen..." aria-label="Suchen" />
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Name, Benutzername oder E-Mail suchen..." aria-label="Suchen" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
@@ -29,6 +30,7 @@
             class="filter-select"
             [options]="groupOptions"
             [(ngModel)]="groupFilter"
+            (ngModelChange)="list.reload()"
             placeholder="Alle Gruppen"
             clearLabel="Alle Gruppen"
             searchPlaceholder="Gruppe suchen..."
@@ -37,20 +39,23 @@
             class="filter-select"
             [options]="statusOptions"
             [(ngModel)]="statusFilter"
+            (ngModelChange)="list.reload()"
             placeholder="Alle Status"
             clearLabel="Alle Status"
         />
     </app-filter-bar>
 
-    <app-list-actions #selection [items]="filteredUsers" [disabled]="loading" [canDelete]="canBulkDelete"
-        [deleteItem]="bulkDelete" (deleted)="load()" />
+    <app-list-actions #selection [items]="users" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
 
-    @if (loading) {
+    @if (list.error && !users.length) {
+        <p class="error">Benutzer konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
         <p class="empty">Lade Benutzer...</p>
-    } @else if (!filteredUsers.length) {
+    } @else if (!users.length) {
         <div class="empty-state">Keine Benutzer gefunden.</div>
     } @else {
         <div class="data-table-wrap">
@@ -66,7 +71,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (user of filteredUsers; track user.uuid) {
+                    @for (user of users; track user.uuid) {
                         <tr class="clickable" [appSelectableRow]="selection" [selectionItem]="user" [class.is-selected]="selection.isSelected(user)" (click)="edit(user)">
                             @if (selection.active) { <td><app-selection-checkbox [selection]="selection" [item]="user" /></td> }
                             <td>
@@ -123,6 +128,13 @@
                     }
                 </tbody>
             </table>
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Benutzer...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+            }
         </div>
     }
 </section>

@@ -1,15 +1,22 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX } from '@lucide/angular';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Subject, Subscription, debounceTime, map } from 'rxjs';
 
 import { ColorPicker, PRESET_COLORS } from '../../components/color-picker/color-picker';
 import { readableTextColor } from '../../components/color-picker/color-utils';
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
+import { InfiniteScroll } from '../../components/infinite-scroll.directive';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
-import { InventoryApiService, InventoryItem, TagItem } from '../../service/inventory-api.service';
+import { InventoryApiService, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
+import { PagedList, SEARCH_DELAY_MS } from '../../util/paged-list';
+
+/** A tag with its usage, as sent by `/tags/page`. */
+interface TagUsage extends TagItem {
+  assetCount: number;
+  assetTypeCount: number;
+}
 
 type RowState = 'saving' | 'saved' | 'error';
 
@@ -25,19 +32,23 @@ interface TagRow extends TagItem {
 /** Tags are global (not bound to areas); name and color are edited inline and saved right away. */
 @Component({
   selector: 'app-tags-page',
-  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, ColorPicker, LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX],
+  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, ColorPicker, InfiniteScroll, LucideCheck, LucidePlus, LucideSearch, LucideTags, LucideTrash2, LucideX],
   templateUrl: './tags-page.html',
   styleUrl: './tags-page.scss',
 })
 export class TagsPage implements OnInit, OnDestroy {
-  protected rows: TagRow[] = [];
+  /** Searched on the server, loaded page by page while scrolling. */
+  protected readonly list = new PagedList<TagRow>((page, size) =>
+    this.api.page<TagUsage>('tags', { q: this.search }, page, size).pipe(
+      map((result) => ({ ...result, items: result.items.map((tag) => this.toRow(tag, tag.assetCount, tag.assetTypeCount)) })),
+    ),
+  );
   protected readonly canBulkDelete = (_row: TagRow) => this.canDelete;
   protected readonly bulkDelete = (row: TagRow) => {
     clearTimeout(this.colorTimers.get(row.uuid));
     return this.api.delete('tags', row.uuid);
   };
   protected search = '';
-  protected loading = false;
   protected error = '';
   protected newName = '';
   protected newColor: string | null = PRESET_COLORS[6];
@@ -45,15 +56,42 @@ export class TagsPage implements OnInit, OnDestroy {
 
   private readonly colorTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly stateTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly searchChanges = new Subject<void>();
+  private readonly searchSubscription: Subscription;
 
   constructor(
     private readonly api: InventoryApiService,
     private readonly permissions: PermissionService,
     private readonly confirmDialog: ConfirmDialogService,
-  ) {}
+  ) {
+    this.searchSubscription = this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload());
+  }
 
   ngOnInit(): void {
     this.load();
+  }
+
+  /** The loaded rows (the list grows while scrolling). */
+  protected get rows(): TagRow[] {
+    return this.list.items;
+  }
+
+  protected set rows(rows: TagRow[]) {
+    this.list.items = rows;
+  }
+
+  protected onSearchChange(): void {
+    this.searchChanges.next();
+  }
+
+  protected clearSearch(): void {
+    this.search = '';
+    this.list.reload();
+  }
+
+  /** Rows removed by the batch delete. */
+  protected removed(uuids: string[]): void {
+    this.list.remove((row) => uuids.includes(row.uuid));
   }
 
   ngOnDestroy(): void {
@@ -66,6 +104,8 @@ export class TagsPage implements OnInit, OnDestroy {
       }
     });
     this.stateTimers.forEach((timer) => clearTimeout(timer));
+    this.searchSubscription.unsubscribe();
+    this.list.destroy();
   }
 
   /** Same rule as the backend: whoever maintains assets or types may create tags. */
@@ -86,11 +126,6 @@ export class TagsPage implements OnInit, OnDestroy {
     return this.permissions.can('ASSET_TYPE', 'delete');
   }
 
-  protected get visibleRows(): TagRow[] {
-    const term = this.search.trim().toLowerCase();
-    return term ? this.rows.filter((row) => row.name.toLowerCase().includes(term)) : this.rows;
-  }
-
   protected textColor(color: string | null | undefined): string {
     return readableTextColor(color);
   }
@@ -109,6 +144,7 @@ export class TagsPage implements OnInit, OnDestroy {
     this.api.create<TagItem>('tags', { name, color: this.newColor }).subscribe({
       next: (tag) => {
         this.rows = this.sort([...this.rows, this.toRow(tag, 0, 0)]);
+        this.list.total++;
         this.newName = '';
         this.creating = false;
         this.flash(tag.uuid, 'saved');
@@ -160,7 +196,7 @@ export class TagsPage implements OnInit, OnDestroy {
       return;
     }
     this.api.delete('tags', row.uuid).subscribe({
-      next: () => (this.rows = this.rows.filter((entry) => entry !== row)),
+      next: () => this.list.remove((entry) => entry === row),
       error: () => (this.error = `„${row.name}“ konnte nicht gelöscht werden.`),
     });
   }
@@ -211,24 +247,8 @@ export class TagsPage implements OnInit, OnDestroy {
   }
 
   protected load(): void {
-    this.loading = true;
-    // usage counts are a nice extra; the page also works without them
-    const optional = <T>(request: ReturnType<InventoryApiService['list']>) => request.pipe(catchError(() => of([] as T[])));
-    forkJoin({
-      tags: this.api.list<TagItem>('tags'),
-      assets: optional<InventoryItem>(this.api.list<InventoryItem>('assets')),
-      types: optional<InventoryItem>(this.api.list<InventoryItem>('asset-types')),
-    }).subscribe({
-      next: ({ tags, assets, types }) => {
-        const count = (items: InventoryItem[], uuid: string) => items.filter((item) => item.tags?.some((tag) => tag.uuid === uuid)).length;
-        this.rows = this.sort(tags.map((tag) => this.toRow(tag, count(assets, tag.uuid), count(types, tag.uuid))));
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Tags konnten nicht geladen werden.';
-        this.loading = false;
-      },
-    });
+    this.error = '';
+    this.list.reload();
   }
 
   private toRow(tag: TagItem, assetCount: number, typeCount: number): TagRow {

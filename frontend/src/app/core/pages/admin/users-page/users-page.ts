@@ -1,29 +1,32 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX } from '@lucide/angular';
-import { forkJoin } from 'rxjs';
+import { Subject, debounceTime } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { FilterBar } from '../../../components/filter-bar/filter-bar';
+import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import { AdminApiService, AdminGroup, AdminUser, PROVIDER_LABELS } from '../../../service/admin-api.service';
 import { AuthStateService } from '../../../service/auth-state.service';
+import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
 
 @Component({
   selector: 'app-users-page',
-  imports: [ListActions, SelectableRow, SelectionCheckbox, FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
+  imports: [InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, FormsModule, FilterBar, SearchSelect, LucidePencil, LucideSearch, LucideTrash2, LucideUser, LucideUserPlus, LucideX],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss',
 })
-export class UsersPage implements OnInit {
+export class UsersPage implements OnInit, OnDestroy {
   protected readonly canBulkDelete = (user: AdminUser) => !this.isSelf(user);
   protected readonly bulkDelete = (user: AdminUser) => this.api.deleteUser(user.uuid);
   protected readonly providerLabels = PROVIDER_LABELS;
-  protected users: AdminUser[] = [];
+  /** Searched and filtered on the server, loaded page by page while scrolling. */
+  protected readonly list = new PagedList<AdminUser>((page, size) =>
+    this.api.userPage({ q: this.search, group: this.groupFilter, status: this.statusFilter }, page, size));
   protected groups: AdminGroup[] = [];
-  protected loading = false;
   protected error = '';
   protected search = '';
   protected groupFilter: string | null = null;
@@ -33,6 +36,8 @@ export class UsersPage implements OnInit {
     { value: 'disabled', label: 'Deaktiviert' },
     { value: 'admin', label: 'Administratoren' },
   ];
+  private readonly searchChanges = new Subject<void>();
+  private readonly searchSubscription = this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload());
 
   constructor(
     private readonly api: AdminApiService,
@@ -45,31 +50,31 @@ export class UsersPage implements OnInit {
     this.load();
   }
 
-  protected get groupOptions(): SelectOption[] {
-    return this.groups.map((group) => ({ value: group.uuid, label: group.name }));
+  protected get users(): AdminUser[] {
+    return this.list.items;
   }
 
-  protected get filteredUsers(): AdminUser[] {
-    const terms = this.search.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    return this.users.filter((user) => {
-      const text = `${user.username} ${user.displayName ?? ''} ${user.email ?? ''}`.toLowerCase();
-      if (!terms.every((term) => text.includes(term))) {
-        return false;
-      }
-      if (this.groupFilter && !user.groupUuids.includes(this.groupFilter)) {
-        return false;
-      }
-      switch (this.statusFilter) {
-        case 'enabled':
-          return user.enabled;
-        case 'disabled':
-          return !user.enabled;
-        case 'admin':
-          return this.isAdmin(user);
-        default:
-          return true;
-      }
-    });
+  ngOnDestroy(): void {
+    this.searchSubscription.unsubscribe();
+    this.list.destroy();
+  }
+
+  protected onSearchChange(): void {
+    this.searchChanges.next();
+  }
+
+  protected clearSearch(): void {
+    this.search = '';
+    this.list.reload();
+  }
+
+  /** Entries removed by a (batch) delete. */
+  protected removed(uuids: string[]): void {
+    this.list.remove((item) => uuids.includes(item.uuid));
+  }
+
+  protected get groupOptions(): SelectOption[] {
+    return this.groups.map((group) => ({ value: group.uuid, label: group.name }));
   }
 
   protected get activeFilterCount(): number {
@@ -84,6 +89,7 @@ export class UsersPage implements OnInit {
     this.search = '';
     this.groupFilter = null;
     this.statusFilter = null;
+    this.list.reload();
   }
 
   /** Admin by role or through an admin group. */
@@ -116,7 +122,7 @@ export class UsersPage implements OnInit {
       return;
     }
     this.api.deleteUser(user.uuid).subscribe({
-      next: () => this.load(),
+      next: () => this.removed([user.uuid]),
       error: () => {
         this.error = 'Benutzer konnte nicht gelöscht werden.';
       },
@@ -124,18 +130,12 @@ export class UsersPage implements OnInit {
   }
 
   protected load(): void {
-    this.loading = true;
     this.error = '';
-    forkJoin({ users: this.api.users(), groups: this.api.groups() }).subscribe({
-      next: ({ users, groups }) => {
-        this.users = users.sort((a, b) => (a.displayName || a.username).localeCompare(b.displayName || b.username));
-        this.groups = groups;
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Benutzer konnten nicht geladen werden.';
-        this.loading = false;
-      },
+    this.list.reload();
+    // for the group filter and the group names in the table
+    this.api.groups().subscribe({
+      next: (groups) => (this.groups = groups),
+      error: () => (this.error = 'Gruppen konnten nicht geladen werden.'),
     });
   }
 }

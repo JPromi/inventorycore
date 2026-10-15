@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Page, pageParams } from '../util/paged-list';
 import { LabelTemplate, LabelTemplateRequest } from './label.model';
 
 @Injectable({ providedIn: 'root' })
@@ -11,6 +12,11 @@ export class LabelTemplateService {
   private readonly options = { withCredentials: true };
 
   constructor(private readonly http: HttpClient) {}
+
+  /** Searched and paged, grouped by area (default area first). */
+  page(query: string, page: number, size: number): Observable<Page<LabelTemplate>> {
+    return this.http.get<Page<LabelTemplate>>(`${this.url}/page`, { ...this.options, params: pageParams({ q: query }, page, size) });
+  }
 
   list(): Observable<LabelTemplate[]> {
     return this.http.get<LabelTemplate[]>(this.url, this.options);

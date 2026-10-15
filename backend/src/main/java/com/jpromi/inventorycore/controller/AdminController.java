@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +29,9 @@ import com.jpromi.inventorycore.dto.GroupPermissionRequest;
 import com.jpromi.inventorycore.dto.GroupPermissionResponse;
 import com.jpromi.inventorycore.dto.GroupRequest;
 import com.jpromi.inventorycore.dto.GroupResponse;
+import com.jpromi.inventorycore.dto.GroupRowResponse;
+import com.jpromi.inventorycore.dto.PageResponse;
+import com.jpromi.inventorycore.service.Paging;
 import com.jpromi.inventorycore.dto.UserRequest;
 import com.jpromi.inventorycore.dto.UserResponse;
 import com.jpromi.inventorycore.entity.Area;
@@ -108,6 +112,20 @@ public class AdminController {
             .toList();
     }
 
+    @GetMapping("/areas/page")
+    public PageResponse<AreaResponse> areaPage(
+        @RequestParam(required = false) String q,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size
+    ) {
+        List<String> terms = Paging.terms(q);
+        List<Area> matches = areaRepository.findAll().stream()
+            .filter(area -> Paging.matches(terms, area.getName(), area.getDescription()))
+            .sorted(Comparator.comparing(Area::isDefaultArea).reversed().thenComparing(Area::getName, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+        return Paging.page(matches, page, size, this::toAreaResponse);
+    }
+
     @PostMapping("/areas")
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
@@ -169,6 +187,32 @@ public class AdminController {
         return userRepository.findAll().stream().map(mapper::toResponse).toList();
     }
 
+    /** `status`: enabled, disabled or admin. */
+    @GetMapping("/users/page")
+    public PageResponse<UserResponse> userPage(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) UUID group,
+        @RequestParam(required = false) String status,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size
+    ) {
+        List<String> terms = Paging.terms(q);
+        List<User> matches = userRepository.findAll().stream()
+            .filter(user -> Paging.matches(terms, user.getUsername(), user.getDisplayName(), user.getEmail()))
+            .filter(user -> group == null || user.getGroups().stream().anyMatch(entry -> entry.getUuid().equals(group)))
+            .filter(user -> status == null || status.isBlank() || switch (status) {
+                case "enabled" -> user.isEnabled();
+                case "disabled" -> !user.isEnabled();
+                case "admin" -> user.isAdmin();
+                default -> true;
+            })
+            // like the list before: by display name, otherwise by user name
+            .sorted(Comparator.comparing((User user) -> user.getDisplayName() == null || user.getDisplayName().isBlank()
+                ? user.getUsername() : user.getDisplayName(), String.CASE_INSENSITIVE_ORDER))
+            .toList();
+        return Paging.page(matches, page, size, mapper::toResponse);
+    }
+
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse createUser(@RequestBody UserRequest request) {
@@ -225,6 +269,30 @@ public class AdminController {
     @GetMapping("/groups")
     public List<GroupResponse> groups() {
         return groupRepository.findAll().stream().map(mapper::toResponse).toList();
+    }
+
+    /** Groups with member count and the first members; the search also finds groups by member. */
+    @GetMapping("/groups/page")
+    public PageResponse<GroupRowResponse> groupPage(
+        @RequestParam(required = false) String q,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size
+    ) {
+        List<String> terms = Paging.terms(q);
+        List<User> users = userRepository.findAll().stream().sorted(Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER)).toList();
+        java.util.function.Function<Group, List<User>> members = group -> users.stream()
+            .filter(user -> user.getGroups().stream().anyMatch(entry -> entry.getId().equals(group.getId()))).toList();
+        List<Group> matches = groupRepository.findAll().stream()
+            .filter(group -> Paging.matches(terms, java.util.stream.Stream.concat(java.util.stream.Stream.of(group.getName()),
+                members.apply(group).stream().flatMap(user -> java.util.stream.Stream.of(user.getUsername(), user.getDisplayName()))).toList()))
+            .sorted(Comparator.comparing(Group::getName, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+        return Paging.page(matches, page, size, group -> {
+            GroupResponse response = mapper.toResponse(group);
+            List<User> groupMembers = members.apply(group);
+            return new GroupRowResponse(response.uuid(), response.name(), response.sourceProvider(), response.permissions(), response.adminGroup(),
+                groupMembers.size(), groupMembers.stream().limit(5).map(mapper::toResponse).toList());
+        });
     }
 
     @PostMapping("/groups")

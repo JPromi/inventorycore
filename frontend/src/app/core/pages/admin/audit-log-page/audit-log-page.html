@@ -67,11 +67,11 @@
     } @else {
         <section class="card log">
             <app-audit-timeline [entries]="entries" [showObject]="true" />
-            @if (entries.length < total) {
-                <button type="button" class="secondary-action more" [disabled]="loading" (click)="loadMore()">
-                    {{ loading ? 'Lädt...' : 'Ältere anzeigen (' + (total - entries.length) + ' weitere)' }}
-                </button>
-            }
+            <div class="list-end" (appInfiniteScroll)="loadMore()" [scrollDisabled]="loading || entries.length >= total">
+                @if (loading) {
+                    <span>Lade ältere Einträge...</span>
+                }
+            </div>
         </section>
     }
 </section>

@@ -1,7 +1,7 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ templates.length }} Vorlagen</p>
+            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Vorlage' : 'Vorlagen' }} }</p>
             <h1>
                 <svg lucideQrCode size="20"></svg>
                 <span>Label-Vorlagen</span>
@@ -22,16 +22,31 @@
         ohne eigene Vorlage die Standard-Vorlage des Standardbereichs.
     </p>
 
-    <app-list-actions #selection [items]="selectionItems" [disabled]="loading" [canDelete]="canBulkDelete"
-        [deleteItem]="bulkDelete" (deleted)="load()" />
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Vorlage oder Bereich suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="selectionItems" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" />
     @if (error) {
         <p class="error">{{ error }}</p>
     }
 
-    @if (loading) {
+    @if (list.error && !templates.length) {
+        <p class="error">Vorlagen konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
         <p class="empty">Lade Vorlagen...</p>
     } @else if (!templates.length) {
-        <div class="empty-state">Noch keine Vorlagen vorhanden.</div>
+        <div class="empty-state">{{ search.trim() ? 'Keine Vorlagen gefunden.' : 'Noch keine Vorlagen vorhanden.' }}</div>
     } @else {
         @for (group of groups; track group.areaUuid) {
             <section class="area-group">
@@ -80,5 +95,12 @@
                 </div>
             </section>
         }
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Vorlagen...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+            }
+        </div>
     }
 </section>

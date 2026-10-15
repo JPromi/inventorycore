@@ -4,6 +4,7 @@ import { LucideHistory, LucideSearch, LucideX } from '@lucide/angular';
 import { Subject, Subscription, debounceTime } from 'rxjs';
 
 import { AuditTimeline } from '../../../components/audit-timeline/audit-timeline';
+import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { FilterBar } from '../../../components/filter-bar/filter-bar';
 import { SearchSelect, SelectOption } from '../../../components/search-select/search-select';
 import {
@@ -20,7 +21,7 @@ const PAGE_SIZE = 50;
 /** Everything that happened, newest first, with filters (admins only). */
 @Component({
   selector: 'app-audit-log-page',
-  imports: [AuditTimeline, FilterBar, FormsModule, SearchSelect, LucideHistory, LucideSearch, LucideX],
+  imports: [AuditTimeline, FilterBar, InfiniteScroll, FormsModule, SearchSelect, LucideHistory, LucideSearch, LucideX],
   templateUrl: './audit-log-page.html',
   styleUrl: './audit-log-page.scss',
 })
@@ -83,7 +84,11 @@ export class AuditLogPage implements OnInit, OnDestroy {
     this.load();
   }
 
+  /** Next page while scrolling (only when the previous one has arrived). */
   protected loadMore(): void {
+    if (this.loading || this.error || this.entries.length >= this.total) {
+      return;
+    }
     this.page++;
     this.load();
   }

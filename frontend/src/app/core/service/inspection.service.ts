@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Page, pageParams } from '../util/paged-list';
 import { AssetFieldType } from './inventory-api.service';
 
 export type InspectionStatus = 'OPEN' | 'COMPLETED';
@@ -173,6 +174,12 @@ export interface InspectionCounts {
   functionUnchecked: number;
 }
 
+/** A page of protocols plus the counts for the status tabs (within the area selection). */
+export interface InspectionPage extends Page<InspectionSummary> {
+  openCount: number;
+  completedCount: number;
+}
+
 export interface InspectionSummary {
   uuid: string;
   title: string;
@@ -334,6 +341,16 @@ export class InspectionService {
   /** All inspections the asset was part of or found in, newest first. */
   inspectionsOfAsset(assetUuid: string): Observable<AssetInspection[]> {
     return this.http.get<AssetInspection[]>(`${this.apiUrl}/assets/${assetUuid}/inspections`, this.options);
+  }
+
+  /** Searched page of the templates; `areas` is the sidebar selection. */
+  typePage(filter: { q?: string; areas?: string[] }, page: number, size: number): Observable<Page<InspectionType>> {
+    return this.http.get<Page<InspectionType>>(`${this.apiUrl}/inspection-types/page`, { ...this.options, params: pageParams(filter, page, size) });
+  }
+
+  /** Searched page of the protocols (newest first) with the tab counts. */
+  inspectionPage(filter: { q?: string; status?: InspectionStatus | null; areas?: string[] }, page: number, size: number): Observable<InspectionPage> {
+    return this.http.get<InspectionPage>(`${this.apiUrl}/inspections/page`, { ...this.options, params: pageParams(filter, page, size) });
   }
 
   inspections(): Observable<InspectionSummary[]> {

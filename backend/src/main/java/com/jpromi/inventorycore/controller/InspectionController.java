@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,12 +29,16 @@ import com.jpromi.inventorycore.dto.InspectionFilter;
 import com.jpromi.inventorycore.dto.InspectionFixedDateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemResponse;
 import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
+import com.jpromi.inventorycore.dto.InspectionPageResponse;
 import com.jpromi.inventorycore.dto.InspectionPhotoRequest;
 import com.jpromi.inventorycore.dto.InspectionScanRequest;
 import com.jpromi.inventorycore.dto.InspectionScanResponse;
 import com.jpromi.inventorycore.dto.InspectionSummaryResponse;
 import com.jpromi.inventorycore.dto.InspectionTypeRequest;
 import com.jpromi.inventorycore.dto.InspectionTypeResponse;
+import com.jpromi.inventorycore.dto.PageResponse;
+import com.jpromi.inventorycore.enums.InspectionStatus;
+import com.jpromi.inventorycore.service.Paging;
 import com.jpromi.inventorycore.service.InspectionScheduleService;
 import com.jpromi.inventorycore.service.InspectionService;
 import com.jpromi.inventorycore.enums.AuditAction;
@@ -69,6 +74,25 @@ public class InspectionController {
         return service.types(permissionService.context(authentication));
     }
 
+    /** Searched and paged for the template list; `areas` is the sidebar selection. */
+    @GetMapping("/inspection-types/page")
+    public PageResponse<InspectionTypeResponse> typePage(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) List<UUID> areas,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size,
+        Authentication authentication
+    ) {
+        List<String> terms = Paging.terms(q);
+        var selection = Paging.selection(areas);
+        List<InspectionTypeResponse> matches = service.types(permissionService.context(authentication)).stream()
+            .filter(type -> Paging.overlapsUuids(type.areaUuids(), selection))
+            .filter(type -> Paging.matches(terms, java.util.stream.Stream.concat(
+                java.util.stream.Stream.of(type.name(), type.description()), type.assetTypeNames().stream()).toList()))
+            .toList();
+        return Paging.page(matches, page, size, type -> type);
+    }
+
     @GetMapping("/inspection-types/{uuid}")
     public InspectionTypeResponse type(@PathVariable UUID uuid, Authentication authentication) {
         return service.type(permissionService.context(authentication), uuid);
@@ -101,6 +125,31 @@ public class InspectionController {
     @GetMapping("/inspections")
     public List<InspectionSummaryResponse> inspections(Authentication authentication) {
         return service.inspections(permissionService.context(authentication));
+    }
+
+    /** Protocols, newest first, searched and paged; the tab counts ignore search and status. */
+    @GetMapping("/inspections/page")
+    public InspectionPageResponse inspectionPage(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) InspectionStatus status,
+        @RequestParam(required = false) List<UUID> areas,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size,
+        Authentication authentication
+    ) {
+        List<String> terms = Paging.terms(q);
+        var selection = Paging.selection(areas);
+        List<InspectionSummaryResponse> inArea = service.inspections(permissionService.context(authentication)).stream()
+            .filter(inspection -> Paging.overlapsUuids(inspection.areaUuids(), selection))
+            .toList();
+        List<InspectionSummaryResponse> matches = inArea.stream()
+            .filter(inspection -> status == null || inspection.status() == status)
+            .filter(inspection -> Paging.matches(terms, inspection.title(), inspection.typeName(), inspection.filterSummary(), inspection.createdByName()))
+            .toList();
+        PageResponse<InspectionSummaryResponse> result = Paging.page(matches, page, size, inspection -> inspection);
+        return new InspectionPageResponse(result.items(), result.total(), result.page(), result.size(), result.hasMore(),
+            inArea.stream().filter(inspection -> inspection.status() == InspectionStatus.OPEN).count(),
+            inArea.stream().filter(inspection -> inspection.status() == InspectionStatus.COMPLETED).count());
     }
 
     @PostMapping("/inspections/preview")

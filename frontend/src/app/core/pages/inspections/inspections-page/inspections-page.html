@@ -24,31 +24,32 @@
 
     <div class="toolbar">
         <div class="segmented-tabs" role="tablist">
-            <button type="button" role="tab" [class.active]="statusFilter === 'DUE'" (click)="statusFilter = 'DUE'">
+            <button type="button" role="tab" [class.active]="statusFilter === 'DUE'" (click)="setStatus('DUE')">
                 Fällig <span class="count" [class.alert]="overdueCount">{{ count('DUE') }}</span>
             </button>
-            <button type="button" role="tab" [class.active]="statusFilter === 'OPEN'" (click)="statusFilter = 'OPEN'">
+            <button type="button" role="tab" [class.active]="statusFilter === 'OPEN'" (click)="setStatus('OPEN')">
                 Offen <span class="count">{{ count('OPEN') }}</span>
             </button>
-            <button type="button" role="tab" [class.active]="statusFilter === 'COMPLETED'" (click)="statusFilter = 'COMPLETED'">
+            <button type="button" role="tab" [class.active]="statusFilter === 'COMPLETED'" (click)="setStatus('COMPLETED')">
                 Abgeschlossen <span class="count">{{ count('COMPLETED') }}</span>
             </button>
-            <button type="button" role="tab" [class.active]="statusFilter === 'ALL'" (click)="statusFilter = 'ALL'">
+            <button type="button" role="tab" [class.active]="statusFilter === 'ALL'" (click)="setStatus('ALL')">
                 Alle <span class="count">{{ count('ALL') }}</span>
             </button>
         </div>
         <div class="search-box">
             <svg class="search-icon" lucideSearch size="18"></svg>
-            <input type="text" [(ngModel)]="search" placeholder="Titel, Art, Standort oder Person suchen..." aria-label="Suchen" />
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Titel, Art, Standort oder Person suchen..." aria-label="Suchen" />
             @if (search) {
-                <button type="button" class="clear" title="Suche leeren" (click)="search = ''">
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
                     <svg lucideX size="15"></svg>
                 </button>
             }
         </div>
     </div>
 
-    <app-list-actions #selection [items]="visible" [disabled]="loading || statusFilter === 'DUE'" [canDelete]="canBulkDelete"
+    <app-list-actions #selection [items]="visible" [disabled]="loading || !list.loaded || statusFilter === 'DUE'" [canDelete]="canBulkDelete"
         [deleteItem]="bulkDelete" (deleted)="bulkDeleted($event)" />
     @if (error) {
         <p class="error">{{ error }}</p>
@@ -110,9 +111,13 @@
                 </section>
             }
         </div>
+    } @else if (list.error && !visible.length) {
+        <p class="error">Prüfungen konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
+        <p class="empty">Lade Prüfungen...</p>
     } @else if (!visible.length) {
         <div class="empty-state">
-            @if (inspections.length) {
+            @if (search.trim() || count('ALL')) {
                 Keine Prüfungen gefunden. Eventuell ist links ein anderer Bereich ausgewählt.
             } @else {
                 Noch keine Prüfungen. Lege zuerst unter Konfiguration eine Prüfungsvorlage an und starte dann eine Prüfung.
@@ -176,6 +181,13 @@
                     </div>
                     </button>
                 </article>
+            }
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Einträge...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
             }
         </div>
     }

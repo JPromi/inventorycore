@@ -1,31 +1,37 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideTrash2 } from '@lucide/angular';
-import { forkJoin } from 'rxjs';
+import { LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideSearch, LucideTrash2, LucideX } from '@lucide/angular';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 import { ConfirmDialogService } from '../../../components/confirm-dialog/confirm-dialog.service';
+import { InfiniteScroll } from '../../../components/infinite-scroll.directive';
 import { ListActions, SelectableRow, SelectionCheckbox } from '../../../components/list-actions/list-actions';
 import { LabelRenderer } from '../../../labels/label-renderer/label-renderer';
 import { LabelTemplateService } from '../../../labels/label-template.service';
 import { LabelElement, LabelTemplate, SAMPLE_CONTEXT, parseElements } from '../../../labels/label.model';
 import { AreaService } from '../../../service/area.service';
 import { PermissionService } from '../../../service/permission.service';
+import { PagedList, SEARCH_DELAY_MS } from '../../../util/paged-list';
 
 @Component({
   selector: 'app-label-templates-page',
-  imports: [ListActions, SelectableRow, SelectionCheckbox, LabelRenderer, LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideTrash2],
+  imports: [FormsModule, InfiniteScroll, ListActions, SelectableRow, SelectionCheckbox, LabelRenderer, LucideCopy, LucidePencil, LucidePlus, LucideQrCode, LucideSearch, LucideTrash2, LucideX],
   templateUrl: './label-templates-page.html',
   styleUrl: './label-templates-page.scss',
 })
-export class LabelTemplatesPage implements OnInit {
+export class LabelTemplatesPage implements OnInit, OnDestroy {
   protected readonly sample = SAMPLE_CONTEXT;
-  protected templates: LabelTemplate[] = [];
+  /** Searched on the server, loaded page by page while scrolling. */
+  protected readonly list = new PagedList<LabelTemplate>((page, size) => this.api.page(this.search, page, size));
+  protected search = '';
   protected readonly canBulkDelete = (item: LabelTemplate) => this.canDelete(item);
   protected readonly bulkDelete = (item: LabelTemplate) => this.api.delete(item.uuid);
   protected get selectionItems(): LabelTemplate[] { return this.groups.flatMap(group => group.templates); }
-  protected loading = false;
   protected error = '';
   private readonly elementCache = new Map<string, LabelElement[]>();
+  private readonly searchChanges = new Subject<void>();
+  private readonly searchSubscription = this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload());
 
   constructor(
     private readonly api: LabelTemplateService,
@@ -36,20 +42,44 @@ export class LabelTemplatesPage implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.areaService.load().subscribe();
     this.load();
   }
 
-  /** Templates grouped by area, areas sorted like in the area list (default first). */
+  ngOnDestroy(): void {
+    this.searchSubscription.unsubscribe();
+    this.list.destroy();
+  }
+
+  protected get templates(): LabelTemplate[] {
+    return this.list.items;
+  }
+
+  protected onSearchChange(): void {
+    this.searchChanges.next();
+  }
+
+  protected clearSearch(): void {
+    this.search = '';
+    this.list.reload();
+  }
+
+  protected removed(uuids: string[]): void {
+    this.list.remove((template) => uuids.includes(template.uuid));
+  }
+
+  /** Loaded templates grouped by area, in the server's order (default area first, then by name). */
   protected get groups(): { areaUuid: string; areaName: string; templates: LabelTemplate[] }[] {
-    const order = this.areaService.areas.map((area) => area.uuid);
-    const uuids = [...new Set(this.templates.map((template) => template.areaUuid))].sort(
-      (a, b) => (order.indexOf(a) + 1 || 999) - (order.indexOf(b) + 1 || 999),
-    );
-    return uuids.map((areaUuid) => ({
-      areaUuid,
-      areaName: this.areaService.name(areaUuid),
-      templates: this.templates.filter((template) => template.areaUuid === areaUuid),
-    }));
+    const groups: { areaUuid: string; areaName: string; templates: LabelTemplate[] }[] = [];
+    for (const template of this.templates) {
+      let group = groups.find((entry) => entry.areaUuid === template.areaUuid);
+      if (!group) {
+        group = { areaUuid: template.areaUuid, areaName: this.areaService.name(template.areaUuid), templates: [] };
+        groups.push(group);
+      }
+      group.templates.push(template);
+    }
+    return groups;
   }
 
   protected get canCreate(): boolean {
@@ -113,24 +143,14 @@ export class LabelTemplatesPage implements OnInit {
       return;
     }
     this.api.delete(template.uuid).subscribe({
-      next: () => this.load(),
+      next: () => this.removed([template.uuid]),
       error: () => (this.error = 'Vorlage konnte nicht gelöscht werden.'),
     });
   }
 
   protected load(): void {
-    this.loading = true;
     this.error = '';
     this.elementCache.clear();
-    forkJoin({ templates: this.api.list(), areas: this.areaService.load() }).subscribe({
-      next: ({ templates }) => {
-        this.templates = templates;
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Vorlagen konnten nicht geladen werden.';
-        this.loading = false;
-      },
-    });
+    this.list.reload();
   }
 }

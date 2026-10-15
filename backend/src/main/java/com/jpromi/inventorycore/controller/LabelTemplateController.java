@@ -15,12 +15,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.jpromi.inventorycore.dto.LabelTemplateRequest;
 import com.jpromi.inventorycore.dto.LabelTemplateResponse;
+import com.jpromi.inventorycore.dto.PageResponse;
+import com.jpromi.inventorycore.service.Paging;
 import com.jpromi.inventorycore.entity.Area;
 import com.jpromi.inventorycore.entity.LabelTemplate;
 import com.jpromi.inventorycore.enums.PermissionAction;
@@ -72,6 +75,26 @@ public class LabelTemplateController {
             .sorted(Comparator.comparing(LabelTemplate::getName, String.CASE_INSENSITIVE_ORDER))
             .map(this::toResponse)
             .toList();
+    }
+
+    /** Searched and paged, grouped by area (default area first) and then by name. */
+    @GetMapping("/page")
+    public PageResponse<LabelTemplateResponse> page(
+        @RequestParam(required = false) String q,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size,
+        Authentication authentication
+    ) {
+        AccessContext access = permissionService.context(authentication);
+        List<String> terms = Paging.terms(q);
+        List<LabelTemplate> matches = templateRepository.findAll().stream()
+            .filter(template -> isVisible(access, template))
+            .filter(template -> Paging.matches(terms, template.getName(), template.getDescription(), template.getArea().getName()))
+            .sorted(Comparator.comparing((LabelTemplate template) -> !template.getArea().isDefaultArea())
+                .thenComparing(template -> template.getArea().getName(), String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(LabelTemplate::getName, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+        return Paging.page(matches, page, size, this::toResponse);
     }
 
     @GetMapping("/{uuid}")

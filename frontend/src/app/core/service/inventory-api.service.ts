@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Page, pageParams } from '../util/paged-list';
 import type { LocationType } from '../util/location-types';
 
 export interface InventoryItem {
@@ -128,6 +129,11 @@ export class InventoryApiService {
 
   list<T extends InventoryItem>(endpoint: string): Observable<T[]> {
     return this.http.get<T[]>(`${this.apiUrl}/${endpoint}`, { withCredentials: true });
+  }
+
+  /** One searched page of a list (`/{endpoint}/page`); see the backend list controllers for the filters. */
+  page<T>(endpoint: string, filter: Record<string, string | string[] | null | undefined>, page: number, size: number): Observable<Page<T>> {
+    return this.http.get<Page<T>>(`${this.apiUrl}/${endpoint}/page`, { withCredentials: true, params: pageParams(filter, page, size) });
   }
 
   get<T extends InventoryItem>(endpoint: string, uuid: string): Observable<T> {

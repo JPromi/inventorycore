@@ -1,7 +1,7 @@
 <section class="page">
     <header class="page-header">
         <div>
-            <p class="eyebrow">{{ areas.length }} Bereiche</p>
+            <p class="eyebrow">@if (list.loaded) { {{ list.total }} {{ list.total === 1 ? 'Bereich' : 'Bereiche' }} }</p>
             <h1>
                 <svg lucideLayers size="20"></svg>
                 <span>Bereiche</span>
@@ -76,11 +76,28 @@
         </form>
     }
 
-    <app-list-actions #selection [items]="areas" [disabled]="loading || saving" [canDelete]="canBulkDelete"
-        [deleteItem]="bulkDelete" (deleted)="load()"
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                placeholder="Bereich suchen..." aria-label="Suchen" />
+            @if (search) {
+                <button type="button" class="clear" title="Suche leeren" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="areas" [disabled]="!list.loaded || saving" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event); refreshSidebar()"
         deleteWarning="Einträge wandern bei Bedarf in den Standardbereich. Die Gruppen-Berechtigungen dieser Bereiche werden entfernt." />
-    @if (loading) {
+    @if (list.error && !areas.length) {
+        <p class="error">Bereiche konnten nicht geladen werden.</p>
+    } @else if (!list.loaded) {
         <p class="empty">Lade Bereiche...</p>
+    } @else if (!areas.length) {
+        <div class="empty-state">Keine Bereiche gefunden.</div>
     } @else {
         <div class="data-table-wrap">
             <table class="data-table">
@@ -129,6 +146,13 @@
                     }
                 </tbody>
             </table>
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>Lade weitere Bereiche...</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">Erneut versuchen</button>
+            }
         </div>
     }
 </section>

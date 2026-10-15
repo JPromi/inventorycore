@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { pageOf } from './support/paging';
 
 const settings = {
   enabled: true, url: 'ldap://directory.example', ignoreCertificates: false,
@@ -47,10 +48,11 @@ for (const success of [true, false]) {
 
 test('refreshes the user list after confirmed deletion without another click', async ({ page }) => {
   let deleted = false;
-  await page.route('**/api/admin/users', (route) => route.fulfill({ json: deleted ? [] : [{
+  const users = () => deleted ? [] : [{
     uuid: 'member-uuid', username: 'member', displayName: 'Member', email: null,
     role: 'USER', enabled: true, sourceProvider: 'LOCAL', groupUuids: [],
-  }] }));
+  }];
+  await page.route('**/api/admin/users/page**', (route) => route.fulfill({ json: pageOf(users(), route.request().url()) }));
   await page.route('**/api/admin/users/member-uuid', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 200));
     deleted = true;

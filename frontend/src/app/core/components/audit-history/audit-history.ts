@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { LucideChevronRight, LucideHistory } from '@lucide/angular';
 
 import { AuditLog, AuditService } from '../../service/audit.service';
+import { InfiniteScroll } from '../infinite-scroll.directive';
 import { AuditTimeline } from '../audit-timeline/audit-timeline';
 
 const PAGE_SIZE = 15;
@@ -14,7 +15,7 @@ const PAGE_SIZE = 15;
  */
 @Component({
   selector: 'app-audit-history',
-  imports: [AuditTimeline, RouterLink, LucideChevronRight, LucideHistory],
+  imports: [AuditTimeline, InfiniteScroll, RouterLink, LucideChevronRight, LucideHistory],
   template: `
     <section class="card">
       <div class="card-title">
@@ -36,10 +37,13 @@ const PAGE_SIZE = 15;
             <span>Gesamten Verlauf anzeigen ({{ total }})</span>
             <svg lucideChevronRight size="15"></svg>
           </a>
-        } @else if (!limit && entries.length < total) {
-          <button type="button" class="secondary-action compact more" [disabled]="loading" (click)="loadMore()">
-            {{ loading ? 'Lädt...' : 'Ältere anzeigen' }}
-          </button>
+        } @else if (!limit) {
+          <!-- full history: older entries load while scrolling -->
+          <div class="list-end" (appInfiniteScroll)="loadMore()" [scrollDisabled]="loading || entries.length >= total">
+            @if (loading) {
+              <span>Lade ältere Einträge...</span>
+            }
+          </div>
         }
       }
     </section>
@@ -79,6 +83,9 @@ export class AuditHistory implements OnChanges {
   }
 
   protected loadMore(): void {
+    if (this.loading || this.error || this.entries.length >= this.total) {
+      return;
+    }
     this.page++;
     this.load();
   }

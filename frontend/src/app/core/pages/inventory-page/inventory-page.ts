@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -22,6 +22,7 @@ import {
 import { ConfirmDialogService } from '../../components/confirm-dialog/confirm-dialog.service';
 import { ListAction, ListActions, SelectableRow, SelectionCheckbox } from '../../components/list-actions/list-actions';
 import { FilterBar } from '../../components/filter-bar/filter-bar';
+import { InfiniteScroll } from '../../components/infinite-scroll.directive';
 import { SearchSelect, SelectOption } from '../../components/search-select/search-select';
 import { PermissionResourceType } from '../../entities/user.entity';
 import { LabelPrintDialog } from '../../labels/label-print-dialog/label-print-dialog';
@@ -29,9 +30,10 @@ import { AreaService } from '../../service/area.service';
 import { InspectionDue, InspectionService, dueText } from '../../service/inspection.service';
 import { InventoryApiService, InventoryItem, InventoryRequest, TagItem } from '../../service/inventory-api.service';
 import { PermissionService } from '../../service/permission.service';
-import { locationPath, locationWithDescendants } from '../../util/location-utils';
+import { locationPath } from '../../util/location-utils';
+import { PagedList, SEARCH_DELAY_MS } from '../../util/paged-list';
 import { locationTypeInfo } from '../../util/location-types';
-import { Observable } from 'rxjs';
+import { Observable, Subject, Subscription, debounceTime, skip } from 'rxjs';
 
 type ViewMode = 'grid' | 'list';
 
@@ -74,6 +76,7 @@ interface FieldConfig {
     SelectionCheckbox,
     FormsModule,
     FilterBar,
+    InfiniteScroll,
     LabelPrintDialog,
     SearchSelect,
     LucideChevronRight,
@@ -92,21 +95,19 @@ interface FieldConfig {
   templateUrl: './inventory-page.html',
   styleUrl: './inventory-page.scss',
 })
-export class InventoryPage implements OnInit {
+export class InventoryPage implements OnInit, OnDestroy {
   protected readonly iconInputs = { size: 18 };
   protected readonly placeholderIconInputs = { size: 22 };
   protected config!: PageConfig;
-  protected items: InventoryItem[] = [];
+  /** The searched list, loaded page by page from the server while scrolling. */
+  protected list = new PagedList<InventoryItem>((page, size) => this.api.page<InventoryItem>(this.config.endpoint, this.query, page, size));
   protected readonly canBulkDelete = (item: InventoryItem) => this.permissions.can(this.config.resourceType, 'delete', item.areaUuids ?? []);
   protected bulkDelete!: (item: InventoryItem) => Observable<unknown>;
   protected bulkActions: ListAction<InventoryItem>[] = [];
   /** Assets whose labels are being printed (dialog open while set). */
   protected printAssets: InventoryItem[] | null = null;
-  protected loading = false;
   protected error = '';
   protected viewMode: ViewMode = 'list';
-  protected page = 1;
-  protected pageSize = 12;
   protected search = '';
   protected tagFilter: string | null = null;
   protected locationFilter: string | null = null;
@@ -119,6 +120,8 @@ export class InventoryPage implements OnInit {
   protected dueByAsset = new Map<string, InspectionDue>();
 
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
+  private readonly searchChanges = new Subject<void>();
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -138,12 +141,29 @@ export class InventoryPage implements OnInit {
       this.bulkActions = endpoint === 'assets'
         ? [{ label: 'Labels drucken', icon: LucidePrinter, run: items => (this.printAssets = items) }]
         : [];
-      this.items = [];
       this.resetFilters();
-      this.load();
       this.loadFilterOptions();
     });
-    this.areaService.selected$.subscribe(() => (this.page = 1));
+    // the sidebar area selection is a server filter too
+    this.subscriptions.add(this.areaService.selected$.pipe(skip(1)).subscribe(() => this.list.reload()));
+    this.subscriptions.add(this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload()));
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+    this.list.destroy();
+  }
+
+  /** Filters for the server; `areas` is the sidebar selection (tags are global). */
+  private get query(): Record<string, string | string[] | null> {
+    return {
+      q: this.search,
+      tag: this.tagFilter,
+      location: this.locationFilter,
+      assetType: this.assetTypeFilter,
+      area: this.areaFilter,
+      areas: this.config.endpoint === 'tags' ? [] : this.areaService.selected,
+    };
   }
 
   /** "/" focuses the search like in many web apps. */
@@ -154,23 +174,6 @@ export class InventoryPage implements OnInit {
       event.preventDefault();
       this.searchInput?.nativeElement.focus();
     }
-  }
-
-  /** Items of the areas chosen in the sidebar (the backend already removed what the user may not see). */
-  protected get areaItems(): InventoryItem[] {
-    // tags are global and not bound to areas
-    if (this.config.endpoint === 'tags') {
-      return this.items;
-    }
-    return this.items.filter((item) => this.areaService.matchesSelection(item, this.locations));
-  }
-
-  protected get visibleItems(): InventoryItem[] {
-    return this.areaItems.filter((item) => this.matchesFilters(item));
-  }
-
-  protected get totalVisibleCount(): number {
-    return this.areaItems.length;
   }
 
   protected get selectedAreaNames(): string[] {
@@ -216,17 +219,13 @@ export class InventoryPage implements OnInit {
     return this.assetTypes.map((type) => ({ value: type.uuid, label: type.name }));
   }
 
-  protected get pageCount(): number {
-    return Math.max(1, Math.ceil(this.visibleItems.length / this.pageSize));
-  }
-
-  protected get pageItems(): InventoryItem[] {
-    const start = (this.page - 1) * this.pageSize;
-    return this.visibleItems.slice(start, start + this.pageSize);
+  /** Search: waits for a pause in typing; other filters reload right away. */
+  protected onSearchChange(): void {
+    this.searchChanges.next();
   }
 
   protected onFilterChange(): void {
-    this.page = 1;
+    this.list.reload();
   }
 
   protected clearSearch(): void {
@@ -241,27 +240,18 @@ export class InventoryPage implements OnInit {
     this.locationFilter = null;
     this.assetTypeFilter = null;
     this.areaFilter = null;
-    this.page = 1;
+    this.load();
   }
 
   protected load(): void {
-    this.loading = true;
     this.error = '';
     this.loadDueInspections();
-    this.api.list(this.config.endpoint).subscribe({
-      next: (items) => {
-        this.items = items.sort((a, b) => a.name.localeCompare(b.name));
-        if (this.config.endpoint === 'locations') {
-          this.locations = items;
-        }
-        this.page = Math.min(this.page, this.pageCount);
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Daten konnten nicht geladen werden.';
-        this.loading = false;
-      },
-    });
+    this.list.reload();
+  }
+
+  /** Entries removed by a (batch) delete leave the loaded list without reloading it. */
+  protected removed(uuids: string[]): void {
+    this.list.remove((item) => uuids.includes(item.uuid));
   }
 
   /** "Prüfung überfällig seit 3 Tagen (Bremsen)" */
@@ -322,16 +312,12 @@ export class InventoryPage implements OnInit {
     }
 
     this.api.delete(this.config.endpoint, item.uuid).subscribe({
-      next: () => this.load(),
+      next: () => this.removed([item.uuid]),
       error: (error) => {
         this.error = this.config.endpoint === 'assets' && error.status === 409
           ? 'Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.' : 'Löschen fehlgeschlagen.';
       },
     });
-  }
-
-  protected setPage(page: number): void {
-    this.page = Math.min(this.pageCount, Math.max(1, page));
   }
 
   protected thumbnail(item: InventoryItem): string | null {
@@ -379,38 +365,6 @@ export class InventoryPage implements OnInit {
     return [...own, ...typeTags.filter((tag) => !ownUuids.has(tag.uuid))];
   }
 
-  private matchesFilters(item: InventoryItem): boolean {
-    const filter = this.config.filter;
-    if (!filter) {
-      return true;
-    }
-
-    const terms = this.search.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    if (terms.length) {
-      const haystack = filter.searchFields
-        .flatMap((field) => (field === 'tags' ? this.itemTags(item).map((tag) => tag.name) : [item[field] ?? '']))
-        .join(' ')
-        .toLowerCase();
-      if (!terms.every((term) => haystack.includes(term))) {
-        return false;
-      }
-    }
-
-    if (this.tagFilter && !this.itemTags(item).some((tag) => tag.uuid === this.tagFilter)) {
-      return false;
-    }
-    if (this.locationFilter && !(item.locationUuid && locationWithDescendants(this.locations, this.locationFilter).has(item.locationUuid))) {
-      return false;
-    }
-    if (this.assetTypeFilter && item.assetTypeUuid !== this.assetTypeFilter) {
-      return false;
-    }
-    if (this.areaFilter && !this.areaService.matchesAreas(item, [this.areaFilter], this.locations)) {
-      return false;
-    }
-    return true;
-  }
-
   private loadFilterOptions(): void {
     const filter = this.config.filter;
     this.tags = [];
@@ -422,7 +376,8 @@ export class InventoryPage implements OnInit {
         error: () => (this.tags = []),
       });
     }
-    if (filter?.locations) {
+    // locations: also for the parent path shown in the location list
+    if (filter?.locations || this.config.endpoint === 'locations') {
       this.api.list<InventoryItem>('locations').subscribe({
         next: (locations) => (this.locations = locations),
         error: () => (this.locations = []),

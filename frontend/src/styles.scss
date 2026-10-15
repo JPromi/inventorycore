@@ -749,6 +749,17 @@ app-selection-checkbox.selection-hidden { display: none; }
     }
 }
 
+// end of a list that loads more while scrolling (see InfiniteScroll): status of the next page
+.list-end {
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: .75rem 0;
+    color: var(--text-muted);
+    font-size: .85rem;
+}
+
 // compact table for reports and protocols (prints well)
 .report-table {
     width: 100%;

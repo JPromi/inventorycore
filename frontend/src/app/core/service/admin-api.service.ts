@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Page, pageParams } from '../util/paged-list';
 import { PermissionResourceType } from '../entities/user.entity';
 import { AreaItem } from './area.service';
 
@@ -42,6 +43,13 @@ export interface AdminGroup {
   sourceProvider: AuthProvider;
   permissions: AdminPermission[];
   adminGroup: boolean;
+}
+
+/** A group in the admin list (`/admin/groups/page`). */
+export interface AdminGroupRow extends AdminGroup {
+  memberCount: number;
+  /** the first few members, for the avatars */
+  members: AdminUser[];
 }
 
 export interface AdminGroupRequest {
@@ -234,6 +242,20 @@ export class AdminApiService {
 
   testOidc(settings: OidcSettings): Observable<OidcTestResult> {
     return this.http.post<OidcTestResult>(`${this.apiUrl}/oidc/test`, settings, this.options);
+  }
+
+  /** `status`: enabled, disabled or admin. */
+  userPage(filter: { q?: string; group?: string | null; status?: string | null }, page: number, size: number): Observable<Page<AdminUser>> {
+    return this.http.get<Page<AdminUser>>(`${this.apiUrl}/users/page`, { ...this.options, params: pageParams(filter, page, size) });
+  }
+
+  /** Groups with member count and the first members; the search also finds groups by member. */
+  groupPage(query: string, page: number, size: number): Observable<Page<AdminGroupRow>> {
+    return this.http.get<Page<AdminGroupRow>>(`${this.apiUrl}/groups/page`, { ...this.options, params: pageParams({ q: query }, page, size) });
+  }
+
+  areaPage(query: string, page: number, size: number): Observable<Page<AreaItem>> {
+    return this.http.get<Page<AreaItem>>(`${this.apiUrl}/areas/page`, { ...this.options, params: pageParams({ q: query }, page, size) });
   }
 
   users(): Observable<AdminUser[]> {

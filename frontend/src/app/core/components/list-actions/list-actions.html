@@ -6,7 +6,7 @@
     @if (active) {
     <label class="select-page"><span class="selection-control">
         <input type="checkbox" class="selection-checkbox" [checked]="allSelected" [indeterminate]="partlySelected"
-            [disabled]="disabled || busy || !currentPage.length" (change)="togglePage($event)" aria-label="Alle auf dieser Seite auswählen" />
+            [disabled]="disabled || busy || !currentPage.length" (change)="togglePage($event)" aria-label="Alle geladenen auswählen" title="Alle geladenen Einträge auswählen" />
         <span class="selection-mark" aria-hidden="true">
             @if (allSelected) { <svg lucideCheck size="14"></svg> }
             @else if (partlySelected) { <svg lucideMinus size="14"></svg> }
