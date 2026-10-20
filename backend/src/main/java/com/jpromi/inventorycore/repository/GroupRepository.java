@@ -9,4 +9,8 @@ import com.jpromi.inventorycore.entity.Group;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
     Optional<Group> findByUuid(UUID uuid);
+
+    Optional<Group> findFirstByEveryoneTrue();
+
+    boolean existsByName(String name);
 }

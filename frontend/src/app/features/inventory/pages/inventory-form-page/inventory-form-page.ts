@@ -25,6 +25,7 @@ import {
   statusFitsAreas,
   statusName,
 } from '../../../asset-statuses/data-access/asset-status.service';
+import { randomPresetColor } from '../../../../shared/components/color-picker/color-picker';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AreaService } from '../../../../core/service/area.service';
@@ -331,6 +332,7 @@ export class InventoryFormPage implements OnInit {
           assetTypeUuid: item.assetTypeUuid ?? null,
           locationUuid: item.locationUuid ?? null,
           parentLocationUuid: item.parentLocationUuid ?? null,
+          shared: item.shared ?? false,
           parentAssetUuid: item.parentAssetUuid ?? null,
           parentAssetNote: item.parentAssetNote ?? '',
           inspectionPolicy: item.inspectionPolicy ?? 'STANDARD',
@@ -390,6 +392,7 @@ export class InventoryFormPage implements OnInit {
       assetTypeUuid: null,
       locationUuid: null,
       parentLocationUuid: null,
+      shared: false,
       parentAssetUuid: null,
       parentAssetNote: '',
       inspectionPolicy: 'STANDARD',
@@ -437,6 +440,7 @@ export class InventoryFormPage implements OnInit {
     return {
       ...request,
       ...status,
+      shared: this.config.endpoint === 'locations' ? !!request.shared : undefined,
       invId: request.invId || undefined,
       description: request.description || null,
       locationType: this.config.locationType ? (request.locationType ?? 'OTHER') : undefined,
@@ -587,7 +591,8 @@ export class InventoryFormPage implements OnInit {
   }
 
   protected createTag(name: string): void {
-    this.api.create<TagItem>('tags', { name }).subscribe({
+    // a tag created while typing gets a color of its own instead of none
+    this.api.create<TagItem>('tags', { name, color: randomPresetColor() }).subscribe({
       next: (tag) => {
         this.tags = [...this.tags, tag].sort((a, b) => a.name.localeCompare(b.name));
         this.selectedTagUuids = [...this.selectedTagUuids, tag.uuid];

@@ -114,7 +114,8 @@ public class InventoryController {
     @GetMapping("/locations")
     public List<LocationResponse> locations(Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
-        return locationRepository.findByDeletedFalse().stream().filter(access::canViewLocation).map(mapper::toResponse).toList();
+        return locationRepository.findByDeletedFalse().stream().filter(access::canViewLocation)
+            .map(location -> mapper.toResponse(location, access)).toList();
     }
 
     @GetMapping("/locations/{uuid}")
@@ -122,7 +123,7 @@ public class InventoryController {
         AccessContext access = permissionService.context(authentication);
         Location location = locationOr404(uuid);
         requireVisible(access.canViewLocation(location));
-        return mapper.toResponse(location);
+        return mapper.toResponse(location, access);
     }
 
     @PostMapping("/locations")
@@ -134,7 +135,7 @@ public class InventoryController {
         Location location = Location.builder().build();
         applyLocation(access, location, request);
         location.setAreas(areas);
-        LocationResponse created = mapper.toResponse(locationRepository.save(location));
+        LocationResponse created = mapper.toResponse(locationRepository.save(location), access);
         audit.log(AuditAction.CREATE, AuditObjectType.LOCATION, created.uuid(), created.name());
         return created;
     }
@@ -149,7 +150,7 @@ public class InventoryController {
         requireAreaChange(access, PermissionResourceType.LOCATION, location.getAreas(), areas);
         applyLocation(access, location, request);
         location.setAreas(areas);
-        LocationResponse after = mapper.toResponse(locationRepository.save(location));
+        LocationResponse after = mapper.toResponse(locationRepository.save(location), access);
         audit.logChanges(AuditObjectType.LOCATION, after.uuid(), after.name(), before, after);
         return after;
     }
@@ -408,6 +409,13 @@ public class InventoryController {
             }
         }
         location.setParentLocation(parent);
+        if (request.shared() != null && request.shared() != location.isShared()) {
+            // decides what the other areas of the location see, so it needs edit rights in all of them
+            // (a new location: the areas it is created in, checked with CREATE before)
+            require(location.getId() == null
+                || access.canInAll(PermissionResourceType.LOCATION, PermissionAction.EDIT, location.getAreas()));
+            location.setShared(request.shared());
+        }
         java.util.Set<UUID> attached = attachedFiles(location.getImages().stream().map(LocationImage::getFile));
         location.getImages().clear();
         if (request.images() != null) {

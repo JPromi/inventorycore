@@ -10,6 +10,7 @@ import { AreaSwitcher } from '../../shared/components/area-switcher/area-switche
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { UserEntity } from '../../core/entities/user.entity';
 import { AuthStateService } from '../../core/service/auth-state.service';
+import { PermissionService } from '../../core/service/permission.service';
 import { PwaService } from '../../core/service/pwa.service';
 import { CustomizationService } from '../../core/service/customization.service';
 import { CommonModule } from '@angular/common';
@@ -47,7 +48,10 @@ export class MainRoute implements OnInit {
 
   protected get visibleNavItems(): NavItem[] {
     const isAdmin = this.user?.role?.toUpperCase() === 'ADMIN';
-    return this.primaryNavItems.filter((item) => !item.adminOnly || isAdmin);
+    return this.primaryNavItems.filter(
+      (item) =>
+        (!item.adminOnly || isAdmin) && (!item.configOnly || this.permissions.canConfigure),
+    );
   }
 
   constructor(
@@ -56,6 +60,7 @@ export class MainRoute implements OnInit {
     private readonly router: Router,
     protected readonly pwa: PwaService,
     protected readonly customization: CustomizationService,
+    private readonly permissions: PermissionService,
   ) {}
 
   ngOnInit(): void {

@@ -59,7 +59,8 @@ public class ApiMapper {
             group.getName(),
             group.getSourceProvider(),
             group.getPermissions().stream().map(this::toResponse).collect(Collectors.toSet()),
-            group.isAdminGroup()
+            group.isAdminGroup(),
+            group.isEveryone()
         );
     }
 
@@ -124,6 +125,16 @@ public class ApiMapper {
     }
 
     public LocationResponse toResponse(Location location) {
+        return toResponse(location, asset -> true, child -> true);
+    }
+
+    /** Only the sub-locations and assets the reader may see are listed (and counted). */
+    public LocationResponse toResponse(Location location, AccessContext access) {
+        return toResponse(location, access::canViewAsset, access::canViewLocation);
+    }
+
+    private LocationResponse toResponse(Location location, java.util.function.Predicate<Asset> assetVisible,
+        java.util.function.Predicate<Location> childVisible) {
         return new LocationResponse(
             location.getUuid(),
             location.getName(),
@@ -137,13 +148,14 @@ public class ApiMapper {
             location.getLatitude(),
             location.getLongitude(),
             location.getParentLocation() == null ? null : location.getParentLocation().getUuid(),
-            location.getChildLocations().stream().map(Location::getUuid).toList(),
-            location.getAssets().stream().map(Asset::getUuid).toList(),
+            location.getChildLocations().stream().filter(childVisible).map(Location::getUuid).toList(),
+            location.getAssets().stream().filter(asset -> !asset.isDeleted()).filter(assetVisible).map(Asset::getUuid).toList(),
             location.getImages().stream().map(this::toResponse).toList(),
             location.getCreatedAt(),
             location.getDeletedAt(),
             location.isDeleted(),
-            location.getAreas().stream().map(Area::getUuid).toList()
+            location.getAreas().stream().map(Area::getUuid).toList(),
+            location.isShared()
         );
     }
 

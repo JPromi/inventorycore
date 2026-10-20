@@ -12,4 +12,6 @@ Use `NNNN-short-title.md` and include:
 4. The decision and meaningful alternatives considered.
 5. Consequences, compatibility/migration needs, and links to relevant implementation or discussion.
 
+Records: [0001 single container image](0001-single-container-image.md), [0002 in-place schema upgrades](0002-in-place-schema-upgrades.md).
+
 Do not invent dates, authors, approval, or rejected alternatives. Until accepted, a proposal must not be presented as the current architecture. Update affected guides when an accepted decision is implemented; link superseding records rather than rewriting history.

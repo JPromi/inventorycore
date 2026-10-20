@@ -10,6 +10,7 @@ This repository contains an Angular 21 frontend in `frontend/` and a Spring Boot
 - Use shared SCSS variables for styling and proper German characters (ä, ö, ü, ß) in German text. See [conventions](docs/CONVENTIONS.md).
 - Put every user-visible frontend text into `frontend/public/i18n/de.json` and use it through the `t` pipe / `t()`; write formal German ("Sie", "Vorhanden" instead of "Da") with general fire-service examples. See [language and texts](docs/CONVENTIONS.md#language-and-texts).
 - Keep API contracts consistent between Java DTOs and TypeScript interfaces.
+- InventoryCore runs in production and is updated in place, never set up again. Every data model change must upgrade an existing database without data loss; ship a migration step whenever Hibernate's automatic update is not enough. See [schema changes in production](docs/DATABASE.md#schema-changes-in-production).
 - Enforce authorization in the backend; frontend guards and hidden buttons are not authorization boundaries.
 - Preserve the Zone.js provider and build polyfill together. Do not migrate the app to zoneless change detection or introduce signals for ordinary page state.
 - Never copy local credentials into code, documentation, or test fixtures.

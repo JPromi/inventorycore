@@ -103,6 +103,15 @@ public class Location {
     @Builder.Default
     private OffsetDateTime deletedAt = null;
 
+    /**
+     * A location several areas use together (e.g. a store room of EDV and Zeugmeister): seeing it
+     * does not show what is in it. Each area sees only the assets and sub-locations it may see
+     * itself. Existing locations keep passing their visibility on (database default false).
+     */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean shared = false;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean deleted = false;

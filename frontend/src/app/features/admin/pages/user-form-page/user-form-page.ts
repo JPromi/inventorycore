@@ -65,6 +65,7 @@ export class UserFormPage implements OnInit {
 
   protected get groupOptions(): SelectOption[] {
     return this.groups
+      .filter((group) => !group.everyone)
       .map((group) => ({
         value: group.uuid,
         label: group.name,

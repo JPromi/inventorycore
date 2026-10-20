@@ -63,6 +63,8 @@ export class GroupFormPage implements OnInit {
   protected name = '';
   protected readOnlyName = false;
   protected adminGroup = false;
+  /** the built-in group of all users: fixed name, no members, no admin rights, not deletable */
+  protected everyone = false;
   protected sourceProvider: string = 'LOCAL';
   protected permissions: AdminPermissionRequest[] = [];
   protected memberUuids: string[] = [];
@@ -197,7 +199,8 @@ export class GroupFormPage implements OnInit {
       .pipe(
         switchMap((group) => {
           this.uuid = group.uuid;
-          return this.saveMembers(group.uuid);
+          // nobody is added to the group of all users; everyone belongs to it anyway
+          return this.everyone ? of(null) : this.saveMembers(group.uuid);
         }),
       )
       .subscribe({
@@ -276,7 +279,8 @@ export class GroupFormPage implements OnInit {
             this.error = t('adminGroupForm.errors.notFound');
           } else {
             this.name = group.name;
-            this.readOnlyName = group.sourceProvider !== 'LOCAL';
+            this.everyone = group.everyone;
+            this.readOnlyName = group.sourceProvider !== 'LOCAL' || group.everyone;
             this.sourceProvider = group.sourceProvider;
             this.adminGroup = group.adminGroup;
             this.permissions = group.permissions

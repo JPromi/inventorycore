@@ -39,7 +39,8 @@
           <app-search-select
             [options]="groupOptions"
             [(ngModel)]="newGroupUuid"
-            [placeholder]="'adminPermissions.chooseGroup' | t"
+            [placeholder]="'adminPermissions.everyone' | t"
+            [clearLabel]="'adminPermissions.everyone' | t"
             [searchPlaceholder]="'adminPermissions.searchGroup' | t"
           />
         </div>
@@ -80,7 +81,7 @@
         <button
           type="button"
           class="primary-action"
-          [disabled]="!newGroupUuid || newPermissionExists"
+          [disabled]="!canAdd"
           (click)="addPermission()"
         >
           {{ 'common.add' | t }}

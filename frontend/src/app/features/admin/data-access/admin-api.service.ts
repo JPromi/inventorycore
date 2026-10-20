@@ -44,6 +44,8 @@ export interface AdminGroup {
   sourceProvider: AuthProvider;
   permissions: AdminPermission[];
   adminGroup: boolean;
+  /** the built-in group "Alle Benutzer": every user belongs to it automatically */
+  everyone: boolean;
 }
 
 /** A group in the admin list (`/admin/groups/page`). */

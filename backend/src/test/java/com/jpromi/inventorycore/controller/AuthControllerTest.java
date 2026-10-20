@@ -34,7 +34,8 @@ class AuthControllerTest {
     private final AppUserRepository users = mock(AppUserRepository.class);
     private final OidcSettingsRepository oidc = mock(OidcSettingsRepository.class);
     private final LoginAuditService loginAudit = mock(LoginAuditService.class);
-    private final AuthController controller = new AuthController(authenticationManager, users, new ApiMapper(), oidc, loginAudit);
+    private final com.jpromi.inventorycore.service.PermissionService permissions = mock(com.jpromi.inventorycore.service.PermissionService.class);
+    private final AuthController controller = new AuthController(authenticationManager, users, new ApiMapper(), oidc, loginAudit, permissions);
 
     @AfterEach
     void clearContext() {

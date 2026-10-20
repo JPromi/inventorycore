@@ -186,6 +186,15 @@
               }
             </label>
           }
+          @if (config.endpoint === 'locations') {
+            <label class="toggle option shared-toggle">
+              <input type="checkbox" [(ngModel)]="form.shared" name="shared" />
+              <span>
+                {{ 'inventoryForm.shared' | t }}
+                <small>{{ 'inventoryForm.sharedHint' | t }}</small>
+              </span>
+            </label>
+          }
           @if (config.tags) {
             <div class="tag-editor">
               <label for="tags">{{ 'terms.tags' | t }}</label>

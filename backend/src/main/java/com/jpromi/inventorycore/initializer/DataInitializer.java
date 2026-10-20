@@ -33,6 +33,7 @@ public class DataInitializer implements CommandLineRunner {
     private final AssetTypeRepository assetTypeRepository;
     private final LabelTemplateRepository labelTemplateRepository;
     private final com.jpromi.inventorycore.service.AssetStatusService assetStatuses;
+    private final com.jpromi.inventorycore.repository.GroupRepository groupRepository;
 
     @Value("${app.default-admin.username:admin}")
     private String defaultAdminUsername;
@@ -48,8 +49,10 @@ public class DataInitializer implements CommandLineRunner {
         LocationRepository locationRepository,
         AssetTypeRepository assetTypeRepository,
         LabelTemplateRepository labelTemplateRepository,
-        com.jpromi.inventorycore.service.AssetStatusService assetStatuses
+        com.jpromi.inventorycore.service.AssetStatusService assetStatuses,
+        com.jpromi.inventorycore.repository.GroupRepository groupRepository
     ) {
+        this.groupRepository = groupRepository;
         this.assetStatuses = assetStatuses;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -70,6 +73,7 @@ public class DataInitializer implements CommandLineRunner {
         assetTypeRepository.findWithoutArea().forEach(type -> type.getAreas().add(defaultArea));
         ensureDefaultLabel(defaultArea);
         assetStatuses.ensureBuiltIns();
+        ensureEveryoneGroup();
         // assets from before statuses existed are simply there
         var available = assetStatuses.builtIn(com.jpromi.inventorycore.enums.AssetStatusKey.AVAILABLE);
         assetRepository.findWithoutStatus().forEach(asset -> asset.setStatus(available));
@@ -101,6 +105,18 @@ public class DataInitializer implements CommandLineRunner {
             .widthMm(62)
             .heightMm(29)
             .elementsJson(DEFAULT_LABEL_ELEMENTS)
+            .build());
+    }
+
+    /** The group "Alle Benutzer" (no permissions at first, so nothing changes for existing installations). */
+    private void ensureEveryoneGroup() {
+        if (groupRepository.findFirstByEveryoneTrue().isPresent()) {
+            return;
+        }
+        groupRepository.save(com.jpromi.inventorycore.entity.Group.builder()
+            .name(groupRepository.existsByName("Alle Benutzer") ? "Alle Benutzer (automatisch)" : "Alle Benutzer")
+            .sourceProvider(Provider.LOCAL)
+            .everyone(true)
             .build());
     }
 

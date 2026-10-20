@@ -36,7 +36,8 @@ public class ScanController {
     @GetMapping
     @Transactional(readOnly = true)
     public ScanResult scan(@RequestParam String code, Authentication authentication) {
-        ScanResolver.Resolution resolution = resolver.resolve(permissionService.context(authentication), code);
+        com.jpromi.inventorycore.service.AccessContext access = permissionService.context(authentication);
+        ScanResolver.Resolution resolution = resolver.resolve(access, code);
         AuditDetail detail = AuditDetail.event("SCAN_PAGE", "code", resolution.code(), "matchedBy", resolution.matchedBy());
         resolution.assets().forEach(asset -> audit.log(AuditAction.SCAN, AuditObjectType.ASSET, asset.getUuid(), asset.getName(), detail));
         resolution.locations().forEach(location -> audit.log(AuditAction.SCAN, AuditObjectType.LOCATION, location.getUuid(), location.getName(), detail));
@@ -44,7 +45,7 @@ public class ScanController {
             resolution.code(),
             resolution.matchedBy(),
             resolution.assets().stream().map(mapper::toResponse).toList(),
-            resolution.locations().stream().map(mapper::toResponse).toList()
+            resolution.locations().stream().map(location -> mapper.toResponse(location, access)).toList()
         );
     }
 }

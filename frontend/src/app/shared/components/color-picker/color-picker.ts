@@ -29,6 +29,11 @@ export const PRESET_COLORS = [
   '#1f2937',
 ];
 
+/** A color of the palette by chance, e.g. so new tags do not all look the same. */
+export function randomPresetColor(): string {
+  return PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
+}
+
 type DragTarget = 'area' | 'hue';
 
 /**

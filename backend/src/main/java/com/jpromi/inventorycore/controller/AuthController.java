@@ -43,6 +43,7 @@ public class AuthController {
     private final ApiMapper mapper;
     private final OidcSettingsRepository oidcSettingsRepository;
     private final LoginAuditService loginAudit;
+    private final com.jpromi.inventorycore.service.PermissionService permissionService;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     public AuthController(
@@ -50,9 +51,11 @@ public class AuthController {
         AppUserRepository userRepository,
         ApiMapper mapper,
         OidcSettingsRepository oidcSettingsRepository,
-        LoginAuditService loginAudit
+        LoginAuditService loginAudit,
+        com.jpromi.inventorycore.service.PermissionService permissionService
     ) {
         this.loginAudit = loginAudit;
+        this.permissionService = permissionService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.mapper = mapper;
@@ -107,10 +110,7 @@ public class AuthController {
                 .sourceProvider(user.getSourceProvider())
                 .profileImageUrl(user.profileImageLocation())
                 .role(role)
-                .permissions(user.getGroups().stream()
-                    .flatMap(group -> group.getPermissions().stream())
-                    .map(mapper::toResponse)
-                    .collect(Collectors.toSet()))
+                .permissions(permissionsOf(user))
                 .build());
         } catch (AuthenticationException exception) {
             loginAudit.failed(request.getUsername(), null, failureReason(exception), httpRequest);
@@ -146,11 +146,16 @@ public class AuthController {
             .sourceProvider(user.getSourceProvider())
             .profileImageUrl(user.profileImageLocation())
             .role(user.effectiveRole())
-            .permissions(user.getGroups().stream()
-                .flatMap(group -> group.getPermissions().stream())
-                .map(mapper::toResponse)
-                .collect(Collectors.toSet()))
+            .permissions(permissionsOf(user))
             .build();
+    }
+
+    /** Including the group "Alle Benutzer"; users not stored yet have none. */
+    private java.util.Set<com.jpromi.inventorycore.dto.GroupPermissionResponse> permissionsOf(User user) {
+        if (user.getId() == null) {
+            return java.util.Set.of();
+        }
+        return permissionService.permissionsOf(user).stream().map(mapper::toResponse).collect(Collectors.toSet());
     }
 
     private User resolveUser(Authentication authentication) {

@@ -34,11 +34,16 @@
                 required
                 [readonly]="readOnlyName"
               />
-              @if (readOnlyName) {
+              @if (everyone) {
+                <small>{{ 'adminGroupForm.everyoneName' | t }}</small>
+              } @else if (readOnlyName) {
                 <small>{{ 'adminGroupForm.nameExternal' | t }}</small>
               }
             </label>
           </div>
+          @if (everyone) {
+            <p class="hint everyone-hint">{{ 'adminGroupForm.everyoneHint' | t }}</p>
+          } @else {
           <label class="toggle admin-toggle" [class.on]="adminGroup">
             <input type="checkbox" [(ngModel)]="adminGroup" name="adminGroup" />
             <span>
@@ -56,6 +61,7 @@
               [emptyText]="'adminGroupForm.noMoreUsers' | t"
             />
           </div>
+          }
         </section>
 
         <section class="content-section">
@@ -191,7 +197,7 @@
         </section>
 
         <div class="editor-actions">
-          @if (uuid) {
+          @if (uuid && !everyone) {
             <button type="button" class="danger-action delete" (click)="remove()">
               <svg lucideTrash2 size="16"></svg>
               <span>{{ 'common.delete' | t }}</span>

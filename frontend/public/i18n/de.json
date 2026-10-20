@@ -444,7 +444,8 @@
     "errors": {
       "load": "Gruppen konnten nicht geladen werden.",
       "delete": "Gruppe konnte nicht gelöscht werden."
-    }
+    },
+    "everyoneBadge": "Alle Benutzer"
   },
   "adminGroupForm": {
     "eyebrow": "Administration",
@@ -480,7 +481,9 @@
       "duplicate": "Jede Kombination aus Bereich und Objektart darf nur einmal vorkommen.",
       "delete": "Gruppe konnte nicht gelöscht werden.",
       "notFound": "Gruppe wurde nicht gefunden."
-    }
+    },
+    "everyoneName": "Eingebaute Gruppe; der Name ist fest.",
+    "everyoneHint": "Zu dieser Gruppe gehört automatisch jeder Benutzer. Ihre Berechtigungen gelten also für alle, zusätzlich zu den Berechtigungen der eigenen Gruppen. Mitglieder und Administratorrechte lassen sich hier nicht festlegen."
   },
   "adminPermissions": {
     "eyebrow": {
@@ -515,7 +518,9 @@
       "add": "Berechtigung konnte nicht hinzugefügt werden.",
       "update": "Änderung konnte nicht gespeichert werden.",
       "load": "Berechtigungen konnten nicht geladen werden."
-    }
+    },
+    "everyone": "Alle Benutzer",
+    "everyoneHint": "Gilt für jeden Benutzer"
   },
   "components": {
     "areaSwitcher": {
@@ -1101,7 +1106,8 @@
       "inspectionPolicy": "Prüferfassung",
       "address": "Adresse",
       "kind": "Art",
-      "createdAt": "Erstellt am"
+      "createdAt": "Erstellt am",
+      "shared": "Gemeinsamer Standort"
     },
     "areaWithoutAccess": "Bereich ohne Zugriff",
     "tags": {
@@ -1165,7 +1171,8 @@
       "saveSchedule": "Der Prüftermin konnte nicht gespeichert werden.",
       "hasChildren": "Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.",
       "load": "Der Eintrag konnte nicht geladen werden."
-    }
+    },
+    "sharedHint": "Jeder Bereich sieht hier nur seine eigenen Assets und Unterstandorte."
   },
   "pdfPrint": {
     "title": "PDF drucken oder speichern",
@@ -1387,7 +1394,9 @@
       "coordinatesIncomplete": "Bitte Breiten- und Längengrad angeben.",
       "latitudeRange": "Der Breitengrad muss zwischen -90 und 90 liegen.",
       "longitudeRange": "Der Längengrad muss zwischen -180 und 180 liegen."
-    }
+    },
+    "shared": "Gemeinsamer Standort",
+    "sharedHint": "Für Standorte, die mehrere Bereiche nutzen, z. B. ein Lager von EDV und Zeugmeister: Jeder Bereich sieht hier nur seine eigenen Assets und Unterstandorte. Ohne diese Einstellung sieht jeder, der den Standort sehen darf, alles darin."
   },
   "labels": {
     "logo": "Logo",
@@ -1963,7 +1972,8 @@
       "crossProviderLogin": "Anmeldung über andere Anbieter",
       "publicUrl": "Öffentliche URL",
       "status": "Status",
-      "category": "Verhalten"
+      "category": "Verhalten",
+      "shared": "Gemeinsamer Standort"
     },
     "values": {
       "true": "Ja",

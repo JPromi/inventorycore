@@ -284,18 +284,20 @@ public class AdminController {
     ) {
         List<String> terms = Paging.terms(q);
         List<User> users = userRepository.findAll().stream().sorted(Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER)).toList();
-        java.util.function.Function<Group, List<User>> members = group -> users.stream()
+        // everyone belongs to the group of all users
+        java.util.function.Function<Group, List<User>> members = group -> group.isEveryone() ? users : users.stream()
             .filter(user -> user.getGroups().stream().anyMatch(entry -> entry.getId().equals(group.getId()))).toList();
         List<Group> matches = groupRepository.findAll().stream()
             .filter(group -> Paging.matches(terms, java.util.stream.Stream.concat(java.util.stream.Stream.of(group.getName()),
                 members.apply(group).stream().flatMap(user -> java.util.stream.Stream.of(user.getUsername(), user.getDisplayName()))).toList()))
-            .sorted(Comparator.comparing(Group::getName, String.CASE_INSENSITIVE_ORDER))
+            .sorted(Comparator.comparing((Group group) -> !group.isEveryone())
+                .thenComparing(Group::getName, String.CASE_INSENSITIVE_ORDER))
             .toList();
         return Paging.page(matches, page, size, group -> {
             GroupResponse response = mapper.toResponse(group);
             List<User> groupMembers = members.apply(group);
             return new GroupRowResponse(response.uuid(), response.name(), response.sourceProvider(), response.permissions(), response.adminGroup(),
-                groupMembers.size(), groupMembers.stream().limit(5).map(mapper::toResponse).toList());
+                response.everyone(), groupMembers.size(), groupMembers.stream().limit(5).map(mapper::toResponse).toList());
         });
     }
 
@@ -318,11 +320,12 @@ public class AdminController {
     public GroupResponse updateGroup(@PathVariable UUID uuid, @RequestBody GroupRequest request) {
         Group group = group(uuid);
         GroupResponse before = mapper.toResponse(group);
-        // names of LDAP / OIDC groups are managed by the provider
-        if (group.getSourceProvider() == Provider.LOCAL) {
+        // names of LDAP / OIDC groups are managed by the provider; the group of all users keeps its name
+        if (group.getSourceProvider() == Provider.LOCAL && !group.isEveryone()) {
             group.setName(request.name());
         }
-        group.setAdminGroup(request.adminGroup());
+        // admin rights for everyone would make every user an administrator
+        group.setAdminGroup(!group.isEveryone() && request.adminGroup());
         group.getPermissions().clear();
         // delete old permissions before inserting new ones, otherwise the unique constraint fails
         groupRepository.flush();
@@ -337,6 +340,9 @@ public class AdminController {
     @Transactional
     public void deleteGroup(@PathVariable UUID uuid) {
         Group group = group(uuid);
+        if (group.isEveryone()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Gruppe aller Benutzer kann nicht gelöscht werden.");
+        }
         group.getUsers().forEach(user -> user.getGroups().remove(group));
         group.getUsers().clear();
         groupRepository.delete(group);
@@ -434,7 +440,8 @@ public class AdminController {
         if (request.groupUuids() == null) {
             return groups;
         }
-        request.groupUuids().forEach(groupUuid -> groups.add(group(groupUuid)));
+        // everyone belongs to the group of all users anyway; it never gets explicit members
+        request.groupUuids().stream().map(this::group).filter(group -> !group.isEveryone()).forEach(groups::add);
         return groups;
     }
 
