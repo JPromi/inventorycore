@@ -617,8 +617,13 @@ export class InventoryFormPage implements OnInit {
     const assetType = this.assetTypes.find((type) => type.uuid === assetTypeUuid);
     const customFields = (this.form.fieldValues ?? []).filter((field) => field.customAssetField);
     if (!assetType) {
-      this.form.fieldValues = customFields;
-      this.lockedTags = [];
+      // Only a type removed on purpose drops its fields. While the types are still loading (the
+      // asset may arrive first) or for a type the user cannot see, the stored values must stay,
+      // otherwise saving would empty them.
+      if (resetFields) {
+        this.form.fieldValues = customFields;
+        this.lockedTags = [];
+      }
       return;
     }
 
