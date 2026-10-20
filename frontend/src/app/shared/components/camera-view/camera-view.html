@@ -38,6 +38,18 @@
                 }
             </button>
         }
+        @if (zoomSteps.length && state === 'running') {
+            <button
+                type="button"
+                class="round zoom"
+                [class.on]="zoom > 1"
+                [title]="'components.cameraView.zoom' | t: { zoom: zoom }"
+                [attr.aria-label]="'components.cameraView.zoom' | t: { zoom: zoom }"
+                (click)="nextZoom()"
+            >
+                {{ zoom }}×
+            </button>
+        }
         @if (cameras.length > 1) {
             <button type="button" class="round" [title]="'components.cameraView.switchCamera' | t" [attr.aria-label]="'components.cameraView.switchCamera' | t" (click)="switchCamera()">
                 <svg lucideSwitchCamera size="20"></svg>

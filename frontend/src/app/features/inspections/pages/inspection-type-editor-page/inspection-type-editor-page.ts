@@ -42,6 +42,7 @@ import {
   InspectionService,
   IntervalUnit,
   fieldOptions,
+  parseOptions,
   intervalText,
 } from '../../data-access/inspection.service';
 
@@ -272,7 +273,7 @@ export class InspectionTypeEditorPage implements OnInit {
           fieldType: field.fieldType,
           optionsJson:
             field.fieldType === 'SELECT'
-              ? JSON.stringify(this.splitOptions(field.optionsText))
+              ? JSON.stringify(parseOptions(field.optionsText))
               : null,
           required: field.required,
           sortOrder: 0,
@@ -344,14 +345,4 @@ export class InspectionTypeEditorPage implements OnInit {
     return groups;
   }
 
-  private splitOptions(text: string): string[] {
-    return [
-      ...new Set(
-        text
-          .split(/[,;\n]/)
-          .map((option) => option.trim())
-          .filter(Boolean),
-      ),
-    ];
-  }
 }

@@ -28,6 +28,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "zxing_reader.wasm",
+                "input": "node_modules/zxing-wasm/dist/reader",
+                "output": "zxing"
               }
             ],
             "styles": ["node_modules/leaflet/dist/leaflet.css", "src/styles.scss"],

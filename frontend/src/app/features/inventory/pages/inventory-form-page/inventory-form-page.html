@@ -317,17 +317,12 @@
                     </label>
                     <label>
                       <span>{{ 'inventoryForm.fieldType' | t }}</span>
-                      <select [(ngModel)]="field.fieldType" name="fieldType{{ $index }}">
-                        <option value="TEXT">{{ 'inventoryForm.fieldTypes.TEXT' | t }}</option>
-                        <option value="NUMBER">{{ 'inventoryForm.fieldTypes.NUMBER' | t }}</option>
-                        <option value="BOOLEAN">
-                          {{ 'inventoryForm.fieldTypes.BOOLEAN' | t }}
-                        </option>
-                        <option value="DATE">{{ 'inventoryForm.fieldTypes.DATE' | t }}</option>
-                        <option value="URL">{{ 'inventoryForm.fieldTypes.URL' | t }}</option>
-                        <option value="EMAIL">{{ 'inventoryForm.fieldTypes.EMAIL' | t }}</option>
-                        <option value="SELECT">{{ 'inventoryForm.fieldTypes.SELECT' | t }}</option>
-                      </select>
+                      <app-search-select
+                        [options]="fieldTypeOptions"
+                        [(ngModel)]="field.fieldType"
+                        name="fieldType{{ $index }}"
+                        [ariaLabel]="'inventoryForm.fieldType' | t"
+                      />
                     </label>
                     <label class="checkbox-label">
                       <input
@@ -345,6 +340,18 @@
                     >
                       <svg lucideTrash2 size="16"></svg>
                     </button>
+                    @if (field.fieldType === 'SELECT') {
+                      <label class="options">
+                        <span>{{ 'inventoryForm.selectOptions' | t }}</span>
+                        <input
+                          type="text"
+                          [ngModel]="optionsText(field)"
+                          (ngModelChange)="setOptionsText(field, $event)"
+                          name="fieldOptions{{ $index }}"
+                          [placeholder]="'inventoryForm.selectOptionsPlaceholder' | t"
+                        />
+                      </label>
+                    }
                   </div>
                 }
               </div>
@@ -362,8 +369,59 @@
                       />
                     </label>
                     <label>
-                      <span>{{ 'inventoryForm.value' | t }}</span>
-                      <input type="text" [(ngModel)]="field.value" name="value{{ $index }}" />
+                      <span>
+                        {{ 'inventoryForm.value' | t }}
+                        @if (valueRequired(field)) {
+                          <span class="required">*</span>
+                        }
+                      </span>
+                      <!-- the input that fits the field type of the asset type -->
+                      @switch (valueType(field)) {
+                        @case ('BOOLEAN') {
+                          <input
+                            type="checkbox"
+                            class="value-check"
+                            [ngModel]="field.value === 'true'"
+                            (ngModelChange)="field.value = $event ? 'true' : 'false'"
+                            name="value{{ $index }}"
+                          />
+                        }
+                        @case ('SELECT') {
+                          <app-search-select
+                            [options]="valueOptions(field)"
+                            [(ngModel)]="field.value"
+                            name="value{{ $index }}"
+                            [placeholder]="'inventoryForm.chooseValue' | t"
+                            [clearLabel]="'inventoryForm.noValue' | t"
+                            [ariaLabel]="'inventoryForm.value' | t"
+                          />
+                        }
+                        @case ('NUMBER') {
+                          <input
+                            type="number"
+                            [ngModel]="field.value"
+                            (ngModelChange)="setNumber(field, $event)"
+                            name="value{{ $index }}"
+                          />
+                        }
+                        @case ('DATE') {
+                          <input type="date" [(ngModel)]="field.value" name="value{{ $index }}" />
+                        }
+                        @case ('DATETIME') {
+                          <input
+                            type="datetime-local"
+                            [(ngModel)]="field.value"
+                            name="value{{ $index }}"
+                          />
+                        }
+                        @default {
+                          <input
+                            [type]="inputType(field)"
+                            [(ngModel)]="field.value"
+                            name="value{{ $index }}"
+                          />
+                        }
+                      }
                     </label>
                     @if (field.customAssetField) {
                       <button

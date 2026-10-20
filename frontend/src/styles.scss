@@ -137,14 +137,9 @@ body {
   }
 }
 
+// light is the default, also before ThemeService has set data-theme
 body[data-theme='dark'] {
   @include themes.dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  body:not([data-theme]) {
-    @include themes.dark;
-  }
 }
 
 .dropdown-panel {

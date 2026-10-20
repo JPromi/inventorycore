@@ -295,14 +295,12 @@
                   </label>
                   <label class="field">
                     <span>{{ 'inspectionTemplateEditor.fields.type' | t }}</span>
-                    <select
+                    <app-search-select
+                      [options]="fieldTypes"
                       [(ngModel)]="field.fieldType"
                       [name]="'type-' + groupIndex + '-' + index"
-                    >
-                      @for (type of fieldTypes; track type.value) {
-                        <option [value]="type.value">{{ type.label }}</option>
-                      }
-                    </select>
+                      [ariaLabel]="'inspectionTemplateEditor.fields.type' | t"
+                    />
                   </label>
                   <label class="toggle required">
                     <input

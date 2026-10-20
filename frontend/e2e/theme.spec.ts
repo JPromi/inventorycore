@@ -1,4 +1,5 @@
 import { expect, Page, test } from '@playwright/test';
+import { followSystemTheme } from './support/theme';
 
 async function mockThemeApi(page: Page, advanced = true, authenticated = true) {
   let username = 'admin';
@@ -59,23 +60,34 @@ async function mockThemeApi(page: Page, advanced = true, authenticated = true) {
   return { settings: () => settings, user: (value: string) => (username = value) };
 }
 
-test('system is live by default; personal overrides persist and remain user-specific', async ({
+test('light by default; system is live when chosen; overrides persist per user', async ({
   page,
 }) => {
   const state = await mockThemeApi(page);
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/profile');
   const selector = page.locator('app-profile-page app-theme-selector');
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark');
-  await expect(selector.getByRole('button', { name: 'System', exact: true })).toHaveAttribute(
+  // light although the system is dark
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'light');
+  await expect(selector.getByRole('button', { name: 'Hell', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
+  await expect(page.locator('.brand img')).toHaveAttribute('src', state.settings().logoUrl);
+
+  // "System" follows the system live and is kept
+  await selector.getByRole('button', { name: 'System', exact: true }).click();
+  await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark');
   await expect(page.locator('.brand img')).toHaveAttribute('src', state.settings().darkLogoUrl);
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(23, 24, 26)');
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'light');
-  await expect(page.locator('.brand img')).toHaveAttribute('src', state.settings().logoUrl);
+  await page.reload();
+  await expect(selector.getByRole('button', { name: 'System', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+
   await selector.getByRole('button', { name: 'Dunkel', exact: true }).click();
   await page.reload();
   await expect(selector.getByRole('button', { name: 'Dunkel', exact: true })).toHaveAttribute(
@@ -83,15 +95,12 @@ test('system is live by default; personal overrides persist and remain user-spec
     'true',
   );
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark');
+  // another user on this browser starts light
   state.user('other');
   await page.reload();
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'light');
   state.user('admin');
   await page.reload();
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark');
-  await selector.getByRole('button', { name: 'System', exact: true }).click();
-  await expect(page.locator('body')).toHaveAttribute('data-theme', 'light');
-  await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark');
 });
 
@@ -168,6 +177,7 @@ for (const width of [1280, 390]) {
 }
 
 test('anonymous dark login uses dark branding; labels remain light', async ({ page }) => {
+  await followSystemTheme(page);
   await page.emulateMedia({ colorScheme: 'dark' });
   const state = await mockThemeApi(page, true, false);
   await page.goto('/login');
@@ -187,6 +197,7 @@ test('anonymous dark login uses dark branding; labels remain light', async ({ pa
 });
 
 test('dark screens still print light documents and the light logo', async ({ page }) => {
+  await followSystemTheme(page);
   await page.emulateMedia({ colorScheme: 'dark' });
   const state = await mockThemeApi(page);
   await page.route('**/api/assets/asset', (route) =>

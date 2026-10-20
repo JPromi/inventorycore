@@ -7,9 +7,14 @@ import { AuthStateService } from './auth-state.service';
 export type ThemeMode = 'light' | 'dark';
 export type ThemePreference = ThemeMode | 'system';
 
+/** Without a choice the app is light; "System" has to be chosen on purpose. */
+export const DEFAULT_THEME: ThemePreference = 'light';
+/** The mode last shown, for the start screen in index.html (before the user is known). */
+export const LAST_THEME_KEY = 'inventorycore.theme.last';
+
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  preference: ThemePreference = 'system';
+  preference: ThemePreference = DEFAULT_THEME;
   readonly effective$ = new BehaviorSubject<ThemeMode>('light');
   private readonly media: MediaQueryList | undefined;
   private storageKey = 'inventorycore.theme.guest';
@@ -50,12 +55,8 @@ export class ThemeService {
   select(value: ThemePreference): void {
     this.preference = value;
     try {
-      const storage = this.document.defaultView?.localStorage;
-      if (value === 'system') {
-        storage?.removeItem(this.storageKey);
-      } else {
-        storage?.setItem(this.storageKey, value);
-      }
+      // "system" is stored as well, since no stored value now means light
+      this.document.defaultView?.localStorage.setItem(this.storageKey, value);
     } catch {
       // Theme selection still works when browser storage is unavailable.
     }
@@ -67,9 +68,9 @@ export class ThemeService {
     try {
       value = this.document.defaultView?.localStorage.getItem(this.storageKey) ?? null;
     } catch {
-      // Restricted storage falls back to the system preference.
+      // Restricted storage falls back to the default.
     }
-    this.preference = value === 'light' || value === 'dark' ? value : 'system';
+    this.preference = value === 'light' || value === 'dark' || value === 'system' ? value : DEFAULT_THEME;
     this.apply();
   }
 
@@ -78,5 +79,10 @@ export class ThemeService {
       this.preference === 'system' ? (this.media?.matches ? 'dark' : 'light') : this.preference;
     this.document.body.dataset['theme'] = mode;
     this.effective$.next(mode);
+    try {
+      this.document.defaultView?.localStorage.setItem(LAST_THEME_KEY, mode);
+    } catch {
+      // the start screen is then light, nothing else depends on it
+    }
   }
 }

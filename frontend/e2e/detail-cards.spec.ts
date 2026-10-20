@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { followSystemTheme } from './support/theme';
 
 for (const endpoint of ['assets', 'locations']) {
   for (const width of [1280, 390]) {
     test(`detail cards and discreet history (${endpoint}, ${width}px)`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
+      await followSystemTheme(page);
       await page.emulateMedia({ colorScheme: width === 390 ? 'dark' : 'light' });
       const item = {
         uuid: 'item',

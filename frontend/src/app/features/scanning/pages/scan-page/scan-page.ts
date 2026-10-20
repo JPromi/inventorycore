@@ -21,6 +21,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { CameraView } from '../../../../shared/components/camera-view/camera-view';
+import { AssetStatusBadge } from '../../../asset-statuses/asset-status-badge/asset-status-badge';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CameraScanner } from '../../camera-scanner';
@@ -85,6 +86,7 @@ const MATCH_TEXTS: Record<MatchContext, Record<MatchKind, string>> = {
 @Component({
   selector: 'app-scan-page',
   imports: [
+    AssetStatusBadge,
     CameraView,
     FormsModule,
     RouterLink,

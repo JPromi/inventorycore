@@ -248,6 +248,23 @@
       align-items: center;
       min-height: 2.35rem;
     }
+
+    // the choices of a selection field take the whole row
+    .options {
+      grid-column: 1 / -1;
+    }
+
+    .required {
+      color: var(--danger);
+    }
+
+    // yes/no below its label, at the height of the other inputs
+    .value-check {
+      align-self: flex-start;
+      width: auto;
+      min-height: 0;
+      margin: 0.6rem 0;
+    }
   }
 
   // sticky save bar, above the home indicator on phones
