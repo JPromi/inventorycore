@@ -157,6 +157,37 @@ test('batch label printing uses the chosen template and copies per asset', async
   await expect(pages.nth(3)).toContainText('Eintrag 03');
 });
 
+for (const width of [320, 390, 1280]) {
+  test(`selection toolbar uses two rows only on phones (${width}px)`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    await setup(page, 'assets');
+    await page.goto('/assets');
+    await page.getByRole('button', { name: 'Auswählen', exact: true }).click();
+    const bar = page.locator('app-list-actions');
+    const toggle = bar.locator('.selection-toggle');
+    const actions = bar.getByRole('button', { name: 'Aktionen', exact: true });
+    const selectPage = bar.locator('.select-page');
+    const assertRows = async () => {
+      const toggleBox = (await toggle.boundingBox())!;
+      const actionsBox = (await actions.boundingBox())!;
+      const selectBox = (await selectPage.boundingBox())!;
+      expect(Math.abs(toggleBox.y - actionsBox.y)).toBeLessThan(2);
+      expect(actionsBox.x).toBeGreaterThanOrEqual(toggleBox.x + toggleBox.width);
+      if (width <= 640) {
+        expect(selectBox.y).toBeGreaterThanOrEqual(toggleBox.y + toggleBox.height);
+      } else {
+        expect(selectBox.y).toBeLessThan(toggleBox.y + toggleBox.height);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    };
+    await assertRows();
+    await selectPage.locator('input').check();
+    await expect(actions).toBeEnabled();
+    await assertRows();
+    await page.screenshot({ path: testInfo.outputPath('selection-toolbar.png') });
+  });
+}
+
 test('mobile tile selection and actions menu remain within viewport',async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await setup(page, 'assets');
