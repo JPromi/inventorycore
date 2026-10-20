@@ -12,7 +12,7 @@ import { Subject, Subscription, debounceTime, map } from 'rxjs';
 
 import {
   ColorPicker,
-  PRESET_COLORS,
+  randomPresetColor,
 } from '../../../../shared/components/color-picker/color-picker';
 import { readableTextColor } from '../../../../shared/components/color-picker/color-utils';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -85,7 +85,8 @@ export class TagsPage implements OnInit, OnDestroy {
   protected search = '';
   protected error = '';
   protected newName = '';
-  protected newColor: string | null = PRESET_COLORS[6];
+  /** every new tag starts with a color of its own; it can still be changed before creating */
+  protected newColor: string | null = randomPresetColor();
   protected creating = false;
 
   private readonly colorTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -183,6 +184,7 @@ export class TagsPage implements OnInit, OnDestroy {
         this.rows = this.sort([...this.rows, this.toRow(tag, 0, 0)]);
         this.list.total++;
         this.newName = '';
+        this.newColor = randomPresetColor();
         this.creating = false;
         this.flash(tag.uuid, 'saved');
       },
