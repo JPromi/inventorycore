@@ -67,18 +67,6 @@
       }
     }
 
-    .flag {
-      width: 1.05rem;
-      height: 1.05rem;
-      accent-color: var(--accent);
-      cursor: pointer;
-
-      @include bp.touch {
-        width: 1.35rem;
-        height: 1.35rem;
-      }
-    }
-
     // size and font come from the global `.page select` rule
     .preset {
       min-width: 9rem;

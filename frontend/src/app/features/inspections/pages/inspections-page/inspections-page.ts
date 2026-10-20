@@ -251,8 +251,7 @@ export class InspectionsPage implements OnInit, OnDestroy {
       : this.expandedGroups.add(uuid);
   }
 
-  protected startDue(group: DueGroup, event: Event): void {
-    event.stopPropagation();
+  protected startDue(group: DueGroup): void {
     this.router.navigate(['/inspections/new'], { queryParams: { type: group.typeUuid, due: 1 } });
   }
 

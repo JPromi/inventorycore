@@ -74,11 +74,19 @@ Costs below follow from query/collection structure. No SQL counts, latency impro
 
 ## UI Simplification
 
-The existing compact visual design and workflows were preserved during the structural migration. The following are specific next design changes, not silently implemented redesigns:
+The structural migration preserved existing workflows. A subsequent UI pass implemented the following changes:
 
-1. **Detail pages:** keep identity, location and key facts before media on mobile. The current sidebar-first layout puts schedules and galleries above facts. Show a compact next-due summary and move history/older schedules behind an expandable section.
-2. **Detail actions:** keep Edit primary; group data-sheet/label printing into a secondary print menu and deletion into a clearly labelled overflow action with confirmation. Do not hide frequently used inspection actions.
-3. **Inventory/type forms:** retain General, Custom Fields, Inspection and Images as visible sections. Expand advanced custom-field/interval settings only when configured; keep inherited values visibly locked. A section should be a band/divider, not a card nested in another card.
+- Shared system typography, restrained headings, lighter navigation text and sentence-case table headings replace the previous uniformly heavy presentation. Typography, content widths and section spacing use central style tokens; no external font download is required.
+- Inventory, user/group and inspection creation forms use unframed sections with dividers rather than a separate floating card for every section. Inventory forms start with name and description, followed by assignments; inherited values remain locked.
+- Inventory details retain separate cards for facts, relationships, schedules and media. Edit stays visible; printing and deletion use a reusable, keyboard-accessible action menu. Empty image galleries, tag blocks and inspection lists are omitted. On mobile, facts precede the media sidebar. The history preview is compact and collapsed initially; expanding it reveals recent entries and the full-history link without collapsing the dedicated history page.
+- Open inspections use compact progress instead of the repeated statistics panel. Due-group disclosure and starting an inspection are separate native buttons.
+- Repetitive helper text was shortened or removed. The duplicate Dashboard navigation entry was removed; existing `/dashboard` links still redirect to assets.
+
+Remaining design proposals:
+
+1. **Detail pages:** show a compact next-due summary and move history/older schedules behind an expandable section where this improves scanning.
+2. **Detail actions:** evaluate frequent inspection actions separately; do not hide frequently used commands merely to reduce button counts.
+3. **Inventory/type forms:** consider expanding advanced custom-field/interval settings only when configured; keep inherited values visibly locked.
 4. **Inspection runs:** show asset identity, status and immediate next action first. Keep notes, field values, photos and scan diagnostics in the existing expandable item editor; show progress once rather than repeating the same totals in several panels. Extract protocol presentation and camera interaction from the run orchestration before adding more controls.
 5. **Permissions:** prefer an area/group filter and named presets before displaying the complete matrix. Keep destructive/admin permission states explicit; progressive disclosure must not silently change permissions.
 6. **Long lists:** keep server search, active filter chips, view mode and selection as the predictable toolbar. Batch actions appear only during selection; do not add a second row of per-item actions to every tile.

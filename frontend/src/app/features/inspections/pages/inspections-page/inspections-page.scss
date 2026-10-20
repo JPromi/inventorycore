@@ -172,6 +172,16 @@
     align-items: center;
     gap: 0.6rem;
     padding: 0.8rem 1rem 0.8rem 1.25rem;
+  }
+
+  .due-disclosure {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0;
     border: 0;
     background: transparent;
     color: var(--text);
@@ -205,12 +215,6 @@
 
       &.open {
         transform: rotate(180deg);
-      }
-    }
-
-    @include bp.phone {
-      .primary-action {
-        margin-left: auto;
       }
     }
   }

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ActionMenu, MenuAction } from '../../../../shared/components/action-menu/action-menu';
 import { ImageViewerService } from '../../../../shared/components/image-viewer/image-viewer.service';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -72,6 +73,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
 @Component({
   selector: 'app-inventory-detail-page',
   imports: [
+    ActionMenu,
     AssetInspectionList,
     AssetPrint,
     AuditHistory,
@@ -84,13 +86,10 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
     LucideBoxes,
     LucideCalendarClock,
     LucideChevronRight,
-    LucideFileText,
     LucideMapPin,
     LucidePencil,
     LucidePlus,
-    LucidePrinter,
     LucideShapes,
-    LucideTrash2,
     TranslatePipe,
   ],
   templateUrl: './inventory-detail-page.html',
@@ -120,6 +119,40 @@ export class InventoryDetailPage implements OnInit {
   protected readonly intervalText = intervalText;
 
   @ViewChild(AssetPrint) private assetPrint?: AssetPrint;
+
+  protected get detailActions(): MenuAction[] {
+    const actions: MenuAction[] = [];
+    if (this.config.endpoint === 'assets') {
+      actions.push(
+        {
+          id: 'print',
+          label: t('common.print'),
+          icon: LucideFileText,
+          run: () => this.printSheet(),
+        },
+        {
+          id: 'label',
+          label: t('inventoryDetail.printLabel'),
+          icon: LucidePrinter,
+          run: () => {
+            this.showPrintDialog = true;
+          },
+        },
+      );
+    }
+    if (this.canDelete) {
+      actions.push({
+        id: 'delete',
+        label: t('common.delete'),
+        icon: LucideTrash2,
+        danger: true,
+        run: () => {
+          void this.remove();
+        },
+      });
+    }
+    return actions;
+  }
 
   constructor(
     private readonly destroyRef: DestroyRef,

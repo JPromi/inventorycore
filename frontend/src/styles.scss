@@ -26,7 +26,7 @@ app-root {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-sans, system-ui);
   // touch: scrolling yes, pinch and double-tap zoom no (the color picker and the label editor
   // set their own value for dragging)
   touch-action: pan-x pan-y;
@@ -75,7 +75,11 @@ body {
   --radius-pill: 999px;
 
   // type
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --content-width: 68rem;
+  --form-content-width: 52rem;
+  --section-space: 1.5rem;
 
   // layout
   --nav-width: 15.25rem;
@@ -89,6 +93,9 @@ body {
   --inspection-tree-indent: 1.25rem;
   --selection-control-size: 2rem;
   --selection-mark-size: 1.2rem;
+  --selection-icon-size: 14px;
+  // Lucide Check, matching the icon inside list-selection marks.
+  --selection-check-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
   --selection-image-inset: 0.25rem;
   --selection-scroll-edge: 64px;
 
@@ -186,7 +193,7 @@ body.camera-open .page {
 }
 
 .page-shell {
-  width: min(100%, 64rem);
+  width: min(100%, var(--content-width));
   margin: 0 auto;
 }
 
@@ -207,7 +214,8 @@ body.camera-open .page {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1.5rem;
+    font-size: 1.375rem;
+    font-weight: 600;
     line-height: 1.25;
 
     @include bp.phone {
@@ -250,7 +258,7 @@ body.camera-open .page {
   background: var(--surface);
   color: var(--text);
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -344,6 +352,27 @@ body.camera-open .page {
   }
 }
 
+.content-section {
+  padding-block: var(--section-space);
+  border-top: 1px solid var(--border);
+  min-width: 0;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  > h2,
+  .card-title h2 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  > h2 {
+    margin-bottom: 1rem;
+  }
+}
+
 .card-title {
   display: flex;
   align-items: center;
@@ -370,7 +399,7 @@ label.field {
   gap: 0.35rem;
   color: var(--text-muted);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 500;
 
   &.wide {
     grid-column: 1 / -1;
@@ -391,13 +420,6 @@ label.field {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-
-  input {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
 }
 
 .data-table-wrap {
@@ -432,8 +454,8 @@ label.field {
     color: var(--text-muted);
     font-size: 0.78rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    text-transform: none;
+    letter-spacing: 0;
     background: var(--surface-active);
     white-space: nowrap;
   }
@@ -649,12 +671,14 @@ app-selection-checkbox.selection-hidden {
   z-index: 1;
   cursor: pointer;
 }
-.selection-mark {
+.selection-mark,
+input[type='checkbox']:not(.selection-checkbox) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--selection-mark-size);
   height: var(--selection-mark-size);
+  flex-shrink: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-xs);
   background: var(--surface);
@@ -663,22 +687,83 @@ app-selection-checkbox.selection-hidden {
     background-color 0.15s,
     border-color 0.15s;
 }
-.selection-control:hover .selection-mark {
+.selection-control:hover .selection-mark,
+input[type='checkbox']:not(.selection-checkbox):hover:not(:disabled) {
   border-color: var(--accent);
 }
-.selection-control > input:is(:checked, :indeterminate) + .selection-mark {
+.selection-control > input:is(:checked, :indeterminate) + .selection-mark,
+input[type='checkbox']:not(.selection-checkbox):is(:checked, :indeterminate) {
   background: var(--accent);
   border-color: var(--accent);
 }
-.selection-control > input:focus-visible + .selection-mark {
+.selection-control > input:focus-visible + .selection-mark,
+input[type='checkbox']:not(.selection-checkbox):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 .selection-control > input:disabled {
   cursor: default;
 }
-.selection-control > input:disabled + .selection-mark {
+.selection-control > input:disabled + .selection-mark,
+input[type='checkbox']:not(.selection-checkbox):disabled {
   opacity: 0.5;
+}
+
+input[type='checkbox']:not(.selection-checkbox) {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    width: var(--selection-icon-size);
+    height: var(--selection-icon-size);
+    background: currentColor;
+    mask: var(--selection-check-mask) center / contain no-repeat;
+    visibility: hidden;
+  }
+
+  &:checked::after {
+    visibility: visible;
+  }
+
+  &:indeterminate::after {
+    width: 0.65rem;
+    height: 2px;
+    border: 0;
+    background: currentColor;
+    mask: none;
+    visibility: visible;
+  }
+
+  &:focus {
+    box-shadow: none;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+@media (forced-colors: active) {
+  .selection-mark,
+  input[type='checkbox']:not(.selection-checkbox) {
+    forced-color-adjust: none;
+    border-color: ButtonText;
+    background: Canvas;
+    color: HighlightText;
+  }
+
+  .selection-control > input:is(:checked, :indeterminate) + .selection-mark,
+  input[type='checkbox']:not(.selection-checkbox):is(:checked, :indeterminate) {
+    background: Highlight;
+    border-color: Highlight;
+  }
 }
 .selecting {
   cursor: pointer;

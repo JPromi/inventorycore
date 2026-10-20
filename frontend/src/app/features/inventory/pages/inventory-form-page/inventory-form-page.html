@@ -1,319 +1,419 @@
 <section class="form-page">
-    <div class="form-shell">
-        <header class="page-header">
-            <div>
-                <p>{{ config.title }}</p>
-                <h1>
-                    <ng-container *ngComponentOutlet="headerIcon; inputs: iconInputs"></ng-container>
-                    <span>{{ title }}</span>
-                </h1>
+  <div class="form-shell">
+    <header class="page-header">
+      <div>
+        <h1>
+          <ng-container *ngComponentOutlet="headerIcon; inputs: iconInputs"></ng-container>
+          <span>{{ title }}</span>
+        </h1>
+      </div>
+
+      <a class="secondary-action" [routerLink]="backRoute">
+        <svg lucideArrowLeft size="18"></svg>
+        <span>{{ 'common.back' | t }}</span>
+      </a>
+    </header>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    @if (lastCreated) {
+      <p class="success">
+        <span>{{ 'inventoryForm.created' | t: { name: lastCreated.name } }}</span>
+        @if (config.detailRoutePrefix) {
+          <a [routerLink]="[config.detailRoutePrefix, lastCreated.uuid]">{{
+            'inventoryForm.view' | t
+          }}</a>
+        }
+      </p>
+    }
+
+    @if (loading) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else {
+      <form class="editor" (ngSubmit)="save()">
+        <section class="form-section">
+          <h2>{{ 'inventoryForm.general' | t }}</h2>
+          @if (config.autoInvId && !uuid) {
+            <p class="hint">{{ 'inventoryForm.autoInvId' | t }}</p>
+          }
+          <div class="field-grid">
+            @for (field of generalFields; track field.key) {
+              <label [class.wide]="field.type === 'textarea'">
+                <span>{{ field.label }}</span>
+                @if (field.type === 'textarea') {
+                  <textarea
+                    [(ngModel)]="form[field.key]"
+                    [name]="field.key"
+                    [required]="field.required ?? false"
+                  ></textarea>
+                } @else {
+                  <input
+                    [type]="field.type"
+                    [(ngModel)]="form[field.key]"
+                    [name]="field.key"
+                    [required]="field.required ?? false"
+                  />
+                }
+              </label>
+            }
+          </div>
+          <h3>{{ 'inventoryForm.assignment' | t }}</h3>
+          @if (config.locationType) {
+            <label class="type-select">
+              <span>{{ 'inventoryForm.locationType' | t }}</span>
+              <app-search-select
+                [options]="locationTypeOptions"
+                [(ngModel)]="form.locationType"
+                name="locationType"
+                [placeholder]="'inventoryForm.selectLocationType' | t"
+                [searchPlaceholder]="'inventoryForm.searchLocationType' | t"
+              />
+            </label>
+          }
+          @if (config.selectAssetType) {
+            <label class="type-select">
+              <span>{{ 'terms.assetType' | t }}</span>
+              <app-search-select
+                [options]="assetTypeOptions"
+                [ngModel]="form.assetTypeUuid"
+                name="assetTypeUuid"
+                (ngModelChange)="selectAssetType($event)"
+                [placeholder]="'inventoryForm.selectAssetType' | t"
+                [clearLabel]="'inventoryForm.noAssetType' | t"
+                [searchPlaceholder]="'inventoryForm.searchAssetType' | t"
+              />
+            </label>
+          }
+          @if (config.endpoint === 'assets') {
+            <div class="asset-link-fields">
+              <label>
+                <span>{{ 'inventoryForm.inspectionPolicyLabel' | t }}</span>
+                <select [(ngModel)]="form.inspectionPolicy" name="inspectionPolicy">
+                  <option value="STANDARD">
+                    {{ 'inventoryForm.inspectionPolicy.STANDARD' | t }}
+                  </option>
+                  <option value="MANUAL">{{ 'inventoryForm.inspectionPolicy.MANUAL' | t }}</option>
+                  <option value="EXCLUDED">
+                    {{ 'inventoryForm.inspectionPolicy.EXCLUDED' | t }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>{{ 'inventoryForm.parentAsset' | t }}</span>
+                <app-search-select
+                  [options]="parentAssetOptions"
+                  [(ngModel)]="form.parentAssetUuid"
+                  name="parentAssetUuid"
+                  [placeholder]="'inventoryForm.selectAsset' | t"
+                  [clearLabel]="'inventoryForm.noParentAsset' | t"
+                  [searchPlaceholder]="'inventoryForm.searchAsset' | t"
+                />
+              </label>
+              @if (form.parentAssetUuid) {
+                <label>
+                  <span>{{ 'inventoryForm.parentAssetNote' | t }}</span>
+                  <input
+                    type="text"
+                    [(ngModel)]="form.parentAssetNote"
+                    name="parentAssetNote"
+                    maxlength="1000"
+                    [placeholder]="'inventoryForm.parentAssetNotePlaceholder' | t"
+                  />
+                </label>
+              }
+            </div>
+          }
+          <div class="area-select">
+            <label for="areas">{{ 'terms.areas' | t }}</label>
+            <app-multi-select
+              [options]="areaOptions"
+              [lockedOptions]="lockedAreaOptions"
+              [lockedHint]="'inventoryForm.areaLocked' | t"
+              [(ngModel)]="selectedAreaUuids"
+              name="areas"
+              [placeholder]="'inventoryForm.selectArea' | t"
+              [emptyText]="'inventoryForm.noMoreAreas' | t"
+            />
+          </div>
+          @if (config.selectLocation || config.selectParentLocation) {
+            <label class="type-select">
+              <span>{{
+                (config.selectParentLocation ? 'inventoryForm.parentLocation' : 'terms.location')
+                  | t
+              }}</span>
+              @if (config.selectParentLocation) {
+                <app-search-select
+                  [options]="locationOptions"
+                  [(ngModel)]="form.parentLocationUuid"
+                  name="parentLocationUuid"
+                  [placeholder]="'inventoryForm.noParentLocation' | t"
+                  [clearLabel]="'inventoryForm.noParentLocation' | t"
+                  [searchPlaceholder]="'inventoryForm.searchLocation' | t"
+                />
+              } @else {
+                <app-search-select
+                  [options]="locationOptions"
+                  [(ngModel)]="form.locationUuid"
+                  name="locationUuid"
+                  [placeholder]="'inventoryForm.noLocation' | t"
+                  [clearLabel]="'inventoryForm.noLocation' | t"
+                  [searchPlaceholder]="'inventoryForm.searchLocation' | t"
+                />
+              }
+            </label>
+          }
+          @if (config.tags) {
+            <div class="tag-editor">
+              <label for="tags">{{ 'terms.tags' | t }}</label>
+              <app-multi-select
+                [options]="tagOptions"
+                [lockedOptions]="lockedTagOptions"
+                [lockedHint]="'inventoryForm.tagLocked' | t"
+                [(ngModel)]="selectedTagUuids"
+                name="tags"
+                [allowCreate]="true"
+                (create)="createTag($event)"
+                [placeholder]="'inventoryForm.tagsPlaceholder' | t"
+                [emptyText]="'inventoryForm.noMoreTags' | t"
+              />
+              @if (lockedTags.length) {
+                <p class="hint">{{ 'inventoryForm.lockedTagsHint' | t }}</p>
+              }
+            </div>
+          }
+        </section>
+
+        @if (config.coordinates) {
+          <section class="form-section">
+            <div class="section-title">
+              <h2>{{ 'inventoryForm.position' | t }}</h2>
+            </div>
+            <div class="field-grid">
+              <label class="wide">
+                <span>{{ 'inventoryForm.street' | t }}</span>
+                <input
+                  type="text"
+                  [(ngModel)]="form.street"
+                  name="street"
+                  autocomplete="address-line1"
+                />
+              </label>
+              <label>
+                <span>{{ 'inventoryForm.postalCode' | t }}</span>
+                <input
+                  type="text"
+                  [(ngModel)]="form.postalCode"
+                  name="postalCode"
+                  autocomplete="postal-code"
+                />
+              </label>
+              <label>
+                <span>{{ 'inventoryForm.city' | t }}</span>
+                <input
+                  type="text"
+                  [(ngModel)]="form.city"
+                  name="city"
+                  autocomplete="address-level2"
+                />
+              </label>
+              <label>
+                <span>{{ 'inventoryForm.country' | t }}</span>
+                <input
+                  type="text"
+                  [(ngModel)]="form.country"
+                  name="country"
+                  autocomplete="country-name"
+                />
+              </label>
+              <label>
+                <span>{{ 'inventoryForm.latitude' | t }}</span>
+                <input
+                  type="number"
+                  step="any"
+                  min="-90"
+                  max="90"
+                  [(ngModel)]="form.latitude"
+                  name="latitude"
+                  [placeholder]="'inventoryForm.latitudePlaceholder' | t"
+                />
+              </label>
+              <label>
+                <span>{{ 'inventoryForm.longitude' | t }}</span>
+                <input
+                  type="number"
+                  step="any"
+                  min="-180"
+                  max="180"
+                  [(ngModel)]="form.longitude"
+                  name="longitude"
+                  [placeholder]="'inventoryForm.longitudePlaceholder' | t"
+                />
+              </label>
+            </div>
+            @if (legacyAddress) {
+              <p class="hint">
+                {{ 'inventoryForm.legacyAddress' | t: { address: legacyAddress } }}
+              </p>
+            }
+            <app-location-lookup
+              [position]="form"
+              [coordinatesError]="coordinatesError"
+              (coordinatesFound)="applyCoordinates($event)"
+              (addressFound)="applyAddress($event)"
+            />
+          </section>
+        }
+
+        @if (config.customFields) {
+          <section class="form-section">
+            <div class="section-title">
+              <h2>{{ 'inventoryForm.customFields' | t }}</h2>
+              <button type="button" class="secondary-action compact" (click)="addCustomField()">
+                <svg lucidePlus size="16"></svg>
+                <span>{{ 'inventoryForm.addField' | t }}</span>
+              </button>
             </div>
 
-            <a class="secondary-action" [routerLink]="backRoute">
-                <svg lucideArrowLeft size="18"></svg>
-                <span>{{ 'common.back' | t }}</span>
-            </a>
-        </header>
-
-        @if (error) {
-            <p class="error">{{ error }}</p>
-        }
-
-        @if (lastCreated) {
-            <p class="success">
-                <span>{{ 'inventoryForm.created' | t: { name: lastCreated.name } }}</span>
-                @if (config.detailRoutePrefix) {
-                    <a [routerLink]="[config.detailRoutePrefix, lastCreated.uuid]">{{ 'inventoryForm.view' | t }}</a>
-                }
-            </p>
-        }
-
-        @if (loading) {
-            <p class="empty">{{ 'common.loading' | t }}</p>
-        } @else {
-            <form class="editor" (ngSubmit)="save()">
-                <section class="form-section">
-                    <h2>{{ 'inventoryForm.general' | t }}</h2>
-                    @if (config.autoInvId && !uuid) {
-                        <p class="hint">{{ 'inventoryForm.autoInvId' | t }}</p>
-                    }
-                    @if (config.locationType) {
-                        <label class="type-select">
-                            <span>{{ 'inventoryForm.locationType' | t }}</span>
-                            <app-search-select
-                                [options]="locationTypeOptions"
-                                [(ngModel)]="form.locationType"
-                                name="locationType"
-                                [placeholder]="'inventoryForm.selectLocationType' | t"
-                                [searchPlaceholder]="'inventoryForm.searchLocationType' | t"
-                            />
-                        </label>
-                    }
-                    @if (config.selectAssetType) {
-                        <label class="type-select">
-                            <span>{{ 'terms.assetType' | t }}</span>
-                            <app-search-select
-                                [options]="assetTypeOptions"
-                                [ngModel]="form.assetTypeUuid"
-                                name="assetTypeUuid"
-                                (ngModelChange)="selectAssetType($event)"
-                                [placeholder]="'inventoryForm.selectAssetType' | t"
-                                [clearLabel]="'inventoryForm.noAssetType' | t"
-                                [searchPlaceholder]="'inventoryForm.searchAssetType' | t"
-                            />
-                        </label>
-                    }
-                    @if (config.endpoint === 'assets') {
-                        <div class="asset-link-fields">
-                            <label>
-                                <span>{{ 'inventoryForm.inspectionPolicyLabel' | t }}</span>
-                                <select [(ngModel)]="form.inspectionPolicy" name="inspectionPolicy">
-                                    <option value="STANDARD">{{ 'inventoryForm.inspectionPolicy.STANDARD' | t }}</option>
-                                    <option value="MANUAL">{{ 'inventoryForm.inspectionPolicy.MANUAL' | t }}</option>
-                                    <option value="EXCLUDED">{{ 'inventoryForm.inspectionPolicy.EXCLUDED' | t }}</option>
-                                </select>
-                            </label>
-                            <label>
-                                <span>{{ 'inventoryForm.parentAsset' | t }}</span>
-                                <app-search-select [options]="parentAssetOptions" [(ngModel)]="form.parentAssetUuid"
-                                    name="parentAssetUuid" [placeholder]="'inventoryForm.selectAsset' | t" [clearLabel]="'inventoryForm.noParentAsset' | t"
-                                    [searchPlaceholder]="'inventoryForm.searchAsset' | t" />
-                            </label>
-                            @if (form.parentAssetUuid) {
-                                <label>
-                                    <span>{{ 'inventoryForm.parentAssetNote' | t }}</span>
-                                    <input type="text" [(ngModel)]="form.parentAssetNote" name="parentAssetNote" maxlength="1000" [placeholder]="'inventoryForm.parentAssetNotePlaceholder' | t" />
-                                </label>
-                            }
-                        </div>
-                    }
-                    <div class="area-select">
-                        <label for="areas">{{ 'terms.areas' | t }}</label>
-                        <app-multi-select
-                            [options]="areaOptions"
-                            [lockedOptions]="lockedAreaOptions"
-                            [lockedHint]="'inventoryForm.areaLocked' | t"
-                            [(ngModel)]="selectedAreaUuids"
-                            name="areas"
-                            [placeholder]="'inventoryForm.selectArea' | t"
-                            [emptyText]="'inventoryForm.noMoreAreas' | t"
-                        />
-                    </div>
-                    @if (config.selectLocation || config.selectParentLocation) {
-                        <label class="type-select">
-                            <span>{{ (config.selectParentLocation ? 'inventoryForm.parentLocation' : 'terms.location') | t }}</span>
-                            @if (config.selectParentLocation) {
-                                <app-search-select
-                                    [options]="locationOptions"
-                                    [(ngModel)]="form.parentLocationUuid"
-                                    name="parentLocationUuid"
-                                    [placeholder]="'inventoryForm.noParentLocation' | t"
-                                    [clearLabel]="'inventoryForm.noParentLocation' | t"
-                                    [searchPlaceholder]="'inventoryForm.searchLocation' | t"
-                                />
-                            } @else {
-                                <app-search-select
-                                    [options]="locationOptions"
-                                    [(ngModel)]="form.locationUuid"
-                                    name="locationUuid"
-                                    [placeholder]="'inventoryForm.noLocation' | t"
-                                    [clearLabel]="'inventoryForm.noLocation' | t"
-                                    [searchPlaceholder]="'inventoryForm.searchLocation' | t"
-                                />
-                            }
-                        </label>
-                    }
-                    <div class="field-grid">
-                        @for (field of generalFields; track field.key) {
-                            <label [class.wide]="field.type === 'textarea'">
-                                <span>{{ field.label }}</span>
-                                @if (field.type === 'textarea') {
-                                    <textarea [(ngModel)]="form[field.key]" [name]="field.key" [required]="field.required ?? false"></textarea>
-                                } @else {
-                                    <input [type]="field.type" [(ngModel)]="form[field.key]" [name]="field.key" [required]="field.required ?? false" />
-                                }
-                            </label>
-                        }
-                    </div>
-
-                    @if (config.tags) {
-                        <div class="tag-editor">
-                            <label for="tags">{{ 'terms.tags' | t }}</label>
-                            <app-multi-select
-                                [options]="tagOptions"
-                                [lockedOptions]="lockedTagOptions"
-                                [lockedHint]="'inventoryForm.tagLocked' | t"
-                                [(ngModel)]="selectedTagUuids"
-                                name="tags"
-                                [allowCreate]="true"
-                                (create)="createTag($event)"
-                                [placeholder]="'inventoryForm.tagsPlaceholder' | t"
-                                [emptyText]="'inventoryForm.noMoreTags' | t"
-                            />
-                            <p class="hint">{{ 'inventoryForm.tagsHint' | t }}@if (lockedTags.length) { {{ 'inventoryForm.lockedTagsHint' | t }}}</p>
-                        </div>
-                    }
-                </section>
-
-                @if (config.coordinates) {
-                    <section class="form-section">
-                        <div class="section-title">
-                            <h2>{{ 'inventoryForm.position' | t }}</h2>
-                            <span class="hint">{{ 'inventoryForm.positionHint' | t }}</span>
-                        </div>
-                        <div class="field-grid">
-                            <label class="wide">
-                                <span>{{ 'inventoryForm.street' | t }}</span>
-                                <input type="text" [(ngModel)]="form.street" name="street" autocomplete="address-line1" />
-                            </label>
-                            <label>
-                                <span>{{ 'inventoryForm.postalCode' | t }}</span>
-                                <input type="text" [(ngModel)]="form.postalCode" name="postalCode" autocomplete="postal-code" />
-                            </label>
-                            <label>
-                                <span>{{ 'inventoryForm.city' | t }}</span>
-                                <input type="text" [(ngModel)]="form.city" name="city" autocomplete="address-level2" />
-                            </label>
-                            <label>
-                                <span>{{ 'inventoryForm.country' | t }}</span>
-                                <input type="text" [(ngModel)]="form.country" name="country" autocomplete="country-name" />
-                            </label>
-                            <label>
-                                <span>{{ 'inventoryForm.latitude' | t }}</span>
-                                <input type="number" step="any" min="-90" max="90" [(ngModel)]="form.latitude" name="latitude" [placeholder]="'inventoryForm.latitudePlaceholder' | t" />
-                            </label>
-                            <label>
-                                <span>{{ 'inventoryForm.longitude' | t }}</span>
-                                <input type="number" step="any" min="-180" max="180" [(ngModel)]="form.longitude" name="longitude" [placeholder]="'inventoryForm.longitudePlaceholder' | t" />
-                            </label>
-                        </div>
-                        @if (legacyAddress) {
-                            <p class="hint">{{ 'inventoryForm.legacyAddress' | t: { address: legacyAddress } }}</p>
-                        }
-                        <app-location-lookup
-                            [position]="form"
-                            [coordinatesError]="coordinatesError"
-                            (coordinatesFound)="applyCoordinates($event)"
-                            (addressFound)="applyAddress($event)"
-                        />
-                    </section>
-                }
-
-                @if (config.customFields) {
-                    <section class="form-section">
-                        <div class="section-title">
-                            <h2>{{ 'inventoryForm.customFields' | t }}</h2>
-                            <button type="button" class="secondary-action compact" (click)="addCustomField()">
-                                <svg lucidePlus size="16"></svg>
-                                <span>{{ 'inventoryForm.addField' | t }}</span>
-                            </button>
-                        </div>
-
-                        @if (config.resourceType === 'ASSET_TYPE') {
-                            <div class="repeat-list">
-                                @for (field of form.fieldDefinitions ?? []; track $index) {
-                                    <div class="repeat-row">
-                                        <label>
-                                            <span>{{ 'common.name' | t }}</span>
-                                            <input type="text" [(ngModel)]="field.name" name="fieldName{{ $index }}" />
-                                        </label>
-                                        <label>
-                                            <span>{{ 'inventoryForm.fieldType' | t }}</span>
-                                            <select [(ngModel)]="field.fieldType" name="fieldType{{ $index }}">
-                                                <option value="TEXT">{{ 'inventoryForm.fieldTypes.TEXT' | t }}</option>
-                                                <option value="NUMBER">{{ 'inventoryForm.fieldTypes.NUMBER' | t }}</option>
-                                                <option value="BOOLEAN">{{ 'inventoryForm.fieldTypes.BOOLEAN' | t }}</option>
-                                                <option value="DATE">{{ 'inventoryForm.fieldTypes.DATE' | t }}</option>
-                                                <option value="URL">{{ 'inventoryForm.fieldTypes.URL' | t }}</option>
-                                                <option value="EMAIL">{{ 'inventoryForm.fieldTypes.EMAIL' | t }}</option>
-                                                <option value="SELECT">{{ 'inventoryForm.fieldTypes.SELECT' | t }}</option>
-                                            </select>
-                                        </label>
-                                        <label class="checkbox-label">
-                                            <input type="checkbox" [(ngModel)]="field.required" name="fieldRequired{{ $index }}" />
-                                            <span>{{ 'common.required' | t }}</span>
-                                        </label>
-                                        <button type="button" class="icon-button danger" [title]="'inventoryForm.removeField' | t" (click)="removeCustomField($index)">
-                                            <svg lucideTrash2 size="16"></svg>
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        } @else {
-                            <div class="repeat-list">
-                                @for (field of form.fieldValues ?? []; track $index) {
-                                    <div class="repeat-row" [class.locked]="!field.customAssetField">
-                                        <label>
-                                            <span>{{ 'common.name' | t }}</span>
-                                            <input type="text" [(ngModel)]="field.name" name="valueName{{ $index }}" [readonly]="!field.customAssetField" />
-                                        </label>
-                                        <label>
-                                            <span>{{ 'inventoryForm.value' | t }}</span>
-                                            <input type="text" [(ngModel)]="field.value" name="value{{ $index }}" />
-                                        </label>
-                                        @if (field.customAssetField) {
-                                            <button type="button" class="icon-button danger" [title]="'inventoryForm.removeField' | t" (click)="removeCustomField($index)">
-                                                <svg lucideTrash2 size="16"></svg>
-                                            </button>
-                                        } @else {
-                                            <span class="locked-note">{{ 'inventoryForm.typeField' | t }}</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </section>
-                }
-
-                @if (inspectionFields.length) {
-                    <section class="form-section">
-                        <h2>{{ 'inventoryForm.inspection' | t }}</h2>
-                        <div class="field-grid">
-                            @for (field of inspectionFields; track field.key) {
-                                <label>
-                                    <span>{{ field.label }}</span>
-                                    <input type="number" [(ngModel)]="form[field.key]" [name]="field.key" />
-                                </label>
-                            }
-                        </div>
-                    </section>
-                }
-
-                @if (config.images) {
-                    <section class="form-section">
-                        <div class="section-title">
-                            <h2>{{ 'inventoryForm.images' | t }}</h2>
-                            <span class="hint">{{ 'inventoryForm.imagesHint' | t }}</span>
-                        </div>
-                        <app-image-upload
-                            [images]="form.images ?? []"
-                            (imagesChange)="form.images = $event"
-                            (busyChange)="uploading = $event"
-                            [disabled]="!canSave"
-                        />
-                    </section>
-                }
-
-                <div class="editor-actions sticky-editor-actions">
-                    <a class="secondary-action" [routerLink]="backRoute">{{ 'common.cancel' | t }}</a>
-                    @if (!uuid) {
-                        <button
-                            type="button"
-                            class="secondary-action"
-                            [disabled]="!canSave || saving || uploading || !!coordinatesError"
-                            (click)="save(true)"
-                            [title]="'inventoryForm.createAnotherTitle' | t"
-                        >
-                            <svg lucidePlus size="17"></svg>
-                            <span>{{ 'inventoryForm.createAnother' | t }}</span>
-                        </button>
-                    }
-                    <button type="submit" class="primary-action" [disabled]="!canSave || saving || uploading || !!coordinatesError">
-                        <svg lucideSave size="18"></svg>
-                        <span>{{ (saving ? 'common.saving' : uploading ? 'inventoryForm.uploadingImages' : uuid ? 'common.save' : 'inventoryForm.create') | t }}</span>
+            @if (config.resourceType === 'ASSET_TYPE') {
+              <div class="repeat-list">
+                @for (field of form.fieldDefinitions ?? []; track $index) {
+                  <div class="repeat-row">
+                    <label>
+                      <span>{{ 'common.name' | t }}</span>
+                      <input type="text" [(ngModel)]="field.name" name="fieldName{{ $index }}" />
+                    </label>
+                    <label>
+                      <span>{{ 'inventoryForm.fieldType' | t }}</span>
+                      <select [(ngModel)]="field.fieldType" name="fieldType{{ $index }}">
+                        <option value="TEXT">{{ 'inventoryForm.fieldTypes.TEXT' | t }}</option>
+                        <option value="NUMBER">{{ 'inventoryForm.fieldTypes.NUMBER' | t }}</option>
+                        <option value="BOOLEAN">
+                          {{ 'inventoryForm.fieldTypes.BOOLEAN' | t }}
+                        </option>
+                        <option value="DATE">{{ 'inventoryForm.fieldTypes.DATE' | t }}</option>
+                        <option value="URL">{{ 'inventoryForm.fieldTypes.URL' | t }}</option>
+                        <option value="EMAIL">{{ 'inventoryForm.fieldTypes.EMAIL' | t }}</option>
+                        <option value="SELECT">{{ 'inventoryForm.fieldTypes.SELECT' | t }}</option>
+                      </select>
+                    </label>
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="field.required"
+                        name="fieldRequired{{ $index }}"
+                      />
+                      <span>{{ 'common.required' | t }}</span>
+                    </label>
+                    <button
+                      type="button"
+                      class="icon-button danger"
+                      [title]="'inventoryForm.removeField' | t"
+                      (click)="removeCustomField($index)"
+                    >
+                      <svg lucideTrash2 size="16"></svg>
                     </button>
-                </div>
-            </form>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="repeat-list">
+                @for (field of form.fieldValues ?? []; track $index) {
+                  <div class="repeat-row" [class.locked]="!field.customAssetField">
+                    <label>
+                      <span>{{ 'common.name' | t }}</span>
+                      <input
+                        type="text"
+                        [(ngModel)]="field.name"
+                        name="valueName{{ $index }}"
+                        [readonly]="!field.customAssetField"
+                      />
+                    </label>
+                    <label>
+                      <span>{{ 'inventoryForm.value' | t }}</span>
+                      <input type="text" [(ngModel)]="field.value" name="value{{ $index }}" />
+                    </label>
+                    @if (field.customAssetField) {
+                      <button
+                        type="button"
+                        class="icon-button danger"
+                        [title]="'inventoryForm.removeField' | t"
+                        (click)="removeCustomField($index)"
+                      >
+                        <svg lucideTrash2 size="16"></svg>
+                      </button>
+                    } @else {
+                      <span class="locked-note">{{ 'inventoryForm.typeField' | t }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </section>
         }
-    </div>
+
+        @if (inspectionFields.length) {
+          <section class="form-section">
+            <h2>{{ 'inventoryForm.inspection' | t }}</h2>
+            <div class="field-grid">
+              @for (field of inspectionFields; track field.key) {
+                <label>
+                  <span>{{ field.label }}</span>
+                  <input type="number" [(ngModel)]="form[field.key]" [name]="field.key" />
+                </label>
+              }
+            </div>
+          </section>
+        }
+
+        @if (config.images) {
+          <section class="form-section">
+            <div class="section-title">
+              <h2>{{ 'inventoryForm.images' | t }}</h2>
+            </div>
+            <app-image-upload
+              [images]="form.images ?? []"
+              (imagesChange)="form.images = $event"
+              (busyChange)="uploading = $event"
+              [disabled]="!canSave"
+            />
+          </section>
+        }
+
+        <div class="editor-actions sticky-editor-actions">
+          <a class="secondary-action" [routerLink]="backRoute">{{ 'common.cancel' | t }}</a>
+          @if (!uuid) {
+            <button
+              type="button"
+              class="secondary-action"
+              [disabled]="!canSave || saving || uploading || !!coordinatesError"
+              (click)="save(true)"
+              [title]="'inventoryForm.createAnotherTitle' | t"
+            >
+              <svg lucidePlus size="17"></svg>
+              <span>{{ 'inventoryForm.createAnother' | t }}</span>
+            </button>
+          }
+          <button
+            type="submit"
+            class="primary-action"
+            [disabled]="!canSave || saving || uploading || !!coordinatesError"
+          >
+            <svg lucideSave size="18"></svg>
+            <span>{{
+              (saving
+                ? 'common.saving'
+                : uploading
+                  ? 'inventoryForm.uploadingImages'
+                  : uuid
+                    ? 'common.save'
+                    : 'inventoryForm.create'
+              ) | t
+            }}</span>
+          </button>
+        </div>
+      </form>
+    }
+  </div>
 </section>

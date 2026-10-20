@@ -18,7 +18,7 @@
   // :where() keeps the specificity low so the global select chevron padding still wins
 
   :where(.form-page) {
-    input,
+    input:not([type='checkbox']):not([type='radio']),
     select,
     textarea {
       width: 100%;
@@ -56,7 +56,7 @@
   }
 
   .form-shell {
-    width: min(100%, 58rem);
+    width: min(100%, var(--form-content-width));
     margin: 0 auto;
   }
 
@@ -94,18 +94,23 @@
   }
 
   .form-section {
-    padding: 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    padding: var(--section-space) 0;
+    border-top: 1px solid var(--border);
+
+    &:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
 
     h2 {
       margin-bottom: 0.75rem;
       font-size: 1rem;
     }
 
-    @include bp.phone {
-      padding: 0.85rem;
+    h3 {
+      margin: 1.5rem 0 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 600;
     }
 
     .section-title {
@@ -123,11 +128,11 @@
     .hint {
       margin-bottom: 0.75rem;
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.8125rem;
     }
 
     .type-select {
-      max-width: 24rem;
+      max-width: none;
       margin-bottom: 0.9rem;
     }
 
@@ -147,7 +152,7 @@
 
     .asset-link-fields,
     .area-select {
-      max-width: 32rem;
+      max-width: none;
       margin-bottom: 0.9rem;
     }
 
@@ -178,9 +183,8 @@
       grid-template-columns: repeat(3, minmax(8rem, 1fr)) auto;
       gap: 0.6rem;
       align-items: end;
-      padding: 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
 
       &.locked {
         background: var(--surface-active);
@@ -211,11 +215,6 @@
       flex-direction: row;
       align-items: center;
       min-height: 2.35rem;
-
-      input {
-        width: auto;
-        min-height: 0;
-      }
     }
   }
 

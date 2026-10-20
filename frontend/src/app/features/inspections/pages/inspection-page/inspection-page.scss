@@ -59,9 +59,6 @@
 .warning {
   --tone: var(--warning);
 }
-.page-shell {
-  width: min(100%, 68rem);
-}
 .error {
   display: flex;
   align-items: center;
@@ -84,11 +81,6 @@
   gap: 0.6rem 1.75rem;
   margin-bottom: 1rem;
   padding: 0.85rem 1.1rem;
-
-  @include bp.phone {
-    gap: 0.6rem 1.25rem;
-    padding: 0.75rem 0.9rem;
-  }
 }
 .stat {
   display: flex;
@@ -107,22 +99,23 @@
     font-weight: 600;
   }
 }
-.progress-wrap {
-  min-width: min(100%, 12rem);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-
-  .progress {
-    height: 0.55rem;
+:host {
+  .progress-wrap {
     display: flex;
-    overflow: hidden;
-    border-radius: var(--radius-pill);
-    background: var(--surface-active);
+    flex-direction: column;
+    margin-bottom: var(--section-space);
+    gap: 0.3rem;
 
-    span {
-      background: var(--tone);
+    .progress {
+      height: 0.55rem;
+      display: flex;
+      overflow: hidden;
+      border-radius: var(--radius-pill);
+      background: var(--surface-active);
+
+      span {
+        background: var(--tone);
+      }
     }
   }
 }

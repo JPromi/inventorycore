@@ -110,11 +110,12 @@ for (const width of [1280, 390]) {
       'rgb(15, 118, 110)',
     );
     const advanced = page.getByRole('checkbox', { name: 'Erweiterte Darstellung' });
-    await expect(advanced).toHaveCSS('accent-color', 'rgb(15, 118, 110)');
+    await expect(advanced).toHaveCSS('appearance', 'none');
     expect(
       await advanced.evaluate((input) => input.closest('label')?.classList.contains('toggle')),
     ).toBe(true);
     await advanced.check();
+    await expect(advanced).toHaveCSS('background-color', 'rgb(15, 118, 110)');
     await page.locator('.style-modes').getByRole('button', { name: 'Dunkel', exact: true }).click();
     await expect(page.locator('app-color-picker .trigger')).toContainText('#E4D455');
     await page.getByLabel('Markenname', { exact: true }).fill('Feuerwehr Musterstadt');
@@ -203,7 +204,8 @@ test('dark screens still print light documents and the light logo', async ({ pag
   });
   await page.goto('/assets/asset');
   await expect(page.locator('body')).toHaveAttribute('data-theme', 'dark');
-  await page.getByRole('button', { name: 'Drucken', exact: true }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Drucken', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Drucken', exact: true }).click();
   await page.emulateMedia({ media: 'print', colorScheme: 'dark' });
   const printed = page.locator('body > .print-document.active');

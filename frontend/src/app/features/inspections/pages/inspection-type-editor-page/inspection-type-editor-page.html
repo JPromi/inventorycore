@@ -1,280 +1,373 @@
 <section class="page">
-    <div class="page-shell">
-        <header class="page-header">
-            <div>
-                <p class="eyebrow">{{ 'inspectionTemplateEditor.eyebrow' | t }}</p>
-                <h1>
-                    <svg lucideClipboardList size="20"></svg>
-                    <span>{{ title }}</span>
-                </h1>
+  <div class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ 'inspectionTemplateEditor.eyebrow' | t }}</p>
+        <h1>
+          <svg lucideClipboardList size="20"></svg>
+          <span>{{ title }}</span>
+        </h1>
+      </div>
+      <a class="secondary-action" routerLink="/config/inspection-templates">
+        <svg lucideArrowLeft size="16"></svg>
+        <span>{{ 'common.back' | t }}</span>
+      </a>
+    </header>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else {
+      <form class="stack" (ngSubmit)="save()">
+        <section class="content-section">
+          <h2>{{ 'inspectionTemplateEditor.general' | t }}</h2>
+          <div class="general">
+            <label class="field">
+              <span>{{ 'inspectionTemplateEditor.nameLabel' | t }}</span>
+              <input
+                type="text"
+                [(ngModel)]="name"
+                name="name"
+                required
+                [placeholder]="'inspectionTemplateEditor.namePlaceholder' | t"
+              />
+            </label>
+            <div class="field">
+              <span class="field-label">{{ 'inspectionTemplateEditor.color' | t }}</span>
+              <app-color-picker [(ngModel)]="color" name="color" />
             </div>
-            <a class="secondary-action" routerLink="/config/inspection-templates">
-                <svg lucideArrowLeft size="16"></svg>
-                <span>{{ 'common.back' | t }}</span>
-            </a>
-        </header>
+            <label class="field wide">
+              <span>{{ 'common.description' | t }}</span>
+              <textarea
+                [(ngModel)]="description"
+                name="description"
+                rows="2"
+                [placeholder]="'inspectionTemplateEditor.descriptionPlaceholder' | t"
+              ></textarea>
+            </label>
+            <div class="field wide">
+              <span class="field-label">{{ 'inspectionTemplateEditor.protocolArea' | t }}</span>
+              <app-search-select
+                [options]="areaOptions"
+                [(ngModel)]="protocolAreaUuid"
+                name="protocolArea"
+                [placeholder]="'inspectionTemplateEditor.currentArea' | t"
+                [clearLabel]="'inspectionTemplateEditor.currentArea' | t"
+              />
+            </div>
+          </div>
+        </section>
 
-        @if (error) {
-            <p class="error">{{ error }}</p>
-        }
+        <section class="content-section">
+          <h2>{{ 'inspectionTemplateEditor.mode.heading' | t }}</h2>
+          <div
+            class="mode-choice"
+            role="radiogroup"
+            [attr.aria-label]="'inspectionTemplateEditor.mode.heading' | t"
+          >
+            <label class="mode" [class.active]="mode === 'INVENTORY'">
+              <input type="radio" name="mode" value="INVENTORY" [(ngModel)]="mode" />
+              <svg lucidePackageSearch size="20"></svg>
+              <span>
+                <strong>{{ 'inspectionTemplateEditor.mode.INVENTORY' | t }}</strong>
+                <small>
+                  {{ 'inspectionTemplateEditor.mode.inventoryHint' | t }}
+                </small>
+              </span>
+            </label>
+            <label class="mode" [class.active]="mode === 'CHECK'">
+              <input type="radio" name="mode" value="CHECK" [(ngModel)]="mode" />
+              <svg lucideListChecks size="20"></svg>
+              <span>
+                <strong>{{ 'inspectionTemplateEditor.mode.CHECK' | t }}</strong>
+                <small>
+                  {{ 'inspectionTemplateEditor.mode.checkHint' | t }}
+                </small>
+              </span>
+            </label>
+          </div>
+          @if (mode === 'INVENTORY') {
+            <label class="toggle function-check">
+              <input type="checkbox" [(ngModel)]="checkFunction" name="checkFunction" />
+              <span>
+                <strong>{{ 'inspectionTemplateEditor.checkFunction' | t }}</strong>
+                <small>
+                  {{ 'inspectionTemplateEditor.checkFunctionHint' | t }}
+                </small>
+              </span>
+            </label>
+          }
+        </section>
 
-        @if (loading) {
-            <p class="empty">{{ 'common.loading' | t }}</p>
-        } @else {
-            <form class="stack" (ngSubmit)="save()">
-                <section class="card">
-                    <h2>{{ 'inspectionTemplateEditor.general' | t }}</h2>
-                    <div class="general">
-                        <label class="field">
-                            <span>{{ 'inspectionTemplateEditor.nameLabel' | t }}</span>
-                            <input type="text" [(ngModel)]="name" name="name" required [placeholder]="'inspectionTemplateEditor.namePlaceholder' | t" />
-                        </label>
-                        <div class="field">
-                            <span class="field-label">{{ 'inspectionTemplateEditor.color' | t }}</span>
-                            <app-color-picker [(ngModel)]="color" name="color" />
-                        </div>
-                        <label class="field wide">
-                            <span>{{ 'common.description' | t }}</span>
-                            <textarea [(ngModel)]="description" name="description" rows="2" [placeholder]="'inspectionTemplateEditor.descriptionPlaceholder' | t"></textarea>
-                        </label>
-                        <div class="field wide">
-                            <span class="field-label">{{ 'inspectionTemplateEditor.protocolArea' | t }}</span>
-                            <app-search-select [options]="areaOptions" [(ngModel)]="protocolAreaUuid"
-                                name="protocolArea" [placeholder]="'inspectionTemplateEditor.currentArea' | t"
-                                [clearLabel]="'inspectionTemplateEditor.currentArea' | t" />
-                        </div>
-                    </div>
-                </section>
+        <section class="content-section">
+          <h2><svg lucideListFilter size="16"></svg> {{ 'common.filter' | t }}</h2>
+          <div class="general">
+            <div class="field wide">
+              <span class="field-label">{{ 'inspectionTemplateEditor.defaultTags' | t }}</span>
+              <app-multi-select
+                [options]="tagOptions"
+                [(ngModel)]="defaultTagUuids"
+                name="defaultTagUuids"
+                [placeholder]="'inspectionTemplateEditor.addTag' | t"
+              />
+            </div>
+            <div class="field wide">
+              <span class="field-label">{{ 'inspectionTemplateEditor.defaultTypes' | t }}</span>
+              <app-multi-select
+                [options]="allTypeOptions"
+                [(ngModel)]="defaultAssetTypeUuids"
+                name="defaultAssetTypeUuids"
+                [placeholder]="'inspectionTemplateEditor.addType' | t"
+              />
+            </div>
+            <div class="field wide">
+              <span class="field-label">{{ 'inspectionTemplateEditor.defaultLocations' | t }}</span>
+              <app-multi-select
+                [options]="locationOptions"
+                [(ngModel)]="defaultLocationUuids"
+                name="defaultLocationUuids"
+                [placeholder]="'inspectionTemplateEditor.addLocation' | t"
+              />
+            </div>
+            <div class="field wide">
+              <label class="toggle">
+                <input type="checkbox" [(ngModel)]="includeChildAssets" name="includeChildAssets" />
+                <span>{{ 'inspectionTemplateEditor.includeChildAssets' | t }}</span>
+              </label>
+            </div>
+          </div>
+        </section>
 
-                <section class="card">
-                    <h2>{{ 'inspectionTemplateEditor.mode.heading' | t }}</h2>
-                    <div class="mode-choice" role="radiogroup" [attr.aria-label]="'inspectionTemplateEditor.mode.heading' | t">
-                        <label class="mode" [class.active]="mode === 'INVENTORY'">
-                            <input type="radio" name="mode" value="INVENTORY" [(ngModel)]="mode" />
-                            <svg lucidePackageSearch size="20"></svg>
-                            <span>
-                                <strong>{{ 'inspectionTemplateEditor.mode.INVENTORY' | t }}</strong>
-                                <small>
-                                    {{ 'inspectionTemplateEditor.mode.inventoryHint' | t }}
-                                </small>
-                            </span>
-                        </label>
-                        <label class="mode" [class.active]="mode === 'CHECK'">
-                            <input type="radio" name="mode" value="CHECK" [(ngModel)]="mode" />
-                            <svg lucideListChecks size="20"></svg>
-                            <span>
-                                <strong>{{ 'inspectionTemplateEditor.mode.CHECK' | t }}</strong>
-                                <small>
-                                    {{ 'inspectionTemplateEditor.mode.checkHint' | t }}
-                                </small>
-                            </span>
-                        </label>
-                    </div>
-                    @if (mode === 'INVENTORY') {
-                        <label class="toggle function-check">
-                            <input type="checkbox" [(ngModel)]="checkFunction" name="checkFunction" />
-                            <span>
-                                <strong>{{ 'inspectionTemplateEditor.checkFunction' | t }}</strong>
-                                <small>
-                                    {{ 'inspectionTemplateEditor.checkFunctionHint' | t }}
-                                </small>
-                            </span>
-                        </label>
-                    }
-                </section>
+        <section class="content-section">
+          <h2>
+            <svg lucideShapes size="16"></svg> {{ 'inspectionTemplateEditor.scope.heading' | t }}
+          </h2>
+          <div class="general">
+            <div class="field wide">
+              <span class="field-label">{{ 'terms.assetTypes' | t }}</span>
+              <app-multi-select
+                [options]="allTypeOptions"
+                [(ngModel)]="assetTypeUuids"
+                name="assetTypeUuids"
+                [placeholder]="'inspectionTemplateEditor.scope.typesPlaceholder' | t"
+              />
+              <small class="hint">
+                {{ 'inspectionTemplateEditor.scope.typesHint' | t }}
+              </small>
+            </div>
+            <div class="field wide">
+              <span class="field-label">{{ 'terms.areas' | t }}</span>
+              <app-multi-select
+                [options]="areaOptions"
+                [(ngModel)]="areaUuids"
+                name="areaUuids"
+                [placeholder]="'inspectionTemplateEditor.scope.areasPlaceholder' | t"
+              />
+              <small class="hint">
+                {{ 'inspectionTemplateEditor.scope.areasHint' | t }}
+              </small>
+            </div>
+          </div>
+        </section>
 
-                <section class="card">
-                    <h2><svg lucideListFilter size="16"></svg> {{ 'common.filter' | t }}</h2>
-                    <div class="general">
-                        <div class="field wide">
-                            <span class="field-label">{{ 'inspectionTemplateEditor.defaultTags' | t }}</span>
-                            <app-multi-select [options]="tagOptions" [(ngModel)]="defaultTagUuids"
-                                name="defaultTagUuids" [placeholder]="'inspectionTemplateEditor.addTag' | t" />
-                        </div>
-                        <div class="field wide">
-                            <span class="field-label">{{ 'inspectionTemplateEditor.defaultTypes' | t }}</span>
-                            <app-multi-select [options]="allTypeOptions" [(ngModel)]="defaultAssetTypeUuids"
-                                name="defaultAssetTypeUuids" [placeholder]="'inspectionTemplateEditor.addType' | t" />
-                        </div>
-                        <div class="field wide">
-                            <span class="field-label">{{ 'inspectionTemplateEditor.defaultLocations' | t }}</span>
-                            <app-multi-select [options]="locationOptions" [(ngModel)]="defaultLocationUuids"
-                                name="defaultLocationUuids" [placeholder]="'inspectionTemplateEditor.addLocation' | t" />
-                        </div>
-                        <div class="field wide">
-                            <label class="toggle">
-                                <input type="checkbox" [(ngModel)]="includeChildAssets" name="includeChildAssets" />
-                                <span>{{ 'inspectionTemplateEditor.includeChildAssets' | t }}</span>
-                            </label>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="card">
-                    <h2><svg lucideShapes size="16"></svg> {{ 'inspectionTemplateEditor.scope.heading' | t }}</h2>
-                    <div class="general">
-                        <div class="field wide">
-                            <span class="field-label">{{ 'terms.assetTypes' | t }}</span>
-                            <app-multi-select
-                                [options]="allTypeOptions"
-                                [(ngModel)]="assetTypeUuids"
-                                name="assetTypeUuids"
-                                [placeholder]="'inspectionTemplateEditor.scope.typesPlaceholder' | t"
-                            />
-                            <small class="hint">
-                                {{ 'inspectionTemplateEditor.scope.typesHint' | t }}
-                            </small>
-                        </div>
-                        <div class="field wide">
-                            <span class="field-label">{{ 'terms.areas' | t }}</span>
-                            <app-multi-select
-                                [options]="areaOptions"
-                                [(ngModel)]="areaUuids"
-                                name="areaUuids"
-                                [placeholder]="'inspectionTemplateEditor.scope.areasPlaceholder' | t"
-                            />
-                            <small class="hint">
-                                {{ 'inspectionTemplateEditor.scope.areasHint' | t }}
-                            </small>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="card">
-                    <h2><svg lucideRepeat size="16"></svg> {{ 'inspectionTemplateEditor.recurrence.heading' | t }}</h2>
-                    <div class="general">
-                        <div class="field wide">
-                            <label class="toggle">
-                                <input type="checkbox" [(ngModel)]="recurring" name="recurring" />
-                                <span>{{ 'inspectionTemplateEditor.recurrence.recurring' | t }}</span>
-                            </label>
-                            @if (recurring) {
-                                <div class="field wide">
-                                    <span class="field-label">{{ 'inspectionTemplateEditor.recurrence.tags' | t }}</span>
-                                    <app-multi-select [options]="tagOptions" [(ngModel)]="recurringTagUuids"
-                                        name="recurringTagUuids" [placeholder]="'inspectionTemplateEditor.recurrence.allTags' | t" />
-                                </div>
-                                <div class="interval">
-                                    <span>{{ 'inspectionTemplateEditor.recurrence.every' | t }}</span>
-                                    <input type="number" min="1" step="1" [(ngModel)]="intervalValue" name="intervalValue" [attr.aria-label]="'inspectionTemplateEditor.recurrence.interval' | t" />
-                                    <select [(ngModel)]="intervalUnit" name="intervalUnit" [attr.aria-label]="'inspectionTemplateEditor.recurrence.unit' | t">
-                                        @for (unit of intervalUnits; track unit.value) {
-                                            <option [value]="unit.value">{{ unit.label }}</option>
-                                        }
-                                    </select>
-                                    <span class="hint">= {{ intervalPreview }}</span>
-                                </div>
-                                <small class="hint">
-                                    {{ 'inspectionTemplateEditor.recurrence.hint' | t }}
-                                </small>
-                            }
-                        </div>
-                    </div>
-                </section>
-
-                @for (group of groups; track group; let groupIndex = $index) {
-                    <section class="card field-group">
-                        <div class="card-title">
-                            <h2>
-                                @if (group.assetTypeUuid) {
-                                    <svg lucideShapes size="16"></svg>
-                                    {{ 'inspectionTemplateEditor.fields.onlyForType' | t: { type: typeName(group.assetTypeUuid) } }}
-                                } @else {
-                                    {{ 'inspectionTemplateEditor.fields.forAll' | t }}
-                                }
-                            </h2>
-                            @if (group.assetTypeUuid) {
-                                <button type="button" class="icon-button" [title]="'inspectionTemplateEditor.fields.removeType' | t" (click)="removeGroup(group)">
-                                    <svg lucideX size="16"></svg>
-                                </button>
-                            }
-                        </div>
-
-                        @if (!group.fields.length) {
-                            <p class="hint">{{ 'inspectionTemplateEditor.fields.empty' | t }}</p>
-                        }
-
-                        <div class="field-list">
-                            @for (field of group.fields; track field; let index = $index; let first = $first; let last = $last) {
-                                <div class="field-row">
-                                    <div class="order">
-                                        <button type="button" class="icon-button" [title]="'inspectionTemplateEditor.fields.moveUp' | t" [disabled]="first" (click)="moveField(group, index, -1)">
-                                            <svg lucideArrowUp size="14"></svg>
-                                        </button>
-                                        <button type="button" class="icon-button" [title]="'inspectionTemplateEditor.fields.moveDown' | t" [disabled]="last" (click)="moveField(group, index, 1)">
-                                            <svg lucideArrowDown size="14"></svg>
-                                        </button>
-                                    </div>
-                                    <label class="field">
-                                        <span>{{ 'inspectionTemplateEditor.fields.name' | t }}</span>
-                                        <input
-                                            type="text"
-                                            [(ngModel)]="field.name"
-                                            [name]="'name-' + groupIndex + '-' + index"
-                                            [placeholder]="'inspectionTemplateEditor.fields.namePlaceholder' | t"
-                                        />
-                                    </label>
-                                    <label class="field">
-                                        <span>{{ 'inspectionTemplateEditor.fields.type' | t }}</span>
-                                        <select [(ngModel)]="field.fieldType" [name]="'type-' + groupIndex + '-' + index">
-                                            @for (type of fieldTypes; track type.value) {
-                                                <option [value]="type.value">{{ type.label }}</option>
-                                            }
-                                        </select>
-                                    </label>
-                                    <label class="toggle required">
-                                        <input type="checkbox" [(ngModel)]="field.required" [name]="'required-' + groupIndex + '-' + index" />
-                                        <span>{{ 'inspectionTemplateEditor.fields.required' | t }}</span>
-                                    </label>
-                                    <button type="button" class="icon-button danger" [title]="'inspectionTemplateEditor.fields.remove' | t" (click)="removeField(group, index)">
-                                        <svg lucideTrash2 size="15"></svg>
-                                    </button>
-                                    @if (field.fieldType === 'SELECT') {
-                                        <label class="field options">
-                                            <span>{{ 'inspectionTemplateEditor.fields.options' | t }}</span>
-                                            <input
-                                                type="text"
-                                                [(ngModel)]="field.optionsText"
-                                                [name]="'options-' + groupIndex + '-' + index"
-                                                [placeholder]="'inspectionTemplateEditor.fields.optionsPlaceholder' | t"
-                                            />
-                                        </label>
-                                    }
-                                </div>
-                            }
-                        </div>
-
-                        <button type="button" class="secondary-action compact add" (click)="addField(group)">
-                            <svg lucidePlus size="15"></svg>
-                            <span>{{ 'inspectionTemplateEditor.fields.add' | t }}</span>
-                        </button>
-                    </section>
-                }
-
-                <section class="card add-type">
-                    <div>
-                        <h2>{{ 'inspectionTemplateEditor.typeFields.heading' | t }}</h2>
-                        <p class="hint">{{ 'inspectionTemplateEditor.typeFields.hint' | t }}</p>
-                    </div>
-                    <app-search-select
-                        [options]="typeOptions"
-                        [(ngModel)]="typeToAdd"
-                        (ngModelChange)="addTypeGroup($event)"
-                        name="typeToAdd"
-                        [placeholder]="'inspectionTemplateEditor.addType' | t"
-                        [searchPlaceholder]="'inspectionTemplateEditor.typeFields.search' | t"
-                        [emptyText]="'inspectionTemplateEditor.typeFields.empty' | t"
-                    />
-                </section>
-
-                <div class="editor-actions sticky-editor-actions">
-                    <a class="secondary-action" routerLink="/config/inspection-templates">{{ 'common.cancel' | t }}</a>
-                    <button type="submit" class="primary-action" [disabled]="saving">
-                        <svg lucideSave size="17"></svg>
-                        <span>{{ saving ? ('common.saving' | t) : ('common.save' | t) }}</span>
-                    </button>
+        <section class="content-section">
+          <h2>
+            <svg lucideRepeat size="16"></svg>
+            {{ 'inspectionTemplateEditor.recurrence.heading' | t }}
+          </h2>
+          <div class="general">
+            <div class="field wide">
+              <label class="toggle">
+                <input type="checkbox" [(ngModel)]="recurring" name="recurring" />
+                <span>{{ 'inspectionTemplateEditor.recurrence.recurring' | t }}</span>
+              </label>
+              @if (recurring) {
+                <div class="field wide">
+                  <span class="field-label">{{
+                    'inspectionTemplateEditor.recurrence.tags' | t
+                  }}</span>
+                  <app-multi-select
+                    [options]="tagOptions"
+                    [(ngModel)]="recurringTagUuids"
+                    name="recurringTagUuids"
+                    [placeholder]="'inspectionTemplateEditor.recurrence.allTags' | t"
+                  />
                 </div>
-            </form>
+                <div class="interval">
+                  <span>{{ 'inspectionTemplateEditor.recurrence.every' | t }}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    [(ngModel)]="intervalValue"
+                    name="intervalValue"
+                    [attr.aria-label]="'inspectionTemplateEditor.recurrence.interval' | t"
+                  />
+                  <select
+                    [(ngModel)]="intervalUnit"
+                    name="intervalUnit"
+                    [attr.aria-label]="'inspectionTemplateEditor.recurrence.unit' | t"
+                  >
+                    @for (unit of intervalUnits; track unit.value) {
+                      <option [value]="unit.value">{{ unit.label }}</option>
+                    }
+                  </select>
+                  <span class="hint">= {{ intervalPreview }}</span>
+                </div>
+                <small class="hint">
+                  {{ 'inspectionTemplateEditor.recurrence.hint' | t }}
+                </small>
+              }
+            </div>
+          </div>
+        </section>
+
+        @for (group of groups; track group; let groupIndex = $index) {
+          <section class="card field-group">
+            <div class="card-title">
+              <h2>
+                @if (group.assetTypeUuid) {
+                  <svg lucideShapes size="16"></svg>
+                  {{
+                    'inspectionTemplateEditor.fields.onlyForType'
+                      | t: { type: typeName(group.assetTypeUuid) }
+                  }}
+                } @else {
+                  {{ 'inspectionTemplateEditor.fields.forAll' | t }}
+                }
+              </h2>
+              @if (group.assetTypeUuid) {
+                <button
+                  type="button"
+                  class="icon-button"
+                  [title]="'inspectionTemplateEditor.fields.removeType' | t"
+                  (click)="removeGroup(group)"
+                >
+                  <svg lucideX size="16"></svg>
+                </button>
+              }
+            </div>
+
+            @if (!group.fields.length) {
+              <p class="hint">{{ 'inspectionTemplateEditor.fields.empty' | t }}</p>
+            }
+
+            <div class="field-list">
+              @for (
+                field of group.fields;
+                track field;
+                let index = $index;
+                let first = $first;
+                let last = $last
+              ) {
+                <div class="field-row">
+                  <div class="order">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [title]="'inspectionTemplateEditor.fields.moveUp' | t"
+                      [disabled]="first"
+                      (click)="moveField(group, index, -1)"
+                    >
+                      <svg lucideArrowUp size="14"></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [title]="'inspectionTemplateEditor.fields.moveDown' | t"
+                      [disabled]="last"
+                      (click)="moveField(group, index, 1)"
+                    >
+                      <svg lucideArrowDown size="14"></svg>
+                    </button>
+                  </div>
+                  <label class="field">
+                    <span>{{ 'inspectionTemplateEditor.fields.name' | t }}</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="field.name"
+                      [name]="'name-' + groupIndex + '-' + index"
+                      [placeholder]="'inspectionTemplateEditor.fields.namePlaceholder' | t"
+                    />
+                  </label>
+                  <label class="field">
+                    <span>{{ 'inspectionTemplateEditor.fields.type' | t }}</span>
+                    <select
+                      [(ngModel)]="field.fieldType"
+                      [name]="'type-' + groupIndex + '-' + index"
+                    >
+                      @for (type of fieldTypes; track type.value) {
+                        <option [value]="type.value">{{ type.label }}</option>
+                      }
+                    </select>
+                  </label>
+                  <label class="toggle required">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="field.required"
+                      [name]="'required-' + groupIndex + '-' + index"
+                    />
+                    <span>{{ 'inspectionTemplateEditor.fields.required' | t }}</span>
+                  </label>
+                  <button
+                    type="button"
+                    class="icon-button danger"
+                    [title]="'inspectionTemplateEditor.fields.remove' | t"
+                    (click)="removeField(group, index)"
+                  >
+                    <svg lucideTrash2 size="15"></svg>
+                  </button>
+                  @if (field.fieldType === 'SELECT') {
+                    <label class="field options">
+                      <span>{{ 'inspectionTemplateEditor.fields.options' | t }}</span>
+                      <input
+                        type="text"
+                        [(ngModel)]="field.optionsText"
+                        [name]="'options-' + groupIndex + '-' + index"
+                        [placeholder]="'inspectionTemplateEditor.fields.optionsPlaceholder' | t"
+                      />
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+
+            <button type="button" class="secondary-action compact add" (click)="addField(group)">
+              <svg lucidePlus size="15"></svg>
+              <span>{{ 'inspectionTemplateEditor.fields.add' | t }}</span>
+            </button>
+          </section>
         }
-    </div>
+
+        <section class="card add-type">
+          <div>
+            <h2>{{ 'inspectionTemplateEditor.typeFields.heading' | t }}</h2>
+            <p class="hint">{{ 'inspectionTemplateEditor.typeFields.hint' | t }}</p>
+          </div>
+          <app-search-select
+            [options]="typeOptions"
+            [(ngModel)]="typeToAdd"
+            (ngModelChange)="addTypeGroup($event)"
+            name="typeToAdd"
+            [placeholder]="'inspectionTemplateEditor.addType' | t"
+            [searchPlaceholder]="'inspectionTemplateEditor.typeFields.search' | t"
+            [emptyText]="'inspectionTemplateEditor.typeFields.empty' | t"
+          />
+        </section>
+
+        <div class="editor-actions sticky-editor-actions">
+          <a class="secondary-action" routerLink="/config/inspection-templates">{{
+            'common.cancel' | t
+          }}</a>
+          <button type="submit" class="primary-action" [disabled]="saving">
+            <svg lucideSave size="17"></svg>
+            <span>{{ saving ? ('common.saving' | t) : ('common.save' | t) }}</span>
+          </button>
+        </div>
+      </form>
+    }
+  </div>
 </section>

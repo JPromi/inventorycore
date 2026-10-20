@@ -15,7 +15,13 @@ Always source reusable presentation values from SCSS. The shared theme is define
 
 Use Lucide components from `@lucide/angular`. Navigation icon choices belong in navigation configuration, not a template if/else chain. Preserve the existing compact administrative UI and responsive navigation.
 
+All native checkboxes share the list-selection appearance in `styles.scss`: mark size, radius, semantic colors, keyboard focus, disabled and indeterminate states. Keep real checkbox inputs and their existing labels/form bindings; do not add page-specific checkbox sizes or browser `accent-color` overrides. List selection retains its larger invisible hit area around the same visual mark. Radio buttons and segmented mode selectors remain distinct controls.
+
+Use the shared system-font, content-width and section-spacing tokens. Forms use `content-section` dividers; inventory detail sections retain `card` surfaces to separate facts, relationships, schedules and media. Their history preview is a compact, initially collapsed disclosure; the full history page remains expanded. Keep helper text brief and specific, omit empty detail blocks, and show identifying facts before secondary media on narrow screens. Keep the main command visible; reuse `ActionMenu` for secondary detail actions instead of adding equally prominent header buttons. Destructive commands retain their confirmation and authorization checks.
+
 Dropdown panels use the shared `DropdownPosition` directive with Floating UI and the browser popover top layer. Reuse it for anchored menus so clipping containers, viewport edges, scrolling, and resizing are handled consistently. Shared sizing and spacing tokens remain in SCSS.
+
+When a menu needs initial keyboard focus, wait for `dropdownReady`: the panel is hidden until its first position has been computed, so focusing it at view creation is too early.
 
 Image previews use the shared `ImageViewerService.open(images, index)`. The single `ImageViewer` in the app shell opens a native modal dialog in the browser top layer, including above other dialogs. Pass full-size URLs and optional thumbnails, filenames, and alt texts. It supports previous/next navigation, keyboard arrows/Escape, zoom buttons/wheel/double-click, panning, and touch pinch/swipe. Navigation resets the zoom; route changes close the viewer. Use buttons for image triggers so keyboard access remains available.
 

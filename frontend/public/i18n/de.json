@@ -29,6 +29,7 @@
     "retry": "Erneut laden"
   },
   "common": {
+    "moreActions": "Weitere Aktionen",
     "save": "Speichern",
     "saving": "Wird gespeichert …",
     "cancel": "Abbrechen",
@@ -153,7 +154,7 @@
       "other": "{count} Einträge"
     },
     "title": "Protokoll",
-    "intro": "Wer wann was mit welchem Objekt gemacht hat: Anlegen, Bearbeiten (mit alten und neuen Werten), Löschen, Scans, Prüfergebnisse und Fotos. Den Verlauf eines einzelnen Assets oder Standorts gibt es auch auf dessen Detailseite.",
+    "intro": "Änderungen mit alten und neuen Werten, Löschungen, Scans, Prüfergebnisse und Fotos mit Zeitpunkt und Benutzer. Der Objektverlauf ist auch auf der Detailseite verfügbar.",
     "searchPlaceholder": "Objekt, Benutzer oder Wert suchen …",
     "clearSearch": "Suche leeren",
     "allObjects": "Alle Objekte",
@@ -214,7 +215,7 @@
     "usersFound": "Benutzer gefunden",
     "groupsFound": "Gruppen gefunden",
     "syncDone": "Synchronisation abgeschlossen",
-    "usersSkipped": "Übersprungen wurden Benutzer, deren Name bereits von einem lokalen oder OIDC-Konto belegt ist.",
+    "usersSkipped": "Benutzer mit bereits lokal oder in OIDC vergebenem Benutzernamen wurden übersprungen.",
     "loading": "Einstellungen werden geladen …",
     "connection": "Verbindung",
     "enabled": "Aktiv",
@@ -227,7 +228,7 @@
     "bindDnHint": "Bei Active Directory ist auch svc-inventar@example.org möglich.",
     "password": "Passwort",
     "passwordStored": "•••••••• (gespeichert)",
-    "passwordKeep": "Leer lassen, um das gespeicherte Passwort zu behalten.",
+    "passwordKeep": "Leer = gespeichertes Passwort beibehalten.",
     "passwordMissing": "Noch kein Passwort gespeichert.",
     "baseDn": "Base-DN",
     "baseDnPlaceholder": "DC=example,DC=org",
@@ -302,7 +303,7 @@
     "clientId": "Client-ID",
     "clientSecret": "Client-Secret",
     "secretStored": "•••••••• (gespeichert)",
-    "secretKeep": "Leer lassen, um das gespeicherte Secret zu behalten.",
+    "secretKeep": "Leer = gespeichertes Secret beibehalten.",
     "secretMissing": "Noch kein Secret gespeichert.",
     "scopes": "Scopes",
     "buttonLabel": "Text des Login-Buttons",
@@ -392,7 +393,7 @@
     "disabled": "Deaktiviert",
     "groupsPlaceholder": "Gruppen suchen …",
     "noMoreGroups": "Keine weiteren Gruppen",
-    "groupsHint": "Über Gruppen erhält der Benutzer seine Berechtigungen.",
+    "groupsHint": "Berechtigungen durch Gruppenzugehörigkeit.",
     "groupPermissions": {
       "one": "{count} Berechtigung",
       "other": "{count} Berechtigungen"
@@ -456,7 +457,7 @@
     "duplicateEntry": "Doppelter Eintrag",
     "applyPreset": "Vorlage anwenden",
     "applyPlaceholder": "Anwenden …",
-    "noPermissions": "Diese Gruppe hat noch keine Berechtigungen.",
+    "noPermissions": "Keine Berechtigungen vergeben.",
     "errors": {
       "nameRequired": "Name ist erforderlich.",
       "duplicate": "Jede Kombination aus Bereich und Objektart darf nur einmal vorkommen.",
@@ -485,7 +486,7 @@
     "preset": "Vorlage",
     "applyPreset": "Vorlage anwenden",
     "applyPlaceholder": "Anwenden …",
-    "exists": "Diese Gruppe hat dafür bereits eine Berechtigung.",
+    "exists": "Berechtigung für diese Gruppe bereits vorhanden.",
     "loading": "Berechtigungen werden geladen …",
     "empty": "Keine Berechtigungen gefunden.",
     "removeConfirm": {
@@ -512,7 +513,7 @@
     },
     "auditHistory": {
       "loading": "Verlauf wird geladen …",
-      "empty": "Noch keine Einträge. Änderungen, Scans und Prüfergebnisse erscheinen hier.",
+      "empty": "Noch keine Einträge.",
       "showAll": "Gesamten Verlauf anzeigen ({count})",
       "loadingOlder": "Ältere Einträge werden geladen …",
       "loadError": "Verlauf konnte nicht geladen werden."
@@ -877,7 +878,7 @@
   },
   "inspectionNew": {
     "title": "Neue Prüfung",
-    "noTemplates": "Es gibt noch keine Prüfungsvorlage.",
+    "noTemplates": "Keine Prüfungsvorlage vorhanden.",
     "createTemplate": "Jetzt unter Konfiguration anlegen",
     "templateLabel": "Prüfungsvorlage *",
     "templatePlaceholder": "Prüfungsvorlage wählen",
@@ -894,26 +895,26 @@
     "titleLabel": "Titel",
     "protocolArea": "Bereich des Prüfprotokolls *",
     "protocolAreaPlaceholder": "Bereich wählen",
-    "checkFunction": "Funktion prüfen – vorhandene Assets auch als „Funktionsfähig“ oder „Defekt“ erfassen",
+    "checkFunction": "Funktion prüfen („Funktionsfähig“ / „Defekt“ bei vorhandenen Assets)",
     "checkFunctionDefault": {
-      "with": "Vorgabe der Prüfungsvorlage: mit Funktionsprüfung",
-      "without": "Vorgabe der Prüfungsvorlage: ohne Funktionsprüfung"
+      "with": "Vorlage: mit Funktionsprüfung",
+      "without": "Vorlage: ohne Funktionsprüfung"
     },
     "onlyDue": "Nur fällige Assets prüfen",
     "dueWithin": {
       "before": "überfällig oder fällig in den nächsten",
       "after": "Tagen"
     },
-    "assetsHeading": "Welche Assets werden geprüft?",
-    "filterHint": "Leer gelassene Filter schränken nicht ein. Innerhalb eines Filters reicht eine Übereinstimmung.",
-    "lockedHint": "Durch die Prüfungsvorlage vorgegeben",
+    "assetsHeading": "Prüfumfang",
+    "filterHint": "Leere Filter: keine Einschränkung. Je Filter genügt eine Übereinstimmung.",
+    "lockedHint": "Von der Prüfungsvorlage vorgegeben",
     "allLocations": "Alle Standorte",
     "includeSubLocations": "Unterstandorte einschließen",
     "includeChildAssets": "Untergeordnete Assets mitprüfen",
     "addTag": "Tag hinzufügen …",
     "addType": "Typ hinzufügen …",
     "allAreas": "Alle Bereiche",
-    "areasHint": "Vorbelegt mit dem links gewählten Bereich. Typen, Tags und Standorte zeigen nur, was es dort gibt.",
+    "areasHint": "Vorgabe: Bereich aus der Navigation. Typen, Tags und Standorte sind auf die gewählten Bereiche begrenzt.",
     "counting": "Assets werden gezählt …",
     "expected": {
       "one": "Asset wird erwartet",
@@ -942,14 +943,14 @@
     "protocolArea": "Bereich der Prüfprotokolle",
     "currentArea": "Aktuell ausgewählter Bereich",
     "mode": {
-      "heading": "Art der Prüfung",
+      "heading": "Prüfungsart",
       "INVENTORY": "Inventur",
       "CHECK": "Einzelprüfung",
-      "inventoryHint": "Die Assets werden beim Start per Filter festgelegt und als „Vorhanden“ oder „Nicht vorhanden“ markiert. Gegenstände, die nicht dazugehören, werden als fremd gemeldet.",
-      "checkHint": "Geräte werden einzeln geprüft („In Ordnung“ / „Mangelhaft“) und können jederzeit per Scan oder Suche hinzugefügt werden. Die Prüfung kann offen bleiben, bis alles erledigt ist."
+      "inventoryHint": "Asset-Auswahl per Filter beim Start. Ergebnis: „Vorhanden“ oder „Nicht vorhanden“. Andere Gegenstände gelten als fremd.",
+      "checkHint": "Einzelbewertung: „In Ordnung“ oder „Mangelhaft“. Assets können jederzeit per Scan oder Suche ergänzt werden. Die Prüfung kann offen bleiben."
     },
     "checkFunction": "Funktion prüfen",
-    "checkFunctionHint": "Vorhandene Assets zusätzlich als „Funktionsfähig“ oder „Defekt“ erfassen. Defekte werden bei wiederkehrenden Prüfungen sofort wieder fällig. Beim Start einer Prüfung änderbar.",
+    "checkFunctionHint": "Vorhandene Assets: zusätzlich „Funktionsfähig“ oder „Defekt“. Defekte Assets sind bei wiederkehrenden Prüfungen sofort wieder fällig. Beim Prüfungsstart änderbar.",
     "defaultTags": "Standard-Tags",
     "defaultTypes": "Standard-Typen",
     "defaultLocations": "Standard-Standorte",
@@ -960,7 +961,7 @@
     "scope": {
       "heading": "Anwendungsbereich",
       "typesPlaceholder": "Alle Assets – Typ hinzufügen, um einzuschränken …",
-      "typesHint": "Leer = alle Assets. Typen schränken die Ausgangsauswahl und die wiederkehrenden Prüftermine ein.",
+      "typesHint": "Leer = alle Assets. Typauswahl begrenzt Ausgangsauswahl und wiederkehrende Prüftermine.",
       "areasPlaceholder": "Alle Bereiche – Bereich hinzufügen, um einzuschränken …",
       "areasHint": "Leer = alle Bereiche. Mit Bereichen, z. B. „Atemschutz“, sehen und starten nur Benutzer mit dem Recht „Prüfen“ in diesen Bereichen die Prüfung. Die Bereiche begrenzen die Ausgangsauswahl."
     },
@@ -972,13 +973,13 @@
       "every": "Alle",
       "interval": "Intervall",
       "unit": "Einheit",
-      "hint": "Jedes Asset bekommt einen eigenen Termin. Nach einer bestandenen Prüfung startet der Zeitraum neu, bei einem Mangel ist das Asset sofort wieder fällig. Pro Asset kann auf der Detailseite ein festes Datum gesetzt werden."
+      "hint": "Eigener Termin je Asset. Bestanden: Intervall beginnt neu. Mangelhaft: sofort wieder fällig. Ein festes Datum ist auf der Asset-Detailseite möglich."
     },
     "fields": {
       "onlyForType": "Nur für Typ „{type}“",
       "forAll": "Prüffelder für alle Assets",
       "removeType": "Typ entfernen",
-      "empty": "Noch keine Felder. Ohne Felder wird nur geprüft, ob das Asset vorhanden ist.",
+      "empty": "Keine Prüffelder. Ohne Felder wird nur das Vorhandensein geprüft.",
       "moveUp": "Nach oben",
       "moveDown": "Nach unten",
       "name": "Bezeichnung",
@@ -991,8 +992,8 @@
       "add": "Feld hinzufügen"
     },
     "typeFields": {
-      "heading": "Felder für einen bestimmten Typ",
-      "hint": "Diese Felder erscheinen in der Prüfung nur bei Assets dieses Typs.",
+      "heading": "Typspezifische Prüffelder",
+      "hint": "Nur für Assets des jeweiligen Typs.",
       "search": "Typ suchen …",
       "empty": "Alle Typen haben bereits Felder"
     },
@@ -1009,14 +1010,14 @@
       "other": "{count} Prüfungsvorlagen"
     },
     "new": "Neue Prüfungsvorlage",
-    "intro": "Eine Prüfungsvorlage legt fest, was bei jedem Asset geprüft wird: Felder für alle Assets und zusätzliche Felder nur für bestimmte Typen, z. B. „Dichtheit geprüft“ bei Atemschutzgeräten.",
+    "intro": "Prüffelder für alle Assets und zusätzliche Felder für bestimmte Typen.",
     "searchPlaceholder": "Vorlage oder Typ suchen …",
     "clearSearch": "Suche leeren",
     "deleteWarning": "Bestehende Prüfprotokolle bleiben erhalten.",
     "loadError": "Die Prüfungsvorlagen konnten nicht geladen werden.",
     "loading": "Prüfungsvorlagen werden geladen …",
     "notFound": "Keine Prüfungsvorlage gefunden.",
-    "empty": "Keine Prüfungsvorlage vorhanden. Eventuell ist links ein anderer Bereich ausgewählt; andernfalls zuerst eine Prüfungsvorlage anlegen.",
+    "empty": "Keine Prüfungsvorlage vorhanden. Bitte die Bereichsauswahl prüfen oder eine Vorlage anlegen.",
     "mode": {
       "INVENTORY": "Inventur",
       "CHECK": "Einzelprüfung"
@@ -1052,10 +1053,10 @@
     "clearSearch": "Suche leeren",
     "loading": "Prüfungen werden geladen …",
     "loadError": "Die Prüfungen konnten nicht geladen werden.",
-    "notFound": "Keine Prüfungen gefunden. Eventuell ist links ein anderer Bereich ausgewählt.",
-    "empty": "Noch keine Prüfungen vorhanden. Zuerst unter Konfiguration eine Prüfungsvorlage anlegen und dann eine Prüfung starten.",
+    "notFound": "Keine Prüfungen gefunden. Bitte die Bereichsauswahl prüfen.",
+    "empty": "Noch keine Prüfungen. Voraussetzung ist eine Prüfungsvorlage unter Konfiguration.",
     "due": {
-      "empty": "Keine fälligen Prüfungen. Wiederkehrende Prüfungen werden unter Konfiguration → Prüfungsvorlagen angelegt.",
+      "empty": "Keine fälligen Prüfungen. Wiederholung unter Konfiguration → Prüfungsvorlagen einstellbar.",
       "soon": "{count} bald fällig",
       "start": "Fällige prüfen",
       "fixedDate": "(festes Datum)",
@@ -1260,7 +1261,7 @@
     "searchAssetType": "Typ suchen …",
     "noFilterMatches": "Keine Einträge passen zum Filter.",
     "resetFilters": "Filter zurücksetzen",
-    "empty": "Noch keine Einträge vorhanden.",
+    "empty": "Noch keine Einträge.",
     "createFirst": "Ersten Eintrag erstellen",
     "inspectionOverdue": "Prüfung überfällig",
     "inspectionDue": "Prüfung fällig",
@@ -1276,10 +1277,12 @@
     }
   },
   "inventoryForm": {
-    "created": "„{name}“ wurde erstellt. Felder wie Bereich, Standort und Typ sind für den nächsten Eintrag übernommen.",
+    "assignment": "Zuordnung",
+    "identification": "Kennzeichnung",
+    "created": "„{name}“ erstellt. Vorgaben wie Bereich, Standort und Typ für den nächsten Eintrag übernommen.",
     "view": "Ansehen",
     "general": "Allgemein",
-    "autoInvId": "Die Inventar-ID wird beim Speichern automatisch generiert.",
+    "autoInvId": "Inventar-ID wird beim Speichern vergeben.",
     "locationType": "Art",
     "selectLocationType": "Art wählen",
     "searchLocationType": "Art suchen …",
@@ -1309,10 +1312,10 @@
     "tagLocked": "Vom Typ übernommen",
     "tagsPlaceholder": "Tags suchen oder neu anlegen …",
     "noMoreTags": "Keine weiteren Tags",
-    "tagsHint": "Enter oder Komma übernimmt den Tag. Unbekannte Tags werden neu angelegt.",
-    "lockedTagsHint": "Gestrichelte Tags kommen vom Typ.",
+    "tagsHint": "Tag mit Enter oder Komma übernehmen. Neue Tags werden angelegt.",
+    "lockedTagsHint": "Gestrichelt: vom Typ übernommen.",
     "position": "Position",
-    "positionHint": "Adresse und Koordinaten für die Karte in der Standort-Ansicht.",
+    "positionHint": "Adresse und Koordinaten für die Standortkarte.",
     "street": "Straße und Hausnummer",
     "postalCode": "PLZ",
     "city": "Ort",
@@ -1321,7 +1324,7 @@
     "latitudePlaceholder": "z. B. 48.208493",
     "longitude": "Längengrad",
     "longitudePlaceholder": "z. B. 16.373149",
-    "legacyAddress": "Die bisherige Adresse „{address}“ steht in „Straße und Hausnummer“ – bitte auf die Felder aufteilen oder „Koordinaten ermitteln“ und danach „Adresse ermitteln“ verwenden.",
+    "legacyAddress": "Bisherige Adresse „{address}“ in „Straße und Hausnummer“. Bitte auf die Felder aufteilen oder nacheinander „Koordinaten ermitteln“ und „Adresse ermitteln“ verwenden.",
     "customFields": "Eigene Felder",
     "addField": "Feld",
     "fieldType": "Typ",
@@ -1339,9 +1342,9 @@
     "removeField": "Feld entfernen",
     "inspection": "Prüfung",
     "images": "Bilder",
-    "imagesHint": "Werden automatisch verkleinert. Das Titelbild erscheint in Listen.",
+    "imagesHint": "Automatische Verkleinerung. Titelbild für Listen.",
     "createAnother": "Erstellen & neu",
-    "createAnotherTitle": "Speichern und direkt einen weiteren Eintrag mit denselben Vorgaben anlegen",
+    "createAnotherTitle": "Speichern und weiteren Eintrag mit gleichen Vorgaben anlegen",
     "create": "Erstellen",
     "uploadingImages": "Bilder werden hochgeladen …",
     "errors": {

@@ -1,4 +1,13 @@
-import { AfterViewInit, Directive, ElementRef, Input, NgZone, OnDestroy } from '@angular/core';
+import {
+  AfterViewInit,
+  Directive,
+  ElementRef,
+  EventEmitter,
+  Input,
+  NgZone,
+  OnDestroy,
+  Output,
+} from '@angular/core';
 import {
   autoUpdate,
   computePosition,
@@ -13,8 +22,10 @@ import {
 export class DropdownPosition implements AfterViewInit, OnDestroy {
   @Input({ required: true }) appDropdownPosition!: HTMLElement;
   @Input() dropdownPlacement: Placement = 'bottom-start';
+  @Output() dropdownReady = new EventEmitter<void>();
   private cleanup?: () => void;
   private destroyed = false;
+  private ready = false;
 
   constructor(
     private readonly element: ElementRef<HTMLElement>,
@@ -57,6 +68,10 @@ export class DropdownPosition implements AfterViewInit, OnDestroy {
         }).then(({ x, y }) => {
           if (!this.destroyed) {
             Object.assign(panel.style, { left: `${x}px`, top: `${y}px`, visibility: 'visible' });
+            if (!this.ready) {
+              this.ready = true;
+              this.dropdownReady.emit();
+            }
           }
         });
       });
