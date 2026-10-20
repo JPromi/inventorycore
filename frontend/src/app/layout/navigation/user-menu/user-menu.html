@@ -1,5 +1,5 @@
-<div class="user">
-  <span class="avatar">
+<ng-template #avatar let-large="large">
+  <span class="avatar" [class.large]="large">
     @if (user?.profileImageUrl && !profileImageFailed) {
       <img
         [src]="user?.profileImageUrl"
@@ -8,44 +8,66 @@
         (error)="profileImageFailed = true"
       />
     } @else {
-      {{ user?.displayName?.charAt(0) }}
+      {{ initial }}
     }
   </span>
-  <span class="user-name" [title]="user?.displayName || user?.username || ''">{{
-    user?.displayName || user?.username
-  }}</span>
-  <button
-    #userMenuTrigger
-    type="button"
-    class="user-menu-trigger"
-    [attr.aria-label]="'userMenu.title' | t"
-    [title]="'userMenu.title' | t"
-    [attr.aria-expanded]="userMenuOpen"
-    aria-controls="user-menu"
-    (click)="userMenuOpen = !userMenuOpen"
-  >
-    <svg lucideEllipsis size="20"></svg>
-  </button>
-</div>
+</ng-template>
+
+<button
+  #userMenuTrigger
+  type="button"
+  class="user"
+  [class.open]="userMenuOpen"
+  [attr.aria-label]="'userMenu.title' | t"
+  [title]="'userMenu.title' | t"
+  [attr.aria-expanded]="userMenuOpen"
+  aria-haspopup="menu"
+  aria-controls="user-menu"
+  (click)="userMenuOpen = !userMenuOpen"
+>
+  <ng-container *ngTemplateOutlet="avatar; context: { large: false }" />
+  <span class="text">
+    <span class="user-name">{{ name }}</span>
+    <small>{{ roleLabel | t }}</small>
+  </span>
+  <svg class="chevron" lucideChevronsUpDown size="15"></svg>
+</button>
+
 @if (userMenuOpen) {
   <div
     #userMenu
     id="user-menu"
     class="user-menu"
     [appDropdownPosition]="userMenuTrigger"
-    dropdownPlacement="top-end"
+    dropdownPlacement="top-start"
   >
-    <a routerLink="/profile"><svg lucideUser size="17"></svg>{{ 'userMenu.profile' | t }}</a>
+    <div class="identity">
+      <ng-container *ngTemplateOutlet="avatar; context: { large: true }" />
+      <span class="text">
+        <strong [title]="name">{{ name }}</strong>
+        @if (username && username !== name) {
+          <small [title]="username">{{ username }}</small>
+        }
+      </span>
+    </div>
+    <div class="divider"></div>
+    <a class="item" routerLink="/profile">
+      <svg lucideUser size="16"></svg><span>{{ 'userMenu.profile' | t }}</span>
+    </a>
+    <div class="divider"></div>
+    <p class="section-label">{{ 'theme.appearance' | t }}</p>
     <app-theme-selector />
-    <button type="button" (click)="logout()" [disabled]="loggingOut">
-      <svg lucideLogOut size="17"></svg
-      >{{ (loggingOut ? 'userMenu.loggingOut' : 'userMenu.logout') | t }}
+    <div class="divider"></div>
+    <button type="button" class="item danger" (click)="logout()" [disabled]="loggingOut">
+      <svg lucideLogOut size="16"></svg
+      ><span>{{ (loggingOut ? 'userMenu.loggingOut' : 'userMenu.logout') | t }}</span>
     </button>
     @if (logoutError) {
-      <p role="alert">{{ 'userMenu.logoutFailed' | t }}</p>
+      <p class="error" role="alert">{{ 'userMenu.logoutFailed' | t }}</p>
     }
   </div>
 }
+
 @if (appInfo.info$ | async; as info) {
   <div class="app-info">
     <span class="app-name">{{ info.name }}</span>

@@ -1,9 +1,9 @@
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { ThemeSelector } from '../../../shared/components/theme-selector/theme-selector';
 import { Component, DestroyRef, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { LucideEllipsis, LucideExternalLink, LucideLogOut, LucideUser } from '@lucide/angular';
+import { LucideChevronsUpDown, LucideExternalLink, LucideLogOut, LucideUser } from '@lucide/angular';
 import { filter } from 'rxjs';
 
 import { DropdownPosition } from '../../../shared/components/dropdown-position.directive';
@@ -18,10 +18,11 @@ import { AuthStateService } from '../../../core/service/auth-state.service';
   imports: [
     ThemeSelector,
     AsyncPipe,
+    NgTemplateOutlet,
     RouterLink,
     TranslatePipe,
     DropdownPosition,
-    LucideEllipsis,
+    LucideChevronsUpDown,
     LucideExternalLink,
     LucideLogOut,
     LucideUser,
@@ -37,6 +38,22 @@ export class UserMenu implements OnInit {
   protected logoutError = false;
   protected user: UserEntity | null = null;
   protected profileImageFailed = false;
+
+  protected get name(): string {
+    return this.user?.displayName || this.user?.username || '';
+  }
+
+  protected get username(): string {
+    return this.user?.username ?? '';
+  }
+
+  protected get initial(): string {
+    return this.name.charAt(0).toUpperCase();
+  }
+
+  protected get roleLabel(): string {
+    return this.user?.role === 'ADMIN' ? 'userMenu.roleAdmin' : 'userMenu.roleUser';
+  }
 
   constructor(
     private readonly destroyRef: DestroyRef,

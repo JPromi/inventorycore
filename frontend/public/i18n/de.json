@@ -10,6 +10,8 @@
   "userMenu": {
     "title": "Benutzermenü",
     "profile": "Profil",
+    "roleAdmin": "Administrator",
+    "roleUser": "Benutzer",
     "logout": "Abmelden",
     "loggingOut": "Wird abgemeldet …",
     "logoutFailed": "Abmelden fehlgeschlagen. Bitte erneut versuchen.",

@@ -32,6 +32,10 @@ for (const width of [1280, 390]) {
     await trigger.click();
     const menu = page.locator('#user-menu');
     await expect(menu).toBeVisible();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.user small')).toHaveText('Administrator');
+    await expect(menu.locator('.identity')).toContainText('admin');
+    await expect(menu.getByRole('group', { name: 'Darstellung' })).toBeVisible();
     const bounds = (await menu.boundingBox())!;
     expect(bounds.x).toBeGreaterThanOrEqual(0);
     expect(bounds.y + bounds.height).toBeLessThanOrEqual(844);
