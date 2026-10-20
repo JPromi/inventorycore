@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { AssetPrintBatch } from '../../components/asset-print-batch/asset-print-batch';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -91,6 +92,7 @@ interface FieldConfig {
   selector: 'app-inventory-page',
   imports: [
     CommonModule,
+    AssetPrintBatch,
     ListActions,
     SelectableRow,
     SelectionCheckbox,
@@ -131,6 +133,7 @@ export class InventoryPage implements OnInit, OnDestroy {
   protected bulkActions: ListAction<InventoryItem>[] = [];
   /** Assets whose labels are being printed (dialog open while set). */
   protected printAssets: InventoryItem[] | null = null;
+  protected datasheetAssets: InventoryItem[] | null = null;
   protected error = '';
   protected viewMode: ViewMode = 'list';
   protected search = '';
@@ -166,6 +169,13 @@ export class InventoryPage implements OnInit, OnDestroy {
       this.bulkActions =
         endpoint === 'assets'
           ? [
+              {
+                label: t('inventoryList.printDatasheets'),
+                icon: LucidePrinter,
+                run: (items) => {
+                  this.datasheetAssets = items;
+                },
+              },
               {
                 label: t('inventoryList.printLabels'),
                 icon: LucidePrinter,

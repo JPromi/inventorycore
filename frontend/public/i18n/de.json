@@ -1151,6 +1151,9 @@
     }
   },
   "assetPrint": {
+    "batchLoading": "Datenblätter für {count} Assets werden geladen …",
+    "batchCount": "{count} Datenblätter",
+    "batchError": "Die Datenblätter konnten nicht vollständig geladen werden. Bitte versuchen Sie es erneut.",
     "kind": "Asset-Datenblatt",
     "images": "Bilder",
     "imageModes": {
@@ -1269,6 +1272,7 @@
     "retry": "Erneut versuchen",
     "loadedOf": "{count} von {total}",
     "printLabels": "Labels drucken",
+    "printDatasheets": "Datenblätter drucken",
     "assetHasChildren": "Das Asset hat noch untergeordnete Assets. Bitte zuerst deren Zuordnung ändern.",
     "inParent": "in {path}",
     "inspectionInterval": {

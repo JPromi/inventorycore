@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { assetPrintDetails } from '../../util/asset-print-details';
 import { ActionMenu, MenuAction } from '../../../../shared/components/action-menu/action-menu';
 import { ImageViewerService } from '../../../../shared/components/image-viewer/image-viewer.service';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
@@ -357,6 +358,9 @@ export class InventoryDetailPage implements OnInit {
 
   /** Details for the printed data sheet; inventory ID, type and location are in its header. */
   protected get printDetails(): AssetPrintDetail[] {
+    if (this.item && this.config.endpoint === 'assets') {
+      return assetPrintDetails(this.item, this.assetType);
+    }
     const fields = this.config.fields
       .filter((field) => field.key !== 'invId')
       .map((field) => ({

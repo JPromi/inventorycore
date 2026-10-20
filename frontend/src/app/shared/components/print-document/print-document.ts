@@ -3,10 +3,12 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  EventEmitter,
   HostListener,
   Inject,
   Input,
   OnDestroy,
+  Output,
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
@@ -92,6 +94,9 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   @Input() meta: PrintMeta[] = [];
   /** Captions for signature lines at the end, e.g. ['Geprüft von', 'Verantwortlich']. */
   @Input() signatures: string[] = [];
+  @Input() additionalDocuments: PrintDocument[] = [];
+  @Output() readonly beforePrint = new EventEmitter<void>();
+  @Output() readonly closed = new EventEmitter<void>();
 
   @ViewChild('sheet', { static: true }) private sheet!: ElementRef<HTMLElement>;
   @ViewChild('source', { static: true }) private source!: ElementRef<HTMLElement>;
@@ -100,6 +105,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   protected settings: PrintSettings = { ...DEFAULT_SETTINGS };
   protected dialogOpen = false;
   protected preparing = false;
+  private destroyed = false;
   protected readonly sizes: SelectOption[] = [
     { value: 'A4', label: 'A4', hint: '210 × 297 mm' },
     { value: 'A3', label: 'A3', hint: '297 × 420 mm' },
@@ -135,6 +141,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.cleanup();
     this.sheet.nativeElement.remove();
   }
@@ -148,7 +155,11 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   }
 
   protected close(): void {
+    if (!this.dialogOpen || this.preparing) {
+      return;
+    }
     this.dialogOpen = false;
+    this.closed.emit();
   }
 
   /** Escape in an open dropdown only closes the dropdown (it prevents the default). */
@@ -169,13 +180,43 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
       // only a convenience
     }
     this.preparing = true;
+    this.beforePrint.emit();
+    // Allow shared batch options to render before measuring every document.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    if (this.destroyed) {
+      return;
+    }
     const sheet = this.sheet.nativeElement;
     const [width, height] = this.paperSize();
     // logo and photos must be loaded, otherwise they have no height while measuring
     await this.imagesLoaded(this.source.nativeElement);
+    if (this.destroyed) {
+      return;
+    }
     sheet.classList.add('paginating');
     this.paginate(width, height);
+    for (const document of this.additionalDocuments) {
+      document.settings = { ...this.settings };
+      await this.imagesLoaded(document.source.nativeElement);
+      if (this.destroyed || document.destroyed) {
+        return;
+      }
+      document.sheet.nativeElement.classList.add('paginating');
+      document.paginate(width, height);
+      this.pages.nativeElement.append(...Array.from(document.pages.nativeElement.children));
+      document.sheet.nativeElement.classList.remove('paginating');
+    }
+    const footers = this.pages.nativeElement.querySelectorAll('.print-page-footer');
+    footers.forEach((footer, index) => {
+      footer.lastElementChild!.textContent = t('components.printDocument.pageOf', {
+        page: index + 1,
+        pages: footers.length,
+      });
+    });
     await this.imagesLoaded(this.pages.nativeElement);
+    if (this.destroyed) {
+      return;
+    }
     sheet.classList.remove('paginating');
     sheet.classList.add('active');
     this.document.body.classList.add(ACTIVE_CLASS);
@@ -193,6 +234,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
       () => {
         this.document.title = title;
         this.cleanup();
+        this.closed.emit();
       },
       { once: true },
     );

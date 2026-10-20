@@ -223,3 +223,6 @@
 @if (printAssets) {
     <app-label-print-dialog [assets]="printAssets" [locations]="locations" [assetTypes]="assetTypes" (closed)="printAssets = null" />
 }
+@if (datasheetAssets) {
+    <app-asset-print-batch [assets]="datasheetAssets" (closed)="datasheetAssets = null" />
+}

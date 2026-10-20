@@ -1,0 +1,44 @@
+@if (loading || failed) {
+  <div class="dialog-backdrop">
+    <section
+      class="card dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="batch-print-title"
+    >
+      <header class="dialog-header">
+        <h2 id="batch-print-title">{{ 'inventoryList.printDatasheets' | t }}</h2>
+      </header>
+      @if (failed) {
+        <p class="error" role="alert">{{ 'assetPrint.batchError' | t }}</p>
+      } @else {
+        <p role="status">{{ 'assetPrint.batchLoading' | t: { count: assets.length } }}</p>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="secondary-action" (click)="closed.emit()">
+          {{ 'common.cancel' | t }}
+        </button>
+        @if (failed) {
+          <button type="button" class="primary-action" (click)="load()">
+            {{ 'inventoryList.retry' | t }}
+          </button>
+        }
+      </div>
+    </section>
+  </div>
+}
+@for (model of models; track model.asset.uuid) {
+  <app-asset-print
+    [asset]="model.asset"
+    [details]="model.details"
+    [typeName]="model.typeName"
+    [locationPath]="model.location"
+    [areaNames]="model.areaNames"
+    [images]="model.asset.images ?? []"
+    [inspections]="model.inspections"
+    [schedules]="model.schedules"
+    [parent]="model.parent"
+    [children]="model.children"
+    (closed)="closed.emit()"
+  />
+}

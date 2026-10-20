@@ -1,5 +1,5 @@
 import { DatePipe, formatDate } from '@angular/common';
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { inspectionResult } from '../../../../../shared/components/asset-inspection-list/asset-inspection-list';
@@ -51,6 +51,9 @@ export class AssetPrint {
   @Input() schedules: InspectionDue[] = [];
   @Input() parent: InventoryItem | null = null;
   @Input() children: InventoryItem[] = [];
+  @Output() readonly closed = new EventEmitter<void>();
+  /** Other data sheets included in the same print job. */
+  private peers: AssetPrint[] = [];
 
   @ViewChild(PrintDocument) private document?: PrintDocument;
 
@@ -68,7 +71,46 @@ export class AssetPrint {
   protected readonly intervalText = intervalText;
 
   open(): void {
+    this.peers = [];
     this.document?.open();
+  }
+
+  openBatch(peers: AssetPrint[]): void {
+    this.peers = peers;
+    this.document?.open();
+  }
+
+  protected get additionalDocuments(): PrintDocument[] {
+    return this.peers.flatMap((peer) => (peer.document ? [peer.document] : []));
+  }
+
+  protected get batchCount(): number {
+    return this.peers.length + 1;
+  }
+
+  protected get hasImages(): boolean {
+    return [this, ...this.peers].some((sheet) => sheet.images.length > 0);
+  }
+
+  protected get hasInspection(): boolean {
+    return [this, ...this.peers].some((sheet) => !!sheet.lastInspection);
+  }
+
+  protected get hasSchedules(): boolean {
+    return [this, ...this.peers].some((sheet) => sheet.schedules.length > 0);
+  }
+
+  protected get hasLinks(): boolean {
+    return [this, ...this.peers].some((sheet) => !!sheet.parent || sheet.children.length > 0);
+  }
+
+  protected prepareBatch(): void {
+    for (const peer of this.peers) {
+      peer.imageMode = this.imageMode;
+      peer.printInspection = this.printInspection;
+      peer.printSchedules = this.printSchedules;
+      peer.printLinks = this.printLinks;
+    }
   }
 
   /** The asset's result in its most recent inspection that already has one. */
