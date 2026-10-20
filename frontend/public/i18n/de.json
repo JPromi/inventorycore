@@ -1258,6 +1258,7 @@
     "view": "Ansicht",
     "listView": "Listenansicht",
     "gridView": "Kachelansicht",
+    "treeView": "Baumansicht",
     "refresh": "Aktualisieren",
     "new": "Neu",
     "clearSearch": "Suche leeren",

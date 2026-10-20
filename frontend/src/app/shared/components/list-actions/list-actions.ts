@@ -1,5 +1,6 @@
 import { NgComponentOutlet } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   Directive,
   ElementRef,
@@ -272,6 +273,7 @@ export class ListActions<T extends SelectableItem> implements OnChanges, OnDestr
 
 @Component({
   selector: 'app-selection-checkbox',
+  changeDetection: ChangeDetectionStrategy.Default,
   imports: [TranslatePipe, LucideCheck],
   host: { '[class.selection-hidden]': '!selection.active', '(click)': '$event.stopPropagation()' },
   template: `<label class="selection-control">

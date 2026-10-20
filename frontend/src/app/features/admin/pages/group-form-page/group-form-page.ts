@@ -51,7 +51,10 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 })
 export class GroupFormPage implements OnInit {
   protected readonly flags = PERMISSION_FLAGS;
-  protected readonly presets = PERMISSION_PRESETS;
+  protected readonly presetOptions: SelectOption[] = PERMISSION_PRESETS.map(({ key, label }) => ({
+    value: key,
+    label,
+  }));
   protected readonly resourceTypes = Object.entries(RESOURCE_TYPE_LABELS) as [
     PermissionResourceType,
     string,
@@ -150,7 +153,10 @@ export class GroupFormPage implements OnInit {
     this.permissions = this.permissions.filter((_, entryIndex) => entryIndex !== index);
   }
 
-  protected applyPreset(permission: AdminPermissionRequest, presetKey: string): void {
+  protected applyPreset(permission: AdminPermissionRequest, presetKey: string | null): void {
+    if (!presetKey) {
+      return;
+    }
     applyPreset(permission, presetKey);
   }
 

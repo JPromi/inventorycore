@@ -9,6 +9,7 @@
     (keydown)="onTriggerKeydown($event)"
     [attr.aria-expanded]="open"
     aria-haspopup="listbox"
+    [attr.aria-label]="ariaLabel"
 >
     @if (selected?.color) {
         <span class="dot" [style.background]="selected?.color"></span>

@@ -54,7 +54,10 @@ const ALL = '__all__';
 })
 export class PermissionsPage implements OnInit {
   protected readonly flags = PERMISSION_FLAGS;
-  protected readonly presets = PERMISSION_PRESETS;
+  protected readonly presetOptions: SelectOption[] = PERMISSION_PRESETS.map(({ key, label }) => ({
+    value: key,
+    label,
+  }));
   protected readonly typeLabel = resourceTypeLabel;
   protected readonly typeOptions: SelectOption[] = [
     { value: ALL, label: t('adminPermissions.allObjectTypes') },
@@ -145,7 +148,10 @@ export class PermissionsPage implements OnInit {
     this.persist(row, () => (row.permission[flag] = previous));
   }
 
-  protected applyPreset(row: PermissionRow, presetKey: string): void {
+  protected applyPreset(row: PermissionRow, presetKey: string | null): void {
+    if (!presetKey) {
+      return;
+    }
     const previous = { ...row.permission };
     applyPreset(row.permission, presetKey);
     this.persist(row, () => Object.assign(row.permission, previous));

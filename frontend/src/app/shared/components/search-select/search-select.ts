@@ -28,6 +28,7 @@ export class SearchSelect implements ControlValueAccessor {
   /** When set, the selection can be cleared and this label is shown as the empty option. */
   @Input() clearLabel: string | null = null;
   @Input() emptyText = t('common.noResults');
+  @Input() ariaLabel: string | null = null;
 
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
 

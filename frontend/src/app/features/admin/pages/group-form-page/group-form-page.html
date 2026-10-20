@@ -80,15 +80,13 @@
               [placeholder]="'adminGroupForm.chooseArea' | t"
               [searchPlaceholder]="'adminGroupForm.searchArea' | t"
             />
-            <select
+            <app-search-select
+              class="quick-preset"
+              [options]="presetOptions"
               [(ngModel)]="quickPreset"
               name="quickPreset"
-              [attr.aria-label]="'adminGroupForm.rights' | t"
-            >
-              @for (preset of presets; track preset.key) {
-                <option [value]="preset.key">{{ preset.label }}</option>
-              }
-            </select>
+              [ariaLabel]="'adminGroupForm.rights' | t"
+            />
             <button
               type="button"
               class="secondary-action"
@@ -146,20 +144,18 @@
                         </select>
                       </td>
                       <td>
-                        <select
+                        <app-search-select
                           #presetSelect
-                          (change)="
-                            applyPreset(permission, presetSelect.value); presetSelect.value = ''
+                          class="preset"
+                          [options]="presetOptions"
+                          [ngModel]="null"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="
+                            applyPreset(permission, $event); presetSelect.writeValue(null)
                           "
-                          [attr.aria-label]="'adminGroupForm.applyPreset' | t"
-                        >
-                          <option value="" disabled selected>
-                            {{ 'adminGroupForm.applyPlaceholder' | t }}
-                          </option>
-                          @for (preset of presets; track preset.key) {
-                            <option [value]="preset.key">{{ preset.label }}</option>
-                          }
-                        </select>
+                          [placeholder]="'adminGroupForm.applyPlaceholder' | t"
+                          [ariaLabel]="'adminGroupForm.applyPreset' | t"
+                        />
                       </td>
                       @for (flag of flags; track flag.key) {
                         <td class="center">

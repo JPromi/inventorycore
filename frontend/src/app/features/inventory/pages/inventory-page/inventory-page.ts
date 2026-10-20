@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { inventoryTree, InventoryTreeRow } from '../../util/inventory-tree';
 import { AssetPrintBatch } from '../../components/asset-print-batch/asset-print-batch';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +9,7 @@ import {
   LucideLayers,
   LucideGrid2X2,
   LucideList,
+  LucideListTree,
   LucideMapPin,
   LucidePencil,
   LucidePlus,
@@ -55,7 +57,7 @@ import { PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
 import { locationTypeInfo } from '../../../../shared/util/location-types';
 import { Observable, Subject, Subscription, debounceTime, skip } from 'rxjs';
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'tree';
 
 interface PageConfig {
   title: string;
@@ -105,6 +107,7 @@ interface FieldConfig {
     LucideLayers,
     LucideGrid2X2,
     LucideList,
+    LucideListTree,
     LucideMapPin,
     LucidePencil,
     LucidePlus,
@@ -150,6 +153,27 @@ export class InventoryPage implements OnInit, OnDestroy {
   @ViewChild('searchInput') private searchInput?: ElementRef<HTMLInputElement>;
   private readonly searchChanges = new Subject<void>();
   private readonly subscriptions = new Subscription();
+  private treeSource: InventoryItem[] | null = null;
+  private treeEndpoint = '';
+  private treeRows: InventoryTreeRow[] = [];
+  private flatRows: InventoryTreeRow[] = [];
+  private treeItems: InventoryItem[] = [];
+
+  protected get displayRows(): InventoryTreeRow[] {
+    if (this.treeSource !== this.list.items || this.treeEndpoint !== this.config.endpoint) {
+      this.treeSource = this.list.items;
+      this.treeEndpoint = this.config.endpoint;
+      this.treeRows = inventoryTree(this.list.items, this.config.endpoint);
+      this.treeItems = this.treeRows.map((row) => row.item);
+      this.flatRows = this.list.items.map((item) => ({ item, depth: 0, guides: [], last: true }));
+    }
+    return this.viewMode === 'tree' ? this.treeRows : this.flatRows;
+  }
+
+  protected get displayItems(): InventoryItem[] {
+    this.displayRows;
+    return this.viewMode === 'tree' ? this.treeItems : this.list.items;
+  }
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -165,6 +189,9 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.route.data.subscribe((data) => {
       this.config = data['inventoryConfig'];
       const endpoint = this.config.endpoint;
+      if (this.viewMode === 'tree' && endpoint !== 'assets' && endpoint !== 'locations') {
+        this.viewMode = 'list';
+      }
       this.bulkDelete = (item) => this.api.delete(endpoint, item.uuid);
       this.bulkActions =
         endpoint === 'assets'

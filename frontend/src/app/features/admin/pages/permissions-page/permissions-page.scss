@@ -67,8 +67,8 @@
       }
     }
 
-    // size and font come from the global `.page select` rule
     .preset {
+      display: block;
       min-width: 9rem;
     }
 

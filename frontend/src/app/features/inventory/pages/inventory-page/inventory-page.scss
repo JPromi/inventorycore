@@ -109,7 +109,75 @@
     &.list {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--inventory-list-gap);
+
+      @include bp.phone {
+        --inventory-tree-indent: 0.85rem;
+        --inventory-tree-max-depth: 2;
+      }
+
+      .item {
+        position: relative;
+        margin-inline-start: calc(
+          min(var(--tree-depth), var(--inventory-tree-max-depth)) * var(--inventory-tree-indent)
+        );
+
+        @include bp.phone {
+          &.selecting .item-actions {
+            display: none;
+          }
+        }
+      }
+
+      .tree-guides {
+        position: absolute;
+        inset-block: calc(-1 * var(--inventory-list-gap));
+        inset-inline-end: 100%;
+        width: calc(
+          min(var(--tree-depth), var(--inventory-tree-max-depth)) * var(--inventory-tree-indent)
+        );
+        pointer-events: none;
+      }
+
+      .tree-guide {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: calc(
+          (min(var(--guide-level), var(--inventory-tree-max-depth) - 1) + 0.5) *
+            var(--inventory-tree-indent)
+        );
+        width: calc(var(--inventory-tree-indent) / 2);
+
+        &.continues::before {
+          content: '';
+          position: absolute;
+          inset-block: 0;
+          inset-inline-start: 0;
+          border-inline-start: 1px solid var(--border-strong);
+        }
+
+        &.branch::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          inset-inline: 0;
+          border-top: 1px solid var(--border-strong);
+        }
+
+        &.last::before {
+          bottom: 50%;
+        }
+
+        &:nth-child(n + 4):not(:last-child) {
+          display: none;
+        }
+
+        @include bp.phone {
+          &:nth-child(n + 2):not(:last-child) {
+            display: none;
+          }
+        }
+      }
     }
   }
 
@@ -194,6 +262,12 @@
     .meta {
       color: var(--text-muted);
       font-size: 0.82rem;
+      overflow-wrap: anywhere;
+    }
+
+    .relationship {
+      color: var(--text-muted);
+      font-size: 0.8rem;
       overflow-wrap: anywhere;
     }
 

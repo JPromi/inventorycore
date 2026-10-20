@@ -1,173 +1,213 @@
 <section class="page">
-    <header class="page-header">
-        <div>
-            <p class="eyebrow">{{ 'adminPermissions.eyebrow' | tn: rows.length }}</p>
-            <h1>
-                <svg lucideShield size="20"></svg>
-                <span>{{ 'adminPermissions.title' | t }}</span>
-            </h1>
-        </div>
-        <div class="header-actions">
-            <button type="button" class="primary-action" (click)="openAddForm()" [disabled]="!groups.length">
-                <svg lucidePlus size="17"></svg>
-                <span>{{ 'adminPermissions.add' | t }}</span>
-            </button>
-        </div>
-    </header>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">{{ 'adminPermissions.eyebrow' | tn: rows.length }}</p>
+      <h1>
+        <svg lucideShield size="20"></svg>
+        <span>{{ 'adminPermissions.title' | t }}</span>
+      </h1>
+    </div>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="primary-action"
+        (click)="openAddForm()"
+        [disabled]="!groups.length"
+      >
+        <svg lucidePlus size="17"></svg>
+        <span>{{ 'adminPermissions.add' | t }}</span>
+      </button>
+    </div>
+  </header>
 
-    @if (showAddForm) {
-        <section class="card add-form">
-            <div class="card-title">
-                <h2>{{ 'adminPermissions.newTitle' | t }}</h2>
-                <button type="button" class="icon-button" [title]="'common.close' | t" (click)="showAddForm = false">
-                    <svg lucideX size="16"></svg>
-                </button>
-            </div>
-            <div class="add-grid">
-                <div class="field">
-                    <span class="field-label">{{ 'terms.group' | t }}</span>
-                    <app-search-select [options]="groupOptions" [(ngModel)]="newGroupUuid" [placeholder]="'adminPermissions.chooseGroup' | t" [searchPlaceholder]="'adminPermissions.searchGroup' | t" />
-                </div>
-                <div class="field">
-                    <span class="field-label">{{ 'terms.area' | t }}</span>
-                    <app-search-select
-                        [options]="areaOptions"
-                        [(ngModel)]="newAreaUuid"
-                        [placeholder]="'adminPermissions.allAreas' | t"
-                        [clearLabel]="'adminPermissions.allAreas' | t"
-                        [searchPlaceholder]="'adminPermissions.searchArea' | t"
-                    />
-                </div>
-                <div class="field">
-                    <span class="field-label">{{ 'adminPermissions.objectType' | t }}</span>
-                    <app-search-select [options]="typeOptions" [ngModel]="newType" (ngModelChange)="changeNewType($event)" />
-                </div>
-                <div class="field">
-                    <span class="field-label">{{ 'adminPermissions.rights' | t }}</span>
-                    <select [(ngModel)]="newPreset" [attr.aria-label]="'adminPermissions.rights' | t">
-                        @for (preset of presets; track preset.key) {
-                            <option [value]="preset.key">{{ preset.label }}</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            <div class="editor-actions">
-                @if (newPermissionExists) {
-                    <span class="hint warn">{{ 'adminPermissions.exists' | t }}</span>
-                }
-                <button type="button" class="secondary-action" (click)="showAddForm = false">{{ 'common.cancel' | t }}</button>
-                <button type="button" class="primary-action" [disabled]="!newGroupUuid || newPermissionExists" (click)="addPermission()">
-                    {{ 'common.add' | t }}
-                </button>
-            </div>
-        </section>
-    }
-
-    <app-filter-bar class="toolbar" [activeCount]="activeFilterCount" [canReset]="hasActiveFilters" (reset)="resetFilters()">
-        <app-search-select
-            class="filter-select"
+  @if (showAddForm) {
+    <section class="card add-form">
+      <div class="card-title">
+        <h2>{{ 'adminPermissions.newTitle' | t }}</h2>
+        <button
+          type="button"
+          class="icon-button"
+          [title]="'common.close' | t"
+          (click)="showAddForm = false"
+        >
+          <svg lucideX size="16"></svg>
+        </button>
+      </div>
+      <div class="add-grid">
+        <div class="field">
+          <span class="field-label">{{ 'terms.group' | t }}</span>
+          <app-search-select
             [options]="groupOptions"
-            [(ngModel)]="groupFilter"
-            [placeholder]="'adminPermissions.allGroups' | t"
-            [clearLabel]="'adminPermissions.allGroups' | t"
+            [(ngModel)]="newGroupUuid"
+            [placeholder]="'adminPermissions.chooseGroup' | t"
             [searchPlaceholder]="'adminPermissions.searchGroup' | t"
-        />
-        <app-search-select
-            class="filter-select"
-            [options]="areaFilterOptions"
-            [(ngModel)]="areaFilter"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">{{ 'terms.area' | t }}</span>
+          <app-search-select
+            [options]="areaOptions"
+            [(ngModel)]="newAreaUuid"
             [placeholder]="'adminPermissions.allAreas' | t"
             [clearLabel]="'adminPermissions.allAreas' | t"
             [searchPlaceholder]="'adminPermissions.searchArea' | t"
-        />
-        <app-search-select
-            class="filter-select"
-            [options]="typeOptions"
-            [(ngModel)]="typeFilter"
-            [placeholder]="'adminPermissions.allObjectTypes' | t"
-            [clearLabel]="'adminPermissions.allObjectTypes' | t"
-        />
-    </app-filter-bar>
-
-    @if (error) {
-        <p class="error">{{ error }}</p>
-    }
-
-    @if (loading) {
-        <p class="empty">{{ 'adminPermissions.loading' | t }}</p>
-    } @else if (!rows.length) {
-        <div class="empty-state">{{ 'adminPermissions.empty' | t }}</div>
-    } @else {
-        <div class="data-table-wrap">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>{{ 'terms.group' | t }}</th>
-                        <th>{{ 'terms.area' | t }}</th>
-                        <th>{{ 'adminPermissions.objectType' | t }}</th>
-                        @for (flag of flags; track flag.key) {
-                            <th class="center">{{ flag.label }}</th>
-                        }
-                        <th>{{ 'adminPermissions.preset' | t }}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (row of rows; track row.permission.uuid) {
-                        <tr [class.saving]="savingUuids.has(row.permission.uuid)">
-                            <td>
-                                <a class="group-link" [routerLink]="['/admin/groups', row.group.uuid, 'edit']">{{ row.group.name }}</a>
-                            </td>
-                            <td>
-                                @if (row.permission.areaUuid) {
-                                    <span class="chip">
-                                        <span class="dot" [style.background]="areaColor(row.permission.areaUuid)"></span>
-                                        {{ areaName(row.permission.areaUuid) }}
-                                    </span>
-                                } @else {
-                                    <span class="badge accent">{{ 'adminPermissions.allAreas' | t }}</span>
-                                }
-                            </td>
-                            <td>
-                                @if (row.permission.resourceType) {
-                                    {{ typeLabel(row.permission.resourceType) }}
-                                } @else {
-                                    <span class="badge accent">{{ 'adminPermissions.allObjectTypes' | t }}</span>
-                                }
-                            </td>
-                            @for (flag of flags; track flag.key) {
-                                <td class="center">
-                                    <input
-                                        type="checkbox"
-                                        class="flag"
-                                        [checked]="row.permission[flag.key]"
-                                        (change)="toggle(row, flag.key, $any($event.target).checked)"
-                                        [attr.aria-label]="flag.label"
-                                    />
-                                </td>
-                            }
-                            <td>
-                                <select
-                                    #presetSelect
-                                    class="preset"
-                                    (change)="applyPreset(row, presetSelect.value); presetSelect.value = ''"
-                                    [attr.aria-label]="'adminPermissions.applyPreset' | t"
-                                >
-                                    <option value="" disabled selected>{{ 'adminPermissions.applyPlaceholder' | t }}</option>
-                                    @for (preset of presets; track preset.key) {
-                                        <option [value]="preset.key">{{ preset.label }}</option>
-                                    }
-                                </select>
-                            </td>
-                            <td class="actions">
-                                <button type="button" class="icon-button danger" [title]="'common.remove' | t" (click)="remove(row)">
-                                    <svg lucideTrash2 size="15"></svg>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+          />
         </div>
-    }
+        <div class="field">
+          <span class="field-label">{{ 'adminPermissions.objectType' | t }}</span>
+          <app-search-select
+            [options]="typeOptions"
+            [ngModel]="newType"
+            (ngModelChange)="changeNewType($event)"
+          />
+        </div>
+        <div class="field">
+          <span class="field-label">{{ 'adminPermissions.rights' | t }}</span>
+          <app-search-select
+            [options]="presetOptions"
+            [(ngModel)]="newPreset"
+            [ariaLabel]="'adminPermissions.rights' | t"
+          />
+        </div>
+      </div>
+      <div class="editor-actions">
+        @if (newPermissionExists) {
+          <span class="hint warn">{{ 'adminPermissions.exists' | t }}</span>
+        }
+        <button type="button" class="secondary-action" (click)="showAddForm = false">
+          {{ 'common.cancel' | t }}
+        </button>
+        <button
+          type="button"
+          class="primary-action"
+          [disabled]="!newGroupUuid || newPermissionExists"
+          (click)="addPermission()"
+        >
+          {{ 'common.add' | t }}
+        </button>
+      </div>
+    </section>
+  }
+
+  <app-filter-bar
+    class="toolbar"
+    [activeCount]="activeFilterCount"
+    [canReset]="hasActiveFilters"
+    (reset)="resetFilters()"
+  >
+    <app-search-select
+      class="filter-select"
+      [options]="groupOptions"
+      [(ngModel)]="groupFilter"
+      [placeholder]="'adminPermissions.allGroups' | t"
+      [clearLabel]="'adminPermissions.allGroups' | t"
+      [searchPlaceholder]="'adminPermissions.searchGroup' | t"
+    />
+    <app-search-select
+      class="filter-select"
+      [options]="areaFilterOptions"
+      [(ngModel)]="areaFilter"
+      [placeholder]="'adminPermissions.allAreas' | t"
+      [clearLabel]="'adminPermissions.allAreas' | t"
+      [searchPlaceholder]="'adminPermissions.searchArea' | t"
+    />
+    <app-search-select
+      class="filter-select"
+      [options]="typeOptions"
+      [(ngModel)]="typeFilter"
+      [placeholder]="'adminPermissions.allObjectTypes' | t"
+      [clearLabel]="'adminPermissions.allObjectTypes' | t"
+    />
+  </app-filter-bar>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @if (loading) {
+    <p class="empty">{{ 'adminPermissions.loading' | t }}</p>
+  } @else if (!rows.length) {
+    <div class="empty-state">{{ 'adminPermissions.empty' | t }}</div>
+  } @else {
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{{ 'terms.group' | t }}</th>
+            <th>{{ 'terms.area' | t }}</th>
+            <th>{{ 'adminPermissions.objectType' | t }}</th>
+            @for (flag of flags; track flag.key) {
+              <th class="center">{{ flag.label }}</th>
+            }
+            <th>{{ 'adminPermissions.preset' | t }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row.permission.uuid) {
+            <tr [class.saving]="savingUuids.has(row.permission.uuid)">
+              <td>
+                <a class="group-link" [routerLink]="['/admin/groups', row.group.uuid, 'edit']">{{
+                  row.group.name
+                }}</a>
+              </td>
+              <td>
+                @if (row.permission.areaUuid) {
+                  <span class="chip">
+                    <span
+                      class="dot"
+                      [style.background]="areaColor(row.permission.areaUuid)"
+                    ></span>
+                    {{ areaName(row.permission.areaUuid) }}
+                  </span>
+                } @else {
+                  <span class="badge accent">{{ 'adminPermissions.allAreas' | t }}</span>
+                }
+              </td>
+              <td>
+                @if (row.permission.resourceType) {
+                  {{ typeLabel(row.permission.resourceType) }}
+                } @else {
+                  <span class="badge accent">{{ 'adminPermissions.allObjectTypes' | t }}</span>
+                }
+              </td>
+              @for (flag of flags; track flag.key) {
+                <td class="center">
+                  <input
+                    type="checkbox"
+                    class="flag"
+                    [checked]="row.permission[flag.key]"
+                    (change)="toggle(row, flag.key, $any($event.target).checked)"
+                    [attr.aria-label]="flag.label"
+                  />
+                </td>
+              }
+              <td>
+                <app-search-select
+                  #presetSelect
+                  class="preset"
+                  [options]="presetOptions"
+                  [ngModel]="null"
+                  (ngModelChange)="applyPreset(row, $event); presetSelect.writeValue(null)"
+                  [placeholder]="'adminPermissions.applyPlaceholder' | t"
+                  [ariaLabel]="'adminPermissions.applyPreset' | t"
+                  [disabled]="savingUuids.has(row.permission.uuid)"
+                />
+              </td>
+              <td class="actions">
+                <button
+                  type="button"
+                  class="icon-button danger"
+                  [title]="'common.remove' | t"
+                  (click)="remove(row)"
+                >
+                  <svg lucideTrash2 size="15"></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </section>
