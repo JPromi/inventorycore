@@ -34,7 +34,7 @@ export class OidcSettingsPage implements OnInit {
   protected saving = false;
   protected testing = false;
   protected saved = false;
-  protected copied = false;
+  protected copied: 'redirect' | 'direct' | null = null;
   protected error = '';
   protected testResult: OidcTestResult | null = null;
 
@@ -56,19 +56,27 @@ export class OidcSettingsPage implements OnInit {
 
   /** Redirect URI as the browser sees it (the backend only knows "{baseUrl}" without public URL). */
   protected get redirectUri(): string {
-    const base = this.settings?.publicUrl?.trim().replace(/\/+$/, '') || window.location.origin;
-    return `${base}/login/oauth2/code/oidc`;
+    return `${this.baseUrl}/login/oauth2/code/oidc`;
+  }
+
+  /** Normal login page while the automatic redirect is on. */
+  protected get directLoginUrl(): string {
+    return `${this.baseUrl}/login?direct=1`;
+  }
+
+  private get baseUrl(): string {
+    return this.settings?.publicUrl?.trim().replace(/\/+$/, '') || window.location.origin;
   }
 
   protected changed(): void {
     this.saved = false;
   }
 
-  protected async copyRedirectUri(): Promise<void> {
+  protected async copy(which: 'redirect' | 'direct'): Promise<void> {
     try {
-      await navigator.clipboard.writeText(this.redirectUri);
-      this.copied = true;
-      setTimeout(() => (this.copied = false), 2000);
+      await navigator.clipboard.writeText(which === 'redirect' ? this.redirectUri : this.directLoginUrl);
+      this.copied = which;
+      setTimeout(() => (this.copied = null), 2000);
     } catch {
       // clipboard not available (e.g. http); the value is visible anyway
     }

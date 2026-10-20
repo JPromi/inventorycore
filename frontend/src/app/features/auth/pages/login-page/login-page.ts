@@ -59,13 +59,19 @@ export class LoginPage implements OnInit {
   protected error = '';
   protected readonly year = new Date().getFullYear();
   protected providers: LoginProviders | null = null;
+  /** On the way to the identity provider because of the automatic redirect. */
+  protected redirecting = false;
+  protected readonly loggedOut: boolean;
 
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly authService: AuthService,
     protected readonly customization: CustomizationService,
-  ) {}
+  ) {
+    // only readable while the navigation from the logout runs
+    this.loggedOut = !!this.router.currentNavigation()?.extras.state?.['loggedOut'];
+  }
 
   ngOnInit(): void {
     if (this.authService.getCurrentUser()) {
@@ -76,7 +82,23 @@ export class LoginPage implements OnInit {
     if (errorCode) {
       this.error = SSO_ERRORS[errorCode] ?? SSO_ERRORS['oidc_failed'];
     }
-    this.authService.providers().subscribe((providers) => (this.providers = providers));
+    this.authService.providers().subscribe((providers) => {
+      this.providers = providers;
+      if (this.autoRedirect(providers, !!errorCode)) {
+        this.redirecting = true;
+        this.loginWithSso();
+      }
+    });
+  }
+
+  /**
+   * Like Nextcloud: with the setting on, the login page goes straight to the identity provider.
+   * Not with ?direct=1 (e.g. for local admins), after a failed SSO login (that would loop) and
+   * right after the logout (the provider would sign the user in again).
+   */
+  private autoRedirect(providers: LoginProviders, failed: boolean): boolean {
+    const direct = this.route.snapshot.queryParamMap.has('direct');
+    return !!providers.oidcAutoRedirect && !!providers.oidcLoginUrl && !direct && !failed && !this.loggedOut;
   }
 
   /** The SSO login is a full page redirect to the identity provider. */

@@ -13,6 +13,8 @@ export interface LoginProviders {
   oidcEnabled: boolean;
   oidcLabel: string;
   oidcLoginUrl: string;
+  /** the login page sends the user to the identity provider right away */
+  oidcAutoRedirect?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

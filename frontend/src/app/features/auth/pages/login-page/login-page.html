@@ -44,72 +44,85 @@
       <h1>{{ customization.settings.loginTitle || ('login.welcome' | t) }}</h1>
       <p class="subtitle">{{ customization.settings.loginMessage || ('login.subtitle' | t) }}</p>
 
-      @if (error) {
-        <p class="error" role="alert">{{ error }}</p>
-      }
-
-      <form class="login-form" (ngSubmit)="loginWithLocal()">
-        <label class="field">
-          <span>{{ 'login.username' | t }}</span>
-          <span class="input-wrap">
-            <svg class="input-icon" lucideUser size="17"></svg>
-            <input
-              type="text"
-              [(ngModel)]="username"
-              name="username"
-              autocomplete="username"
-              autofocus
-              [disabled]="loading"
-            />
-          </span>
-        </label>
-
-        <label class="field">
-          <span>{{ 'login.password' | t }}</span>
-          <span class="input-wrap">
-            <svg class="input-icon" lucideLock size="17"></svg>
-            <input
-              [type]="showPassword ? 'text' : 'password'"
-              [(ngModel)]="password"
-              name="password"
-              autocomplete="current-password"
-              [disabled]="loading"
-            />
-            <button
-              type="button"
-              class="toggle-password"
-              [title]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t"
-              [attr.aria-label]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t"
-              (click)="showPassword = !showPassword"
-            >
-              @if (showPassword) {
-                <svg lucideEyeOff size="17"></svg>
-              } @else {
-                <svg lucideEye size="17"></svg>
-              }
-            </button>
-          </span>
-        </label>
-
-        <button type="submit" class="login-button" [disabled]="loading">
-          @if (loading) {
-            <svg class="spin" lucideLoaderCircle size="18"></svg>
-            <span>{{ 'login.submitting' | t }}</span>
-          } @else {
-            <svg lucideLogIn size="18"></svg>
-            <span>{{ 'login.submit' | t }}</span>
-          }
-        </button>
-      </form>
-
-      @if (providers?.oidcEnabled) {
-        <div class="divider">
-          <span>{{ 'login.or' | t }}</span>
+      @if (redirecting) {
+        <div class="redirecting" role="status">
+          <svg class="spin" lucideLoaderCircle size="22"></svg>
+          <p>{{ 'login.redirecting' | t: { provider: providers?.oidcLabel } }}</p>
+          <!-- a full page load, so it also stops the redirect that is already on its way -->
+          <a href="/login?direct=1">{{ 'login.useLocalLogin' | t }}</a>
         </div>
-        <button type="button" class="sso-button" [disabled]="loading" (click)="loginWithSso()">
-          <svg lucideKeyRound size="18"></svg>
-          <span>{{ 'login.sso' | t: { provider: providers?.oidcLabel } }}</span>
-        </button>
+      } @else if (providers) {
+        @if (loggedOut && !error) {
+          <p class="info" role="status">{{ 'login.loggedOut' | t }}</p>
+        }
+
+        @if (error) {
+          <p class="error" role="alert">{{ error }}</p>
+        }
+
+        <form class="login-form" (ngSubmit)="loginWithLocal()">
+          <label class="field">
+            <span>{{ 'login.username' | t }}</span>
+            <span class="input-wrap">
+              <svg class="input-icon" lucideUser size="17"></svg>
+              <input
+                type="text"
+                [(ngModel)]="username"
+                name="username"
+                autocomplete="username"
+                autofocus
+                [disabled]="loading"
+              />
+            </span>
+          </label>
+
+          <label class="field">
+            <span>{{ 'login.password' | t }}</span>
+            <span class="input-wrap">
+              <svg class="input-icon" lucideLock size="17"></svg>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="password"
+                name="password"
+                autocomplete="current-password"
+                [disabled]="loading"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                [title]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t"
+                [attr.aria-label]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t"
+                (click)="showPassword = !showPassword"
+              >
+                @if (showPassword) {
+                  <svg lucideEyeOff size="17"></svg>
+                } @else {
+                  <svg lucideEye size="17"></svg>
+                }
+              </button>
+            </span>
+          </label>
+
+          <button type="submit" class="login-button" [disabled]="loading">
+            @if (loading) {
+              <svg class="spin" lucideLoaderCircle size="18"></svg>
+              <span>{{ 'login.submitting' | t }}</span>
+            } @else {
+              <svg lucideLogIn size="18"></svg>
+              <span>{{ 'login.submit' | t }}</span>
+            }
+          </button>
+        </form>
+
+        @if (providers.oidcEnabled) {
+          <div class="divider">
+            <span>{{ 'login.or' | t }}</span>
+          </div>
+          <button type="button" class="sso-button" [disabled]="loading" (click)="loginWithSso()">
+            <svg lucideKeyRound size="18"></svg>
+            <span>{{ 'login.sso' | t: { provider: providers.oidcLabel } }}</span>
+          </button>
+        }
       }
       <footer class="legal-links">
         @if (customization.settings.imprintUrl) {

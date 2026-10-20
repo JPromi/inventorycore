@@ -96,12 +96,38 @@
                         <span class="field-label">{{ 'adminOidc.redirectUri' | t }}</span>
                         <div class="redirect-row">
                             <code>{{ redirectUri }}</code>
-                            <button type="button" class="secondary-action compact" (click)="copyRedirectUri()">
+                            <button type="button" class="secondary-action compact" (click)="copy('redirect')">
                                 <svg lucideCopy size="14"></svg>
-                                <span>{{ (copied ? 'adminOidc.copied' : 'adminOidc.copy') | t }}</span>
+                                <span>{{ (copied === 'redirect' ? 'adminOidc.copied' : 'adminOidc.copy') | t }}</span>
                             </button>
                         </div>
                     </div>
+                </section>
+
+                <section class="card">
+                    <h2>{{ 'adminOidc.loginPage' | t }}</h2>
+                    <div class="options">
+                        <label class="toggle option">
+                            <input type="checkbox" [(ngModel)]="settings.autoRedirect" name="autoRedirect" />
+                            <span>
+                                {{ 'adminOidc.autoRedirect' | t }}
+                                <small>{{ 'adminOidc.autoRedirectHint' | t }}</small>
+                            </span>
+                        </label>
+                    </div>
+                    @if (settings.autoRedirect) {
+                        <div class="redirect">
+                            <span class="field-label">{{ 'adminOidc.directLogin' | t }}</span>
+                            <div class="redirect-row">
+                                <code>{{ directLoginUrl }}</code>
+                                <button type="button" class="secondary-action compact" (click)="copy('direct')">
+                                    <svg lucideCopy size="14"></svg>
+                                    <span>{{ (copied === 'direct' ? 'adminOidc.copied' : 'adminOidc.copy') | t }}</span>
+                                </button>
+                            </div>
+                            <small class="hint">{{ 'adminOidc.directLoginHint' | t }}</small>
+                        </div>
+                    }
                 </section>
 
                 <section class="card">

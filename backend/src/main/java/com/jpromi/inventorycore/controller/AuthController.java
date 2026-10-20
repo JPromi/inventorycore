@@ -53,13 +53,15 @@ public class AuthController {
     }
 
     /** Login options for the login page (public). */
-    public record LoginProviders(boolean oidcEnabled, String oidcLabel, String oidcLoginUrl) {}
+    /** {@code oidcAutoRedirect}: the login page sends the user to the identity provider right away. */
+    public record LoginProviders(boolean oidcEnabled, String oidcLabel, String oidcLoginUrl, boolean oidcAutoRedirect) {}
 
     @GetMapping("/providers")
     public LoginProviders providers() {
         OidcSettings oidc = oidcSettingsRepository.load();
         boolean enabled = oidc.isEnabled() && oidc.getIssuerUri() != null && oidc.getClientId() != null;
-        return new LoginProviders(enabled, oidc.getButtonLabel() == null ? "SSO" : oidc.getButtonLabel(), "/oauth2/authorization/oidc");
+        return new LoginProviders(enabled, oidc.getButtonLabel() == null ? "SSO" : oidc.getButtonLabel(),
+            "/oauth2/authorization/oidc", enabled && oidc.isAutoRedirect());
     }
 
     @PostMapping

@@ -107,7 +107,8 @@ export class UserMenu implements OnInit {
     this.logoutError = false;
     this.auth.logout().subscribe({
       next: () => {
-        void this.router.navigate(['/login']);
+        // no automatic SSO redirect now, it would sign the user in again at once
+        void this.router.navigate(['/login'], { state: { loggedOut: true } });
       },
       error: () => {
         this.loggingOut = false;

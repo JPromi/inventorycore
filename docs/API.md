@@ -52,7 +52,7 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 
 All `/page` endpoints take `page` (from 0), `size` (default 50, max 200) and `q` (every word must occur), and return `PageResponse` (`items`, `total`, `page`, `size`, `hasMore`). `areas` (repeatable) is the sidebar area selection. Further filters: assets `tag`, `location` (with sub-locations), `assetType`, `area`; locations `type`, `area`; asset types `area`; protocols `status` (`OPEN`/`COMPLETED`, response adds `openCount` / `completedCount` within the area selection, independent of search and status); users `group`, `status` (`enabled`, `disabled`, `admin`). Tags return `TagUsageResponse` with `assetCount` / `assetTypeCount` of visible objects; groups return `GroupRowResponse` with `memberCount` and up to five `members`. Sorting is fixed per list (by name; protocols newest first; label templates by area, default area first).
 
-OIDC browser redirects additionally use `/oauth2/authorization/oidc` and `/login/oauth2/**` outside `/api`.
+OIDC browser redirects additionally use `/oauth2/authorization/oidc` and `/login/oauth2/**` outside `/api`. `/auth/providers` returns `oidcEnabled`, `oidcLabel`, `oidcLoginUrl` and `oidcAutoRedirect`; the login page follows the redirect unless it was opened with `?direct=1`.
 
 ### Dashboard
 

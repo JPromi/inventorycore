@@ -124,6 +124,8 @@ export interface OidcSettings {
   autoCreateUsers: boolean;
   syncGroups: boolean;
   crossProviderLogin: boolean;
+  /** the login page goes straight to the identity provider; /login?direct=1 skips it */
+  autoRedirect: boolean;
   publicUrl: string | null;
   redirectUri?: string | null;
 }

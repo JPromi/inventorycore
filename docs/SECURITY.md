@@ -4,7 +4,7 @@
 
 Spring Security supports local passwords, LDAP password checks for imported users, and dynamic OIDC client registration from database settings. Local passwords use BCrypt. Successful authentication establishes a server-side HTTP session; the example session inactivity timeout is 24 hours. There is no JWT token lifecycle or shared session-store configuration in the repository.
 
-`sourceProvider` identifies account ownership. Local accounts cannot be taken over through OIDC. Cross-provider login for nonlocal accounts is a separate OIDC setting. LDAP synchronization likewise does not overwrite a local or OIDC account sharing the same username.
+`sourceProvider` identifies account ownership. Local accounts cannot be taken over through OIDC. Cross-provider login for nonlocal accounts is a separate OIDC setting. The optional OIDC auto-redirect (like Nextcloud) sends the login page straight to the identity provider; `/login?direct=1` still shows the login form (e.g. for local admins), and the redirect is also skipped after a failed SSO login (`?error=`, to avoid a loop) and right after a logout (the provider session would sign the user in again). It is only a convenience of the login page: `/api/auth/providers` reports it as `oidcAutoRedirect` only when OIDC is enabled and complete, and local login stays available on the server. LDAP synchronization likewise does not overwrite a local or OIDC account sharing the same username.
 
 Local users may upload/remove their profile image. LDAP and OIDC users are rejected by the upload endpoint: LDAP photos come from `thumbnailPhoto` / `jpegPhoto`; OIDC uses an HTTPS `picture` claim when supplied. Display names from LDAP fall back to usernames when missing or blank.
 

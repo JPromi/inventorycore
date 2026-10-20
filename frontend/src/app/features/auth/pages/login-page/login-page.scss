@@ -213,6 +213,41 @@
       font-weight: 600;
     }
 
+    .info {
+      margin-bottom: 1rem;
+      padding: 0.65rem 0.8rem;
+      border-radius: var(--radius-md);
+      background: var(--success-soft);
+      color: var(--success);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    // automatic SSO redirect: a quiet spinner instead of the form
+    .redirecting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.5rem 0 0.5rem;
+      color: var(--text-muted);
+      text-align: center;
+
+      p {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      a {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+
+        &:hover {
+          color: var(--accent-foreground);
+        }
+      }
+    }
+
     .divider {
       display: flex;
       align-items: center;

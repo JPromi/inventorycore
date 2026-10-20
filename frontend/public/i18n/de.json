@@ -288,6 +288,11 @@
     }
   },
   "adminOidc": {
+    "loginPage": "Anmeldeseite",
+    "autoRedirect": "Automatisch zum Identity Provider weiterleiten",
+    "autoRedirectHint": "Die Anmeldeseite leitet sofort zur SSO-Anmeldung weiter, ohne das Anmeldeformular zu zeigen. Nach dem Abmelden und nach einer fehlgeschlagenen SSO-Anmeldung bleibt das Formular sichtbar.",
+    "directLogin": "Normale Anmeldeseite",
+    "directLoginHint": "Über diese Adresse ist das Anmeldeformular weiterhin erreichbar, z. B. für lokale Administratoren.",
     "eyebrow": "Administration · Authentifizierung",
     "title": "OpenID Connect (SSO)",
     "test": "Verbindung testen",
@@ -1666,6 +1671,9 @@
     },
     "welcome": "Willkommen zurück",
     "subtitle": "Bitte mit dem eigenen Konto anmelden.",
+    "redirecting": "Weiterleitung zu {provider} …",
+    "useLocalLogin": "Stattdessen mit Benutzername und Passwort anmelden",
+    "loggedOut": "Erfolgreich abgemeldet.",
     "username": "Benutzername",
     "password": "Passwort",
     "showPassword": "Passwort anzeigen",
