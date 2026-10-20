@@ -560,7 +560,8 @@
         "notFound": "Keine passende Kamera gefunden.",
         "notReadable": "Die Kamera wird gerade von einem anderen Programm verwendet.",
         "start": "Die Kamera konnte nicht gestartet werden."
-      }
+      },
+      "zoom": "Zoom: {zoom}-fach (antippen für die nächste Stufe)"
     },
     "colorPicker": {
       "label": "Farbe",

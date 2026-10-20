@@ -76,6 +76,9 @@ export class CameraView implements OnInit, AfterViewInit, OnDestroy {
   protected cameras: CameraDevice[] = [];
   protected torchSupported = false;
   protected torchOn = false;
+  /** zoom steps of the camera (empty without zoom) and the current one */
+  protected zoomSteps: number[] = [];
+  protected zoom = 1;
   protected flashing = false;
   protected capturing = false;
 
@@ -119,6 +122,8 @@ export class CameraView implements OnInit, AfterViewInit, OnDestroy {
     this.state = 'starting';
     this.error = '';
     this.torchOn = false;
+    this.zoomSteps = [];
+    this.zoom = 1;
     this.scanner = new CameraScanner(this.videoRef.nativeElement, (code) =>
       this.zone.run(() => this.onCode(code)),
     );
@@ -127,6 +132,7 @@ export class CameraView implements OnInit, AfterViewInit, OnDestroy {
       this.state = 'running';
       this.cameraId = this.scanner.activeDeviceId ?? deviceId;
       this.torchSupported = this.scanner.torchSupported;
+      this.zoomSteps = this.scanner.zoomSteps;
       // labels and ids are only complete after the permission was granted
       this.cameras = await CameraScanner.devices();
     } catch (error) {
@@ -173,6 +179,17 @@ export class CameraView implements OnInit, AfterViewInit, OnDestroy {
       this.torchOn = !this.torchOn;
     } catch {
       this.torchSupported = false;
+    }
+  }
+
+  /** Next zoom step, back to 1× after the largest: brings small markings closer. */
+  protected async nextZoom(): Promise<void> {
+    const next = this.zoomSteps[(this.zoomSteps.indexOf(this.zoom) + 1) % this.zoomSteps.length];
+    try {
+      await this.scanner?.setZoom(next);
+      this.zoom = next;
+    } catch {
+      this.zoomSteps = [];
     }
   }
 

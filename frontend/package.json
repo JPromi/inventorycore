@@ -22,15 +22,14 @@
     "@angular/service-worker": "^21.2.0",
     "@floating-ui/dom": "^1.8.0",
     "@lucide/angular": "^1.56.0",
-    "@zxing/browser": "0.2.1",
-    "@zxing/library": "0.23.0",
     "bwip-js": "4.11.4",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "leaflet": "1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "^0.16.3"
+    "zone.js": "^0.16.3",
+    "zxing-wasm": "3.1.4"
   },
   "devDependencies": {
     "@angular/build": "^21.2.7",
