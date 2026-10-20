@@ -78,9 +78,9 @@
 
         <footer>
             <button type="button" class="secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
-            <button type="button" class="primary" [disabled]="!template" (click)="print()">
+            <button type="button" class="primary" [disabled]="!template || preparing" (click)="print()">
                 <svg lucidePrinter size="16"></svg>
-                <span>{{ 'common.print' | t }}</span>
+                <span>{{ (preparing ? 'components.printDocument.preparing' : 'common.print') | t }}</span>
             </button>
         </footer>
     </div>

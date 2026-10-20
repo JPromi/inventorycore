@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PdfPrintDialog } from './shared/components/pdf-print-dialog/pdf-print-dialog';
 import { RouterOutlet } from '@angular/router';
 
 import { PwaStatus } from './shared/components/pwa-status/pwa-status';
@@ -8,7 +9,7 @@ import { CustomizationService } from './core/service/customization.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, PwaStatus, ImageViewer],
+  imports: [RouterOutlet, PwaStatus, ImageViewer, PdfPrintDialog],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

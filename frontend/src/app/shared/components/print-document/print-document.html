@@ -84,6 +84,9 @@
             </div>
 
             <div class="dialog-actions">
+                @if (error) {
+                    <p class="error" role="alert">{{ error }}</p>
+                }
                 <button type="button" class="secondary-action" (click)="close()">{{ 'common.cancel' | t }}</button>
                 <button type="button" class="primary-action" [disabled]="preparing" (click)="print()">
                     <svg lucidePrinter size="16"></svg>

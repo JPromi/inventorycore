@@ -35,6 +35,8 @@ From `frontend/`, `npm run i18n:check` verifies that every literal text key used
 
 ## Browser Regressions
 
+`pwa-print.spec.ts` emulates iPhone/iPad standalone indicators in Edge and verifies real local PDF generation, page/copy counts, nonblank page rasters, gesture-bound file sharing, cancelled/failed share attempts and the download-only fallback. This is not a physical iOS/AirPrint test. On a real home-screen installation, test both an asset/protocol and labels: Print prepares a PDF, then PDF teilen opens the native share sheet; choose Drucken there, or download/save the PDF. Verify printer paper size and barcode readability on actual labels. Browser/Android printing continues to use the existing print calls.
+
 `theme.spec.ts` covers default and live system appearance, per-user overrides across reloads, account isolation, unavailable browser storage, advanced light/dark branding, independent logo changes, fallback when advanced mode is disabled, anonymous dark login, light label logos and light print-document colors. Check screenshots on desktop/mobile and rerun after palette changes. Restart a reused dev server if it is no longer watching source changes; a production build alone does not update an already stale server.
 
 Dark-mode verification passed the full 72-test browser suite and 14 focused backend tests (`CustomizationServiceTest`, `CustomizationSecurityTest`). Production build, translation keys and formatting checks also passed. This does not exercise the Hibernate column update against a live PostgreSQL database.

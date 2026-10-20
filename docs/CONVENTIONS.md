@@ -25,6 +25,14 @@ When a menu needs initial keyboard focus, wait for `dropdownReady`: the panel is
 
 Image previews use the shared `ImageViewerService.open(images, index)`. The single `ImageViewer` in the app shell opens a native modal dialog in the browser top layer, including above other dialogs. Pass full-size URLs and optional thumbnails, filenames, and alt texts. It supports previous/next navigation, keyboard arrows/Escape, zoom buttons/wheel/double-click, panning, and touch pinch/swipe. Navigation resets the zoom; route changes close the viewer. Use buttons for image triggers so keyboard access remains available.
 
+## iOS PWA Printing
+
+Installed iPhone/iPad web apps use local PDF output for documents and labels instead of relying on a silently ignored `window.print()`. `PdfPrintService` detects iOS (including desktop-UA iPads) plus standalone/fullscreen mode, loads jsPDF/html2canvas only for that path, and captures one already-paginated page at a time. Paper dimensions, document page numbers and label copies are preserved; canvases are capped at four million pixels and released between pages. PDFs are rasterized, not searchable/vector documents, and large batches can consume substantial PDF memory. No content is sent to an external conversion service. External images still require CORS permission.
+
+The app-wide native `PdfPrintDialog` offers a direct-gesture file-share button only when `navigator.canShare` supports the PDF, plus a blob download link. It does not call sharing after async generation: WebKit's user-activation restrictions are documented in [WebKit issue 225559](https://bugs.webkit.org/show_bug.cgi?id=225559). Share cancellation is not an error; failed sharing leaves download available. Closing or navigating revokes the blob URL. Physical iOS/AirPrint validation remains necessary; browser emulation does not establish that a printer dialog opened.
+
+The PDF libraries introduce lazy chunks and jsPDF optional dependencies currently emit CommonJS optimization warnings. Do not hide these warnings or increase style budgets to suppress them.
+
 ## Appearance
 
 Light/dark semantic palettes live in `frontend/src/styles/_themes.scss`, applied from `styles.scss`; components still consume the same shared variables. `ThemeService` resolves the system preference unless explicitly overridden and updates on live media-query changes. Reuse `ThemeSelector` in the user menu/profile rather than storing another theme state. Overrides are stored per user UUID (username fallback) in this browser; anonymous pages use a separate guest key. Selecting System removes the override. Storage failures keep appearance usable; cross-tab storage changes are observed. This is not cross-device account synchronization. Before Angular starts, CSS follows the system preference.

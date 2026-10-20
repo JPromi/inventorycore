@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   EventEmitter,
   HostListener,
   Input,
@@ -29,6 +30,7 @@ import {
   parseElements,
 } from '../label.model';
 import { printLabels } from '../print';
+import { PdfPrintService } from '../../../shared/components/pdf-print-dialog/pdf-print.service';
 
 const MM_TO_PX = 96 / 25.4;
 
@@ -68,11 +70,17 @@ export class LabelPrintDialog implements OnInit, OnChanges {
   protected contexts: LabelContext[] = [];
   protected loading = true;
   protected error = '';
+  protected preparing = false;
+  private readonly printAbort = new AbortController();
 
   constructor(
     private readonly api: LabelTemplateService,
     private readonly areaService: AreaService,
-  ) {}
+    private readonly pdf: PdfPrintService,
+    private readonly destroyRef: DestroyRef,
+  ) {
+    this.destroyRef.onDestroy(() => this.printAbort.abort());
+  }
 
   ngOnChanges(): void {
     this.index = Math.min(this.index, Math.max(0, this.assets.length - 1));
@@ -149,18 +157,26 @@ export class LabelPrintDialog implements OnInit, OnChanges {
 
   protected async print(): Promise<void> {
     const template = this.template;
-    if (!template || !this.renderers?.length) {
+    if (!template || !this.renderers?.length || this.preparing) {
       return;
     }
+    this.preparing = true;
+    this.error = '';
     try {
       await printLabels(
         this.renderers.map((renderer) => renderer.nativeLabel),
         template.widthMm,
         template.heightMm,
         this.clampedCopies,
+        this.pdf,
+        this.printAbort.signal,
       );
     } catch {
-      this.error = t('labels.print.logoFailed');
+      if (!this.destroyRef.destroyed) {
+        this.error = t('pdfPrint.prepareFailed');
+      }
+    } finally {
+      this.preparing = false;
     }
   }
 

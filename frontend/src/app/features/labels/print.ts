@@ -1,4 +1,8 @@
 import { currentLanguage, t } from '../../core/i18n/i18n';
+import {
+  needsPdfPrint,
+  PdfPrintService,
+} from '../../shared/components/pdf-print-dialog/pdf-print.service';
 
 /**
  * Prints rendered labels (each `copies` times) through a hidden iframe whose page size equals the label size,
@@ -9,6 +13,8 @@ export async function printLabels(
   widthMm: number,
   heightMm: number,
   copies = 1,
+  pdf?: PdfPrintService,
+  signal?: AbortSignal,
 ): Promise<void> {
   const iframe = document.createElement('iframe');
   iframe.style.position = 'fixed';
@@ -59,6 +65,21 @@ export async function printLabels(
   } catch {
     iframe.remove();
     throw new Error(t('labels.print.logoFailed'));
+  }
+
+  if (pdf && signal && needsPdfPrint()) {
+    try {
+      const count = Math.max(1, copies);
+      const pages = Array.from(doc.querySelectorAll<HTMLElement>('.page')).filter(
+        (_, index) => index % count === 0,
+      );
+      const file = await pdf.generate(pages, widthMm, heightMm, t('terms.label'), signal, count);
+      signal.throwIfAborted();
+      pdf.open(file);
+    } finally {
+      iframe.remove();
+    }
+    return;
   }
 
   const cleanup = () => setTimeout(() => iframe.remove(), 500);

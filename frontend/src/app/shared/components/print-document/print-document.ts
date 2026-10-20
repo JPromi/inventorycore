@@ -19,6 +19,7 @@ import { t } from '../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { CustomizationService } from '../../../core/service/customization.service';
 import { SearchSelect, SelectOption } from '../search-select/search-select';
+import { needsPdfPrint, PdfPrintService } from '../pdf-print-dialog/pdf-print.service';
 
 /** One "label: value" entry in the document header (who, when, what). */
 export interface PrintMeta {
@@ -106,6 +107,8 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   protected dialogOpen = false;
   protected preparing = false;
   private destroyed = false;
+  private readonly printAbort = new AbortController();
+  protected error = '';
   protected readonly sizes: SelectOption[] = [
     { value: 'A4', label: 'A4', hint: '210 × 297 mm' },
     { value: 'A3', label: 'A3', hint: '297 × 420 mm' },
@@ -124,6 +127,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   constructor(
     @Inject(DOCUMENT) private readonly document: Document,
     protected readonly customization: CustomizationService,
+    private readonly pdf: PdfPrintService,
   ) {
     try {
       this.settings = {
@@ -142,6 +146,7 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.printAbort.abort();
     this.cleanup();
     this.sheet.nativeElement.remove();
   }
@@ -171,6 +176,19 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
   }
 
   protected async print(): Promise<void> {
+    this.error = '';
+    try {
+      await this.preparePrint();
+    } catch {
+      this.cleanup();
+      if (!this.destroyed) {
+        this.preparing = false;
+        this.error = t('pdfPrint.prepareFailed');
+      }
+    }
+  }
+
+  private async preparePrint(): Promise<void> {
     if (this.preparing) {
       return;
     }
@@ -215,6 +233,23 @@ export class PrintDocument implements AfterViewInit, OnDestroy {
     });
     await this.imagesLoaded(this.pages.nativeElement);
     if (this.destroyed) {
+      return;
+    }
+    if (needsPdfPrint()) {
+      const file = await this.pdf.generate(
+        Array.from(this.pages.nativeElement.querySelectorAll<HTMLElement>('.print-page')),
+        width,
+        height,
+        [this.kind, this.title].filter(Boolean).join(' - '),
+        this.printAbort.signal,
+      );
+      if (!this.destroyed) {
+        this.pdf.open(file);
+        this.cleanup();
+        this.preparing = false;
+        this.dialogOpen = false;
+        this.closed.emit();
+      }
       return;
     }
     sheet.classList.remove('paginating');

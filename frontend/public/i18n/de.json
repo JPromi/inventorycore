@@ -1150,6 +1150,13 @@
       "load": "Der Eintrag konnte nicht geladen werden."
     }
   },
+  "pdfPrint": {
+    "title": "PDF drucken oder speichern",
+    "share": "PDF teilen",
+    "download": "PDF herunterladen",
+    "shareFailed": "Das Teilen ist nicht verfügbar. Sie können die PDF stattdessen herunterladen.",
+    "prepareFailed": "Die Druckdatei konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+  },
   "assetPrint": {
     "batchLoading": "Datenblätter für {count} Assets werden geladen …",
     "batchCount": "{count} Datenblätter",
