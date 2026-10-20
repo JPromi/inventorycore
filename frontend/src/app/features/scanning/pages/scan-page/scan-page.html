@@ -22,7 +22,7 @@
                         <svg lucideVolumeX size="17"></svg>
                     }
                 </button>
-                <label class="toggle auto-open" [title]="'scan.autoOpenHint' | t">
+                <label class="auto-open" [class.on]="autoOpen" [title]="'scan.autoOpenHint' | t">
                     <input type="checkbox" [checked]="autoOpen" (change)="toggleAutoOpen()" />
                     <span>{{ 'scan.autoOpen' | t }}</span>
                 </label>
@@ -30,12 +30,16 @@
         </header>
 
         <div class="mode-switch" role="tablist" [attr.aria-label]="'scan.modeLabel' | t">
-            <button type="button" role="tab" [class.active]="mode === 'scanner'" [attr.aria-selected]="mode === 'scanner'" (click)="setMode('scanner')">
-                <svg lucideKeyboard size="18"></svg>
-                <span>
-                    <strong>{{ 'scan.modeScanner' | t }}</strong>
-                    <small>{{ 'scan.modeScannerHint' | t }}</small>
-                </span>
+            <button
+                type="button"
+                role="tab"
+                [class.active]="mode === 'scanner'"
+                [attr.aria-selected]="mode === 'scanner'"
+                [title]="'scan.modeScannerHint' | t"
+                (click)="setMode('scanner')"
+            >
+                <svg lucideKeyboard size="17"></svg>
+                <span>{{ 'scan.modeScanner' | t }}</span>
             </button>
             <button
                 type="button"
@@ -43,14 +47,11 @@
                 [class.active]="mode === 'camera'"
                 [attr.aria-selected]="mode === 'camera'"
                 [disabled]="!cameraAvailable"
-                [title]="cameraAvailable ? '' : ('scan.cameraUnavailable' | t)"
+                [title]="(cameraAvailable ? 'scan.modeCameraHint' : 'scan.cameraUnavailable') | t"
                 (click)="setMode('camera')"
             >
-                <svg lucideCamera size="18"></svg>
-                <span>
-                    <strong>{{ 'scan.modeCamera' | t }}</strong>
-                    <small>{{ (cameraAvailable ? 'scan.modeCameraHint' : 'scan.cameraHttpsOnly') | t }}</small>
-                </span>
+                <svg lucideCamera size="17"></svg>
+                <span>{{ 'scan.modeCamera' | t }}</span>
             </button>
         </div>
 
@@ -209,17 +210,24 @@
                         <p class="hint">{{ 'scan.hitsFor' | t: { count: matchCount } }} <code>{{ result.code }}</code> {{ 'scan.pleaseSelect' | t }}</p>
                     }
                     @for (asset of result.assets; track asset.uuid) {
-                        <article class="card result-card" [class.compact]="matchCount > 1">
-                            <a class="result-image" [routerLink]="['/assets', asset.uuid]">
-                                @if (thumbnail(asset); as url) {
-                                    <img [src]="url" [alt]="asset.name" />
-                                } @else {
-                                    <svg lucideBoxes size="34"></svg>
-                                }
-                            </a>
+                        <article class="card result-card">
+                            <div class="result-head">
+                                <a class="result-image" [routerLink]="['/assets', asset.uuid]" [attr.aria-label]="asset.name">
+                                    @if (thumbnail(asset); as url) {
+                                        <img [src]="url" alt="" />
+                                    } @else {
+                                        <svg lucideBoxes size="28"></svg>
+                                    }
+                                </a>
+                                <div class="result-title">
+                                    <p class="eyebrow">{{ matchText(result, asset, 'asset') }}</p>
+                                    <h2>{{ asset.name }}</h2>
+                                    @if (asset.status) {
+                                        <app-asset-status-badge [status]="asset.status" />
+                                    }
+                                </div>
+                            </div>
                             <div class="result-body">
-                                <p class="eyebrow">{{ matchText(result, asset, 'asset') }}</p>
-                                <h2>{{ asset.name }}</h2>
                                 <dl>
                                     @if (asset.invId) {
                                         <div><dt>{{ 'terms.invId' | t }}</dt><dd>{{ asset.invId }}</dd></div>
@@ -257,17 +265,21 @@
                         </article>
                     }
                     @for (location of result.locations; track location.uuid) {
-                        <article class="card result-card" [class.compact]="matchCount > 1">
-                            <a class="result-image" [routerLink]="['/locations', location.uuid]">
-                                @if (thumbnail(location); as url) {
-                                    <img [src]="url" [alt]="location.name" />
-                                } @else {
-                                    <svg lucideMapPin size="34"></svg>
-                                }
-                            </a>
+                        <article class="card result-card">
+                            <div class="result-head">
+                                <a class="result-image" [routerLink]="['/locations', location.uuid]" [attr.aria-label]="location.name">
+                                    @if (thumbnail(location); as url) {
+                                        <img [src]="url" alt="" />
+                                    } @else {
+                                        <svg lucideMapPin size="28"></svg>
+                                    }
+                                </a>
+                                <div class="result-title">
+                                    <p class="eyebrow">{{ matchText(result, undefined, 'location') }}</p>
+                                    <h2>{{ locationName(location.uuid) ?? location.name }}</h2>
+                                </div>
+                            </div>
                             <div class="result-body">
-                                <p class="eyebrow">{{ matchText(result, undefined, 'location') }}</p>
-                                <h2>{{ locationName(location.uuid) ?? location.name }}</h2>
                                 <dl>
                                     @if (location.address) {
                                         <div><dt>{{ 'scan.address' | t }}</dt><dd>{{ location.address }}</dd></div>

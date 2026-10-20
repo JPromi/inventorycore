@@ -16,13 +16,14 @@
     transform: translateY(0.4rem);
   }
 }
+
 :host {
   display: block;
   width: 100%;
   height: 100%;
 
   .page-shell {
-    width: min(100%, 72rem);
+    width: min(100%, 64rem);
   }
 
   code,
@@ -35,86 +36,100 @@
     font-size: 0.82em;
   }
 
-  .auto-open {
-    padding: 0 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-  }
-
   .hint {
     color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     line-height: 1.5;
   }
 
-  // ---- mode switch ----
+  // ---- header: sound and "open directly" as small controls ----
+
+  .header-actions {
+    align-items: center;
+
+    // on phones the actions span the width: the sound button stays a square
+    > .icon-button,
+    > .auto-open {
+      flex: 0 0 auto;
+    }
+  }
+
+  .auto-open {
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    input {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+    }
+
+    &.on {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-foreground);
+    }
+  }
+
+  // ---- mode: one slim segmented control ----
 
   .mode-switch {
-    display: grid;
+    display: inline-grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
+    gap: 0.25rem;
+    width: min(100%, 24rem);
     margin-bottom: 1rem;
+    padding: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
 
     button {
-      display: flex;
+      min-height: 2.25rem;
+      display: inline-flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      background: var(--surface);
+      justify-content: center;
+      gap: 0.45rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
       color: var(--text-muted);
-      text-align: left;
+      font-size: 0.88rem;
+      font-weight: 600;
       cursor: pointer;
-      transition:
-        border-color 0.15s,
-        background-color 0.15s,
-        color 0.15s;
 
-      > span {
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-      }
-
-      strong {
+      &:hover:not(:disabled):not(.active) {
+        background: var(--surface-hover);
         color: var(--text);
-        font-size: 0.95rem;
-      }
-
-      small {
-        font-size: 0.78rem;
-
-        @include bp.phone {
-          display: none;
-        }
-      }
-
-      &:hover:not(:disabled) {
-        border-color: var(--border-strong);
       }
 
       &.active {
-        border-color: var(--accent);
         background: var(--accent-soft);
         color: var(--accent-foreground);
-        box-shadow: 0 0 0 1px var(--accent);
       }
 
       &:disabled {
         cursor: not-allowed;
-        opacity: 0.55;
+        opacity: 0.5;
       }
+    }
 
-      @include bp.phone {
-        gap: 0.5rem;
-        padding: 0.7rem 0.75rem;
-      }
+    @include bp.phone {
+      width: 100%;
     }
   }
 
-  // ---- layout ----
+  // ---- layout: input and history left, result right; one column on small screens ----
 
   .scan-layout {
     display: grid;
@@ -122,7 +137,6 @@
     align-items: start;
     gap: 1rem;
 
-    // one column: the result right below the camera, the history last
     @include bp.tablet {
       grid-template-columns: minmax(0, 1fr);
 
@@ -153,7 +167,7 @@
   .scanner-card {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.6rem;
 
     .scan-field {
       position: relative;
@@ -162,7 +176,7 @@
 
       .field-icon {
         position: absolute;
-        left: 1rem;
+        left: 0.85rem;
         color: var(--text-subtle);
         pointer-events: none;
       }
@@ -170,17 +184,13 @@
       // more specific than the generic `.page :is(input...)` rule, so this one wins
       input:not([type='checkbox']):not([type='radio']) {
         width: 100%;
-        min-height: 3.5rem;
-        padding: 0 3.5rem 0 3.2rem;
-        border: 2px solid var(--border-strong);
-        border-radius: var(--radius-md);
-        font-family: var(--font-mono);
-        font-size: 1.15rem;
-        letter-spacing: 0.02em;
+        min-height: 3rem;
+        padding: 0 3.25rem 0 2.75rem;
+        font-size: 1.05rem;
 
         &:focus {
           border-color: var(--accent);
-          box-shadow: 0 0 0 4px var(--accent-soft);
+          box-shadow: 0 0 0 3px var(--accent-soft);
         }
       }
 
@@ -192,9 +202,9 @@
 
       .submit {
         position: absolute;
-        right: 0.5rem;
-        width: 2.5rem;
-        height: 2.5rem;
+        right: 0.4rem;
+        width: 2.25rem;
+        height: 2.25rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -216,7 +226,7 @@
   // ---- camera ----
 
   .camera-off {
-    min-height: 12rem;
+    min-height: 10rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -268,25 +278,6 @@
       background: var(--surface-hover);
     }
 
-    .thumb {
-      width: 4.5rem;
-      height: 4.5rem;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      border-radius: var(--radius-sm);
-      background: var(--surface-active);
-      color: var(--text-subtle);
-
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-    }
-
     .info {
       flex: 1;
       min-width: 0;
@@ -308,6 +299,27 @@
     .go {
       flex-shrink: 0;
       color: var(--text-subtle);
+    }
+  }
+
+  // thumbnail of a hit, in the result card and over the camera
+  .thumb,
+  .result-image {
+    width: 4.5rem;
+    height: 4.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--surface-active);
+    color: var(--text-subtle);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 
@@ -362,7 +374,12 @@
 
     a {
       color: var(--text);
-      font-weight: 700;
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover {
+        color: var(--accent-foreground);
+      }
     }
 
     code {
@@ -394,9 +411,10 @@
     }
 
     &.placeholder {
-      min-height: 16rem;
+      min-height: 12rem;
       flex-direction: column;
       justify-content: center;
+      gap: 0.4rem;
       border-style: dashed;
       color: var(--text-subtle);
       text-align: center;
@@ -406,7 +424,7 @@
       }
 
       @include bp.tablet {
-        min-height: 9rem;
+        min-height: 7rem;
       }
     }
   }
@@ -414,58 +432,22 @@
   .result-card {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    padding: 0;
+    gap: 0.9rem;
     animation: appear 0.2s ease-out;
-
-    .result-image {
-      aspect-ratio: 16 / 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--surface-active);
-      color: var(--text-subtle);
-
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
-    }
-
-    &.compact {
-      flex-direction: row;
-
-      .result-image {
-        width: 6.5rem;
-        flex-shrink: 0;
-        aspect-ratio: 1;
-
-        @include bp.phone {
-          width: 4.5rem;
-        }
-      }
-
-      .result-body {
-        padding: 0.75rem 1rem;
-
-        @include bp.phone {
-          padding: 0.65rem 0.75rem;
-        }
-      }
-
-      h2 {
-        font-size: 1.05rem;
-      }
-    }
   }
 
-  .result-body {
+  .result-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .result-title {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    padding: 1rem 1.15rem 1.15rem;
+    align-items: flex-start;
+    gap: 0.2rem;
 
     .eyebrow {
       color: var(--text-muted);
@@ -473,15 +455,24 @@
     }
 
     h2 {
-      font-size: 1.35rem;
+      font-size: 1.2rem;
       line-height: 1.25;
       overflow-wrap: anywhere;
     }
+  }
+
+  .result-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 
     dl {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
       gap: 0.55rem 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
     }
 
     dt {
@@ -500,10 +491,6 @@
       color: var(--text-muted);
       font-size: 0.88rem;
       white-space: pre-line;
-    }
-
-    @include bp.phone {
-      padding: 0.85rem;
     }
 
     .result-actions {
