@@ -22,7 +22,8 @@ import com.jpromi.inventorycore.enums.PermissionResourceType;
  *   <li>A permission applies to one area, or to all areas when its area is {@code null}.</li>
  *   <li>A permission applies to one kind of object, or to all kinds when its resource type is {@code null}.</li>
  *   <li>An object is accessible when the action is allowed in at least one of its areas.</li>
- *   <li>Viewing is inherited: whoever may view a location also sees its sub-locations and all assets in them.</li>
+ *   <li>Viewing is inherited: whoever may view a location also sees its sub-locations and all assets in them,
+ *       except for shared locations, whose contents are only visible through their own areas.</li>
  *   <li>Users with the ADMIN role may do everything.</li>
  * </ul>
  */
@@ -82,16 +83,18 @@ public class AccessContext {
         }
         // guards against cycles in the location tree
         locationViewCache.put(location.getId(), false);
-        // a visible parent makes all of its children visible
+        // a visible parent makes all of its children visible, unless it is shared by several areas
+        Location parent = location.getParentLocation();
         boolean visible = can(PermissionResourceType.LOCATION, PermissionAction.VIEW, location.getAreas())
-            || (location.getParentLocation() != null && canViewLocation(location.getParentLocation()));
+            || (parent != null && !parent.isShared() && canViewLocation(parent));
         locationViewCache.put(location.getId(), visible);
         return visible;
     }
 
     public boolean canViewAsset(Asset asset) {
+        // in a shared location an asset is only visible through its own areas
         return can(PermissionResourceType.ASSET, PermissionAction.VIEW, asset.getAreas())
-            || (asset.getLocation() != null && canViewLocation(asset.getLocation()));
+            || (asset.getLocation() != null && !asset.getLocation().isShared() && canViewLocation(asset.getLocation()));
     }
 
     public boolean canViewAssetType(AssetType type) {

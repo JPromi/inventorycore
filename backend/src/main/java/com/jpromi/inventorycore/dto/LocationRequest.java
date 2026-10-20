@@ -18,5 +18,7 @@ public record LocationRequest(
     Double longitude,
     UUID parentLocationUuid,
     List<LocationImageRequest> images,
-    Set<UUID> areaUuids
+    Set<UUID> areaUuids,
+    /** null keeps the current value (older clients) */
+    Boolean shared
 ) {}

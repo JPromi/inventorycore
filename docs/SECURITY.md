@@ -16,7 +16,7 @@ Only `GET /api/customization` and `GET /api/customization/logo` are anonymous br
 
 The request filter requires `ROLE_ADMIN` for `/api/admin/**` and authentication for every other `/api/**` path except the public login, health, and customization reads. Paths outside `/api` are public because they are the bundled Angular app (static files and client routes); never add a backend endpoint outside `/api`. A user is an admin through its role or membership in an admin-marked group; session authorities are established at login. Other domain operations use `PermissionService` and `AccessContext` to evaluate current group permissions. Do not assume every existing admin session is immediately revoked when group membership changes.
 
-Permissions support view, create, edit, inspect, delete, and admin actions for `ASSET`, `LOCATION`, or `ASSET_TYPE`. A null resource type or area broadens the grant to all types or areas. An object may be accessible through any of its areas. View access to a location extends to descendant locations and their assets; this does not automatically grant mutation rights.
+Permissions support view, create, edit, inspect, delete, and admin actions for `ASSET`, `LOCATION`, or `ASSET_TYPE`. A null resource type or area broadens the grant to all types or areas. An object may be accessible through any of its areas. View access to a location extends to descendant locations and their assets; this does not automatically grant mutation rights. A location marked as shared (`shared`, "Gemeinsamer Standort") does not pass its visibility on: sub-locations and assets in it are visible only through their own areas, so areas using one store room see only their own things there. Location responses list only the sub-locations and assets the reader may see. Changing the flag on an existing location needs EDIT in every area of the location, since it decides what the other areas see.
 
 Frontend guards and permission-based action visibility improve UX, but backend checks remain authoritative: every endpoint must refuse what the UI hides. When adding an endpoint, check the action against the object's areas on the server before reading or changing anything, and keep the frontend's `PermissionService` mirror in line. The configuration menu and its pages (statuses, tags, types, labels, inspection templates; `configGuard`) appear only for users who may create or edit asset types in at least one area (`PermissionService.canConfigure`), the right the backend requires for maintaining all of them; the read-only type detail page stays reachable from assets.
 
@@ -26,7 +26,7 @@ Frontend guards and permission-based action visibility improve UX, but backend c
 
 | Object / operation | Rule |
 | --- | --- |
-| Assets, locations, asset types: view, lists, `/page` lists | VIEW in any area; locations and assets also through a visible (parent) location. Lists and searches are filtered after this check, so totals never count hidden objects. |
+| Assets, locations, asset types: view, lists, `/page` lists | VIEW in any area; locations and assets also through a visible (parent) location that is not shared. Lists and searches are filtered after this check, so totals never count hidden objects. |
 | Create | CREATE in **every** chosen area; referenced parent, location, type must be visible. |
 | Edit | EDIT in any current area, plus EDIT in every area that is added or removed. |
 | Delete | DELETE in any area. Soft-deleted objects answer 404 for reads and changes. |

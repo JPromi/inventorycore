@@ -113,7 +113,7 @@ public class InventoryListService {
             .filter(location -> Paging.matches(terms, location.getName(), location.getAddress(), location.getDescription()))
             .sorted(Comparator.comparing(Location::getName, BY_NAME))
             .toList();
-        return Paging.page(matches, page, size, mapper::toResponse);
+        return Paging.page(matches, page, size, location -> mapper.toResponse(location, access));
     }
 
     public PageResponse<AssetTypeResponse> assetTypes(

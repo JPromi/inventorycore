@@ -97,6 +97,12 @@
                   </dd>
                 </div>
               }
+              @if (config.endpoint === 'locations' && item.shared) {
+                <div class="wide">
+                  <dt>{{ 'inventoryDetail.fields.shared' | t }}</dt>
+                  <dd>{{ 'inventoryDetail.sharedHint' | t }}</dd>
+                </div>
+              }
               <div>
                 <dt>{{ 'terms.areas' | t }}</dt>
                 <dd>

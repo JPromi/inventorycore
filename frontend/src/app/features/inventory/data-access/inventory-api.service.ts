@@ -42,6 +42,8 @@ export interface InventoryItem {
   assetUuids?: string[];
   createdAt?: string | null;
   areaUuids?: string[];
+  /** locations: used by several areas; seeing it does not show what the other areas keep in it */
+  shared?: boolean;
   /** assets: current status; the history is loaded separately */
   status?: AssetStatus | null;
   statusChangedAt?: string | null;
@@ -77,6 +79,8 @@ export interface InventoryRequest {
   images?: InventoryImage[];
   tagUuids?: string[];
   areaUuids?: string[];
+  /** locations: see InventoryItem.shared */
+  shared?: boolean;
   /** assets: new status (null keeps it) and the comment for its history */
   statusUuid?: string | null;
   statusComment?: string | null;

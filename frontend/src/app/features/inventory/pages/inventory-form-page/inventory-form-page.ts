@@ -332,6 +332,7 @@ export class InventoryFormPage implements OnInit {
           assetTypeUuid: item.assetTypeUuid ?? null,
           locationUuid: item.locationUuid ?? null,
           parentLocationUuid: item.parentLocationUuid ?? null,
+          shared: item.shared ?? false,
           parentAssetUuid: item.parentAssetUuid ?? null,
           parentAssetNote: item.parentAssetNote ?? '',
           inspectionPolicy: item.inspectionPolicy ?? 'STANDARD',
@@ -391,6 +392,7 @@ export class InventoryFormPage implements OnInit {
       assetTypeUuid: null,
       locationUuid: null,
       parentLocationUuid: null,
+      shared: false,
       parentAssetUuid: null,
       parentAssetNote: '',
       inspectionPolicy: 'STANDARD',
@@ -438,6 +440,7 @@ export class InventoryFormPage implements OnInit {
     return {
       ...request,
       ...status,
+      shared: this.config.endpoint === 'locations' ? !!request.shared : undefined,
       invId: request.invId || undefined,
       description: request.description || null,
       locationType: this.config.locationType ? (request.locationType ?? 'OTHER') : undefined,

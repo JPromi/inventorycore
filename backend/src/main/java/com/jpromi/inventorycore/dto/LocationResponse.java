@@ -23,5 +23,6 @@ public record LocationResponse(
     OffsetDateTime createdAt,
     OffsetDateTime deletedAt,
     boolean deleted,
-    List<UUID> areaUuids
+    List<UUID> areaUuids,
+    boolean shared
 ) {}
