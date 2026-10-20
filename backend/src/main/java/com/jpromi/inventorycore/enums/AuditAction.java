@@ -13,5 +13,10 @@ public enum AuditAction {
     /** Inspection completed. */
     COMPLETE,
     /** LDAP synchronization and similar runs. */
-    SYNC
+    SYNC,
+    /** Sign-in (object: the user), with way of signing in, IP address and user agent. */
+    LOGIN,
+    /** Rejected sign-in (object: the account with that user name, if there is one). */
+    LOGIN_FAILED,
+    LOGOUT
 }

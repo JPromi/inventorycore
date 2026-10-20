@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -29,6 +32,7 @@ import com.jpromi.inventorycore.entity.OidcSettings;
 import com.jpromi.inventorycore.repository.AppUserRepository;
 import com.jpromi.inventorycore.repository.OidcSettingsRepository;
 import com.jpromi.inventorycore.service.ApiMapper;
+import com.jpromi.inventorycore.service.LoginAuditService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -38,14 +42,17 @@ public class AuthController {
     private final AppUserRepository userRepository;
     private final ApiMapper mapper;
     private final OidcSettingsRepository oidcSettingsRepository;
+    private final LoginAuditService loginAudit;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     public AuthController(
         AuthenticationManager authenticationManager,
         AppUserRepository userRepository,
         ApiMapper mapper,
-        OidcSettingsRepository oidcSettingsRepository
+        OidcSettingsRepository oidcSettingsRepository,
+        LoginAuditService loginAudit
     ) {
+        this.loginAudit = loginAudit;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.mapper = mapper;
@@ -90,6 +97,7 @@ public class AuthController {
                 .map(authority -> authority.replace("ROLE_", ""))
                 .orElse("USER");
             User user = resolveUser(authentication);
+            loginAudit.signedIn(user, LoginAuditService.methodOf(user), httpRequest);
 
             return ResponseEntity.ok(AuthResponse.builder()
                 .authenticated(true)
@@ -104,7 +112,9 @@ public class AuthController {
                     .map(mapper::toResponse)
                     .collect(Collectors.toSet()))
                 .build());
-        } catch (BadCredentialsException exception) {
+        } catch (AuthenticationException exception) {
+            loginAudit.failed(request.getUsername(), null, failureReason(exception), httpRequest);
+            // the same answer for every reason, so it does not tell which accounts exist
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthResponse.builder()
                 .authenticated(false)
                 .username(null)
@@ -161,9 +171,26 @@ public class AuthController {
             .orElse("USER");
     }
 
+    /** Language-neutral reason of a failed sign-in for the activity log. */
+    private static String failureReason(AuthenticationException exception) {
+        if (exception instanceof BadCredentialsException) {
+            return "BAD_CREDENTIALS";
+        }
+        if (exception instanceof DisabledException) {
+            return "DISABLED";
+        }
+        if (exception instanceof LockedException) {
+            return "LOCKED";
+        }
+        return "ERROR";
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            userRepository.findByUsername(authentication.getName()).ifPresent(user -> loginAudit.signedOut(user, request));
+        }
         if (authentication != null) {
             new SecurityContextLogoutHandler().logout(request, response, authentication);
         }

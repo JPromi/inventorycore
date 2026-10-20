@@ -144,6 +144,9 @@
           </button>
         </div>
       </form>
+      @if (uuid) {
+        <app-user-logins [userUuid]="uuid" />
+      }
     }
   </div>
 </section>

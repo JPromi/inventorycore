@@ -30,7 +30,8 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 
 | Routes | Responsibility / source controller |
 | --- | --- |
-| `/auth`, `/auth/me`, `/auth/providers`, `/auth/logout` | Session login, restoration, provider discovery, logout; `AuthController` |
+| `/auth`, `/auth/me`, `/auth/providers`, `/auth/logout` | Session login, restoration, provider discovery, logout; `AuthController`. Sign-ins, failures and sign-outs are logged via `LoginAuditService` |
+| `/admin/users/{uuid}/logins` | Sign-in history of one user (admins only); `AuditController` |
 | `/auth/me/profile-image`, `/profile-images/{uuid}` | Local profile image upload/removal and authenticated image delivery; `ProfileImageController` |
 | `/assets`, `/locations`, `/asset-types`, `/tags` | Inventory read/write operations; `InventoryController` |
 | `/areas` | Areas accessible to the current user; `AreaController` |

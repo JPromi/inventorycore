@@ -61,6 +61,7 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
     private final AppUserRepository userRepository;
     private final GroupRepository groupRepository;
     private final TransactionTemplate transaction;
+    private final com.jpromi.inventorycore.service.LoginAuditService loginAudit;
     private final SecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
 
     /** Reason for a rejected login, shown on the login page via ?error=... */
@@ -77,8 +78,10 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
         OidcSettingsRepository settingsRepository,
         AppUserRepository userRepository,
         GroupRepository groupRepository,
-        TransactionTemplate transaction
+        TransactionTemplate transaction,
+        com.jpromi.inventorycore.service.LoginAuditService loginAudit
     ) {
+        this.loginAudit = loginAudit;
         this.settingsRepository = settingsRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -99,8 +102,10 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
 
         try {
             // the role needs the user's groups, so it is read inside the transaction
+            User[] signedIn = new User[1];
             String[] login = transaction.execute(status -> {
                 User user = resolveUser(settings, claims);
+                signedIn[0] = user;
                 return new String[] { user.getUsername(), user.effectiveRole() };
             });
             Authentication session = UsernamePasswordAuthenticationToken.authenticated(
@@ -109,8 +114,11 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
             context.setAuthentication(session);
             SecurityContextHolder.setContext(context);
             contextRepository.saveContext(context, request, response);
+            loginAudit.signedIn(signedIn[0], com.jpromi.inventorycore.service.LoginAuditService.Method.OIDC, request);
             response.sendRedirect(frontendUrl(settings, "/"));
         } catch (Rejected rejected) {
+            String username = firstNonBlank(claim(claims, settings.getUsernameClaim()), claim(claims, "preferred_username"), claim(claims, "email"));
+            loginAudit.failed(username, com.jpromi.inventorycore.service.LoginAuditService.Method.OIDC, rejected.code.toUpperCase(java.util.Locale.ROOT), request);
             reject(request, response, settings, rejected.code);
         }
     }
@@ -118,6 +126,7 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
         log.warn("OIDC login failed: {}", exception.getMessage());
+        loginAudit.failed(null, com.jpromi.inventorycore.service.LoginAuditService.Method.OIDC, "OIDC_FAILED", request);
         reject(request, response, settingsRepository.load(), "oidc_failed");
     }
 

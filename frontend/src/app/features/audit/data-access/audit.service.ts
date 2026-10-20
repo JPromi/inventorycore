@@ -6,12 +6,23 @@ import { environment } from '../../../../environments/environment';
 import { t } from '../../../core/i18n/i18n';
 
 export type AuditAction =
-  'CREATE' | 'UPDATE' | 'DELETE' | 'SCAN' | 'INSPECT' | 'PHOTO' | 'COMPLETE' | 'SYNC';
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'SCAN'
+  | 'INSPECT'
+  | 'PHOTO'
+  | 'COMPLETE'
+  | 'SYNC'
+  | 'LOGIN'
+  | 'LOGIN_FAILED'
+  | 'LOGOUT';
 export type AuditObjectType =
   | 'ASSET'
   | 'LOCATION'
   | 'ASSET_TYPE'
   | 'TAG'
+  | 'ASSET_STATUS'
   | 'INSPECTION'
   | 'INSPECTION_TYPE'
   | 'LABEL_TEMPLATE'
@@ -81,6 +92,9 @@ export const AUDIT_ACTIONS: { value: AuditAction; label: string }[] = [
   { value: 'PHOTO', label: t('audit.actions.PHOTO') },
   { value: 'COMPLETE', label: t('audit.actions.COMPLETE') },
   { value: 'SYNC', label: t('audit.actions.SYNC') },
+  { value: 'LOGIN', label: t('audit.actions.LOGIN') },
+  { value: 'LOGIN_FAILED', label: t('audit.actions.LOGIN_FAILED') },
+  { value: 'LOGOUT', label: t('audit.actions.LOGOUT') },
 ];
 
 export const AUDIT_OBJECT_TYPES: { value: AuditObjectType; label: string }[] = [
@@ -88,6 +102,7 @@ export const AUDIT_OBJECT_TYPES: { value: AuditObjectType; label: string }[] = [
   { value: 'LOCATION', label: t('terms.location') },
   { value: 'ASSET_TYPE', label: t('terms.assetType') },
   { value: 'TAG', label: t('terms.tag') },
+  { value: 'ASSET_STATUS', label: t('audit.objectTypes.ASSET_STATUS') },
   { value: 'INSPECTION', label: t('terms.inspection') },
   { value: 'INSPECTION_TYPE', label: t('terms.inspectionTemplate') },
   { value: 'LABEL_TEMPLATE', label: t('audit.objectTypes.LABEL_TEMPLATE') },
@@ -150,6 +165,15 @@ export class AuditService {
       }
     }
     return this.http.get<AuditLogPage>(`${this.apiUrl}/audit-logs`, { ...this.options, params });
+  }
+
+  /** Sign-ins, failed sign-ins and sign-outs of one user (admins only), newest first. */
+  userLogins(uuid: string, page = 0, size = 20): Observable<AuditLogPage> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<AuditLogPage>(`${this.apiUrl}/admin/users/${uuid}/logins`, {
+      ...this.options,
+      params,
+    });
   }
 
   /** History of one asset or location. */

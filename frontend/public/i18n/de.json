@@ -411,6 +411,16 @@
       "save": "Das Speichern ist fehlgeschlagen. Möglicherweise ist der Benutzername bereits vergeben.",
       "delete": "Benutzer konnte nicht gelöscht werden.",
       "notFound": "Benutzer wurde nicht gefunden."
+    },
+    "logins": {
+      "title": "Anmeldungen",
+      "hint": "Anmeldungen, fehlgeschlagene Versuche und Abmeldungen mit IP-Adresse und Browser, neueste zuerst.",
+      "signedIn": "Angemeldet",
+      "signedOut": "Abgemeldet",
+      "failed": "Anmeldung fehlgeschlagen",
+      "empty": "Noch keine Anmeldungen erfasst.",
+      "more": "Ältere anzeigen",
+      "loadError": "Die Anmeldungen konnten nicht geladen werden."
     }
   },
   "adminGroups": {
@@ -1860,12 +1870,16 @@
       "INSPECT": "Geprüft",
       "PHOTO": "Foto",
       "COMPLETE": "Abgeschlossen",
-      "SYNC": "Synchronisiert"
+      "SYNC": "Synchronisiert",
+      "LOGIN": "Angemeldet",
+      "LOGIN_FAILED": "Anmeldung fehlgeschlagen",
+      "LOGOUT": "Abgemeldet"
     },
     "objectTypes": {
       "LABEL_TEMPLATE": "Label-Vorlage",
       "PERMISSION": "Berechtigung",
-      "SETTINGS": "Einstellungen"
+      "SETTINGS": "Einstellungen",
+      "ASSET_STATUS": "Status"
     },
     "fields": {
       "name": "Name",
@@ -1947,7 +1961,9 @@
       "autoCreateUsers": "Benutzer automatisch anlegen",
       "syncGroups": "Gruppen übernehmen",
       "crossProviderLogin": "Anmeldung über andere Anbieter",
-      "publicUrl": "Öffentliche URL"
+      "publicUrl": "Öffentliche URL",
+      "status": "Status",
+      "category": "Verhalten"
     },
     "values": {
       "true": "Ja",
@@ -2033,6 +2049,27 @@
       "assetTypes": "Typen: {names}",
       "areas": "Bereiche: {names}",
       "onlyDue": "Nur fällige Assets"
+    },
+    "signIn": {
+      "method": "Anmeldung über {method}",
+      "ip": "IP-Adresse: {ip}",
+      "device": "Browser: {device}",
+      "methods": {
+        "LOCAL": "Benutzername und Passwort",
+        "LDAP": "LDAP / Active Directory",
+        "OIDC": "Single Sign-on (OIDC)"
+      },
+      "reasons": {
+        "BAD_CREDENTIALS": "Benutzername oder Passwort falsch",
+        "DISABLED": "Konto deaktiviert",
+        "LOCKED": "Konto gesperrt",
+        "OIDC_LOCAL_USER": "Lokales Konto, Anmeldung per SSO nicht erlaubt",
+        "OIDC_UNKNOWN_USER": "Unbekannter Benutzer, automatisches Anlegen ist aus",
+        "OIDC_PROVIDER_MISMATCH": "Konto stammt aus einer anderen Quelle",
+        "OIDC_DISABLED_USER": "Konto deaktiviert",
+        "OIDC_NO_USERNAME": "Der Identity Provider hat keinen Benutzernamen geliefert",
+        "ERROR": "Anmeldung fehlgeschlagen"
+      }
     }
   },
   "dashboard": {

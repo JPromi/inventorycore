@@ -1,5 +1,6 @@
 import { hasText, t, tn } from '../../../core/i18n/i18n';
 import { LOCATION_TYPES } from '../../../shared/util/location-types';
+import { describeUserAgent } from '../../../shared/util/user-agent';
 import { AuditDetail, AuditPermission } from './audit.service';
 
 /*
@@ -161,6 +162,10 @@ function eventLines(code: string, params: Record<string, unknown>): string[] {
             }),
           ]
         : [t('audit.events.error', { error: p('error') })];
+    case 'SIGN_IN':
+    case 'SIGN_IN_FAILED':
+    case 'SIGN_OUT':
+      return signInLines(code, params);
     case 'TEXT':
       // entries written before the log was language neutral
       return p('text').split('\n');
@@ -238,4 +243,60 @@ function permissionText(permission: AuditPermission): string {
 function formatDate(iso: string): string {
   const [year, month, day] = iso.split('-');
   return year && month && day ? `${day}.${month}.${year}` : iso;
+}
+
+/** How someone signed in (or tried to), from where and with which browser. */
+export function signInLines(code: string, params: Record<string, unknown>): string[] {
+  const text = (key: string) => (params[key] == null ? '' : String(params[key]));
+  const lines: string[] = [];
+  if (code === 'SIGN_IN_FAILED') {
+    lines.push(signInReason(text('reason')));
+  }
+  if (params['method']) {
+    lines.push(t('audit.signIn.method', { method: signInMethod(text('method')) }));
+  }
+  if (params['ip']) {
+    lines.push(t('audit.signIn.ip', { ip: text('ip') }));
+  }
+  if (params['userAgent']) {
+    lines.push(t('audit.signIn.device', { device: describeUserAgent(text('userAgent')) ?? text('userAgent') }));
+  }
+  return lines;
+}
+
+export function signInMethod(method: string): string {
+  switch (method) {
+    case 'LOCAL':
+      return t('audit.signIn.methods.LOCAL');
+    case 'LDAP':
+      return t('audit.signIn.methods.LDAP');
+    case 'OIDC':
+      return t('audit.signIn.methods.OIDC');
+    default:
+      return method;
+  }
+}
+
+/** Reasons from the password sign-in; OIDC rejections use the codes of the login page. */
+export function signInReason(reason: string): string {
+  switch (reason) {
+    case 'BAD_CREDENTIALS':
+      return t('audit.signIn.reasons.BAD_CREDENTIALS');
+    case 'DISABLED':
+      return t('audit.signIn.reasons.DISABLED');
+    case 'LOCKED':
+      return t('audit.signIn.reasons.LOCKED');
+    case 'OIDC_LOCAL_USER':
+      return t('audit.signIn.reasons.OIDC_LOCAL_USER');
+    case 'OIDC_UNKNOWN_USER':
+      return t('audit.signIn.reasons.OIDC_UNKNOWN_USER');
+    case 'OIDC_PROVIDER_MISMATCH':
+      return t('audit.signIn.reasons.OIDC_PROVIDER_MISMATCH');
+    case 'OIDC_DISABLED_USER':
+      return t('audit.signIn.reasons.OIDC_DISABLED_USER');
+    case 'OIDC_NO_USERNAME':
+      return t('audit.signIn.reasons.OIDC_NO_USERNAME');
+    default:
+      return t('audit.signIn.reasons.ERROR');
+  }
 }
