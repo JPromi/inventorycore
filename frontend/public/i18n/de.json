@@ -1716,7 +1716,7 @@
     "customization": "Erscheinungsbild",
     "users": "Benutzer",
     "groups": "Gruppen",
-    "groupPermissions": "Gruppenberechtigungen",
+    "groupPermissions": "Berechtigungen",
     "ldap": "LDAP",
     "oidc": "OIDC",
     "logs": "Protokoll",
