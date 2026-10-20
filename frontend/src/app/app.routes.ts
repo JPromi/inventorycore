@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LucideBoxes, LucideMapPin, LucideShapes } from '@lucide/angular';
 
 import { adminGuard } from './core/guards/admin.guard';
+import { configGuard } from './core/guards/config.guard';
 import { t } from './core/i18n/i18n';
 import { AuthGuard } from './core/guards/auth.guard';
 import { LoginRedirectGuard } from './core/guards/login-redirect.guard';
@@ -223,6 +224,7 @@ export const routes: Routes = [
       // Konfiguration
       {
         path: 'config/types',
+        canActivate: [configGuard],
         component: InventoryPage,
         data: {
           inventoryConfig: {
@@ -244,11 +246,13 @@ export const routes: Routes = [
       },
       {
         path: 'config/types/new',
+        canActivate: [configGuard],
         component: InventoryFormPage,
         data: { inventoryFormConfig: assetTypeFormConfig },
       },
       {
         path: 'config/types/:uuid/edit',
+        canActivate: [configGuard],
         component: InventoryFormPage,
         data: { inventoryFormConfig: assetTypeFormConfig },
       },
@@ -294,6 +298,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/inspection-templates',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/inspections/pages/inspection-types-page/inspection-types-page').then(
             (m) => m.InspectionTypesPage,
@@ -316,6 +321,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/inspection-templates/new',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/inspections/pages/inspection-type-editor-page/inspection-type-editor-page').then(
             (m) => m.InspectionTypeEditorPage,
@@ -323,6 +329,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/inspection-templates/:uuid',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/inspections/pages/inspection-type-editor-page/inspection-type-editor-page').then(
             (m) => m.InspectionTypeEditorPage,
@@ -335,6 +342,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/statuses',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/asset-statuses/pages/asset-statuses-page/asset-statuses-page').then(
             (m) => m.AssetStatusesPage,
@@ -342,12 +350,14 @@ export const routes: Routes = [
       },
       {
         path: 'config/tags',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/tags/pages/tags-page/tags-page').then((m) => m.TagsPage),
       },
 
       {
         path: 'config/labels',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/labels/pages/label-templates-page/label-templates-page').then(
             (m) => m.LabelTemplatesPage,
@@ -355,6 +365,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/labels/new',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/labels/pages/label-editor-page/label-editor-page').then(
             (m) => m.LabelEditorPage,
@@ -362,6 +373,7 @@ export const routes: Routes = [
       },
       {
         path: 'config/labels/:uuid/edit',
+        canActivate: [configGuard],
         loadComponent: () =>
           import('./features/labels/pages/label-editor-page/label-editor-page').then(
             (m) => m.LabelEditorPage,

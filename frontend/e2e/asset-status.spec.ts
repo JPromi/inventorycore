@@ -170,3 +170,17 @@ test('the form sets the status and asks for a comment only when it changes', asy
   await expect.poll(() => calls.saved.length).toBe(1);
   expect(calls.saved[0]).toMatchObject({ statusUuid: 'defect', statusComment: 'Flaschenventil undicht' });
 });
+
+test('the status configuration scrolls on phones', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 640 });
+  await mockApi(page);
+  await page.goto('/config/statuses');
+  const scroller = page.locator('app-asset-statuses-page .page');
+  await expect(page.locator('.status-list.editable li')).toHaveCount(2);
+  const size = await scroller.evaluate((element) => ({ scroll: element.scrollHeight, client: element.clientHeight }));
+  expect(size.scroll).toBeGreaterThan(size.client);
+  await scroller.hover();
+  await page.mouse.wheel(0, 2000);
+  await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect(page.getByRole('heading', { name: 'Verhalten' })).toBeInViewport();
+});

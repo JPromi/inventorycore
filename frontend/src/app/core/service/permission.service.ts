@@ -44,6 +44,14 @@ export class PermissionService {
     );
   }
 
+  /**
+   * May maintain the configuration (types, tags, statuses, labels, inspection templates): create
+   * or edit types in at least one area, as the backend requires for all of them.
+   */
+  get canConfigure(): boolean {
+    return this.can('ASSET_TYPE', 'create') || this.can('ASSET_TYPE', 'edit');
+  }
+
   /** The logged-in user's UUID. */
   get userUuid(): string | null {
     return this.authState.getCurrentUser()?.uuid ?? null;

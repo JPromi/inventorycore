@@ -32,6 +32,8 @@ export type NavItem = NavChild & {
   icon?: LucideIcon;
   disabled?: boolean;
   adminOnly?: boolean;
+  /** only for users who may maintain the configuration (see PermissionService.canConfigure) */
+  configOnly?: boolean;
   children?: NavChild[];
 };
 
@@ -45,6 +47,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     label: t('nav.config'),
     icon: LucideSettings,
     disabled: false,
+    configOnly: true,
     children: [
       { label: t('nav.tags'), route: '/config/tags', icon: LucideTags },
       { label: t('nav.statuses'), route: '/config/statuses', icon: LucideCircleDot },

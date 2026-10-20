@@ -18,7 +18,7 @@ The request filter requires `ROLE_ADMIN` for `/api/admin/**` and authentication 
 
 Permissions support view, create, edit, inspect, delete, and admin actions for `ASSET`, `LOCATION`, or `ASSET_TYPE`. A null resource type or area broadens the grant to all types or areas. An object may be accessible through any of its areas. View access to a location extends to descendant locations and their assets; this does not automatically grant mutation rights.
 
-Frontend guards and permission-based action visibility improve UX, but backend checks remain authoritative: every endpoint must refuse what the UI hides. When adding an endpoint, check the action against the object's areas on the server before reading or changing anything, and keep the frontend's `PermissionService` mirror in line.
+Frontend guards and permission-based action visibility improve UX, but backend checks remain authoritative: every endpoint must refuse what the UI hides. When adding an endpoint, check the action against the object's areas on the server before reading or changing anything, and keep the frontend's `PermissionService` mirror in line. The configuration menu and its pages (statuses, tags, types, labels, inspection templates; `configGuard`) appear only for users who may create or edit asset types in at least one area (`PermissionService.canConfigure`), the right the backend requires for maintaining all of them; the read-only type detail page stays reachable from assets.
 
 ## Permission Rules
 
