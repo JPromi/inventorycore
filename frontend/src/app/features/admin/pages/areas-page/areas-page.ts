@@ -17,6 +17,7 @@ import {
   SelectableRow,
   SelectionCheckbox,
 } from '../../../../shared/components/list-actions/list-actions';
+import { ColorPicker } from '../../../../shared/components/color-picker/color-picker';
 import { InfiniteScroll } from '../../../../shared/components/infinite-scroll.directive';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -24,20 +25,13 @@ import { AdminApiService, AdminAreaRequest } from '../../data-access/admin-api.s
 import { AreaItem, AreaService } from '../../../../core/service/area.service';
 import { PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
 
-const COLORS = [
-  '#b62f2f',
-  '#d97706',
-  '#15803d',
-  '#0f766e',
-  '#2563eb',
-  '#7c3aed',
-  '#db2777',
-  '#475569',
-];
+/** New areas start with blue, so they differ from the red default area. */
+const NEW_AREA_COLOR = '#2563eb';
 
 @Component({
   selector: 'app-areas-page',
   imports: [
+    ColorPicker,
     InfiniteScroll,
     ListActions,
     SelectableRow,
@@ -59,7 +53,6 @@ const COLORS = [
 export class AreasPage implements OnInit, OnDestroy {
   protected readonly canBulkDelete = (item: AreaItem) => !item.defaultArea;
   protected readonly bulkDelete = (item: AreaItem) => this.api.deleteArea(item.uuid);
-  protected readonly colors = COLORS;
   /** Searched on the server, loaded page by page while scrolling. */
   protected readonly list = new PagedList<AreaItem>((page, size) =>
     this.api.areaPage(this.search, page, size),
@@ -192,6 +185,6 @@ export class AreasPage implements OnInit, OnDestroy {
   }
 
   private emptyForm(): AdminAreaRequest {
-    return { name: '', description: '', color: COLORS[4], defaultArea: false };
+    return { name: '', description: '', color: NEW_AREA_COLOR, defaultArea: false };
   }
 }

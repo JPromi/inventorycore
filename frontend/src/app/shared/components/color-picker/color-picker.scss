@@ -33,7 +33,7 @@
     height: 1.5rem;
     border-radius: var(--radius-sm);
 
-    &.empty {
+    &.no-color {
       @extend %no-color;
     }
   }
@@ -75,11 +75,21 @@
       padding: 0;
     }
 
+    // fixed width and one line: "Keine Farbe" must not make the field wider or taller than a hex value
     .trigger-text {
-      min-width: 4.6rem;
+      width: 5.6rem;
+      overflow: hidden;
       font-family: var(--font-mono);
       font-size: 0.82rem;
+      line-height: 1.2;
       text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      &.no-color {
+        font-family: inherit;
+        color: var(--text-muted);
+      }
     }
 
     .chevron {

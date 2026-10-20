@@ -36,34 +36,6 @@
       font-weight: 700;
     }
 
-    .colors {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-
-      @include bp.phone {
-        gap: 0.55rem;
-      }
-    }
-
-    .swatch {
-      width: 1.75rem;
-      height: 1.75rem;
-      border: 2px solid var(--surface);
-      border-radius: 50%;
-      box-shadow: 0 0 0 1px var(--border);
-      cursor: pointer;
-
-      &.active {
-        box-shadow: 0 0 0 2px var(--text);
-      }
-
-      @include bp.phone {
-        width: 2.25rem;
-        height: 2.25rem;
-      }
-    }
-
     .editor-actions {
       margin-top: 1rem;
     }

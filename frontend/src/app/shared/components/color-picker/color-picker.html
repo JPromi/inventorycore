@@ -9,9 +9,9 @@
     [attr.aria-expanded]="open"
     (click)="toggle()"
 >
-    <span class="swatch" [class.empty]="!value" [style.background]="value"></span>
+    <span class="swatch" [class.no-color]="!value" [style.background]="value"></span>
     @if (!compact) {
-        <span class="trigger-text">{{ value ? value.toUpperCase() : ('components.colorPicker.noColor' | t) }}</span>
+        <span class="trigger-text" [class.no-color]="!value">{{ value ? value.toUpperCase() : ('components.colorPicker.noColor' | t) }}</span>
         <svg class="chevron" lucideChevronDown size="15"></svg>
     }
 </button>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="hex-row">
-            <span class="preview" [class.empty]="!value" [style.background]="value"></span>
+            <span class="preview" [class.no-color]="!value" [style.background]="value"></span>
             <label class="hex-field">
                 <span>{{ 'components.colorPicker.hex' | t }}</span>
                 <input

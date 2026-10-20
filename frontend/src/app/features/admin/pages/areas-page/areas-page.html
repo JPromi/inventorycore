@@ -42,18 +42,7 @@
             <div class="field-row">
                 <div class="field">
                     <span class="field-label">{{ 'adminAreas.color' | t }}</span>
-                    <div class="colors" role="radiogroup" [attr.aria-label]="'adminAreas.color' | t">
-                        @for (color of colors; track color) {
-                            <button
-                                type="button"
-                                class="swatch"
-                                [class.active]="form.color === color"
-                                [style.background]="color"
-                                [attr.aria-label]="color"
-                                (click)="form.color = color"
-                            ></button>
-                        }
-                    </div>
+                    <app-color-picker [(ngModel)]="form.color" name="color" [label]="'adminAreas.color' | t" />
                 </div>
                 <label class="toggle">
                     <input type="checkbox" [(ngModel)]="form.defaultArea" name="defaultArea" [disabled]="editingDefault" />
