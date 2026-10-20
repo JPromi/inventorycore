@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:e2e": "playwright test",
-    "i18n:check": "node scripts/check-i18n.mjs"
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "screenshots": "playwright test -c screenshots/playwright.config.ts"
   },
   "private": true,
   "packageManager": "npm@12.0.2",
