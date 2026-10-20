@@ -60,7 +60,7 @@
 
     &.bad {
       background: var(--accent-soft);
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
 
     &.warn {
@@ -91,7 +91,7 @@
     }
 
     .no {
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
 
     @include bp.phone {

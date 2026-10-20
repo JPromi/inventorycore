@@ -1,8 +1,10 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { DestroyRef, Inject, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ThemeMode, ThemeService } from './theme.service';
 
 export interface Customization {
   brandName: string | null;
@@ -14,6 +16,9 @@ export interface Customization {
   websiteUrl: string | null;
   supportUrl: string | null;
   logoUrl: string | null;
+  darkBrandColor: string | null;
+  darkLogoUrl: string | null;
+  advancedThemeEnabled: boolean;
 }
 
 const DEFAULTS: Customization = {
@@ -26,6 +31,9 @@ const DEFAULTS: Customization = {
   websiteUrl: null,
   supportUrl: null,
   logoUrl: null,
+  darkBrandColor: null,
+  darkLogoUrl: null,
+  advancedThemeEnabled: false,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -37,7 +45,11 @@ export class CustomizationService {
   constructor(
     private readonly http: HttpClient,
     @Inject(DOCUMENT) private readonly document: Document,
-  ) {}
+    private readonly theme: ThemeService,
+    destroyRef: DestroyRef,
+  ) {
+    theme.effective$.pipe(takeUntilDestroyed(destroyRef)).subscribe(() => this.applyBrand());
+  }
 
   get brandName(): string {
     return this.settings.brandName || 'InventoryCore';
@@ -45,8 +57,14 @@ export class CustomizationService {
   get labelColor(): string {
     return (
       this.settings.brandColor ||
-      getComputedStyle(this.document.body).getPropertyValue('--accent').trim()
+      getComputedStyle(this.document.body).getPropertyValue('--theme-light-brand-default').trim()
     );
+  }
+
+  get logoUrl(): string | null {
+    return this.theme.effective === 'dark' && this.settings.advancedThemeEnabled
+      ? this.settings.darkLogoUrl || this.settings.logoUrl
+      : this.settings.logoUrl;
   }
 
   load(fallback = true) {
@@ -62,17 +80,21 @@ export class CustomizationService {
       .pipe(tap((settings) => this.apply(settings)));
   }
 
-  uploadLogo(file: File) {
+  uploadLogo(file: File, mode: ThemeMode = 'light') {
     const data = new FormData();
     data.append('file', file);
     return this.http
-      .post<Customization>(`${this.url}/logo`, data, this.options)
+      .post<Customization>(
+        `${this.url}/logo${mode === 'dark' ? '?mode=dark' : ''}`,
+        data,
+        this.options,
+      )
       .pipe(tap((settings) => this.apply(settings)));
   }
 
-  removeLogo() {
+  removeLogo(mode: ThemeMode = 'light') {
     return this.http
-      .delete<Customization>(`${this.url}/logo`, this.options)
+      .delete<Customization>(`${this.url}/logo${mode === 'dark' ? '?mode=dark' : ''}`, this.options)
       .pipe(tap((settings) => this.apply(settings)));
   }
 
@@ -91,10 +113,25 @@ export class CustomizationService {
 
   private apply(value: Customization): void {
     this.settings = { ...DEFAULTS, ...value };
+    this.applyBrand();
+    this.document.title = this.brandName;
+  }
+
+  private applyBrand(): void {
     const style = this.document.body.style;
-    const color = this.settings.brandColor;
+    const configuredColor =
+      this.theme.effective === 'dark' && this.settings.advancedThemeEnabled
+        ? this.settings.darkBrandColor || this.settings.brandColor
+        : this.settings.brandColor;
+    const color =
+      configuredColor ||
+      getComputedStyle(this.document.body).getPropertyValue('--default-brand-color').trim();
     if (color && /^#[0-9a-f]{6}$/i.test(color)) {
-      style.setProperty('--brand-color', color);
+      if (configuredColor) {
+        style.setProperty('--brand-color', color);
+      } else {
+        style.removeProperty('--brand-color');
+      }
       style.setProperty('--brand-on-color', this.textColor(color));
       const hoverStrength =
         parseFloat(
@@ -106,7 +143,12 @@ export class CustomizationService {
       style.removeProperty('--brand-on-color');
       style.removeProperty('--brand-on-hover-color');
     }
-    this.document.title = this.brandName;
+    this.document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        'content',
+        getComputedStyle(this.document.body).getPropertyValue('--background').trim(),
+      );
   }
 
   private textColor(color: string, strength = 1): string {

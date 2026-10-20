@@ -81,7 +81,7 @@
       &.active {
         border-color: var(--accent);
         background: var(--accent-soft);
-        color: var(--accent);
+        color: var(--accent-foreground);
         box-shadow: 0 0 0 1px var(--accent);
       }
     }

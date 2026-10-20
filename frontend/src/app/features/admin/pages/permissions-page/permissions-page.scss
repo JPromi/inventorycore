@@ -31,7 +31,7 @@
 
       .hint.warn {
         margin-right: auto;
-        color: var(--accent);
+        color: var(--accent-foreground);
 
         @include bp.phone {
           flex-basis: 100%;
@@ -62,7 +62,7 @@
       text-decoration: none;
 
       &:hover {
-        color: var(--accent);
+        color: var(--accent-foreground);
         text-decoration: underline;
       }
     }

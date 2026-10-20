@@ -102,7 +102,7 @@
       white-space: nowrap;
 
       &.failed {
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
 
       // phones: only errors are shown, on their own line

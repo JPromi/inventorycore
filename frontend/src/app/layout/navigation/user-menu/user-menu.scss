@@ -65,6 +65,10 @@
   }
 
   .user-menu {
+    app-theme-selector {
+      display: block;
+      margin: 0.25rem 0.35rem 0.5rem;
+    }
     width: 13rem;
     padding: 0.3rem;
     border: 1px solid var(--border);
@@ -127,7 +131,7 @@
       text-decoration: none;
     }
     a:hover {
-      color: var(--accent);
+      color: var(--accent-foreground);
       text-decoration: underline;
     }
   }

@@ -25,7 +25,7 @@
     &.filtered {
       border-color: var(--accent);
       background: var(--accent-soft);
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
 
     .text {
@@ -107,7 +107,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: var(--accent);
+        color: var(--accent-foreground);
 
         &.box {
           border: 1px solid var(--border-strong);

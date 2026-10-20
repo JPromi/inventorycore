@@ -20,7 +20,7 @@
     font-weight: 700;
 
     .required {
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
 
     .scope {
@@ -131,7 +131,7 @@
 
     &:hover {
       border-color: var(--accent);
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
   }
 

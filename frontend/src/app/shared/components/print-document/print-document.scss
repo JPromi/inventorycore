@@ -1,8 +1,12 @@
+@use 'themes';
+
 // No view encapsulation (the pages are built in code): every selector stays under
 // .print-document or .print-settings.
 
 // ---- the printed sheet: black on white, gray only for secondary text and lines ----
 .print-document {
+  @include themes.light;
+  background: var(--surface);
   display: none;
   color: var(--text);
   font-size: 9.5pt;

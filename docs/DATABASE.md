@@ -2,7 +2,7 @@
 
 ## Persistence Model
 
-`customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields. Label templates reference the current branding logically through their JSON elements/placeholders; logo bytes are not copied into label records.
+`customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. The dark variant uses nullable `dark_brand_color`, `dark_logo` (PostgreSQL `bytea`), `dark_logo_content_type`, and `dark_logo_version` columns, with nullable `advanced_theme_enabled` interpreted as false for existing rows. Hibernate update adds these columns; no destructive data conversion is needed. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields; dark/light logo operations are independent and disabling advanced mode does not delete dark data. Label templates reference the light branding logically through their JSON elements/placeholders; logo bytes are not copied into label records. Personal screen appearance is browser-local per user, not a new user database column.
 
 PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities generally have a generated numeric primary key for joins and a separate unique UUID for API use. LDAP/OIDC settings are singleton records with a fixed ID rather than ordinary UUID-addressed resources.
 

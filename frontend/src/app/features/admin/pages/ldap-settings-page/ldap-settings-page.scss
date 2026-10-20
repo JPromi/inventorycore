@@ -34,7 +34,7 @@
       background: var(--accent-soft);
 
       .result-head {
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
     }
 
@@ -135,7 +135,7 @@
       }
 
       &.warn > span {
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
     }
 

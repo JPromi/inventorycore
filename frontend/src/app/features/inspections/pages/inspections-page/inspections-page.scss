@@ -5,7 +5,7 @@
   height: 100%;
 
   .overdue-text {
-    color: var(--accent);
+    color: var(--accent-foreground);
     font-weight: 700;
   }
 
@@ -232,7 +232,7 @@
       }
 
       &.overdue .when {
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
 
       @include bp.phone {

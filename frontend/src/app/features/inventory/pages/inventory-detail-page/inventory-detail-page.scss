@@ -38,7 +38,7 @@
     justify-content: center;
     border-radius: var(--radius-md);
     background: var(--accent-soft);
-    color: var(--accent);
+    color: var(--accent-foreground);
 
     @include bp.phone {
       width: 2.4rem;
@@ -64,7 +64,7 @@
       text-decoration: none;
 
       &:hover {
-        color: var(--accent);
+        color: var(--accent-foreground);
         text-decoration: underline;
       }
     }
@@ -128,7 +128,7 @@
     overflow-wrap: anywhere;
 
     &:hover {
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
   }
 
@@ -245,7 +245,7 @@
     }
 
     &.overdue .due {
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
 
     &.due .due {
@@ -270,7 +270,7 @@
   }
 
   .defect {
-    color: var(--accent);
+    color: var(--accent-foreground);
     font-weight: 700;
   }
 
@@ -287,7 +287,7 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--accent);
+    color: var(--accent-foreground);
     font-size: 0.8rem;
     font-weight: 600;
     text-align: left;

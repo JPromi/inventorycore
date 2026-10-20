@@ -1,29 +1,55 @@
 @if (state.currentUser$ | async; as user) {
-    <section>
-        <h1>{{ 'profile.title' | t }}</h1>
-        <div class="identity">
-            <div class="avatar">
-                @if (user.profileImageUrl && !imageFailed) {
-                    <img [src]="user.profileImageUrl" [alt]="'profile.image' | t" referrerpolicy="no-referrer" (error)="imageFailed = true" />
-                } @else {
-                    {{ user.displayName.charAt(0).toUpperCase() }}
-                }
-            </div>
-            <div><h2>{{ user.displayName }}</h2><p>{{ user.username }}</p></div>
-        </div>
-        <h2>{{ 'profile.image' | t }}</h2>
-        @if (user.authProvider === 'LOCAL') {
-            <input #uploadInput type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff" hidden (change)="upload($event)" />
-            <div class="actions">
-                <button type="button" [disabled]="busy" (click)="uploadInput.click()"><svg lucideUpload size="18"></svg>{{ 'profile.upload' | t }}</button>
-                @if (user.profileImageUrl) {
-                    <button type="button" [disabled]="busy" (click)="remove()"><svg lucideTrash2 size="18"></svg>{{ 'common.remove' | t }}</button>
-                }
-            </div>
+  <section>
+    <h1>{{ 'profile.title' | t }}</h1>
+    <div class="identity">
+      <div class="avatar">
+        @if (user.profileImageUrl && !imageFailed) {
+          <img
+            [src]="user.profileImageUrl"
+            [alt]="'profile.image' | t"
+            referrerpolicy="no-referrer"
+            (error)="imageFailed = true"
+          />
         } @else {
-            <p>{{ 'profile.managedBy' | t: { provider: user.authProvider } }}</p>
+          {{ user.displayName.charAt(0).toUpperCase() }}
         }
-        @if (busy) { <p role="status">{{ 'common.saving' | t }}</p> }
-        @if (error) { <p class="error" role="alert">{{ error }}</p> }
-    </section>
+      </div>
+      <div>
+        <h2>{{ user.displayName }}</h2>
+        <p>{{ user.username }}</p>
+      </div>
+    </div>
+    <div class="appearance">
+      <h2>{{ 'theme.appearance' | t }}</h2>
+      <app-theme-selector />
+    </div>
+    <h2>{{ 'profile.image' | t }}</h2>
+    @if (user.authProvider === 'LOCAL') {
+      <input
+        #uploadInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff"
+        hidden
+        (change)="upload($event)"
+      />
+      <div class="actions">
+        <button type="button" [disabled]="busy" (click)="uploadInput.click()">
+          <svg lucideUpload size="18"></svg>{{ 'profile.upload' | t }}
+        </button>
+        @if (user.profileImageUrl) {
+          <button type="button" [disabled]="busy" (click)="remove()">
+            <svg lucideTrash2 size="18"></svg>{{ 'common.remove' | t }}
+          </button>
+        }
+      </div>
+    } @else {
+      <p>{{ 'profile.managedBy' | t: { provider: user.authProvider } }}</p>
+    }
+    @if (busy) {
+      <p role="status">{{ 'common.saving' | t }}</p>
+    }
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+  </section>
 }

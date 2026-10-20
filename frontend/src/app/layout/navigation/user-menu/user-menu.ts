@@ -1,4 +1,5 @@
 import { AsyncPipe } from '@angular/common';
+import { ThemeSelector } from '../../../shared/components/theme-selector/theme-selector';
 import { Component, DestroyRef, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
@@ -15,6 +16,7 @@ import { AuthStateService } from '../../../core/service/auth-state.service';
 @Component({
   selector: 'app-user-menu',
   imports: [
+    ThemeSelector,
     AsyncPipe,
     RouterLink,
     TranslatePipe,

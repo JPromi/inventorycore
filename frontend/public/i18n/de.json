@@ -1,4 +1,12 @@
 {
+  "theme": {
+    "appearance": "Darstellung",
+    "system": "System",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "advanced": "Erweiterte Darstellung",
+    "styles": "Darstellungsvarianten"
+  },
   "userMenu": {
     "title": "Benutzermenü",
     "profile": "Profil",

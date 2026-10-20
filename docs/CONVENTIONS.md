@@ -19,6 +19,14 @@ Dropdown panels use the shared `DropdownPosition` directive with Floating UI and
 
 Image previews use the shared `ImageViewerService.open(images, index)`. The single `ImageViewer` in the app shell opens a native modal dialog in the browser top layer, including above other dialogs. Pass full-size URLs and optional thumbnails, filenames, and alt texts. It supports previous/next navigation, keyboard arrows/Escape, zoom buttons/wheel/double-click, panning, and touch pinch/swipe. Navigation resets the zoom; route changes close the viewer. Use buttons for image triggers so keyboard access remains available.
 
+## Appearance
+
+Light/dark semantic palettes live in `frontend/src/styles/_themes.scss`, applied from `styles.scss`; components still consume the same shared variables. `ThemeService` resolves the system preference unless explicitly overridden and updates on live media-query changes. Reuse `ThemeSelector` in the user menu/profile rather than storing another theme state. Overrides are stored per user UUID (username fallback) in this browser; anonymous pages use a separate guest key. Selecting System removes the override. Storage failures keep appearance usable; cross-tab storage changes are observed. This is not cross-device account synchronization. Before Angular starts, CSS follows the system preference.
+
+`CustomizationService.logoUrl` selects screen branding; do not read the raw light `settings.logoUrl` for navigation/login. Admin branding edits light by default, exposing separate light/dark editors only through the persisted advanced checkbox. Print documents and labels intentionally use the raw light logo/color and light palette regardless of screen theme. Keep native controls' `color-scheme` aligned with the effective theme and recompute brand-button text contrast when either the palette or brand color changes.
+
+Use `--accent` for actual brand fills and `--accent-foreground` for brand-colored text/icons on neutral surfaces. The dark palette lightens the latter toward the regular text color so even a near-black configured brand color remains visible; button fills and their automatically contrasted `--on-accent` text retain the configured color.
+
 ## Lists: Paging and Server Search
 
 Every list page loads its entries from a `GET /api/<resource>/page` endpoint, 50 at a time (`PAGE_SIZE`), and loads the next page while scrolling. Rules:

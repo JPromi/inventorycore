@@ -98,7 +98,7 @@
       &.active {
         border-color: var(--accent);
         background: var(--accent-soft);
-        color: var(--accent);
+        color: var(--accent-foreground);
         box-shadow: 0 0 0 1px var(--accent);
       }
 
@@ -244,7 +244,7 @@
     overflow-wrap: anywhere;
 
     &.failure {
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
   }
 
@@ -339,7 +339,7 @@
       }
 
       &.missing .label {
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
 
       @include bp.phone {
@@ -386,7 +386,7 @@
     &.failure {
       border-color: var(--accent);
       background: var(--accent-soft);
-      color: var(--accent);
+      color: var(--accent-foreground);
 
       svg {
         flex-shrink: 0;

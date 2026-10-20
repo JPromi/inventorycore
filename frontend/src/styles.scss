@@ -1,4 +1,5 @@
 @use 'breakpoints' as bp;
+@use 'themes';
 
 html,
 body {
@@ -34,32 +35,21 @@ app-root {
 // ---- design tokens: components use only these variables for colors, shadows and radii ----
 body {
   // surfaces and text
-  --background: #f5f5f5;
-  --surface: #ffffff;
-  --surface-hover: #f3f4f6;
-  --surface-active: #f1f5f9;
-  --border: #e5e7eb;
-  --border-strong: #cbd5e1;
-  --text: #212121;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  @include themes.light;
+  --theme-light-surface: #ffffff;
+  --theme-dark-surface: #202226;
+  --theme-light-brand-default: #b62f2f;
+  background: var(--background);
+  color: var(--text);
 
   // brand
-  --accent: var(--brand-color, #b62f2f);
+  --accent: var(--brand-color, var(--default-brand-color));
   --brand-hover-strength: 85%;
   --accent-hover: color-mix(in srgb, var(--accent) var(--brand-hover-strength), var(--black));
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
   /** text and icons on top of accent, success or other strong colors */
   --on-accent: var(--brand-on-color, #ffffff);
   --on-accent-hover: var(--brand-on-hover-color, var(--on-accent));
-
-  // states
-  --success: #15803d;
-  --danger: #b62f2f;
-  --success-soft: rgba(21, 128, 61, 0.12);
-  --warning: #b45309;
-  --warning-soft: #fef3c7;
-  --warning-border: #f59e0b;
 
   // fixed colors where the meaning is "white" / "black" (e.g. the color picker spectrum, masks)
   --white: #ffffff;
@@ -74,14 +64,8 @@ body {
   --viewer-border: #494d55;
   --viewer-text: #ffffff;
   --media-text: #e5e7eb;
-  /** behind dialogs */
-  --overlay: rgba(15, 23, 42, 0.45);
   /** darkening around a scan frame or under image captions */
   --scrim: rgba(0, 0, 0, 0.35);
-
-  // depth
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.12);
 
   // shape
   --radius-xs: 0.3rem;
@@ -139,6 +123,16 @@ body {
     background-repeat: no-repeat;
     background-position: right 0.6rem center;
     cursor: pointer;
+  }
+}
+
+body[data-theme='dark'] {
+  @include themes.dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme]) {
+    @include themes.dark;
   }
 }
 
@@ -296,7 +290,7 @@ body.camera-open .page {
 }
 
 .danger-action {
-  color: var(--accent);
+  color: var(--accent-foreground);
 
   &:hover:not(:disabled) {
     background: var(--accent-soft);
@@ -321,7 +315,7 @@ body.camera-open .page {
   }
 
   &.danger {
-    color: var(--accent);
+    color: var(--accent-foreground);
   }
 
   @include bp.phone {
@@ -514,7 +508,7 @@ label.field {
 
   &.accent {
     background: var(--accent-soft);
-    color: var(--accent);
+    color: var(--accent-foreground);
   }
 
   &.warn {
@@ -606,7 +600,7 @@ label.field {
   border: 1px solid var(--accent-soft);
   border-radius: var(--radius-md);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-foreground);
 }
 
 .hint {
@@ -927,8 +921,11 @@ app-selection-checkbox.selection-hidden {
     overflow: visible !important;
   }
 
-  body {
+  body,
+  body[data-theme] {
+    @include themes.light;
     position: static !important;
+    background: var(--white) !important;
   }
 
   .page {

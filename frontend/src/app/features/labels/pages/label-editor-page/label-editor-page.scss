@@ -106,7 +106,7 @@
 
         &:hover {
           border-color: var(--accent);
-          color: var(--accent);
+          color: var(--accent-foreground);
         }
 
         @include bp.touch {
@@ -139,7 +139,7 @@
 
       &.active {
         background: var(--accent-soft);
-        color: var(--accent);
+        color: var(--accent-foreground);
         font-weight: 700;
       }
 

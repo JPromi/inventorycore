@@ -179,10 +179,10 @@
         background-color: var(--surface-active);
 
         &:not([aria-expanded='true']) {
-          color: var(--accent);
+          color: var(--accent-foreground);
 
           svg {
-            color: var(--accent);
+            color: var(--accent-foreground);
           }
         }
       }
@@ -250,10 +250,10 @@
 
       a.active,
       a:hover {
-        color: var(--accent);
+        color: var(--accent-foreground);
 
         svg {
-          color: var(--accent);
+          color: var(--accent-foreground);
         }
       }
     }
@@ -274,7 +274,7 @@
         border: 1px dashed var(--border-strong);
         border-radius: var(--radius-sm);
         background: var(--accent-soft);
-        color: var(--accent);
+        color: var(--accent-foreground);
         font-weight: 700;
         cursor: pointer;
 

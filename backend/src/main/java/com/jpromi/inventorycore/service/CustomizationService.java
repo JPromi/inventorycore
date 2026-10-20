@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.jpromi.inventorycore.dto.CustomizationDto;
 import com.jpromi.inventorycore.entity.Customization;
+import com.jpromi.inventorycore.enums.BrandingMode;
 import com.jpromi.inventorycore.files.ImageProcessor;
 import com.jpromi.inventorycore.repository.CustomizationRepository;
 
@@ -38,6 +39,10 @@ public class CustomizationService {
         if (color != null && !color.matches("#[0-9a-fA-F]{6}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine gültige HEX-Farbe wählen.");
         }
+        String darkColor = text(request.darkBrandColor(), 7);
+        if (darkColor != null && !darkColor.matches("#[0-9a-fA-F]{6}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte eine gültige HEX-Farbe wählen.");
+        }
         String title = text(request.loginTitle(), 200);
         String message = text(request.loginMessage(), 1000);
         String imprint = url(request.imprintUrl());
@@ -47,6 +52,8 @@ public class CustomizationService {
         Customization value = settings();
         value.setBrandName(name);
         value.setBrandColor(color);
+        value.setDarkBrandColor(darkColor);
+        value.setAdvancedThemeEnabled(request.advancedThemeEnabled());
         value.setLoginTitle(title);
         value.setLoginMessage(message);
         value.setImprintUrl(imprint);
@@ -57,6 +64,10 @@ public class CustomizationService {
     }
 
     public CustomizationDto logo(byte[] data) throws IOException {
+        return logo(data, BrandingMode.light);
+    }
+
+    public CustomizationDto logo(byte[] data, BrandingMode mode) throws IOException {
         if (data == null || data.length == 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte ein Logo auswählen.");
         }
@@ -70,45 +81,77 @@ public class CustomizationService {
         }
         var encoded = ImageProcessor.encode(image, 1200);
         Customization value = settings();
-        value.setLogo(encoded.data());
-        value.setLogoContentType(encoded.contentType());
-        value.setLogoVersion(UUID.randomUUID());
+        if (mode == BrandingMode.dark) {
+            value.setDarkLogo(encoded.data());
+            value.setDarkLogoContentType(encoded.contentType());
+            value.setDarkLogoVersion(UUID.randomUUID());
+        } else {
+            value.setLogo(encoded.data());
+            value.setLogoContentType(encoded.contentType());
+            value.setLogoVersion(UUID.randomUUID());
+        }
         return response(repository.save(value));
     }
 
     public CustomizationDto removeLogo() {
+        return removeLogo(BrandingMode.light);
+    }
+
+    public CustomizationDto removeLogo(BrandingMode mode) {
         Customization value = settings();
-        value.setLogo(null);
-        value.setLogoContentType(null);
-        value.setLogoVersion(null);
+        if (mode == BrandingMode.dark) {
+            value.setDarkLogo(null);
+            value.setDarkLogoContentType(null);
+            value.setDarkLogoVersion(null);
+        } else {
+            value.setLogo(null);
+            value.setLogoContentType(null);
+            value.setLogoVersion(null);
+        }
         return response(repository.save(value));
     }
 
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> image() {
+        return image(BrandingMode.light);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> image(BrandingMode mode) {
         Customization value = settings();
-        if (value.getLogo() == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        byte[] data = mode == BrandingMode.dark ? value.getDarkLogo() : value.getLogo();
+        String contentType = mode == BrandingMode.dark ? value.getDarkLogoContentType() : value.getLogoContentType();
+        if (data == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         return ResponseEntity.ok().cacheControl(CacheControl.noCache())
             .header("X-Content-Type-Options", "nosniff")
-            .contentType(MediaType.parseMediaType(value.getLogoContentType())).body(value.getLogo());
+            .contentType(MediaType.parseMediaType(contentType)).body(data);
     }
 
     private static CustomizationDto response(Customization value) {
         return new CustomizationDto(value.getBrandName(), value.getBrandColor(), value.getLoginTitle(), value.getLoginMessage(),
             value.getImprintUrl(), value.getPrivacyUrl(), value.getWebsiteUrl(), value.getSupportUrl(),
-            value.getLogoVersion() == null ? null : "/api/customization/logo?v=" + value.getLogoVersion());
+            value.getLogoVersion() == null ? null : "/api/customization/logo?v=" + value.getLogoVersion(),
+            value.getDarkBrandColor(),
+            value.getDarkLogoVersion() == null ? null : "/api/customization/logo?mode=dark&v=" + value.getDarkLogoVersion(),
+            Boolean.TRUE.equals(value.getAdvancedThemeEnabled()));
     }
 
     private static String text(String value, int limit) {
         String result = value == null || value.isBlank() ? null : value.trim();
-        if (result != null && result.length() > limit) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der Wert ist zu lang (maximal " + limit + " Zeichen).");
+        if (result != null && result.length() > limit) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der Wert ist zu lang (maximal " + limit + " Zeichen).");
+        }
         return result;
     }
 
     private static void validateImageSize(byte[] data) throws IOException {
         try (var input = javax.imageio.ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
             var readers = javax.imageio.ImageIO.getImageReaders(input);
-            if (!readers.hasNext()) throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Die Datei ist kein lesbares Rasterbild.");
+            if (!readers.hasNext()) {
+                throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Die Datei ist kein lesbares Rasterbild.");
+            }
             var reader = readers.next();
             try {
                 reader.setInput(input);
@@ -125,12 +168,18 @@ public class CustomizationService {
 
     private static String url(String value) {
         String result = text(value, 2000);
-        if (result == null) return null;
+        if (result == null) {
+            return null;
+        }
         try {
             URI uri = URI.create(result);
             if (("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
-                && uri.getHost() != null && uri.getUserInfo() == null) return result;
-        } catch (IllegalArgumentException ignored) { }
+                && uri.getHost() != null && uri.getUserInfo() == null) {
+                return result;
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Invalid URI syntax is reported with the same validation response.
+        }
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Links müssen vollständige HTTP- oder HTTPS-Adressen sein.");
     }
 }

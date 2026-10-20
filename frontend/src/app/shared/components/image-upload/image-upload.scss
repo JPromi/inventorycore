@@ -106,7 +106,7 @@
 
         &:hover:not(:disabled) {
           background: var(--surface);
-          color: var(--accent);
+          color: var(--accent-foreground);
         }
 
         &:disabled {
@@ -145,7 +145,7 @@
       &.failed {
         border-color: var(--accent);
         background: var(--accent-soft);
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
 
       .pending-name {
@@ -232,7 +232,7 @@
       &.dragging {
         border-color: var(--accent);
         background: var(--accent-soft);
-        color: var(--accent);
+        color: var(--accent-foreground);
       }
     }
 

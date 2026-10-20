@@ -83,7 +83,7 @@
 
         &:hover {
           background: var(--accent-soft);
-          color: var(--accent);
+          color: var(--accent-foreground);
         }
       }
 
@@ -155,7 +155,7 @@
       }
 
       &.create {
-        color: var(--accent);
+        color: var(--accent-foreground);
         font-weight: 700;
       }
 

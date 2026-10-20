@@ -35,6 +35,10 @@ From `frontend/`, `npm run i18n:check` verifies that every literal text key used
 
 ## Browser Regressions
 
+`theme.spec.ts` covers default and live system appearance, per-user overrides across reloads, account isolation, unavailable browser storage, advanced light/dark branding, independent logo changes, fallback when advanced mode is disabled, anonymous dark login, light label logos and light print-document colors. Check screenshots on desktop/mobile and rerun after palette changes. Restart a reused dev server if it is no longer watching source changes; a production build alone does not update an already stale server.
+
+Dark-mode verification passed the full 72-test browser suite and 14 focused backend tests (`CustomizationServiceTest`, `CustomizationSecurityTest`). Production build, translation keys and formatting checks also passed. This does not exercise the Hibernate column update against a live PostgreSQL database.
+
 After the feature/shared/layout migration, `refactoring-regressions.spec.ts` covers the `/dashboard` compatibility route, cancelled stale detail responses during linked navigation, and retrying group membership saves without duplicating the group or repeating successful updates. The complete 66-test Edge suite passed during the refactor, including image previews, print pagination, map rendering, dropdown positioning and touch selection. The focused `InventoryListServiceTest` and `PagingTest` suites passed 12 tests, including skipping usage scans on out-of-range tag pages. These are regression results, not performance benchmarks.
 
 `touch-selection.spec.ts` uses touch-enabled Edge and CDP touch input to cover hold/drag/reverse selection, deselection, edge auto-scroll in list/grid views, stopping on release/cancellation, and native quick-swipe scrolling. These browser regressions do not replace a physical iPhone/Safari check.

@@ -1,6 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucidePalette, LucideSave, LucideTrash2, LucideUpload } from '@lucide/angular';
+import {
+  LucideMoon,
+  LucidePalette,
+  LucideSave,
+  LucideSun,
+  LucideTrash2,
+  LucideUpload,
+} from '@lucide/angular';
 import { ColorPicker } from '../../../../shared/components/color-picker/color-picker';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -19,6 +26,8 @@ import {
     LucideSave,
     LucideTrash2,
     LucideUpload,
+    LucideSun,
+    LucideMoon,
   ],
   templateUrl: './customization-page.html',
   styleUrl: './customization-page.scss',
@@ -30,6 +39,8 @@ export class CustomizationPage implements OnInit {
   protected uploading = false;
   protected error = '';
   protected success = '';
+  protected selectedMode: 'light' | 'dark' = 'light';
+  private uploadMode: 'light' | 'dark' = 'light';
   protected readonly links = [
     { key: 'imprintUrl', label: t('adminCustomization.links.imprint') },
     { key: 'privacyUrl', label: t('adminCustomization.links.privacy') },
@@ -42,7 +53,7 @@ export class CustomizationPage implements OnInit {
   ngOnInit(): void {
     this.customization.load(false).subscribe({
       next: (value) => {
-        this.form = { ...value };
+        this.form = { ...value, advancedThemeEnabled: value.advancedThemeEnabled ?? false };
         this.loading = false;
       },
       error: () => {
@@ -78,17 +89,45 @@ export class CustomizationPage implements OnInit {
       this.error = t('adminCustomization.logoTooLarge');
       return;
     }
-    this.changeLogo(file);
+    this.changeLogo(file, this.uploadMode);
   }
 
-  protected changeLogo(file?: File): void {
+  protected get editorMode(): 'light' | 'dark' {
+    return this.form.advancedThemeEnabled ? this.selectedMode : 'light';
+  }
+
+  protected get brandColor(): string | null {
+    return this.editorMode === 'dark' ? this.form.darkBrandColor : this.form.brandColor;
+  }
+
+  protected set brandColor(value: string | null) {
+    if (this.editorMode === 'dark') {
+      this.form.darkBrandColor = value;
+    } else {
+      this.form.brandColor = value;
+    }
+  }
+
+  protected get logoUrl(): string | null {
+    return this.editorMode === 'dark' ? this.form.darkLogoUrl : this.form.logoUrl;
+  }
+
+  protected openLogoInput(input: HTMLInputElement): void {
+    this.uploadMode = this.editorMode;
+    input.click();
+  }
+
+  protected changeLogo(file?: File, mode = this.editorMode): void {
     if (this.uploading || this.saving) return;
     this.uploading = true;
     this.error = this.success = '';
-    const request = file ? this.customization.uploadLogo(file) : this.customization.removeLogo();
+    const request = file
+      ? this.customization.uploadLogo(file, mode)
+      : this.customization.removeLogo(mode);
     request.subscribe({
       next: (value) => {
         this.form.logoUrl = value.logoUrl;
+        this.form.darkLogoUrl = value.darkLogoUrl;
         this.uploading = false;
         this.success = t(file ? 'adminCustomization.logoSaved' : 'adminCustomization.logoRemoved');
       },

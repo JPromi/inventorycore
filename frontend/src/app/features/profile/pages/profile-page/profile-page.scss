@@ -5,6 +5,11 @@
   overflow: auto;
   padding: 2rem 1rem;
 
+  .appearance {
+    max-width: 20rem;
+    margin-block: 1.5rem;
+  }
+
   section {
     max-width: 48rem;
     margin: 0 auto;
@@ -86,7 +91,7 @@
   }
 
   .error {
-    color: var(--accent);
+    color: var(--accent-foreground);
     margin-top: 1rem;
   }
 }

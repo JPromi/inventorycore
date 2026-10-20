@@ -193,7 +193,7 @@
   .camera-toggle {
     &.active {
       border-color: var(--accent);
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
 
     // camera button on its own line below the input
@@ -267,7 +267,7 @@
   padding: 0.7rem 0.9rem;
   border-radius: var(--radius-md);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-foreground);
   font-weight: 700;
   overflow-wrap: anywhere;
   animation: pop 0.25s ease-out;
@@ -498,7 +498,7 @@
   font-weight: 700;
 
   .required {
-    color: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .scope {
@@ -526,7 +526,7 @@
 }
 // colored list entries and headings in the dialog and the protocol
 .bad {
-  color: var(--accent);
+  color: var(--accent-foreground);
 }
 .warn {
   color: var(--warning);
@@ -586,7 +586,7 @@ dd {
     font-weight: 600;
 
     &.no {
-      color: var(--accent);
+      color: var(--accent-foreground);
     }
   }
 }
