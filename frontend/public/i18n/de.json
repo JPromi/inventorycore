@@ -444,7 +444,8 @@
     "errors": {
       "load": "Gruppen konnten nicht geladen werden.",
       "delete": "Gruppe konnte nicht gelöscht werden."
-    }
+    },
+    "everyoneBadge": "Alle Benutzer"
   },
   "adminGroupForm": {
     "eyebrow": "Administration",
@@ -480,7 +481,9 @@
       "duplicate": "Jede Kombination aus Bereich und Objektart darf nur einmal vorkommen.",
       "delete": "Gruppe konnte nicht gelöscht werden.",
       "notFound": "Gruppe wurde nicht gefunden."
-    }
+    },
+    "everyoneName": "Eingebaute Gruppe; der Name ist fest.",
+    "everyoneHint": "Zu dieser Gruppe gehört automatisch jeder Benutzer. Ihre Berechtigungen gelten also für alle, zusätzlich zu den Berechtigungen der eigenen Gruppen. Mitglieder und Administratorrechte lassen sich hier nicht festlegen."
   },
   "adminPermissions": {
     "eyebrow": {
@@ -515,7 +518,9 @@
       "add": "Berechtigung konnte nicht hinzugefügt werden.",
       "update": "Änderung konnte nicht gespeichert werden.",
       "load": "Berechtigungen konnten nicht geladen werden."
-    }
+    },
+    "everyone": "Alle Benutzer",
+    "everyoneHint": "Gilt für jeden Benutzer"
   },
   "components": {
     "areaSwitcher": {

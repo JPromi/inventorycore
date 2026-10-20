@@ -50,7 +50,8 @@ import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/transla
   styleUrl: './groups-page.scss',
 })
 export class GroupsPage implements OnInit, OnDestroy {
-  protected readonly canBulkDelete = (_item: AdminGroup) => true;
+  /** The group of all users is built in. */
+  protected readonly canBulkDelete = (item: AdminGroup) => !item.everyone;
   protected readonly bulkDelete = (item: AdminGroup) => this.api.deleteGroup(item.uuid);
   /** Searched on the server (also by member), loaded page by page while scrolling. */
   protected readonly list = new PagedList<AdminGroupRow>((page, size) =>

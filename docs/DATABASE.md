@@ -10,6 +10,7 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | --- | --- |
 | Assets | Optional type and location, direct tags, areas, field values, and image records; `invId` is a separate string generated when omitted |
 | Asset types | Custom field definitions, tags, areas, image records, and related assets |
+| Groups: `everyone` | Non-null boolean with database default false; `DataInitializer` creates the one group with `everyone = true` ("Alle Benutzer") without permissions, so existing installations keep their access rules |
 | Locations: `shared` | Non-null boolean with database default false (existing locations keep passing visibility to their contents) |
 | Asset statuses | Built-in statuses (`systemKey`, no area) and custom statuses per area with name, color, and category; custom ones are soft deleted and only when no asset uses them |
 | Asset status changes | History per asset: from/to status, comment, author, time, and the inspection that set it |

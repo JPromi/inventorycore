@@ -61,6 +61,9 @@
                                 @if (group.adminGroup) {
                                     <span class="badge accent provider">{{ 'adminGroups.adminBadge' | t }}</span>
                                 }
+                                @if (group.everyone) {
+                                    <span class="badge provider">{{ 'adminGroups.everyoneBadge' | t }}</span>
+                                }
                                 @if (group.sourceProvider !== 'LOCAL') {
                                     <span class="badge provider">{{ group.sourceProvider }}</span>
                                 }

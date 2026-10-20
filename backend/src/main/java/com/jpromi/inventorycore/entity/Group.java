@@ -58,6 +58,15 @@ public class Group {
     @Builder.Default
     private boolean adminGroup = false;
 
+    /**
+     * The built-in group "Alle Benutzer": every user belongs to it without being added, so its
+     * permissions apply to everyone. There is exactly one; it cannot be renamed, deleted, given
+     * members or made an admin group.
+     */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean everyone = false;
+
     @ManyToMany(mappedBy = "groups")
     @Builder.Default
     private Set<User> users = new HashSet<>();

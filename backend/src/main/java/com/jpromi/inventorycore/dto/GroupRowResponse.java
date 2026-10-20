@@ -13,6 +13,7 @@ public record GroupRowResponse(
     Provider sourceProvider,
     Set<GroupPermissionResponse> permissions,
     boolean adminGroup,
+    boolean everyone,
     long memberCount,
     List<UserResponse> members
 ) {}

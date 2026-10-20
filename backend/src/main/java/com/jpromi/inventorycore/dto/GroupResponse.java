@@ -10,5 +10,7 @@ public record GroupResponse(
     String name,
     Provider sourceProvider,
     Set<GroupPermissionResponse> permissions,
-    boolean adminGroup
+    boolean adminGroup,
+    /** the built-in group of all users */
+    boolean everyone
 ) {}

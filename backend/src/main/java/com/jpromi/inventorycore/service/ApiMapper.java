@@ -59,7 +59,8 @@ public class ApiMapper {
             group.getName(),
             group.getSourceProvider(),
             group.getPermissions().stream().map(this::toResponse).collect(Collectors.toSet()),
-            group.isAdminGroup()
+            group.isAdminGroup(),
+            group.isEveryone()
         );
     }
 

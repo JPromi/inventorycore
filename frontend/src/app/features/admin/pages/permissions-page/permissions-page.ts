@@ -87,8 +87,26 @@ export class PermissionsPage implements OnInit {
     this.load();
   }
 
+  /** The group of all users first, with a hint that it applies to everyone. */
   protected get groupOptions(): SelectOption[] {
-    return this.groups.map((group) => ({ value: group.uuid, label: group.name }));
+    return [...this.groups]
+      .sort((a, b) => Number(b.everyone) - Number(a.everyone))
+      .map((group) => ({
+        value: group.uuid,
+        label: group.name,
+        hint: group.everyone ? t('adminPermissions.everyoneHint') : undefined,
+      }));
+  }
+
+  /** The chosen group; without a choice the permission applies to all users. */
+  private get targetGroup(): AdminGroup | undefined {
+    return this.newGroupUuid
+      ? this.groups.find((entry) => entry.uuid === this.newGroupUuid)
+      : this.groups.find((entry) => entry.everyone);
+  }
+
+  protected get canAdd(): boolean {
+    return !!this.targetGroup && !this.newPermissionExists;
   }
 
   protected get areaOptions(): SelectOption[] {
@@ -197,7 +215,7 @@ export class PermissionsPage implements OnInit {
   }
 
   protected get newPermissionExists(): boolean {
-    const group = this.groups.find((entry) => entry.uuid === this.newGroupUuid);
+    const group = this.targetGroup;
     return !!group?.permissions.some(
       (permission) =>
         permission.resourceType === this.newResourceType &&
@@ -206,7 +224,7 @@ export class PermissionsPage implements OnInit {
   }
 
   protected addPermission(): void {
-    const group = this.groups.find((entry) => entry.uuid === this.newGroupUuid);
+    const group = this.targetGroup;
     if (!group || this.newPermissionExists) {
       return;
     }
