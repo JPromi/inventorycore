@@ -55,6 +55,33 @@ The example configuration uses `spring.jpa.hibernate.ddl-auto=update`. There is 
 
 The LDAP interval value retains its historical `sync_interval_hours` column name for compatibility; `syncIntervalUnit` now determines whether the value means minutes, hours, or days. Older separate group selections are exposed as an editable group filter and cleared when settings are saved.
 
+## Schema Changes in Production
+
+InventoryCore runs in production and is updated by replacing the image; the database is kept (decision [0002](decisions/0002-in-place-schema-upgrades.md)). Every change to entities, columns, relations, enums or stored formats must therefore turn the database of the previous release into the new one on start, without data loss and without manual steps. A change that only works on a fresh database is not finished.
+
+What `ddl-auto=update` does on its own: create new tables, add new nullable columns, foreign keys and indexes declared on new columns. Everything else needs a migration step.
+
+Needs a step in [SchemaMigration](../backend/src/main/java/com/jpromi/inventorycore/initializer/SchemaMigration.java):
+
+- Renaming a table or column (Hibernate would create a new, empty one next to the old).
+- Changing a column type or length, or relaxing/tightening `NOT NULL`.
+- A new `NOT NULL` column on an existing table: give it a database default (`columnDefinition = "boolean default false"`, as for `OidcSettings.autoRedirect` or `AssetStatus.deleted`) or add it nullable and fill it in a step first.
+- New values of an enum stored as string: Hibernate's check constraint (e.g. `audit_logs_action_check`) still lists the old values; drop it, as the existing steps do.
+- Moving, splitting, merging or converting existing data, and changed unique constraints or indexes.
+- Removing a column or table: only after its data has been moved, and only once nothing reads it anymore.
+
+Needs a step in [DataInitializer](../backend/src/main/java/com/jpromi/inventorycore/initializer/DataInitializer.java): rows the application depends on (built-in statuses, the default area, a default label) and values for existing rows that the new code requires, e.g. assets without status becoming "Vorhanden".
+
+Rules for every step:
+
+- Idempotent: it runs on every start. Check first (`columnExists`, `tableExists`, `if exists`, `where ... is null`) and leave already migrated data alone.
+- Ordered: schema steps run in `SchemaMigration` (`@Order(0)`) before data steps in `DataInitializer` (`@Order(1)`); keep later steps after earlier ones in the code.
+- PostgreSQL SQL through `JdbcTemplate`; no destructive statement without a guard. Never drop or reset data to make a change easier.
+- Log what was changed (counts), as the existing steps do.
+- Explain the step with a comment: why it exists and which older state it handles.
+- Verify the upgrade, not only a fresh start: start the new version against a database of the previous version (a copy of production data, or the schema produced by the previous release) and check the data afterwards. Say in the commit which of the two was done.
+- Mention schema changes and data transformations in the commit body, so updates can be planned and backed up.
+
 ## Operational Gaps
 
-No PostgreSQL server version, test database lifecycle, migration rollback process, or backup/restore automation is pinned in the repository. Agree these before production schema work; do not document an unimplemented migration system as current behavior.
+No PostgreSQL server version, test database lifecycle, migration rollback process, or backup/restore automation is pinned in the repository. Without a migration history there is no automatic rollback: back up the database and upload volumes before every update. Do not document an unimplemented migration system (Flyway, Liquibase) as current behavior.
