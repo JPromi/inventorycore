@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { PwaStatus } from './core/components/pwa-status/pwa-status';
-import { ImageViewer } from './core/components/image-viewer/image-viewer';
+import { PwaStatus } from './shared/components/pwa-status/pwa-status';
+import { ImageViewer } from './shared/components/image-viewer/image-viewer';
 import { AuthService } from './core/service/auth.service';
 import { CustomizationService } from './core/service/customization.service';
 
@@ -10,12 +10,15 @@ import { CustomizationService } from './core/service/customization.service';
   selector: 'app-root',
   imports: [RouterOutlet, PwaStatus, ImageViewer],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App implements OnInit {
   protected readonly title = 'inventorycore';
 
-  constructor(private readonly authService: AuthService, private readonly customization: CustomizationService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly customization: CustomizationService,
+  ) {}
 
   ngOnInit(): void {
     this.authService.initializeSession().subscribe();

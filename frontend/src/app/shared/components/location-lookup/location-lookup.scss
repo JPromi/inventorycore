@@ -1,0 +1,46 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+
+  .lookup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .matches {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    list-style: none;
+
+    button {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      small {
+        color: var(--text-muted);
+      }
+    }
+  }
+
+  .preview {
+    max-width: 28rem;
+  }
+}

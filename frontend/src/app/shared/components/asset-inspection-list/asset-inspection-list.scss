@@ -1,0 +1,101 @@
+@use 'breakpoints' as bp;
+:host {
+  .inspection-history {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+
+    li + li {
+      border-top: 1px solid var(--border);
+    }
+
+    a {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-height: 2.75rem;
+      padding: 0.6rem 0.35rem;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      text-decoration: none;
+
+      &:hover {
+        background: var(--surface-hover);
+      }
+
+      > svg:first-child {
+        flex-shrink: 0;
+        color: var(--text-muted);
+      }
+    }
+  }
+
+  .what {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+
+    small {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+  }
+
+  .result {
+    flex-shrink: 0;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-active);
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+
+    &.good {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    &.bad {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    &.warn {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+  }
+
+  .check-values {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.15rem 0.75rem;
+    margin: 0 0.35rem 0.6rem 2.35rem;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+
+    div {
+      display: contents;
+    }
+
+    dt {
+      color: var(--text-muted);
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .no {
+      color: var(--accent);
+    }
+
+    @include bp.phone {
+      margin-left: 0.35rem;
+    }
+  }
+}

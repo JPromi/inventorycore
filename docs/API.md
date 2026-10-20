@@ -42,7 +42,7 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |
 | `/audit-logs`, `/assets/{uuid}/logs`, `/locations/{uuid}/logs` | Admin activity search and authorized object histories; `AuditController` |
 | `/health` | Public health response; `HealthController` |
-| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` |
+| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` delegates to `InventoryListService` |
 | `/inspection-types/page`, `/inspections/page`, `/label-templates/page`, `/admin/users/page`, `/admin/groups/page`, `/admin/areas/page` | Searched, paged lists of the other list pages; their controllers |
 
 ### Paged lists
@@ -59,7 +59,7 @@ The frontend sends credentials with HTTP requests and restores the user through 
 
 ## Lists, Files, and Errors
 
-Inventory endpoints currently return authorized arrays; the frontend implements their pagination. The admin audit endpoint instead accepts zero-based `page` and `size` and returns `{ items, total, page, size }`; size is capped at 200. Do not add pagination query parameters to inventory clients without implementing a matching backend contract.
+Inventory `/page` endpoints accept zero-based `page`, `size`, server search, and resource-specific filters and return `{ items, total, page, size, hasMore }`. Permission and area filters run before totals and slicing; the frontend uses these pages for incremental loading. Plain inventory list endpoints remain authorized arrays for pickers. The current service loads candidate entities and filters/pages in memory, not with database pagination; moving this work to SQL must preserve permission-aware totals and inherited areas/tags. The admin audit endpoint returns `{ items, total, page, size }`; its size is capped at 200.
 
 Image upload uses `multipart/form-data` with a `file` part. File content supports `?variant=thumb`. Profile uploads use a distinct endpoint and return a user DTO. Do not serialize raw inventory image bytes into inventory JSON responses.
 

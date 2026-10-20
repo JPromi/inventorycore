@@ -5,12 +5,15 @@ import { adminGuard } from './core/guards/admin.guard';
 import { t } from './core/i18n/i18n';
 import { AuthGuard } from './core/guards/auth.guard';
 import { LoginRedirectGuard } from './core/guards/login-redirect.guard';
-import { InventoryFormPage } from './core/pages/inventory-form-page/inventory-form-page';
-import { InventoryPage } from './core/pages/inventory-page/inventory-page';
-import { LoginPage } from './core/pages/login-page/login-page';
-import { PlaceholderPage } from './core/pages/placeholder-page/placeholder-page';
-import { MainRoute } from './core/routes/main-route/main-route';
-import { ASSET_DETAIL_CONFIG, LOCATION_DETAIL_CONFIG } from './core/pages/inventory-detail-page/detail-configs';
+import { InventoryFormPage } from './features/inventory/pages/inventory-form-page/inventory-form-page';
+import { InventoryPage } from './features/inventory/pages/inventory-page/inventory-page';
+import { LoginPage } from './features/auth/pages/login-page/login-page';
+import { PlaceholderPage } from './shared/pages/placeholder-page/placeholder-page';
+import { MainRoute } from './layout/navigation/main-route';
+import {
+  ASSET_DETAIL_CONFIG,
+  LOCATION_DETAIL_CONFIG,
+} from './features/inventory/pages/inventory-detail-page/detail-configs';
 
 const assetFormConfig = {
   title: t('terms.asset'),
@@ -84,9 +87,12 @@ export const routes: Routes = [
     component: MainRoute,
     canActivate: [AuthGuard],
     children: [
+      // Keep existing bookmarks valid until a dedicated dashboard is implemented.
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'assets' },
       {
         path: 'profile',
-        loadComponent: () => import('./core/pages/profile-page/profile-page').then((m) => m.ProfilePage),
+        loadComponent: () =>
+          import('./features/profile/pages/profile-page/profile-page').then((m) => m.ProfilePage),
       },
       {
         path: '',
@@ -119,21 +125,38 @@ export const routes: Routes = [
           },
         },
       },
-      { path: 'assets/new', component: InventoryFormPage, data: { inventoryFormConfig: assetFormConfig } },
-      { path: 'assets/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: assetFormConfig } },
+      {
+        path: 'assets/new',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetFormConfig },
+      },
+      {
+        path: 'assets/:uuid/edit',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetFormConfig },
+      },
       {
         path: 'assets/:uuid',
-        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        loadComponent: () =>
+          import('./features/inventory/pages/inventory-detail-page/inventory-detail-page').then(
+            (m) => m.InventoryDetailPage,
+          ),
         data: { inventoryDetailConfig: ASSET_DETAIL_CONFIG },
       },
       {
         path: 'assets/:uuid/history',
-        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        loadComponent: () =>
+          import('./features/audit/pages/object-log-page/object-log-page').then(
+            (m) => m.ObjectLogPage,
+          ),
         data: { endpoint: 'assets', view: 'history' },
       },
       {
         path: 'assets/:uuid/inspections',
-        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        loadComponent: () =>
+          import('./features/audit/pages/object-log-page/object-log-page').then(
+            (m) => m.ObjectLogPage,
+          ),
         data: { endpoint: 'assets', view: 'inspections' },
       },
 
@@ -159,16 +182,30 @@ export const routes: Routes = [
           },
         },
       },
-      { path: 'locations/new', component: InventoryFormPage, data: { inventoryFormConfig: locationFormConfig } },
-      { path: 'locations/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: locationFormConfig } },
+      {
+        path: 'locations/new',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: locationFormConfig },
+      },
+      {
+        path: 'locations/:uuid/edit',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: locationFormConfig },
+      },
       {
         path: 'locations/:uuid',
-        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        loadComponent: () =>
+          import('./features/inventory/pages/inventory-detail-page/inventory-detail-page').then(
+            (m) => m.InventoryDetailPage,
+          ),
         data: { inventoryDetailConfig: LOCATION_DETAIL_CONFIG },
       },
       {
         path: 'locations/:uuid/history',
-        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        loadComponent: () =>
+          import('./features/audit/pages/object-log-page/object-log-page').then(
+            (m) => m.ObjectLogPage,
+          ),
         data: { endpoint: 'locations', view: 'history' },
       },
 
@@ -194,11 +231,22 @@ export const routes: Routes = [
           },
         },
       },
-      { path: 'config/types/new', component: InventoryFormPage, data: { inventoryFormConfig: assetTypeFormConfig } },
-      { path: 'config/types/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: assetTypeFormConfig } },
+      {
+        path: 'config/types/new',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetTypeFormConfig },
+      },
+      {
+        path: 'config/types/:uuid/edit',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetTypeFormConfig },
+      },
       {
         path: 'config/types/:uuid',
-        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        loadComponent: () =>
+          import('./features/inventory/pages/inventory-detail-page/inventory-detail-page').then(
+            (m) => m.InventoryDetailPage,
+          ),
         data: {
           inventoryDetailConfig: {
             title: t('terms.assetType'),
@@ -207,64 +255,99 @@ export const routes: Routes = [
             editRoutePrefix: '/config/types',
             resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
-            fields: [
-              { key: 'description', label: t('common.description') },
-            ],
+            fields: [{ key: 'description', label: t('common.description') }],
           },
         },
       },
       // Prüfungen
       {
         path: 'inspections',
-        loadComponent: () => import('./core/pages/inspections/inspections-page/inspections-page').then((m) => m.InspectionsPage),
+        loadComponent: () =>
+          import('./features/inspections/pages/inspections-page/inspections-page').then(
+            (m) => m.InspectionsPage,
+          ),
       },
       {
         path: 'inspections/new',
-        loadComponent: () => import('./core/pages/inspections/inspection-new-page/inspection-new-page').then((m) => m.InspectionNewPage),
+        loadComponent: () =>
+          import('./features/inspections/pages/inspection-new-page/inspection-new-page').then(
+            (m) => m.InspectionNewPage,
+          ),
       },
       {
         path: 'inspections/:uuid',
-        loadComponent: () => import('./core/pages/inspections/inspection-page/inspection-page').then((m) => m.InspectionPage),
+        loadComponent: () =>
+          import('./features/inspections/pages/inspection-page/inspection-page').then(
+            (m) => m.InspectionPage,
+          ),
       },
       {
         path: 'config/inspection-templates',
         loadComponent: () =>
-          import('./core/pages/inspections/inspection-types-page/inspection-types-page').then((m) => m.InspectionTypesPage),
+          import('./features/inspections/pages/inspection-types-page/inspection-types-page').then(
+            (m) => m.InspectionTypesPage,
+          ),
       },
-      { path: 'config/inspection-types', redirectTo: 'config/inspection-templates', pathMatch: 'full' },
-      { path: 'config/inspection-types/new', redirectTo: 'config/inspection-templates/new', pathMatch: 'full' },
-      { path: 'config/inspection-types/:uuid', redirectTo: 'config/inspection-templates/:uuid', pathMatch: 'full' },
+      {
+        path: 'config/inspection-types',
+        redirectTo: 'config/inspection-templates',
+        pathMatch: 'full',
+      },
+      {
+        path: 'config/inspection-types/new',
+        redirectTo: 'config/inspection-templates/new',
+        pathMatch: 'full',
+      },
+      {
+        path: 'config/inspection-types/:uuid',
+        redirectTo: 'config/inspection-templates/:uuid',
+        pathMatch: 'full',
+      },
       {
         path: 'config/inspection-templates/new',
         loadComponent: () =>
-          import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
+          import('./features/inspections/pages/inspection-type-editor-page/inspection-type-editor-page').then(
+            (m) => m.InspectionTypeEditorPage,
+          ),
       },
       {
         path: 'config/inspection-templates/:uuid',
         loadComponent: () =>
-          import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
+          import('./features/inspections/pages/inspection-type-editor-page/inspection-type-editor-page').then(
+            (m) => m.InspectionTypeEditorPage,
+          ),
       },
       {
         path: 'scan',
-        loadComponent: () => import('./core/pages/scan-page/scan-page').then((m) => m.ScanPage),
+        loadComponent: () =>
+          import('./features/scanning/pages/scan-page/scan-page').then((m) => m.ScanPage),
       },
       {
         path: 'config/tags',
-        loadComponent: () => import('./core/pages/tags-page/tags-page').then((m) => m.TagsPage),
+        loadComponent: () =>
+          import('./features/tags/pages/tags-page/tags-page').then((m) => m.TagsPage),
       },
 
       {
         path: 'config/labels',
         loadComponent: () =>
-          import('./core/pages/labels/label-templates-page/label-templates-page').then((m) => m.LabelTemplatesPage),
+          import('./features/labels/pages/label-templates-page/label-templates-page').then(
+            (m) => m.LabelTemplatesPage,
+          ),
       },
       {
         path: 'config/labels/new',
-        loadComponent: () => import('./core/pages/labels/label-editor-page/label-editor-page').then((m) => m.LabelEditorPage),
+        loadComponent: () =>
+          import('./features/labels/pages/label-editor-page/label-editor-page').then(
+            (m) => m.LabelEditorPage,
+          ),
       },
       {
         path: 'config/labels/:uuid/edit',
-        loadComponent: () => import('./core/pages/labels/label-editor-page/label-editor-page').then((m) => m.LabelEditorPage),
+        loadComponent: () =>
+          import('./features/labels/pages/label-editor-page/label-editor-page').then(
+            (m) => m.LabelEditorPage,
+          ),
       },
 
       // Administration
@@ -273,29 +356,83 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
-          { path: 'customization', loadComponent: () => import('./core/pages/admin/customization-page/customization-page').then(m => m.CustomizationPage) },
+          {
+            path: 'customization',
+            loadComponent: () =>
+              import('./features/admin/pages/customization-page/customization-page').then(
+                (m) => m.CustomizationPage,
+              ),
+          },
           {
             path: 'areas',
-            loadComponent: () => import('./core/pages/admin/areas-page/areas-page').then((m) => m.AreasPage),
+            loadComponent: () =>
+              import('./features/admin/pages/areas-page/areas-page').then((m) => m.AreasPage),
           },
-          { path: 'users', loadComponent: () => import('./core/pages/admin/users-page/users-page').then((m) => m.UsersPage) },
-          { path: 'users/new', loadComponent: () => import('./core/pages/admin/user-form-page/user-form-page').then((m) => m.UserFormPage) },
-          { path: 'users/:uuid/edit', loadComponent: () => import('./core/pages/admin/user-form-page/user-form-page').then((m) => m.UserFormPage) },
-          { path: 'groups', loadComponent: () => import('./core/pages/admin/groups-page/groups-page').then((m) => m.GroupsPage) },
-          { path: 'groups/new', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
-          { path: 'groups/:uuid/edit', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
-          { path: 'group-permissions', loadComponent: () => import('./core/pages/admin/permissions-page/permissions-page').then((m) => m.PermissionsPage) },
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/admin/pages/users-page/users-page').then((m) => m.UsersPage),
+          },
+          {
+            path: 'users/new',
+            loadComponent: () =>
+              import('./features/admin/pages/user-form-page/user-form-page').then(
+                (m) => m.UserFormPage,
+              ),
+          },
+          {
+            path: 'users/:uuid/edit',
+            loadComponent: () =>
+              import('./features/admin/pages/user-form-page/user-form-page').then(
+                (m) => m.UserFormPage,
+              ),
+          },
+          {
+            path: 'groups',
+            loadComponent: () =>
+              import('./features/admin/pages/groups-page/groups-page').then((m) => m.GroupsPage),
+          },
+          {
+            path: 'groups/new',
+            loadComponent: () =>
+              import('./features/admin/pages/group-form-page/group-form-page').then(
+                (m) => m.GroupFormPage,
+              ),
+          },
+          {
+            path: 'groups/:uuid/edit',
+            loadComponent: () =>
+              import('./features/admin/pages/group-form-page/group-form-page').then(
+                (m) => m.GroupFormPage,
+              ),
+          },
+          {
+            path: 'group-permissions',
+            loadComponent: () =>
+              import('./features/admin/pages/permissions-page/permissions-page').then(
+                (m) => m.PermissionsPage,
+              ),
+          },
           {
             path: 'ldap',
-            loadComponent: () => import('./core/pages/admin/ldap-settings-page/ldap-settings-page').then((m) => m.LdapSettingsPage),
+            loadComponent: () =>
+              import('./features/admin/pages/ldap-settings-page/ldap-settings-page').then(
+                (m) => m.LdapSettingsPage,
+              ),
           },
           {
             path: 'oidc',
-            loadComponent: () => import('./core/pages/admin/oidc-settings-page/oidc-settings-page').then((m) => m.OidcSettingsPage),
+            loadComponent: () =>
+              import('./features/admin/pages/oidc-settings-page/oidc-settings-page').then(
+                (m) => m.OidcSettingsPage,
+              ),
           },
           {
             path: 'logs',
-            loadComponent: () => import('./core/pages/admin/audit-log-page/audit-log-page').then((m) => m.AuditLogPage),
+            loadComponent: () =>
+              import('./features/admin/pages/audit-log-page/audit-log-page').then(
+                (m) => m.AuditLogPage,
+              ),
           },
         ],
       },

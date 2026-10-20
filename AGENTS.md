@@ -14,6 +14,12 @@ This repository contains an Angular 21 frontend in `frontend/` and a Spring Boot
 - Preserve the Zone.js provider and build polyfill together. Do not migrate the app to zoneless change detection or introduce signals for ordinary page state.
 - Never copy local credentials into code, documentation, or test fixtures.
 
+## Commits
+
+- Every agent-created commit must have a descriptive subject and a long, detailed body explaining the motivation, affected components, behavioral changes, verification performed, and any remaining limitations. Use English and describe actual results; do not claim tests that were not run.
+- Every contributing AI agent must identify itself with a `Co-authored-by: Agent Name <agent-email>` trailer. Use the agent's actual identity and appropriate attribution address, for example `Co-authored-by: Codex <noreply@openai.com>`; include contributing agents rather than impersonating the human author.
+- These rules apply whenever a commit is requested; they do not authorize committing or pushing without a user request. Preserve the configured Git author and review the staged changes before committing.
+
 ## Essential Commands
 
 Run commands in the indicated directory. On Windows use `npm.cmd` if PowerShell blocks `npm` scripts; on Unix use `./gradlew` instead of `./gradlew.bat`.
@@ -37,6 +43,7 @@ Run commands in the indicated directory. On Windows use `npm.cmd` if PowerShell 
 - [API](docs/API.md), [database](docs/DATABASE.md), [security](docs/SECURITY.md): contracts and sensitive behavior.
 - [Deployment](docs/DEPLOYMENT.md): runtime requirements and missing infrastructure.
 - [Conventions](docs/CONVENTIONS.md): styling, language, code, and logging rules.
+- [Optimization review](docs/OPTIMIZATION.md): implemented refactors, remaining risks, and UI simplification priorities.
 - [Decision records](docs/decisions/README.md): when and how to record future decisions.
 
 Update the relevant document when a change alters its documented behavior; avoid duplicating instructions across files.

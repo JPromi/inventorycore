@@ -34,40 +34,44 @@ export class AuthService {
       password,
     };
 
-    return this.http.post<AuthResponseDto>(`${this.backendUrl}/auth`, request, { withCredentials: true }).pipe(
-      map((payload) => {
-        if (!payload.authenticated || !payload.username) {
-          throw new Error(payload.message || 'Invalid credentials');
-        }
+    return this.http
+      .post<AuthResponseDto>(`${this.backendUrl}/auth`, request, { withCredentials: true })
+      .pipe(
+        map((payload) => {
+          if (!payload.authenticated || !payload.username) {
+            throw new Error(payload.message || 'Invalid credentials');
+          }
 
-        const user = this.toUser(payload);
-        this.authState.setCurrentUser(user);
-        return user;
-      }),
-      catchError((error) => {
-        this.authState.clearCurrentUser();
-        return throwError(() => error);
-      })
-    );
+          const user = this.toUser(payload);
+          this.authState.setCurrentUser(user);
+          return user;
+        }),
+        catchError((error) => {
+          this.authState.clearCurrentUser();
+          return throwError(() => error);
+        }),
+      );
   }
 
   me(): Observable<UserEntity | null> {
-    return this.http.get<AuthResponseDto>(`${this.backendUrl}/auth/me`, { withCredentials: true }).pipe(
-      map((payload) => {
-        if (!payload.authenticated || !payload.username) {
-          this.authState.clearCurrentUser();
-          return null;
-        }
+    return this.http
+      .get<AuthResponseDto>(`${this.backendUrl}/auth/me`, { withCredentials: true })
+      .pipe(
+        map((payload) => {
+          if (!payload.authenticated || !payload.username) {
+            this.authState.clearCurrentUser();
+            return null;
+          }
 
-        const user = this.toUser(payload);
-        this.authState.setCurrentUser(user);
-        return user;
-      }),
-      catchError(() => {
-        this.authState.clearCurrentUser();
-        return of(null);
-      })
-    );
+          const user = this.toUser(payload);
+          this.authState.setCurrentUser(user);
+          return user;
+        }),
+        catchError(() => {
+          this.authState.clearCurrentUser();
+          return of(null);
+        }),
+      );
   }
 
   /** Login options shown on the login page (e.g. SSO button). */
@@ -78,9 +82,9 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    return this.http.post<void>(`${this.backendUrl}/auth/logout`, null, { withCredentials: true }).pipe(
-      finalize(() => this.authState.clearCurrentUser())
-    );
+    return this.http
+      .post<void>(`${this.backendUrl}/auth/logout`, null, { withCredentials: true })
+      .pipe(finalize(() => this.authState.clearCurrentUser()));
   }
 
   getCurrentUser(): UserEntity | null {

@@ -1,0 +1,286 @@
+@use 'breakpoints' as bp;
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  .editor-layout {
+    display: grid;
+    grid-template-columns: 22rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+
+    // canvas on top, properties below
+    @include bp.laptop {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  // ---- properties panel ----
+
+  .sidebar {
+    gap: 0.75rem;
+    min-width: 0;
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    label.field > span,
+    .field-label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .four {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.4rem;
+
+      input {
+        padding: 0.4rem;
+      }
+
+      @include bp.phone {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .toggle {
+      min-height: 1.8rem;
+      font-size: 0.85rem;
+
+      @include bp.phone {
+        min-height: 2.5rem;
+      }
+    }
+
+    .style-toggles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .add-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.6rem;
+
+      @include bp.phone {
+        > * {
+          flex: 1 1 auto;
+        }
+      }
+    }
+
+    .placeholders {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: -0.3rem;
+
+      button {
+        padding: 0.15rem 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        background: var(--surface-active);
+        color: var(--text);
+        font-size: 0.74rem;
+        cursor: pointer;
+
+        &:hover {
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+
+        @include bp.touch {
+          padding: 0.45rem 0.75rem;
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+
+  .element-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.45rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--surface-hover);
+      }
+
+      &.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      &.empty-item {
+        cursor: default;
+      }
+
+      button {
+        width: 1.5rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: var(--radius-xs);
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+
+        &:disabled {
+          opacity: 0.3;
+          cursor: default;
+        }
+
+        &:hover:not(:disabled) {
+          background: var(--surface-active);
+        }
+
+        @include bp.touch {
+          width: 2.5rem;
+          height: 2.5rem;
+        }
+      }
+    }
+
+    .element-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+  }
+
+  // ---- canvas ----
+
+  .canvas-column {
+    position: sticky;
+    top: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    @include bp.laptop {
+      position: static;
+      order: -1;
+    }
+
+    .canvas-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+
+    .sample {
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+
+      .sample-select {
+        width: min(100%, 16rem);
+      }
+
+      @include bp.phone {
+        flex: 1 1 100%;
+
+        .sample-select {
+          flex: 1 1 12rem;
+        }
+      }
+    }
+
+    .zoom {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+
+      .zoom-value {
+        min-width: 4rem;
+        height: 2.25rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+
+        @include bp.phone {
+          height: 2.5rem;
+        }
+      }
+
+      @include bp.phone {
+        margin-left: auto;
+      }
+    }
+
+    .canvas {
+      min-height: 24rem;
+      max-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 2rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background:
+        linear-gradient(45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 16px 16px,
+        linear-gradient(-45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 16px 16px,
+        var(--surface-hover);
+
+      @include bp.phone {
+        min-height: 14rem;
+        max-height: 55vh;
+        padding: 1rem;
+      }
+    }
+
+    .canvas-hint code {
+      padding: 0 0.25rem;
+      border-radius: var(--radius-xs);
+      background: var(--surface-active);
+    }
+  }
+}

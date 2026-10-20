@@ -1,0 +1,110 @@
+@use 'breakpoints' as bp;
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  .intro {
+    max-width: 48rem;
+    margin-bottom: 1rem;
+  }
+
+  .area-group {
+    margin-bottom: 1.5rem;
+
+    h2 {
+      margin-bottom: 0.6rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+      gap: 0.75rem;
+    }
+  }
+
+  .template-card {
+    position: relative;
+    > app-selection-checkbox {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      z-index: 1;
+      padding: 0.25rem;
+      background: var(--surface);
+      border-radius: var(--radius-xs);
+    }
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+
+    &.clickable {
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-sm);
+      }
+    }
+
+    .preview {
+      height: 9.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background:
+        linear-gradient(45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 12px 12px,
+        linear-gradient(-45deg, var(--surface-active) 25%, transparent 25%) 0 0 / 12px 12px,
+        var(--surface-hover);
+    }
+
+    .info {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.65rem 0.75rem 0.25rem;
+
+      > div {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow-wrap: anywhere;
+      }
+
+      .muted {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+      }
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.3rem;
+      padding: 0 0.6rem 0.6rem;
+
+      .icon-button {
+        width: 2rem;
+        height: 2rem;
+
+        @include bp.phone {
+          width: 2.5rem;
+          height: 2.5rem;
+        }
+      }
+    }
+  }
+}

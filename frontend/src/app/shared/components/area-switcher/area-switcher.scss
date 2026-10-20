@@ -1,0 +1,174 @@
+@use 'breakpoints' as bp;
+:host {
+  position: relative;
+  display: block;
+  margin-bottom: 0.75rem;
+
+  .trigger {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-hover);
+    }
+
+    &.filtered {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      small {
+        color: var(--text-muted);
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      span {
+        overflow: hidden;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .chevron {
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+  }
+
+  .panel {
+    overflow-y: auto;
+    padding: 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+
+    .option {
+      width: 100%;
+      min-height: 2rem;
+      padding: 0.3rem 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.85rem;
+      text-align: left;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--surface-hover);
+
+        .only {
+          visibility: visible;
+        }
+      }
+
+      &.selected {
+        .name {
+          font-weight: 700;
+        }
+
+        .check.box {
+          border-color: var(--accent);
+          background: var(--accent);
+          color: var(--on-accent);
+        }
+      }
+
+      .check {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+
+        &.box {
+          border: 1px solid var(--border-strong);
+          border-radius: var(--radius-xs);
+        }
+      }
+
+      .dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        flex-shrink: 0;
+        border-radius: 50%;
+      }
+
+      .name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .only {
+        visibility: hidden;
+        padding: 0 0.35rem;
+        border-radius: var(--radius-xs);
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+
+        &:hover {
+          background: var(--surface-active);
+          color: var(--text);
+        }
+      }
+
+      @include bp.touch {
+        min-height: 2.75rem;
+
+        // no hover on touch: always offer "nur" with a tappable size
+        .only {
+          min-height: 2rem;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 0.6rem;
+          visibility: visible;
+          background: var(--surface-active);
+        }
+      }
+    }
+
+    .divider {
+      height: 1px;
+      margin: 0.25rem 0;
+      background: var(--border);
+    }
+
+    .note {
+      padding: 0.35rem 0.45rem 0.2rem;
+      color: var(--text-subtle);
+      font-size: 0.72rem;
+    }
+  }
+}

@@ -1,0 +1,602 @@
+@use 'breakpoints' as bp;
+@keyframes pop {
+  from {
+    transform: scale(0.98);
+    opacity: 0.4;
+  }
+}
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.item-list > .item,
+.protocol-asset {
+  margin-inline-start: min(calc(var(--asset-depth, 0) * var(--inspection-tree-indent)), 20%);
+}
+.asset-group-toggle {
+  flex-shrink: 0;
+  &.collapsed svg {
+    transform: rotate(-90deg);
+  }
+}
+.asset-link-note {
+  color: var(--text);
+}
+.protocol-asset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  strong {
+    overflow-wrap: anywhere;
+  }
+}
+// small bordered buttons in the item list (fields toggle, status, yes / no)
+%small-button {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+%panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+// status color of figures, progress, items and status buttons
+.present,
+.yes {
+  --tone: var(--success);
+}
+.missing,
+.no {
+  --tone: var(--accent);
+}
+.warning {
+  --tone: var(--warning);
+}
+.page-shell {
+  width: min(100%, 68rem);
+}
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.eyebrow .badge svg {
+  vertical-align: -1px;
+}
+.filter-summary {
+  margin-top: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+// ---- figures ----
+.stats {
+  @extend %panel;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.75rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+
+  @include bp.phone {
+    gap: 0.6rem 1.25rem;
+    padding: 0.75rem 0.9rem;
+  }
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+
+  .value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--tone, inherit);
+  }
+
+  .label {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+}
+.progress-wrap {
+  min-width: min(100%, 12rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  .progress {
+    height: 0.55rem;
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: var(--surface-active);
+
+    span {
+      background: var(--tone);
+    }
+  }
+}
+// ---- scanning ----
+.scan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.scan-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  .scan-field {
+    position: relative;
+    flex: 1 1 14rem;
+    display: flex;
+    align-items: center;
+
+    &.busy input {
+      opacity: 0.6;
+    }
+  }
+
+  .field-icon {
+    position: absolute;
+    left: 0.9rem;
+    color: var(--text-subtle);
+    pointer-events: none;
+  }
+
+  input:not([type='checkbox']):not([type='radio']) {
+    min-height: 3rem;
+    padding: 0 3.2rem 0 2.9rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+
+    &:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+  }
+
+  .submit {
+    position: absolute;
+    right: 0.4rem;
+    width: 2.3rem;
+    height: 2.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--on-accent);
+    cursor: pointer;
+
+    &:disabled {
+      background: var(--surface-active);
+      color: var(--text-subtle);
+    }
+  }
+
+  .camera-toggle {
+    &.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    // camera button on its own line below the input
+    @include bp.phone {
+      flex-basis: 100%;
+    }
+  }
+}
+.add-asset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+
+  app-search-select {
+    flex: 1 1 14rem;
+    max-width: 26rem;
+  }
+}
+// desktop: camera card in the page (phones and tablets: full screen)
+.camera {
+  width: min(100%, 28rem);
+}
+// popup over the camera: room for its close button
+.camera.immersive .scan-result {
+  margin-right: 2.5rem;
+}
+// photos in the protocol
+.report-photos {
+  button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: zoom-in;
+  }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+
+  img {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: block;
+    border-radius: var(--radius-xs);
+    object-fit: cover;
+  }
+}
+// scanned item in the popup over the camera
+.sheet-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+
+  strong {
+    font-size: 1.05rem;
+  }
+
+  .status-buttons button {
+    flex: 1;
+    min-height: 3rem;
+    justify-content: center;
+    font-size: 0.95rem;
+  }
+}
+.scan-result {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  animation: pop 0.25s ease-out;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &.success {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+
+  &.warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+  }
+
+  &.neutral {
+    background: var(--surface-active);
+    color: var(--text-muted);
+  }
+}
+// ---- foreign objects ----
+.unexpected {
+  margin-bottom: 1rem;
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  h2,
+  .hint {
+    color: var(--warning);
+  }
+
+  .hint {
+    margin: 0.2rem 0 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    overflow-wrap: anywhere;
+
+    a,
+    strong {
+      font-weight: 700;
+      color: var(--text);
+    }
+  }
+}
+.meta {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+// ---- item list ----
+.list-toolbar {
+  margin-bottom: 0.75rem;
+}
+.item-list {
+  @extend %panel;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &:empty {
+    display: none;
+  }
+}
+.item {
+  border-left: 4px solid var(--tone, transparent);
+  transition: background-color 0.3s;
+
+  & + & {
+    border-top: 1px solid var(--border);
+  }
+
+  &.highlight {
+    background: var(--success-soft);
+  }
+}
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+
+  .status-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    flex-shrink: 0;
+    border: 2px solid var(--tone, var(--border-strong));
+    border-radius: 50%;
+    background: var(--tone);
+  }
+
+  .item-main {
+    min-width: 0;
+    flex: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .item-name {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .checked.function-open {
+    color: var(--warning);
+  }
+
+  .checked {
+    color: var(--text-subtle);
+    font-size: 0.74rem;
+  }
+
+  // name on its own line, big status buttons below
+  @include bp.phone {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+
+    .item-main {
+      flex-basis: calc(100% - 2rem);
+    }
+
+    button {
+      min-height: 2.6rem;
+    }
+
+    .status-buttons {
+      margin-left: auto;
+
+      button {
+        padding: 0 1rem;
+      }
+    }
+  }
+}
+.fields-toggle {
+  @extend %small-button;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  svg {
+    transition: transform 0.15s;
+  }
+
+  &.open svg {
+    transform: rotate(180deg);
+  }
+
+  .incomplete {
+    color: var(--warning);
+  }
+}
+.status-buttons {
+  display: flex;
+  gap: 0.3rem;
+
+  &.busy {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  button {
+    @extend %small-button;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+
+  button:is(:hover, .active) {
+    border-color: var(--tone);
+    color: var(--tone);
+  }
+
+  button.active {
+    background: var(--tone);
+    color: var(--on-accent);
+  }
+}
+// app-inspection-item-editor below an item
+.item-fields {
+  padding: 0.25rem 1rem 1rem 2.4rem;
+
+  @include bp.phone {
+    padding-left: 1rem;
+  }
+}
+.check-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  &.wide {
+    grid-column: 1 / -1;
+  }
+}
+.check-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  .required {
+    color: var(--accent);
+  }
+
+  .scope {
+    margin-left: 0.3rem;
+    padding: 0 0.35rem;
+    border-radius: var(--radius-xs);
+    background: var(--surface-active);
+    font-weight: 600;
+  }
+}
+// ---- complete dialog ----
+.complete-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+.lock-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+// colored list entries and headings in the dialog and the protocol
+.bad {
+  color: var(--accent);
+}
+.warn {
+  color: var(--warning);
+}
+.good {
+  color: var(--success);
+}
+// ---- protocol ----
+.protocol-meta {
+  margin-bottom: 1rem;
+  overflow-wrap: anywhere;
+
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 0.75rem 1.5rem;
+  }
+
+  .comment {
+    margin-top: 0.9rem;
+    white-space: pre-line;
+  }
+}
+dt {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+dd {
+  margin: 0;
+}
+.report-section {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin-bottom: 0.6rem;
+  }
+}
+// report tables scroll sideways instead of getting squashed on phones
+.table-wrap {
+  overflow-x: auto;
+
+  table {
+    min-width: 34rem;
+  }
+}
+.values {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.1rem 0.6rem;
+
+  div {
+    display: contents;
+  }
+
+  dd {
+    font-weight: 600;
+
+    &.no {
+      color: var(--accent);
+    }
+  }
+}
+// asset structure in the printed protocol
+.print-tree-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 4mm;
+  margin-left: calc(var(--asset-depth, 0) * 5mm);
+  padding: 1mm 0;
+  border-bottom: 1px solid var(--border);
+  break-inside: avoid;
+}

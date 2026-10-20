@@ -1,0 +1,118 @@
+@use 'breakpoints' as bp;
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}
+:host {
+  // the host also carries the global .toolbar class (row with wrapping, spacing below)
+
+  // phones: search and "Filter" button side by side, the filters below when opened
+
+  @include bp.phone {
+    // more specific than the global .toolbar rule
+    &.toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.5rem;
+    }
+
+    &.toolbar.no-filters {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .filter-toggle {
+    display: none;
+
+    @include bp.phone {
+      min-height: 2.6rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+
+      // no search box in front: the button takes the whole row
+      &:first-child {
+        grid-column: 1 / -1;
+      }
+
+      &.active {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .count {
+        min-width: 1.3rem;
+        padding: 0 0.35rem;
+        border-radius: var(--radius-pill);
+        background: var(--accent);
+        color: var(--on-accent);
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      .chevron {
+        color: var(--text-subtle);
+        transition: transform 0.15s;
+      }
+
+      &[aria-expanded='true'] .chevron {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  // desktop: the filters are simply part of the toolbar row
+
+  .filter-panel {
+    display: contents;
+
+    @include bp.phone {
+      grid-column: 1 / -1;
+      display: none;
+
+      &.open {
+        display: grid;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        animation: unfold 0.15s ease-out;
+      }
+    }
+  }
+
+  .reset {
+    min-height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0 0.6rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--accent-soft);
+    }
+
+    @include bp.phone {
+      min-height: 2.6rem;
+    }
+  }
+}

@@ -35,6 +35,8 @@ From `frontend/`, `npm run i18n:check` verifies that every literal text key used
 
 ## Browser Regressions
 
+After the feature/shared/layout migration, `refactoring-regressions.spec.ts` covers the `/dashboard` compatibility route, cancelled stale detail responses during linked navigation, and retrying group membership saves without duplicating the group or repeating successful updates. The complete 66-test Edge suite passed during the refactor, including image previews, print pagination, map rendering, dropdown positioning and touch selection. The focused `InventoryListServiceTest` and `PagingTest` suites passed 12 tests, including skipping usage scans on out-of-range tag pages. These are regression results, not performance benchmarks.
+
 `touch-selection.spec.ts` uses touch-enabled Edge and CDP touch input to cover hold/drag/reverse selection, deselection, edge auto-scroll in list/grid views, stopping on release/cancellation, and native quick-swipe scrolling. These browser regressions do not replace a physical iPhone/Safari check.
 
 Backend: `PagingTest` covers page slicing, size limits, search words and the area-selection rule (including location chains and cycles); `PermissionRulesTest` covers the server-side rules that the UI mirrors: no scans or checks of assets outside the user's inspect areas, protocol details without hidden assets, ambiguous scan codes (nothing recorded, only a matching choice accepted), deleting open protocols, template areas, attaching and reading files, and upload rights.

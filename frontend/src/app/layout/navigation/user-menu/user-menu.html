@@ -1,0 +1,27 @@
+<div class="user">
+    <span class="avatar">
+        @if (user?.profileImageUrl && !profileImageFailed) {
+            <img [src]="user?.profileImageUrl" alt="" referrerpolicy="no-referrer" (error)="profileImageFailed = true" />
+        } @else {
+            {{ user?.displayName?.charAt(0) }}
+        }
+    </span>
+    <span class="user-name" [title]="user?.displayName || user?.username || ''">{{ user?.displayName || user?.username }}</span>
+    <button #userMenuTrigger type="button" class="user-menu-trigger" [attr.aria-label]="'userMenu.title' | t" [title]="'userMenu.title' | t" [attr.aria-expanded]="userMenuOpen" aria-controls="user-menu" (click)="userMenuOpen = !userMenuOpen">
+        <svg lucideEllipsis size="20"></svg>
+    </button>
+</div>
+@if (userMenuOpen) {
+    <div #userMenu id="user-menu" class="user-menu" [appDropdownPosition]="userMenuTrigger" dropdownPlacement="top-end">
+        <a routerLink="/profile"><svg lucideUser size="17"></svg>{{ 'userMenu.profile' | t }}</a>
+        <button type="button" (click)="logout()" [disabled]="loggingOut"><svg lucideLogOut size="17"></svg>{{ (loggingOut ? 'userMenu.loggingOut' : 'userMenu.logout') | t }}</button>
+        @if (logoutError) { <p role="alert">{{ 'userMenu.logoutFailed' | t }}</p> }
+    </div>
+}
+@if (appInfo.info$ | async; as info) {
+    <div class="app-info">
+        <span class="app-name">{{ info.name }}</span>
+        <span>{{ 'userMenu.version' | t: { version: info.version } }}</span>
+        <a [href]="info.githubUrl" target="_blank" rel="noopener noreferrer"><svg lucideExternalLink size="13"></svg>{{ 'userMenu.github' | t }}</a>
+    </div>
+}
