@@ -8,7 +8,7 @@ Reviewed on 2026-10-20. This is a source-based engineering review, not a product
 - Extracted [UserMenu](../frontend/src/app/layout/navigation/user-menu/user-menu.ts) from the shell and moved navigation labels, icons, and destinations into [navigation.config.ts](../frontend/src/app/layout/navigation/navigation.config.ts). Long-lived subscriptions use destruction-aware teardown. AuthStateService remains the source of user identity; components do not maintain independent authenticated-user stores.
 - Reformatted component SCSS as multiline blocks and nested ordinary component styles under `:host`. PrintDocument and Leaflet keep global wrappers; the large inspection page avoids adding a repeated host prefix to every selector because that exceeded its unchanged build budget. These are intentional exceptions, not reasons to raise the budget.
 - Removed duplicate detail configuration interfaces: [InventoryDetailPage](../frontend/src/app/features/inventory/pages/inventory-detail-page/inventory-detail-page.ts) imports the existing types from `detail-configs.ts`. Image sorting now happens once per loaded object instead of on every change-detection read. Superseded detail requests are cancelled and per-object schedule/image state is reset.
-- Fixed `/dashboard` links reaching the not-found wildcard: the route now explicitly redirects to the working inventory view. A dedicated dashboard has not been implemented.
+- Fixed `/dashboard` links reaching the not-found wildcard: the route first redirected to the inventory view; it now shows the dedicated dashboard page.
 - Fixed [group retry](../frontend/src/app/features/admin/pages/group-form-page/group-form-page.ts) after a partial membership failure: retain the newly created group UUID immediately and reconcile each successful membership update. Retry updates the existing group and only the outstanding memberships. This is not a substitute for a future transactional group-membership API.
 - Made [inspection creation](../frontend/src/app/features/inspections/pages/inspection-new-page/inspection-new-page.ts) initialization and preview/area streams destruction-aware, so delayed initialization cannot attach a new sidebar subscription after navigation away.
 - Extracted [InventoryListService](../backend/src/main/java/com/jpromi/inventorycore/service/InventoryListService.java) from the HTTP controller. One read-only transaction covers authorized filtering, sorting, paging, and mapping. Empty and out-of-range tag pages now skip asset/type scans for usage counts while retaining correct totals and normalized page metadata.
@@ -80,7 +80,7 @@ The structural migration preserved existing workflows. A subsequent UI pass impl
 - Inventory, user/group and inspection creation forms use unframed sections with dividers rather than a separate floating card for every section. Inventory forms start with name and description, followed by assignments; inherited values remain locked.
 - Inventory details retain separate cards for facts, relationships, schedules and media. Edit stays visible; printing and deletion use a reusable, keyboard-accessible action menu. Empty image galleries, tag blocks and inspection lists are omitted. On mobile, facts precede the media sidebar. The history preview is compact and collapsed initially; expanding it reveals recent entries and the full-history link without collapsing the dedicated history page.
 - Open inspections use compact progress instead of the repeated statistics panel. Due-group disclosure and starting an inspection are separate native buttons.
-- Repetitive helper text was shortened or removed. The duplicate Dashboard navigation entry was removed; existing `/dashboard` links still redirect to assets.
+- Repetitive helper text was shortened or removed. The duplicate Dashboard navigation entry was removed; the dashboard now has one navigation entry at the top.
 
 Remaining design proposals:
 
@@ -97,6 +97,6 @@ Validate each UI change with real long names, nested assets/locations, many fiel
 
 - Production frontend build and i18n key check must pass; style-budget warnings remain visible and budgets were not increased.
 - Run the complete Playwright suite after folder/style changes, including print pagination, Leaflet, dropdown top-layer positioning, image viewing, touch selection, and permission-limited lists.
-- `refactoring-regressions.spec.ts` covers dashboard compatibility, stale linked-detail responses and partial group-membership retries.
+- `refactoring-regressions.spec.ts` covers the `/dashboard` route and brand link, stale linked-detail responses and partial group-membership retries.
 - `InventoryListServiceTest` and `PagingTest` cover filtering before totals/slicing, inherited tags/areas, usage counts, and empty/out-of-range pages without unnecessary usage queries. These mock tests do not measure SQL performance or run database concurrency tests.
 - The existing Angular login unit spec remains a separate documented baseline failure. No full backend context test was run against the configured PostgreSQL database.

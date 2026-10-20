@@ -40,6 +40,7 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/admin/oidc`, `/admin/oidc/test` | OIDC configuration/discovery test; `AuthProviderController` |
 | `/inspection-types`, `/inspections`, `/inspection-schedules` | Types, runs, items, scans, photos, completion and due dates; `InspectionController` |
 | `/label-templates` | Printable label configuration; `LabelTemplateController` |
+| `/dashboard` | Start-page numbers and short lists for the sidebar area selection; `DashboardController` |
 | `/scan` | Resolve a scanned value; `ScanController` |
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |
 | `/audit-logs`, `/assets/{uuid}/logs`, `/locations/{uuid}/logs` | Admin activity search and authorized object histories; `AuditController` |
@@ -52,6 +53,10 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 All `/page` endpoints take `page` (from 0), `size` (default 50, max 200) and `q` (every word must occur), and return `PageResponse` (`items`, `total`, `page`, `size`, `hasMore`). `areas` (repeatable) is the sidebar area selection. Further filters: assets `tag`, `location` (with sub-locations), `assetType`, `area`; locations `type`, `area`; asset types `area`; protocols `status` (`OPEN`/`COMPLETED`, response adds `openCount` / `completedCount` within the area selection, independent of search and status); users `group`, `status` (`enabled`, `disabled`, `admin`). Tags return `TagUsageResponse` with `assetCount` / `assetTypeCount` of visible objects; groups return `GroupRowResponse` with `memberCount` and up to five `members`. Sorting is fixed per list (by name; protocols newest first; label templates by area, default area first).
 
 OIDC browser redirects additionally use `/oauth2/authorization/oidc` and `/login/oauth2/**` outside `/api`.
+
+### Dashboard
+
+`GET /api/dashboard` takes the sidebar selection as repeatable `areas` (empty = all) and returns `DashboardResponse`. Every number uses the list rules: permission filter first, then the area selection (assets and locations also through their location or parent locations, types through their own areas, inspections through the protocol area, due dates through their asset). It contains `assetCount`, `locationCount`, `assetTypeCount`, `tagCount` (distinct own and inherited tags of those assets), `topTags` (6, assets per tag), `assetsByType` (5 types with the most assets; an entry without `uuid`/`name` counts assets without type) plus `otherTypeAssetCount`. For users with the right to inspect somewhere (`canInspect`) it adds `due` (OVERDUE/DUE/OK counts), `nextDue` (5 most urgent `InspectionDueResponse`), `openInspectionCount`, `completedInspectionCount` (last 30 days), `recentInspections` (4 newest completed) and `results` (checked assets of inspections completed in the last 90 days: `ok`, `defect`, `missing`, `failed`); without that right these stay empty and no inspection data is read.
 
 ## Authentication and Access
 

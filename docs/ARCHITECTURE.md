@@ -15,7 +15,7 @@ Local development uses Angular's proxy for `/api`, `/oauth2`, and `/login/oauth2
 - `core` is reserved for cross-application auth, guards, permissions, area selection, customization, app metadata, PWA, i18n, and authentication models. Auth and area selection use RxJS subjects.
 - `features/labels` renders label layouts and barcodes with bwip-js. `features/scanning` owns scanner helpers using ZXing. Shared controls that still depend on domain types are listed for a later ownership cleanup in [optimization review](OPTIMIZATION.md).
 
-Relative imports, dynamic page imports, and documentation file links were migrated with the folder moves; public browser routes are unchanged. `/dashboard` is an explicit compatibility redirect to `/assets` until a dedicated dashboard exists, rather than falling through to the not-found page. Do not infer routes from physical folder names.
+Relative imports, dynamic page imports, and documentation file links were migrated with the folder moves; public browser routes are unchanged. `/dashboard` is the start page (`features/dashboard`, also the target of `/` and the brand link); its numbers come from one `GET /api/dashboard` call counted on the server. Do not infer routes from physical folder names.
 
 Change detection is zone-based. Both the root provider and the build's Zone.js polyfill are necessary for async workflows; see [conventions](CONVENTIONS.md). List pages load server-side pages with search and filters; see [conventions](CONVENTIONS.md).
 

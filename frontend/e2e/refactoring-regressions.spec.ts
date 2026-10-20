@@ -1,20 +1,26 @@
 import { expect, test } from '@playwright/test';
 
-test('dashboard links resolve to the inventory instead of the wildcard', async ({ page }) => {
+test('dashboard links and the brand open the dashboard instead of the wildcard', async ({ page }) => {
   await page.route('**/api/**', (route) =>
     route.fulfill({
       json:
         new URL(route.request().url()).pathname === '/api/auth/me'
           ? { authenticated: true, username: 'admin', role: 'ADMIN', permissions: [] }
-          : new URL(route.request().url()).pathname.endsWith('/page')
-            ? { items: [], total: 0, hasMore: false }
-            : [],
+          : new URL(route.request().url()).pathname === '/api/dashboard'
+            ? { assetCount: 0, locationCount: 0, assetTypeCount: 0, tagCount: 0, canInspect: false,
+                due: { overdue: 0, dueSoon: 0, ok: 0 }, nextDue: [], openInspectionCount: 0, completedInspectionCount: 0,
+                recentInspections: [], results: { ok: 0, defect: 0, missing: 0, failed: 0 }, topTags: [], assetsByType: [],
+                otherTypeAssetCount: 0 }
+            : new URL(route.request().url()).pathname.endsWith('/page')
+              ? { items: [], total: 0, hasMore: false }
+              : [],
     }),
   );
   await page.goto('/dashboard');
-  await expect(page).toHaveURL(/\/assets$/);
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await page.goto('/assets');
   await page.locator('.brand').click();
-  await expect(page).toHaveURL(/\/assets$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 test('late responses cannot overwrite a newer linked asset detail', async ({ page }) => {

@@ -2023,5 +2023,75 @@
       "areas": "Bereiche: {names}",
       "onlyDue": "Nur fällige Assets"
     }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "scopeAll": "Alle Bereiche",
+    "scopeSelected": "Ausgewählte Bereiche",
+    "showAll": "Alle anzeigen",
+    "tiles": {
+      "label": "Kennzahlen",
+      "tagsInUse": "Verwendete Tags",
+      "overdue": "Überfällig",
+      "dueSoon": "Bald fällig"
+    },
+    "next": {
+      "title": "Nächste Prüfungen",
+      "empty": "Keine wiederkehrenden Prüfungen für die ausgewählten Bereiche vorhanden."
+    },
+    "recent": {
+      "title": "Letzte Prüfungen",
+      "presentOf": "{count} von {total} vorhanden",
+      "passedOf": "{count} von {total} in Ordnung",
+      "problems": {
+        "one": "1 Auffälligkeit",
+        "other": "{count} Auffälligkeiten"
+      },
+      "noProblems": "Ohne Auffälligkeiten",
+      "empty": "Noch keine abgeschlossenen Prüfungen vorhanden.",
+      "open": {
+        "one": "1 offene Prüfung",
+        "other": "{count} offene Prüfungen"
+      },
+      "completed": {
+        "one": "1 in den letzten 30 Tagen abgeschlossen",
+        "other": "{count} in den letzten 30 Tagen abgeschlossen"
+      }
+    },
+    "stats": {
+      "withoutType": "Ohne Typ",
+      "assets": {
+        "one": "1 Asset",
+        "other": "{count} Assets"
+      },
+      "otherTypes": {
+        "one": "1 Asset weiterer Typen",
+        "other": "{count} Assets weiterer Typen"
+      },
+      "noAssets": "Keine Assets in den ausgewählten Bereichen vorhanden.",
+      "title": "Bestand nach Typ",
+      "tags": "Häufigste Tags",
+      "types": {
+        "one": "1 Typ",
+        "other": "{count} Typen"
+      },
+      "tagsInUse": {
+        "one": "1 Tag in Verwendung",
+        "other": "{count} Tags in Verwendung"
+      }
+    },
+    "results": {
+      "title": "Prüfergebnisse",
+      "ok": "In Ordnung",
+      "defect": "Defekt",
+      "problem": "Nicht vorhanden oder mangelhaft",
+      "partTitle": "{label}: {count} ({percent} %)",
+      "summary": {
+        "one": "1 geprüftes Asset in den letzten 90 Tagen",
+        "other": "{count} geprüfte Assets in den letzten 90 Tagen"
+      },
+      "empty": "In den letzten 90 Tagen wurde keine Prüfung abgeschlossen.",
+      "okShare": "in Ordnung"
+    }
   }
 }

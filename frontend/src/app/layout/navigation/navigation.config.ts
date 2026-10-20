@@ -1,4 +1,5 @@
 import {
+  LucideLayoutDashboard,
   LucideScanBarcode,
   LucideBoxes,
   LucideMapPin,
@@ -34,6 +35,7 @@ export type NavItem = NavChild & {
 };
 
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
+  { label: t('nav.dashboard'), route: '/dashboard', icon: LucideLayoutDashboard },
   { label: t('nav.scan'), route: '/scan', icon: LucideScanBarcode },
   { label: t('nav.assets'), route: '/assets', icon: LucideBoxes },
   { label: t('nav.locations'), route: '/locations', icon: LucideMapPin },

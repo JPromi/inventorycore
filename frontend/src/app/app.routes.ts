@@ -87,8 +87,11 @@ export const routes: Routes = [
     component: MainRoute,
     canActivate: [AuthGuard],
     children: [
-      // Keep existing bookmarks valid until a dedicated dashboard is implemented.
-      { path: 'dashboard', pathMatch: 'full', redirectTo: 'assets' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/pages/dashboard-page/dashboard-page').then((m) => m.DashboardPage),
+      },
       {
         path: 'profile',
         loadComponent: () =>
