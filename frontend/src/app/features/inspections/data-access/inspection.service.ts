@@ -317,6 +317,18 @@ export interface InspectionItemUpdate {
   values?: Record<string, string>;
 }
 
+/** Choices typed as text ("A, B; C" or one per line), without blanks and duplicates. */
+export function parseOptions(text: string): string[] {
+  return [
+    ...new Set(
+      text
+        .split(/[,;\n]/)
+        .map((option) => option.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 /** Choices of a SELECT field. */
 export function fieldOptions(field: Pick<InspectionField, 'optionsJson'>): string[] {
   try {

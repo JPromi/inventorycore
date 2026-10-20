@@ -25,6 +25,11 @@ import {
   statusFitsAreas,
   statusName,
 } from '../../../asset-statuses/data-access/asset-status.service';
+import {
+  CHECK_FIELD_TYPES,
+  fieldOptions,
+  parseOptions,
+} from '../../../inspections/data-access/inspection.service';
 import { randomPresetColor } from '../../../../shared/components/color-picker/color-picker';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -35,6 +40,9 @@ import {
   InventoryItem,
   InventoryRequest,
   TagItem,
+  AssetFieldType,
+  CustomFieldDefinition,
+  CustomFieldValue,
 } from '../../data-access/inventory-api.service';
 import { PermissionService } from '../../../../core/service/permission.service';
 import { locationPath, locationWithDescendants } from '../../../../shared/util/location-utils';
@@ -237,6 +245,15 @@ export class InventoryFormPage implements OnInit {
   /** `createAnother` keeps the context (areas, location, type, ...) and opens an empty form again. */
   protected save(createAnother = false): void {
     if (!this.canSave || this.saving || this.uploading || this.coordinatesError) {
+      return;
+    }
+    const emptySelect = (this.form.fieldDefinitions ?? []).find(
+      (field) => field.fieldType === 'SELECT' && !fieldOptions(field).length,
+    );
+    if (this.config.resourceType === 'ASSET_TYPE' && emptySelect) {
+      this.error = t('inventoryForm.errors.selectWithoutOptions', {
+        name: emptySelect.name || t('inventoryForm.fieldTypes.SELECT'),
+      });
       return;
     }
     if (!this.selectedAreaUuids.length && !this.lockedAreaUuids.length) {
@@ -461,7 +478,11 @@ export class InventoryFormPage implements OnInit {
       parentLocationUuid: request.parentLocationUuid || null,
       parentAssetUuid: request.parentAssetUuid || null,
       parentAssetNote: request.parentAssetUuid ? request.parentAssetNote?.trim() || null : null,
-      fieldDefinitions: request.fieldDefinitions ?? [],
+      // choices only belong to selection fields
+      fieldDefinitions: (request.fieldDefinitions ?? []).map((field) => ({
+        ...field,
+        optionsJson: field.fieldType === 'SELECT' ? (field.optionsJson ?? '[]') : null,
+      })),
       fieldValues: request.fieldValues ?? [],
       images: request.images?.filter((image) => image.fileUuid || image.url?.trim()) ?? [],
       tagUuids: this.config.tags ? this.selectedTagUuids : [],
@@ -499,6 +520,70 @@ export class InventoryFormPage implements OnInit {
 
   protected get inspectionFields(): FieldConfig[] {
     return this.config.fields.filter((field) => field.key === 'inspectionIntervalDays');
+  }
+
+  protected readonly fieldTypeOptions: SelectOption[] = CHECK_FIELD_TYPES.map((type) => ({
+    value: type.value,
+    label: type.label,
+  }));
+  /** Choice lists as typed, so commas and blanks survive while typing. */
+  private readonly optionTexts = new WeakMap<CustomFieldDefinition, string>();
+
+  protected optionsText(definition: CustomFieldDefinition): string {
+    return this.optionTexts.get(definition) ?? fieldOptions(definition).join(', ');
+  }
+
+  protected setOptionsText(definition: CustomFieldDefinition, text: string): void {
+    this.optionTexts.set(definition, text);
+    definition.optionsJson = JSON.stringify(parseOptions(text));
+  }
+
+  /** The type's definition of a value, for the matching input; own fields have none. */
+  private valueDefinition(field: CustomFieldValue): CustomFieldDefinition | null {
+    if (field.customAssetField) {
+      return null;
+    }
+    const type = this.assetTypes.find((entry) => entry.uuid === this.form.assetTypeUuid);
+    return (
+      type?.fieldDefinitions?.find((definition) =>
+        definition.fieldKey && field.fieldKey
+          ? definition.fieldKey === field.fieldKey
+          : definition.name === field.name,
+      ) ?? null
+    );
+  }
+
+  protected valueType(field: CustomFieldValue): AssetFieldType {
+    return this.valueDefinition(field)?.fieldType ?? 'TEXT';
+  }
+
+  protected valueRequired(field: CustomFieldValue): boolean {
+    return !!this.valueDefinition(field)?.required;
+  }
+
+  /** The choices of the type; a stored value that is no longer one of them stays selectable. */
+  protected valueOptions(field: CustomFieldValue): SelectOption[] {
+    const definition = this.valueDefinition(field);
+    const options = definition ? fieldOptions(definition) : [];
+    if (field.value && !options.includes(field.value)) {
+      options.push(field.value);
+    }
+    return options.map((option) => ({ value: option, label: option }));
+  }
+
+  protected inputType(field: CustomFieldValue): string {
+    switch (this.valueType(field)) {
+      case 'EMAIL':
+        return 'email';
+      case 'URL':
+        return 'url';
+      default:
+        return 'text';
+    }
+  }
+
+  protected setNumber(field: CustomFieldValue, value: number | string | null): void {
+    field.value = value === null || value === undefined ? '' : String(value);
   }
 
   protected addCustomField(): void {
