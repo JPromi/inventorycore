@@ -72,3 +72,5 @@ Playwright reads [playwright.config.ts](../frontend/playwright.config.ts), uses 
 Dropdown regression tests also cover viewport-edge positioning, list scrolling, and selection for search, multi-select, area, and color panels at desktop and mobile sizes.
 
 For async UI changes, assert the final DOM after delayed responses without injecting an extra click or manual change-detection call. For permissions and persistence changes, prioritize backend checks. Documentation-only changes need link/command validation, not a database-backed application restart.
+
+The Playwright suite runs against the Angular dev server, which resolves CommonJS packages differently from the production build. Leaflet 1.x is such a package: `LocationMap` takes it from the module's `default` export when present, because in the production build `import('leaflet')` only provides it there (otherwise the built app failed with "Cannot read properties of undefined (reading 'mobile')" and showed no map). After changing how such packages are imported, check the built app (`npm run build`, then serve `dist/inventorycore/browser` with an SPA fallback) and not only the dev server.

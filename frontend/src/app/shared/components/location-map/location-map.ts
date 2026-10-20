@@ -87,7 +87,10 @@ export class LocationMap implements AfterViewInit, OnChanges, OnDestroy {
   private async show(): Promise<void> {
     const position: [number, number] = [this.latitude, this.longitude];
     if (!this.map) {
-      const L = await import('leaflet');
+      // Leaflet 1.x is CommonJS: the production build puts it under `default`, the dev server
+      // also exposes it directly; without this the built app fails with `L.Browser` undefined
+      const module = (await import('leaflet')) as typeof Leaflet & { default?: typeof Leaflet };
+      const L = module.default ?? module;
       if (this.destroyed || this.map) return;
       this.zone.runOutsideAngular(() => this.create(L, position));
     } else {
