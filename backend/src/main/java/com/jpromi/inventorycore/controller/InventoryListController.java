@@ -35,11 +35,12 @@ public class InventoryListController {
         @RequestParam(required = false) UUID assetType,
         @RequestParam(required = false) UUID area,
         @RequestParam(required = false) List<UUID> areas,
+        @RequestParam(required = false) List<UUID> status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size,
         Authentication authentication
     ) {
-        return lists.assets(q, tag, location, assetType, area, areas, page, size, authentication);
+        return lists.assets(q, tag, location, assetType, area, areas, status, page, size, authentication);
     }
 
     @GetMapping("/locations/page")

@@ -34,7 +34,7 @@ class PermissionRulesTest {
     private final InspectionService service = new InspectionService(types, inspections, assets,
         mock(AssetTypeRepository.class), mock(LocationRepository.class), mock(TagRepository.class), areas,
         resolver, mock(InspectionItemRepository.class), mock(AssetInspectionScheduleRepository.class),
-        mock(InspectionScheduleService.class), files, mock(AuditService.class));
+        mock(InspectionScheduleService.class), files, mock(AuditService.class), mock(AssetStatusService.class));
 
     private final User inspector = User.builder().username("inspector").displayName("Inspector").build();
 

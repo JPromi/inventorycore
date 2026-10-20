@@ -47,7 +47,7 @@ class InventoryListServiceTest {
         Asset first = Asset.builder().name("Bravo").areas(Set.of(visible)).build();
         when(assets.findByDeletedFalse()).thenReturn(List.of(last, denied, first));
 
-        var page = service.assets(null, null, null, null, null, null, 1, 1, authentication);
+        var page = service.assets(null, null, null, null, null, null, null, 1, 1, authentication);
 
         assertEquals(List.of(last.getUuid()), page.items().stream().map(item -> item.uuid()).toList());
         assertEquals(2, page.total());
@@ -71,12 +71,12 @@ class InventoryListServiceTest {
         when(assets.findByDeletedFalse()).thenReturn(List.of(match, wrongTag));
 
         var page = service.assets("geraet atem", inherited.getUuid(), parent.getUuid(), type.getUuid(),
-            hidden.getUuid(), List.of(visible.getUuid()), 0, 50, authentication);
+            hidden.getUuid(), List.of(visible.getUuid()), null, 0, 50, authentication);
 
         assertEquals(List.of(match.getUuid()), page.items().stream().map(item -> item.uuid()).toList());
         assertEquals(1, page.total());
         assertTrue(service.assets(null, null, null, null, java.util.UUID.randomUUID(),
-            List.of(visible.getUuid()), 0, 50, authentication).items().isEmpty());
+            List.of(visible.getUuid()), null, 0, 50, authentication).items().isEmpty());
     }
 
     @Test

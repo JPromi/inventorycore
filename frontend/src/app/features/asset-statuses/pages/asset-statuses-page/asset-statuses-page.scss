@@ -1,0 +1,122 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.intro {
+  max-width: 48rem;
+  margin-bottom: 1rem;
+}
+
+.card {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin-bottom: 0.9rem;
+  }
+}
+
+.create-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+
+  .name-input {
+    flex: 1 1 12rem;
+  }
+
+  .select {
+    flex: 0 1 12rem;
+  }
+
+  @include bp.phone {
+    .select,
+    .primary-action {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    min-height: 2.5rem;
+    transition: opacity 0.15s;
+
+    &.saving {
+      opacity: 0.6;
+    }
+  }
+
+  &.editable li {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    .name-input {
+      flex: 1 1 12rem;
+    }
+
+    .select {
+      flex: 0 1 12rem;
+    }
+  }
+
+  .category,
+  .area {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .area {
+    margin-left: auto;
+  }
+
+  .lock {
+    margin-left: auto;
+    color: var(--text-subtle);
+  }
+}
+
+.behaviors {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+
+  div {
+    display: grid;
+    grid-template-columns: minmax(0, 11rem) 1fr;
+    gap: 0.75rem;
+
+    @include bp.phone {
+      grid-template-columns: 1fr;
+      gap: 0.1rem;
+    }
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+}

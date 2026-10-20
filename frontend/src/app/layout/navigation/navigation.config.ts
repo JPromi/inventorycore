@@ -6,6 +6,7 @@ import {
   LucideClipboardCheck,
   LucideSettings,
   LucideTags,
+  LucideCircleDot,
   LucideShapes,
   LucideQrCode,
   LucideClipboardList,
@@ -46,6 +47,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     disabled: false,
     children: [
       { label: t('nav.tags'), route: '/config/tags', icon: LucideTags },
+      { label: t('nav.statuses'), route: '/config/statuses', icon: LucideCircleDot },
       { label: t('nav.types'), route: '/config/types', icon: LucideShapes },
       { label: t('nav.labels'), route: '/config/labels', icon: LucideQrCode },
       {

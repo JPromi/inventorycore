@@ -10,6 +10,8 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | --- | --- |
 | Assets | Optional type and location, direct tags, areas, field values, and image records; `invId` is a separate string generated when omitted |
 | Asset types | Custom field definitions, tags, areas, image records, and related assets |
+| Asset statuses | Built-in statuses (`systemKey`, no area) and custom statuses per area with name, color, and category; custom ones are soft deleted and only when no asset uses them |
+| Asset status changes | History per asset: from/to status, comment, author, time, and the inspection that set it |
 | Locations | Optional parent, child locations, assets, areas, images, address parts (`street`, `postal_code`, `city`, `country`) with the formatted `address`, and nullable `latitude` / `longitude` |
 | Users and groups | Many-to-many membership; group permissions apply to a resource type and optional area |
 | Inspections | Types/field definitions, runs/items, item values/photos, and per-asset schedule data |
@@ -32,6 +34,8 @@ Location address parts and coordinates are nullable columns added by Hibernate `
 Inspection runs reference their own area through nullable legacy-compatible `inspections.area_id`. New runs always receive an area. Startup migration assigns older runs their template's sole area, or the default area when applicability was global/multiple or the template was deleted. Reads of any unmigrated rows retain the old template-based authorization. Area deletion moves protocols to the configured default area before deleting the area.
 
 Inspection templates own additional many-to-many joins `inspection_type_default_asset_types`, `inspection_type_default_locations`, and `inspection_type_recurring_tags`. Defaults are empty for existing templates. Soft-deleted default types/locations are not offered or applied to new runs. Recurring tag references are detached before a tag is physically deleted. Runs store multiple selected location UUIDs in `filter_location_uuids` while retaining the legacy singular column for historical runs.
+
+Assets without a status (from before statuses existed) are set to "Vorhanden" on start, without a history entry. Deleting an area moves its custom statuses to the default area.
 
 Assets, locations, and asset types use `deleted` / `deletedAt` soft deletion in inventory handlers. Groups and tags are physically deleted after detaching associations. Group permissions cascade with their group. Do not assume all entities share one deletion policy.
 

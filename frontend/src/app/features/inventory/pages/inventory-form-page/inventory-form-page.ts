@@ -19,6 +19,12 @@ import {
 } from '../../../../shared/components/search-select/search-select';
 
 import { PermissionResourceType } from '../../../../core/entities/user.entity';
+import {
+  AssetStatus,
+  AssetStatusService,
+  statusFitsAreas,
+  statusName,
+} from '../../../asset-statuses/data-access/asset-status.service';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AreaService } from '../../../../core/service/area.service';
@@ -103,6 +109,9 @@ export class InventoryFormPage implements OnInit {
   protected saving = false;
   /** Areas the user may change on this object. */
   protected selectedAreaUuids: string[] = [];
+  /** assets: statuses to choose from and the status the asset had when the form opened */
+  protected statuses: AssetStatus[] = [];
+  protected originalStatusUuid: string | null = null;
   /** Assigned areas the user has no rights in; they are kept unchanged. */
   protected lockedAreaUuids: string[] = [];
   private originalAreaUuids: string[] = [];
@@ -120,6 +129,7 @@ export class InventoryFormPage implements OnInit {
     protected readonly permissions: PermissionService,
     private readonly areaService: AreaService,
     private readonly host: ElementRef<HTMLElement>,
+    private readonly assetStatuses: AssetStatusService,
   ) {}
 
   ngOnInit(): void {
@@ -135,6 +145,8 @@ export class InventoryFormPage implements OnInit {
         });
         if (!this.uuid)
           this.form.parentAssetUuid = this.route.snapshot.queryParamMap.get('parentAssetUuid');
+        this.originalStatusUuid = null;
+        this.loadStatuses();
       }
       this.originalAreaUuids = [];
       this.lockedAreaUuids = [];
@@ -322,6 +334,8 @@ export class InventoryFormPage implements OnInit {
           parentAssetUuid: item.parentAssetUuid ?? null,
           parentAssetNote: item.parentAssetNote ?? '',
           inspectionPolicy: item.inspectionPolicy ?? 'STANDARD',
+          statusUuid: item.status?.uuid ?? null,
+          statusComment: '',
           fieldDefinitions: item.fieldDefinitions ?? [],
           fieldValues: item.fieldValues ?? [],
           images: item.images ?? [],
@@ -339,6 +353,7 @@ export class InventoryFormPage implements OnInit {
           this.form.street = item.address;
         }
         this.selectedTagUuids = (item.tags ?? []).map((tag) => tag.uuid);
+        this.originalStatusUuid = item.status?.uuid ?? null;
         this.originalAreaUuids = item.areaUuids ?? [];
         this.areaService.load().subscribe(() => {
           const editable = new Set(this.areaOptions.map((option) => option.value));
@@ -385,9 +400,43 @@ export class InventoryFormPage implements OnInit {
     };
   }
 
+  /** Statuses that fit the chosen areas (custom ones belong to one area); the current one always stays. */
+  protected get statusOptions(): SelectOption[] {
+    const areas = [...this.lockedAreaUuids, ...this.selectedAreaUuids];
+    return this.statuses
+      .filter((status) => statusFitsAreas(status, areas) || status.uuid === this.form.statusUuid)
+      .map((status) => ({ value: status.uuid, label: statusName(status), color: status.color }));
+  }
+
+  protected get statusChanged(): boolean {
+    return !!this.uuid && this.form.statusUuid !== this.originalStatusUuid;
+  }
+
+  /** New assets start as "Vorhanden". */
+  private loadStatuses(): void {
+    this.assetStatuses.list().subscribe({
+      next: (statuses) => {
+        this.statuses = statuses;
+        if (!this.uuid && !this.form.statusUuid) {
+          this.form.statusUuid = statuses.find((status) => status.systemKey === 'AVAILABLE')?.uuid ?? null;
+        }
+      },
+      error: () => (this.statuses = []),
+    });
+  }
+
   private normalizeRequest(request: InventoryRequest): InventoryRequest {
+    // assets: the status only goes along when it changed (or for a new asset), with its comment
+    const status =
+      this.config.endpoint === 'assets'
+        ? {
+            statusUuid: !this.uuid || this.statusChanged ? (request.statusUuid ?? null) : null,
+            statusComment: this.statusChanged ? request.statusComment?.trim() || null : null,
+          }
+        : {};
     return {
       ...request,
+      ...status,
       invId: request.invId || undefined,
       description: request.description || null,
       locationType: this.config.locationType ? (request.locationType ?? 'OTHER') : undefined,

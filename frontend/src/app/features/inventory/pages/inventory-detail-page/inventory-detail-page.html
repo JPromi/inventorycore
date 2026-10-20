@@ -24,7 +24,7 @@
                 · <span class="mono">{{ item.invId }}</span>
               }
             </p>
-            <h1>{{ item.name }}</h1>
+            <h1 [class.retired]="retired">{{ item.name }}</h1>
             @if (locationChain.length) {
               <nav class="breadcrumb" [attr.aria-label]="'terms.location' | t">
                 <svg lucideMapPin size="14"></svg>
@@ -346,6 +346,13 @@
         </div>
 
         <aside class="stack">
+          @if (config.endpoint === 'assets' && item.status) {
+            <app-asset-status-card
+              [asset]="item"
+              [canChange]="canChangeStatus"
+              (changed)="statusChanged($event)"
+            />
+          }
           @if (schedules.length) {
             <section class="card schedules">
               <h2>

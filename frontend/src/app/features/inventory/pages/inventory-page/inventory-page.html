@@ -72,6 +72,7 @@
           filter.tags ||
           filter.locations ||
           filter.assetTypes ||
+          filter.statuses ||
           (filter.areas && areaOptions.length > 1)
         )
       "
@@ -112,6 +113,14 @@
           [placeholder]="'inventoryList.allAreas' | t"
           [clearLabel]="'inventoryList.allAreas' | t"
           [searchPlaceholder]="'inventoryList.searchArea' | t"
+        />
+      }
+      @if (filter.statuses) {
+        <app-asset-status-filter
+          class="filter-select"
+          [statuses]="statusOptions"
+          [(ngModel)]="statusFilter"
+          (ngModelChange)="onFilterChange()"
         />
       }
       @if (filter.tags) {
@@ -205,6 +214,7 @@
           [selectionItem]="item"
           [class.is-selected]="selection.isSelected(item)"
           [class.clickable]="itemsClickable"
+          [class.retired]="retired(item)"
           (click)="open(item)"
         >
           @if (row.depth) {
@@ -237,6 +247,9 @@
           <div class="item-main">
             <strong>
               {{ item.name }}
+              @if (shownStatus(item); as status) {
+                <app-asset-status-badge [status]="status" />
+              }
               @if (dueByAsset.get(item.uuid); as due) {
                 <span
                   class="due-badge"

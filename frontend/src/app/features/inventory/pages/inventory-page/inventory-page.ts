@@ -30,6 +30,14 @@ import {
   SelectionCheckbox,
 } from '../../../../shared/components/list-actions/list-actions';
 import { FilterBar } from '../../../../shared/components/filter-bar/filter-bar';
+import { AssetStatusBadge } from '../../../asset-statuses/asset-status-badge/asset-status-badge';
+import { AssetStatusFilter } from '../../../asset-statuses/asset-status-filter/asset-status-filter';
+import {
+  AssetStatus,
+  AssetStatusService,
+  inAreaSelection,
+  isRetired,
+} from '../../../asset-statuses/data-access/asset-status.service';
 import { InfiniteScroll } from '../../../../shared/components/infinite-scroll.directive';
 import {
   SearchSelect,
@@ -81,6 +89,7 @@ interface FilterConfig {
   locations?: boolean;
   assetTypes?: boolean;
   areas?: boolean;
+  statuses?: boolean;
 }
 
 interface FieldConfig {
@@ -93,6 +102,8 @@ interface FieldConfig {
 @Component({
   selector: 'app-inventory-page',
   imports: [
+    AssetStatusBadge,
+    AssetStatusFilter,
     CommonModule,
     AssetPrintBatch,
     ListActions,
@@ -144,6 +155,9 @@ export class InventoryPage implements OnInit, OnDestroy {
   protected locationFilter: string | null = null;
   protected assetTypeFilter: string | null = null;
   protected areaFilter: string | null = null;
+  /** selected statuses; empty = all */
+  protected statusFilter: string[] = [];
+  protected statuses: AssetStatus[] = [];
   protected tags: TagItem[] = [];
   protected locations: InventoryItem[] = [];
   protected assetTypes: InventoryItem[] = [];
@@ -183,6 +197,7 @@ export class InventoryPage implements OnInit, OnDestroy {
     protected readonly permissions: PermissionService,
     protected readonly areaService: AreaService,
     private readonly inspections: InspectionService,
+    private readonly assetStatuses: AssetStatusService,
   ) {}
 
   ngOnInit(): void {
@@ -235,6 +250,7 @@ export class InventoryPage implements OnInit, OnDestroy {
       location: this.locationFilter,
       assetType: this.assetTypeFilter,
       area: this.areaFilter,
+      status: this.statusFilter,
       areas: this.config.endpoint === 'tags' ? [] : this.areaService.selected,
     };
   }
@@ -247,6 +263,21 @@ export class InventoryPage implements OnInit, OnDestroy {
       event.preventDefault();
       this.searchInput?.nativeElement.focus();
     }
+  }
+
+  /** "Vorhanden" is the normal case; only other statuses are shown in the list. */
+  protected shownStatus(item: InventoryItem): AssetStatus | null {
+    return item.status && item.status.systemKey !== 'AVAILABLE' ? item.status : null;
+  }
+
+  protected retired(item: InventoryItem): boolean {
+    return isRetired(item.status);
+  }
+
+  /** Filter choices: built-in statuses and those of the areas selected in the sidebar. */
+  protected get statusOptions(): AssetStatus[] {
+    const selected = this.areaService.selected;
+    return this.statuses.filter((status) => inAreaSelection(status, selected));
   }
 
   protected get selectedAreaNames(): string[] {
@@ -263,9 +294,10 @@ export class InventoryPage implements OnInit, OnDestroy {
 
   /** Set filters without the search (for the folded filter button on phones). */
   protected get activeFilterCount(): number {
-    return [this.tagFilter, this.locationFilter, this.assetTypeFilter, this.areaFilter].filter(
-      Boolean,
-    ).length;
+    return (
+      [this.tagFilter, this.locationFilter, this.assetTypeFilter, this.areaFilter].filter(Boolean)
+        .length + (this.statusFilter.length ? 1 : 0)
+    );
   }
 
   protected get hasActiveFilters(): boolean {
@@ -274,7 +306,8 @@ export class InventoryPage implements OnInit, OnDestroy {
       !!this.tagFilter ||
       !!this.locationFilter ||
       !!this.assetTypeFilter ||
-      !!this.areaFilter
+      !!this.areaFilter ||
+      this.statusFilter.length > 0
     );
   }
 
@@ -325,6 +358,7 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.locationFilter = null;
     this.assetTypeFilter = null;
     this.areaFilter = null;
+    this.statusFilter = [];
     this.load();
   }
 
@@ -474,6 +508,13 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.tags = [];
     this.locations = [];
     this.assetTypes = [];
+    this.statuses = [];
+    if (filter?.statuses) {
+      this.assetStatuses.list().subscribe({
+        next: (statuses) => (this.statuses = statuses),
+        error: () => (this.statuses = []),
+      });
+    }
     if (filter?.tags) {
       this.api.list<TagItem>('tags').subscribe({
         next: (tags) => (this.tags = tags.sort((a, b) => a.name.localeCompare(b.name))),

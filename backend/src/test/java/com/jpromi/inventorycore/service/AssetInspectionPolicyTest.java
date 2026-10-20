@@ -33,7 +33,7 @@ class AssetInspectionPolicyTest {
     private final InspectionService service = new InspectionService(types, inspections, assets,
         mock(AssetTypeRepository.class), locations, mock(TagRepository.class), areas,
         resolver, items, mock(AssetInspectionScheduleRepository.class),
-        mock(InspectionScheduleService.class), mock(StoredFileRepository.class), mock(AuditService.class));
+        mock(InspectionScheduleService.class), mock(StoredFileRepository.class), mock(AuditService.class), mock(AssetStatusService.class));
 
     @Test
     void excludesOptedOutAssetsButKeepsManualChildrenAsIndividuallyCountedSnapshots() {

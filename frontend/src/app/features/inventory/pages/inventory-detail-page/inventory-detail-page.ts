@@ -28,6 +28,11 @@ import { ConfirmDialogService } from '../../../../shared/components/confirm-dial
 import { LabelPrintDialog } from '../../../labels/label-print-dialog/label-print-dialog';
 import { AssetInspectionList } from '../../../../shared/components/asset-inspection-list/asset-inspection-list';
 import { AuditHistory } from '../../../../shared/components/audit-history/audit-history';
+import {
+  AssetStatusCard,
+  StatusOwner,
+} from '../../../asset-statuses/asset-status-card/asset-status-card';
+import { isRetired } from '../../../asset-statuses/data-access/asset-status.service';
 import { LocationMap } from '../../../../shared/components/location-map/location-map';
 import { AssetPrint, AssetPrintDetail } from './asset-print/asset-print';
 import { t } from '../../../../core/i18n/i18n';
@@ -74,6 +79,7 @@ const FIELD_TYPE_LABELS: Record<string, string | undefined> = {
 @Component({
   selector: 'app-inventory-detail-page',
   imports: [
+    AssetStatusCard,
     ActionMenu,
     AssetInspectionList,
     AssetPrint,
@@ -233,6 +239,25 @@ export class InventoryDetailPage implements OnInit {
       !!this.config.editRoutePrefix &&
       this.permissions.can(this.config.resourceType, 'edit', this.item.areaUuids ?? [])
     );
+  }
+
+  /** Status changes are allowed with the right to edit or to inspect the asset. */
+  protected get canChangeStatus(): boolean {
+    const areas = this.item?.areaUuids ?? [];
+    return (
+      !!this.item &&
+      (this.permissions.can('ASSET', 'edit', areas) || this.permissions.can('ASSET', 'inspect', areas))
+    );
+  }
+
+  protected get retired(): boolean {
+    return isRetired(this.item?.status);
+  }
+
+  protected statusChanged(asset: StatusOwner): void {
+    if (this.item) {
+      this.item = { ...this.item, status: asset.status, statusChangedAt: asset.statusChangedAt };
+    }
   }
 
   protected get canDelete(): boolean {

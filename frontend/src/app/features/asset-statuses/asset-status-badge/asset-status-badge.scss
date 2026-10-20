@@ -1,0 +1,43 @@
+:host {
+  display: inline-flex;
+  min-width: 0;
+}
+
+// the text stays in text colors; the status color only tints the pill and the dot
+.status-badge {
+  --status-color: var(--text-subtle);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--status-color) 14%, transparent);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  .dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--status-color);
+  }
+
+  &.large {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.9rem;
+
+    .dot {
+      width: 0.6rem;
+      height: 0.6rem;
+    }
+  }
+
+  &.retired {
+    background: var(--surface-active);
+    color: var(--text-muted);
+  }
+}

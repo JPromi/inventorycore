@@ -123,6 +123,7 @@ export const routes: Routes = [
               tags: true,
               locations: true,
               assetTypes: true,
+              statuses: true,
             },
             fields: assetFormConfig.fields,
           },
@@ -153,6 +154,13 @@ export const routes: Routes = [
             (m) => m.ObjectLogPage,
           ),
         data: { endpoint: 'assets', view: 'history' },
+      },
+      {
+        path: 'assets/:uuid/status-history',
+        loadComponent: () =>
+          import('./features/asset-statuses/pages/asset-status-history-page/asset-status-history-page').then(
+            (m) => m.AssetStatusHistoryPage,
+          ),
       },
       {
         path: 'assets/:uuid/inspections',
@@ -324,6 +332,13 @@ export const routes: Routes = [
         path: 'scan',
         loadComponent: () =>
           import('./features/scanning/pages/scan-page/scan-page').then((m) => m.ScanPage),
+      },
+      {
+        path: 'config/statuses',
+        loadComponent: () =>
+          import('./features/asset-statuses/pages/asset-statuses-page/asset-statuses-page').then(
+            (m) => m.AssetStatusesPage,
+          ),
       },
       {
         path: 'config/tags',

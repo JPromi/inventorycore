@@ -1732,7 +1732,8 @@
     "oidc": "OIDC",
     "logs": "Protokoll",
     "openMenu": "Menü öffnen",
-    "closeMenu": "Menü schließen"
+    "closeMenu": "Menü schließen",
+    "statuses": "Status"
   },
   "pwa": {
     "install": "App installieren"
@@ -2103,5 +2104,73 @@
       "empty": "In den letzten 90 Tagen wurde keine Prüfung abgeschlossen.",
       "okShare": "in Ordnung"
     }
+  },
+  "assetStatus": {
+    "title": "Status",
+    "change": "Status ändern",
+    "since": "seit {date}",
+    "newStatus": "Neuer Status",
+    "comment": "Kommentar",
+    "commentPlaceholder": "z. B. Ventil undicht, an den Hersteller geschickt",
+    "retiredHint": "Ausgeschieden: Das Asset wird nicht mehr geprüft und in Listen grau angezeigt.",
+    "history": "Verlauf",
+    "fromInspection": "Aus Prüfung „{title}“",
+    "loadError": "Die Status konnten nicht geladen werden.",
+    "saveError": "Der Status konnte nicht gespeichert werden.",
+    "keys": {
+      "AVAILABLE": "Vorhanden",
+      "IN_DELIVERY": "In Lieferung",
+      "DEFECT": "Defekt",
+      "IN_REPAIR": "In Reparatur",
+      "MISSING": "Nicht auffindbar",
+      "RETIRED": "Ausgeschieden"
+    },
+    "categories": {
+      "ACTIVE": "Einsatzbereit",
+      "DEFECT": "Defekt",
+      "MISSING": "Nicht auffindbar",
+      "RETIRED": "Ausgeschieden"
+    },
+    "categoryHints": {
+      "ACTIVE": "Das Asset ist im Bestand und kann verwendet werden, z. B. „Verliehen“ oder „In Lieferung“.",
+      "DEFECT": "Das Asset kann nicht verwendet werden. Eine bestandene Prüfung setzt es wieder auf „Vorhanden“.",
+      "MISSING": "Das Asset wurde nicht gefunden. Wird es bei einer Prüfung gefunden, ist es wieder „Vorhanden“.",
+      "RETIRED": "Das Asset ist außer Dienst: Es wird grau angezeigt, nicht mehr geprüft und von Prüfungen nicht mehr verändert."
+    },
+    "filter": {
+      "label": "Status filtern",
+      "all": "Alle Status",
+      "clear": "Statusfilter entfernen",
+      "selected": {
+        "one": "{count} Status",
+        "other": "{count} Status"
+      }
+    },
+    "config": {
+      "eyebrow": "Konfiguration",
+      "title": "Status",
+      "intro": "Status beschreiben den Zustand eines Assets. Die festen Status gibt es in jedem Bereich; eigene Status gelten nur für Assets ihres Bereichs.",
+      "builtIn": "Feste Status",
+      "fixed": "Fest, nicht änderbar",
+      "custom": "Eigene Status",
+      "noneCustom": "Noch keine eigenen Status.",
+      "name": "Name des Status",
+      "namePlaceholder": "z. B. Verliehen oder Beim Hersteller",
+      "color": "Farbe des Status",
+      "category": "Verhalten",
+      "behaviorTitle": "Verhalten",
+      "automation": "Beim Abschluss einer Prüfung wird der Status automatisch gesetzt: Mängel oder nicht bestandene Prüfungen ergeben „Defekt“, nicht gefundene Assets „Nicht auffindbar“, bestandene Prüfungen wieder „Vorhanden“. Jede Änderung steht im Verlauf des Assets.",
+      "saveError": "Der Status konnte nicht gespeichert werden.",
+      "deleteError": "Der Status konnte nicht gelöscht werden.",
+      "searchArea": "Bereich suchen …"
+    },
+    "historyPage": {
+      "title": "Statusverlauf",
+      "empty": "Noch keine Statusänderungen.",
+      "initial": "Angelegt als",
+      "loadError": "Der Statusverlauf konnte nicht geladen werden."
+    },
+    "select": "Status wählen",
+    "search": "Status suchen …"
   }
 }

@@ -1,0 +1,146 @@
+<section class="page">
+  <div class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ 'assetStatus.config.eyebrow' | t }}</p>
+        <h1>
+          <svg lucideCircleDot size="20"></svg>
+          <span>{{ 'assetStatus.config.title' | t }}</span>
+        </h1>
+      </div>
+    </header>
+
+    <p class="hint intro">{{ 'assetStatus.config.intro' | t }}</p>
+
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+
+    @if (!loaded) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else {
+      <section class="card">
+        <h2>{{ 'assetStatus.config.builtIn' | t }}</h2>
+        <ul class="status-list">
+          @for (status of builtIn; track status.uuid) {
+            <li>
+              <app-asset-status-badge [status]="status" />
+              <span class="category">{{ categoryLabel(status.category) }}</span>
+              <svg class="lock" lucideLock size="14" [attr.aria-label]="'assetStatus.config.fixed' | t"></svg>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>{{ 'assetStatus.config.custom' | t }}</h2>
+
+        @if (createAreas.length) {
+          <form class="create-row" (ngSubmit)="create()">
+            <app-color-picker
+              [(ngModel)]="newColor"
+              name="newColor"
+              [allowEmpty]="false"
+              [compact]="true"
+              [label]="'assetStatus.config.color' | t"
+            />
+            <input
+              type="text"
+              class="name-input"
+              [(ngModel)]="newName"
+              name="newName"
+              maxlength="80"
+              [placeholder]="'assetStatus.config.namePlaceholder' | t"
+              [attr.aria-label]="'assetStatus.config.name' | t"
+            />
+            <app-search-select
+              class="select"
+              [options]="categoryOptions"
+              [(ngModel)]="newCategory"
+              name="newCategory"
+              [ariaLabel]="'assetStatus.config.category' | t"
+            />
+            @if (createAreas.length > 1) {
+              <app-search-select
+                class="select"
+                [options]="areaOptions"
+                [(ngModel)]="newArea"
+                name="newArea"
+                [ariaLabel]="'terms.area' | t"
+                [searchPlaceholder]="'assetStatus.config.searchArea' | t"
+              />
+            }
+            <button type="submit" class="primary-action" [disabled]="!newName.trim() || creating">
+              <svg lucidePlus size="16"></svg>
+              <span>{{ 'common.create' | t }}</span>
+            </button>
+          </form>
+        }
+
+        @if (custom.length) {
+          <ul class="status-list editable">
+            @for (status of custom; track status.uuid) {
+              <li [class.saving]="saving === status.uuid">
+                @if (canEdit(status)) {
+                  <app-color-picker
+                    [ngModel]="status.color"
+                    (ngModelChange)="save(status, { color: $event })"
+                    [allowEmpty]="false"
+                    [compact]="true"
+                    [label]="'assetStatus.config.color' | t"
+                  />
+                  <input
+                    #nameInput
+                    type="text"
+                    class="name-input"
+                    maxlength="80"
+                    [value]="status.name"
+                    [attr.aria-label]="'assetStatus.config.name' | t"
+                    (blur)="rename(status, nameInput.value)"
+                    (keydown.enter)="nameInput.blur()"
+                  />
+                  <app-search-select
+                    class="select"
+                    [options]="categoryOptions"
+                    [ngModel]="status.category"
+                    (ngModelChange)="save(status, { category: $event })"
+                    [ariaLabel]="'assetStatus.config.category' | t"
+                  />
+                } @else {
+                  <app-asset-status-badge [status]="status" />
+                  <span class="category">{{ categoryLabel(status.category) }}</span>
+                }
+                <span class="area">{{ areaName(status.areaUuid) }}</span>
+                @if (canDelete(status)) {
+                  <button
+                    type="button"
+                    class="icon-button danger"
+                    [title]="'common.delete' | t"
+                    (click)="remove(status)"
+                  >
+                    <svg lucideTrash2 size="16"></svg>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="hint">{{ 'assetStatus.config.noneCustom' | t }}</p>
+        }
+      </section>
+
+      <section class="card">
+        <h2>{{ 'assetStatus.config.behaviorTitle' | t }}</h2>
+        <dl class="behaviors">
+          @for (category of categories; track category.value) {
+            <div>
+              <dt>{{ category.label }}</dt>
+              <dd>{{ category.hint }}</dd>
+            </div>
+          }
+        </dl>
+        <p class="hint">{{ 'assetStatus.config.automation' | t }}</p>
+      </section>
+    }
+  </div>
+</section>

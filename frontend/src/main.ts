@@ -25,6 +25,8 @@ function hideSplash(): void {
     return;
   }
   setTimeout(() => {
+    // while it fades out it is no longer a status message for screen readers
+    splash.setAttribute('aria-hidden', 'true');
     splash.classList.add('app-splash-done');
     splash.addEventListener('transitionend', () => splash.remove(), { once: true });
     // also when transitions are off (reduced motion) or the tab is in the background

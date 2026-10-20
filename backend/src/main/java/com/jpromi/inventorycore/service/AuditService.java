@@ -66,7 +66,7 @@ public class AuditService {
         "uuid", "createdAt", "deletedAt", "deleted", "childLocationUuids", "assetUuids", "inspectionIntervalDays",
         "inspectionCount", "usable", "editable", "deletable", "assetTypeNames", "areaNames", "assetCount", "locationCount",
         "assetTypeCount", "bindPassword", "bindPasswordSet", "clientSecret", "clientSecretSet", "password", "redirectUri",
-        "lastSyncAt", "lastSyncResult", "sourceProvider"
+        "lastSyncAt", "lastSyncResult", "sourceProvider", "statusChangedAt"
     );
 
     private final AuditLogRepository repository;

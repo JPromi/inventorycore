@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { Page, pageParams } from '../../../shared/util/paged-list';
 import type { LocationType } from '../../../shared/util/location-types';
 import { t } from '../../../core/i18n/i18n';
+import type { AssetStatus } from '../../asset-statuses/data-access/asset-status.service';
 
 export interface InventoryItem {
   inspectionPolicy?: AssetInspectionPolicy;
@@ -41,6 +42,9 @@ export interface InventoryItem {
   assetUuids?: string[];
   createdAt?: string | null;
   areaUuids?: string[];
+  /** assets: current status; the history is loaded separately */
+  status?: AssetStatus | null;
+  statusChangedAt?: string | null;
 }
 
 export interface InventoryRequest {
@@ -73,6 +77,9 @@ export interface InventoryRequest {
   images?: InventoryImage[];
   tagUuids?: string[];
   areaUuids?: string[];
+  /** assets: new status (null keeps it) and the comment for its history */
+  statusUuid?: string | null;
+  statusComment?: string | null;
 }
 
 export type AssetFieldType =

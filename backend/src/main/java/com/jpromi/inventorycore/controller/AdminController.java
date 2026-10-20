@@ -66,6 +66,7 @@ public class AdminController {
     private final LocationRepository locationRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final LabelTemplateRepository labelTemplateRepository;
+    private final com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApiMapper mapper;
     private final AuditService audit;
@@ -85,8 +86,10 @@ public class AdminController {
         ApiMapper mapper,
         AuditService audit,
         InspectionRepository inspectionRepository,
-        InspectionTypeRepository inspectionTypeRepository
+        InspectionTypeRepository inspectionTypeRepository,
+        com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository
     ) {
+        this.assetStatusRepository = assetStatusRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.permissionRepository = permissionRepository;
@@ -169,6 +172,7 @@ public class AdminController {
         assetRepository.findByArea(area).forEach(asset -> moveOut(asset.getAreas(), area, defaultArea));
         locationRepository.findByArea(area).forEach(location -> moveOut(location.getAreas(), area, defaultArea));
         assetTypeRepository.findByArea(area).forEach(type -> moveOut(type.getAreas(), area, defaultArea));
+        assetStatusRepository.findByArea(area).forEach(status -> status.setArea(defaultArea));
         labelTemplateRepository.findByArea(area).forEach(template -> {
             template.setArea(defaultArea);
             template.setDefaultForArea(false);

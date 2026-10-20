@@ -89,6 +89,28 @@
           @if (config.endpoint === 'assets') {
             <div class="asset-link-fields">
               <label>
+                <span>{{ 'assetStatus.title' | t }}</span>
+                <app-search-select
+                  [options]="statusOptions"
+                  [(ngModel)]="form.statusUuid"
+                  name="statusUuid"
+                  [placeholder]="'assetStatus.select' | t"
+                  [searchPlaceholder]="'assetStatus.search' | t"
+                />
+              </label>
+              @if (statusChanged) {
+                <label>
+                  <span>{{ 'assetStatus.comment' | t }}</span>
+                  <input
+                    type="text"
+                    [(ngModel)]="form.statusComment"
+                    name="statusComment"
+                    maxlength="2000"
+                    [placeholder]="'assetStatus.commentPlaceholder' | t"
+                  />
+                </label>
+              }
+              <label>
                 <span>{{ 'inventoryForm.inspectionPolicyLabel' | t }}</span>
                 <select [(ngModel)]="form.inspectionPolicy" name="inspectionPolicy">
                   <option value="STANDARD">

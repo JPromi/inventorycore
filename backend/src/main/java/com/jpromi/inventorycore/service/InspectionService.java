@@ -97,6 +97,7 @@ public class InspectionService {
     private final InspectionScheduleService scheduleService;
     private final StoredFileRepository fileRepository;
     private final AuditService audit;
+    private final AssetStatusService assetStatuses;
 
     public InspectionService(
         InspectionTypeRepository typeRepository,
@@ -111,7 +112,8 @@ public class InspectionService {
         AssetInspectionScheduleRepository scheduleRepository,
         InspectionScheduleService scheduleService,
         StoredFileRepository fileRepository,
-        AuditService audit
+        AuditService audit,
+        AssetStatusService assetStatuses
     ) {
         this.typeRepository = typeRepository;
         this.inspectionRepository = inspectionRepository;
@@ -126,6 +128,7 @@ public class InspectionService {
         this.scheduleService = scheduleService;
         this.fileRepository = fileRepository;
         this.audit = audit;
+        this.assetStatuses = assetStatuses;
     }
 
     // ---- inspection types ----
@@ -781,6 +784,7 @@ public class InspectionService {
         inspection.setCompletedAt(OffsetDateTime.now());
         inspection.setCompletedByUuid(user.getUuid());
         inspection.setCompletedByName(displayName(user));
+        assetStatuses.applyInspection(inspection, user);
         InspectionDetailResponse completed = toDetail(inspectionRepository.save(inspection), access);
         InspectionCounts counts = completed.summary().counts();
         audit.log(AuditAction.COMPLETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(

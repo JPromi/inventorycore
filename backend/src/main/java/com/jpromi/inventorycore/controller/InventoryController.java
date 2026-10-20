@@ -79,6 +79,7 @@ public class InventoryController {
     private final AuditService audit;
     private final com.jpromi.inventorycore.service.AssetHierarchyService hierarchy;
     private final com.jpromi.inventorycore.service.FileAccess fileAccess;
+    private final com.jpromi.inventorycore.service.AssetStatusService statuses;
 
     public InventoryController(
         AssetRepository assetRepository,
@@ -91,9 +92,11 @@ public class InventoryController {
         ApiMapper mapper,
         AuditService audit,
         com.jpromi.inventorycore.service.AssetHierarchyService hierarchy,
-        com.jpromi.inventorycore.service.FileAccess fileAccess
+        com.jpromi.inventorycore.service.FileAccess fileAccess,
+        com.jpromi.inventorycore.service.AssetStatusService statuses
     ) {
         this.fileAccess = fileAccess;
+        this.statuses = statuses;
         this.assetRepository = assetRepository;
         this.assetTypeRepository = assetTypeRepository;
         this.locationRepository = locationRepository;
@@ -305,7 +308,11 @@ public class InventoryController {
         Asset asset = Asset.builder().build();
         applyAsset(access, asset, request);
         asset.setAreas(areas);
-        AssetResponse created = mapper.toResponse(assetRepository.save(asset));
+        Asset saved = assetRepository.save(asset);
+        // the first entry of the history: the status the asset starts with
+        statuses.change(saved, statuses.resolve(request.statusUuid(), saved), request.statusComment(),
+            permissionService.currentUser(authentication), null);
+        AssetResponse created = mapper.toResponse(assetRepository.save(saved));
         audit.log(AuditAction.CREATE, AuditObjectType.ASSET, created.uuid(), created.name());
         return created;
     }
@@ -321,6 +328,10 @@ public class InventoryController {
         requireAreaChange(access, PermissionResourceType.ASSET, asset.getAreas(), areas);
         applyAsset(access, asset, request);
         asset.setAreas(areas);
+        if (request.statusUuid() != null) {
+            statuses.change(asset, statuses.resolve(request.statusUuid(), asset), request.statusComment(),
+                permissionService.currentUser(authentication), null);
+        }
         AssetResponse after = mapper.toResponse(assetRepository.save(asset));
         audit.logChanges(AuditObjectType.ASSET, after.uuid(), after.name(), before, after);
         return after;

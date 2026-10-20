@@ -1,0 +1,121 @@
+@use 'breakpoints' as bp;
+
+// same shape as the other filter fields (app-search-select)
+:host {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.trigger {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0 0.55rem 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
+
+  &.open {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+
+    .chevron {
+      transform: rotate(180deg);
+    }
+  }
+
+  &.placeholder .label {
+    color: var(--text-subtle);
+  }
+
+  .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clear {
+    display: inline-flex;
+    padding: 0.15rem;
+    border-radius: var(--radius-xs);
+    color: var(--text-muted);
+
+    &:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+  }
+
+  .chevron {
+    flex-shrink: 0;
+    color: var(--text-subtle);
+    transition: transform 0.15s;
+  }
+
+  @include bp.touch {
+    min-height: 2.75rem;
+  }
+}
+
+.panel {
+  --dropdown-min-width: 13rem;
+  overflow-y: auto;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.option {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-hover);
+  }
+
+  &[aria-checked='true'] .check {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .check {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-xs);
+  }
+
+  @include bp.touch {
+    min-height: 2.75rem;
+  }
+}

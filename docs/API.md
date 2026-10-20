@@ -45,7 +45,8 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |
 | `/audit-logs`, `/assets/{uuid}/logs`, `/locations/{uuid}/logs` | Admin activity search and authorized object histories; `AuditController` |
 | `/health` | Public health response; `HealthController` |
-| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` delegates to `InventoryListService` |
+| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` delegates to `InventoryListService`. `/assets/page` also filters by repeated `status` UUIDs |
+| `/asset-statuses`, `/assets/{uuid}/status`, `/assets/{uuid}/status-history` | Built-in and custom asset statuses, status changes with comment, and the status history; `AssetStatusController` |
 | `/inspection-types/page`, `/inspections/page`, `/label-templates/page`, `/admin/users/page`, `/admin/groups/page`, `/admin/areas/page` | Searched, paged lists of the other list pages; their controllers |
 
 ### Paged lists
