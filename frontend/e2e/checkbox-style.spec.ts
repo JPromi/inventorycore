@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { pageOf } from './support/paging';
+import { followSystemTheme } from './support/theme';
 
 for (const colorScheme of ['light', 'dark'] as const) {
   for (const width of [1280, 390]) {
     test(`checkboxes share selection styling (${colorScheme}, ${width}px)`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
+      await followSystemTheme(page);
       await page.emulateMedia({ colorScheme });
       const asset = { uuid: 'asset', name: 'Atemschutzgerät', areaUuids: [], images: [] };
       await page.route('**/api/**', async (route) => {

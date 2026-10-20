@@ -53,14 +53,12 @@
         text-align: center;
       }
 
-      @media (prefers-color-scheme: dark) {
-        .app-splash,
-        .app-noscript {
-          --splash-bg: #17181a;
-          --splash-text: #f1f2f4;
-          --splash-muted: #bbc0c9;
-          --splash-track: rgba(255, 255, 255, 0.1);
-        }
+      /* light by default; dark when the app was last shown dark (set by the script below) */
+      .app-splash.app-splash-dark {
+        --splash-bg: #17181a;
+        --splash-text: #f1f2f4;
+        --splash-muted: #bbc0c9;
+        --splash-track: rgba(255, 255, 255, 0.1);
       }
 
       .app-splash {
@@ -374,9 +372,13 @@
       (function () {
         var splash = document.getElementById('app-splash');
         try {
+          // the mode the app was last shown in (ThemeService), so a dark choice does not flash light
+          var dark = localStorage.getItem('inventorycore.theme.last') === 'dark';
+          if (dark) {
+            splash.classList.add('app-splash-dark');
+          }
           var brand = JSON.parse(localStorage.getItem('inventorycore.splash') || 'null');
           if (!brand) return;
-          var dark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
           var color = (dark && brand.darkColor) || brand.color;
           if (/^#[0-9a-f]{6}$/i.test(color || '')) {
             var r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
