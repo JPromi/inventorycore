@@ -66,7 +66,7 @@ public class AuditService {
         "uuid", "createdAt", "deletedAt", "deleted", "childLocationUuids", "assetUuids", "inspectionIntervalDays",
         "inspectionCount", "usable", "editable", "deletable", "assetTypeNames", "areaNames", "assetCount", "locationCount",
         "assetTypeCount", "bindPassword", "bindPasswordSet", "clientSecret", "clientSecretSet", "password", "redirectUri",
-        "lastSyncAt", "lastSyncResult", "sourceProvider"
+        "lastSyncAt", "lastSyncResult", "sourceProvider", "statusChangedAt"
     );
 
     private final AuditLogRepository repository;
@@ -102,20 +102,36 @@ public class AuditService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(AuditAction action, AuditObjectType type, UUID objectUuid, String objectName, List<AuditDetail> details) {
         try {
-            Optional<User> user = currentUser();
-            repository.save(AuditLog.builder()
-                .action(action)
-                .objectType(type)
-                .objectUuid(objectUuid)
-                .objectName(truncate(objectName, 500))
-                .userUuid(user.map(User::getUuid).orElse(null))
-                // null = no logged-in user (system); clients show their own word for it
-                .userName(user.map(AuditService::displayName).orElse(null))
-                .details(details == null || details.isEmpty() ? null : JSON.writeValueAsString(details))
-                .build());
+            write(currentUser(), action, type, objectUuid, objectName, details);
         } catch (RuntimeException exception) {
             LOG.warn("Could not write activity log for {} {} {}", action, type, objectUuid, exception);
         }
+    }
+
+    /**
+     * Writes one entry for the given user instead of the logged-in one (sign-ins happen before the
+     * session exists, sign-outs after it ended); {@code actor} null = nobody (failed sign-in).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logAs(User actor, AuditAction action, AuditObjectType type, UUID objectUuid, String objectName, AuditDetail... details) {
+        try {
+            write(Optional.ofNullable(actor), action, type, objectUuid, objectName, List.of(details));
+        } catch (RuntimeException exception) {
+            LOG.warn("Could not write activity log for {} {} {}", action, type, objectUuid, exception);
+        }
+    }
+
+    private void write(Optional<User> user, AuditAction action, AuditObjectType type, UUID objectUuid, String objectName, List<AuditDetail> details) {
+        repository.save(AuditLog.builder()
+            .action(action)
+            .objectType(type)
+            .objectUuid(objectUuid)
+            .objectName(truncate(objectName, 500))
+            .userUuid(user.map(User::getUuid).orElse(null))
+            // null = no logged-in user (system); clients show their own word for it
+            .userName(user.map(AuditService::displayName).orElse(null))
+            .details(details == null || details.isEmpty() ? null : JSON.writeValueAsString(details))
+            .build());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

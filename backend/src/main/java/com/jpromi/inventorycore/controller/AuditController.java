@@ -143,6 +143,23 @@ public class AuditController {
         return toPage(repository.findAll(filter, pageRequest(page, size, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")))), page, size);
     }
 
+    /** Sign-ins, failed sign-ins and sign-outs of one user with IP address and browser. Admins only. */
+    @GetMapping("/admin/users/{uuid}/logins")
+    @Transactional(readOnly = true)
+    public AuditLogPage userLogins(
+        @PathVariable UUID uuid,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        Authentication authentication
+    ) {
+        PermissionService.require(permissionService.context(authentication).isAdmin());
+        Specification<AuditLog> filter = (root, query, cb) -> cb.and(
+            cb.equal(root.get("objectType"), AuditObjectType.USER),
+            cb.equal(root.get("objectUuid"), uuid),
+            root.get("action").in(AuditAction.LOGIN, AuditAction.LOGIN_FAILED, AuditAction.LOGOUT));
+        return toPage(repository.findAll(filter, pageRequest(page, size, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")))), page, size);
+    }
+
     @GetMapping("/locations/{uuid}/logs")
     @Transactional(readOnly = true)
     public AuditLogPage locationLogs(

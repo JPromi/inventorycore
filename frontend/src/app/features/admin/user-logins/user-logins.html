@@ -1,0 +1,60 @@
+<section class="content-section">
+  <h2>{{ 'adminUserForm.logins.title' | t }}</h2>
+  <p class="hint">{{ 'adminUserForm.logins.hint' | t }}</p>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @if (entries.length) {
+    <ol class="logins">
+      @for (entry of entries; track entry.uuid) {
+        <li [class]="entry.kind">
+          <span class="icon" aria-hidden="true">
+            @switch (entry.kind) {
+              @case ('in') { <svg lucideLogIn size="16"></svg> }
+              @case ('out') { <svg lucideLogOut size="16"></svg> }
+              @default { <svg lucideShieldAlert size="16"></svg> }
+            }
+          </span>
+          <div class="main">
+            <div class="head">
+              <strong>
+                @switch (entry.kind) {
+                  @case ('in') { {{ 'adminUserForm.logins.signedIn' | t }} }
+                  @case ('out') { {{ 'adminUserForm.logins.signedOut' | t }} }
+                  @default { {{ 'adminUserForm.logins.failed' | t }} }
+                }
+              </strong>
+              <time [attr.datetime]="entry.createdAt">{{ entry.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</time>
+            </div>
+            @if (entry.reason) {
+              <p class="reason">{{ entry.reason }}</p>
+            }
+            <p class="facts">
+              @if (entry.method) {
+                <span>{{ entry.method }}</span>
+              }
+              @if (entry.ip) {
+                <span class="mono">{{ entry.ip }}</span>
+              }
+              @if (entry.device) {
+                <span [title]="entry.userAgent ?? ''">{{ entry.device }}</span>
+              }
+            </p>
+          </div>
+        </li>
+      }
+    </ol>
+  } @else if (!loading && !error) {
+    <p class="hint">{{ 'adminUserForm.logins.empty' | t }}</p>
+  }
+
+  @if (loading) {
+    <p class="hint">{{ 'common.loading' | t }}</p>
+  } @else if (hasMore) {
+    <button type="button" class="secondary-action compact" (click)="more()">
+      {{ 'adminUserForm.logins.more' | t }}
+    </button>
+  }
+</section>

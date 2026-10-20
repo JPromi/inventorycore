@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemValueResponse;
 import com.jpromi.inventorycore.dto.InspectionPhotoRequest;
 import com.jpromi.inventorycore.dto.InspectionPhotoResponse;
+import com.jpromi.inventorycore.dto.InspectionScanCandidate;
 import com.jpromi.inventorycore.dto.InspectionScanResponse;
 import com.jpromi.inventorycore.dto.InspectionSummaryResponse;
 import com.jpromi.inventorycore.dto.InspectionTypeRequest;
@@ -95,6 +97,7 @@ public class InspectionService {
     private final InspectionScheduleService scheduleService;
     private final StoredFileRepository fileRepository;
     private final AuditService audit;
+    private final AssetStatusService assetStatuses;
 
     public InspectionService(
         InspectionTypeRepository typeRepository,
@@ -109,7 +112,8 @@ public class InspectionService {
         AssetInspectionScheduleRepository scheduleRepository,
         InspectionScheduleService scheduleService,
         StoredFileRepository fileRepository,
-        AuditService audit
+        AuditService audit,
+        AssetStatusService assetStatuses
     ) {
         this.typeRepository = typeRepository;
         this.inspectionRepository = inspectionRepository;
@@ -124,6 +128,7 @@ public class InspectionService {
         this.scheduleService = scheduleService;
         this.fileRepository = fileRepository;
         this.audit = audit;
+        this.assetStatuses = assetStatuses;
     }
 
     // ---- inspection types ----
@@ -431,7 +436,13 @@ public class InspectionService {
 
     @Transactional
     public InspectionScanResponse scan(AccessContext access, User user, UUID uuid, String code) {
-        InspectionScanResponse response = scanCode(access, user, uuid, code);
+        return scan(access, user, uuid, code, null);
+    }
+
+    /** {@code chosenAsset}: the user's choice after an AMBIGUOUS answer, or null. */
+    @Transactional
+    public InspectionScanResponse scan(AccessContext access, User user, UUID uuid, String code, UUID chosenAsset) {
+        InspectionScanResponse response = scanCode(access, user, uuid, code, chosenAsset);
         InspectionItemResponse item = response.item();
         if (item != null && item.assetUuid() != null) {
             String title = inspectionRepository.findByUuid(uuid).map(Inspection::getTitle).orElse("?");
@@ -441,18 +452,42 @@ public class InspectionService {
         return response;
     }
 
-    private InspectionScanResponse scanCode(AccessContext access, User user, UUID uuid, String code) {
+    private InspectionScanResponse scanCode(AccessContext access, User user, UUID uuid, String code, UUID chosenAsset) {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
-        ScanResolver.Resolution resolution = scanResolver.resolve(access, code);
+        ScanResolver.Resolution resolved = scanResolver.resolve(access, code);
         Map<Long, Location> locations = locationsById();
+
+        // several assets share the code (e.g. the same serial number): nothing is recorded until the user picks one
+        if (chosenAsset != null) {
+            List<Asset> chosen = resolved.assets().stream().filter(asset -> asset.getUuid().equals(chosenAsset)).toList();
+            if (chosen.isEmpty()) {
+                return new InspectionScanResponse("IGNORED", "Das gewählte Asset passt nicht zu diesem Code.", null);
+            }
+            resolved = new ScanResolver.Resolution(resolved.code(), resolved.matchedBy(), chosen, List.of());
+        } else if (resolved.assets().size() > 1) {
+            String scanned = resolved.code();
+            List<InspectionScanCandidate> candidates = resolved.assets().stream()
+                .sorted(Comparator.comparing(Asset::getName, String.CASE_INSENSITIVE_ORDER))
+                .map(asset -> new InspectionScanCandidate(
+                    asset.getUuid(),
+                    asset.getName(),
+                    asset.getInvId(),
+                    asset.getAssetType() == null ? null : asset.getAssetType().getName(),
+                    asset.getLocation() == null ? null : locationPath(asset.getLocation(), locations),
+                    matchedField(asset, scanned),
+                    inspection.getItems().stream().anyMatch(item -> item.getAsset() != null && item.getAsset().getId().equals(asset.getId()))))
+                .toList();
+            return new InspectionScanResponse("AMBIGUOUS", candidates.size() + " Assets passen zu „" + scanned + "“. Bitte das richtige Asset auswählen.", null, candidates);
+        }
+        ScanResolver.Resolution resolution = resolved;
 
         if (resolution.assets().isEmpty()) {
             if (!resolution.locations().isEmpty()) {
                 return new InspectionScanResponse("IGNORED", "Das ist ein Standort-Label, kein Asset.", null);
             }
             if (resolution.code().isEmpty()) {
-                return new InspectionScanResponse("IGNORED", "Leerer Code.", null);
+                return new InspectionScanResponse("IGNORED", "Der Code ist leer.", null);
             }
             // remember unknown codes once, so they show up in the protocol
             InspectionItem item = inspection.getItems().stream()
@@ -470,7 +505,7 @@ public class InspectionService {
                     return unknown;
                 });
             inspectionRepository.save(inspection);
-            return new InspectionScanResponse("UNKNOWN", "Zu „" + resolution.code() + "“ gibt es kein Asset.", toResponse(item, locations));
+            return new InspectionScanResponse("UNKNOWN", "Zu „" + resolution.code() + "“ ist kein Asset vorhanden.", toResponse(item, locations));
         }
 
         Asset asset = resolution.assets().get(0);
@@ -488,7 +523,7 @@ public class InspectionService {
             return new InspectionScanResponse("IGNORED", asset.getName() + " ist von Prüfungen ausgenommen.", null);
         }
         if (policy == com.jpromi.inventorycore.enums.AssetInspectionPolicy.MANUAL) {
-            return new InspectionScanResponse("IGNORED", asset.getName() + " wird ohne Label manuell geprüft.",
+            return new InspectionScanResponse("IGNORED", asset.getName() + " wird ohne Label manuell geprüft und kann nicht gescannt werden.",
                 item == null ? null : toResponse(item, locations));
         }
 
@@ -503,10 +538,10 @@ public class InspectionService {
             InspectionType type = inspection.getInspectionType();
             boolean typeFits = type == null || type.appliesTo(asset.getAssetType());
             boolean areaFits = type == null || type.coversAreas(asset.getAreas());
-            String warning = !typeFits ? " – der Typ ist für diese Prüfung eigentlich nicht vorgesehen."
-                : !areaFits ? " – das Gerät liegt nicht im Bereich dieser Prüfung." : null;
+            String warning = !typeFits ? " – der Typ ist für diese Prüfung nicht vorgesehen."
+                : !areaFits ? " – das Asset liegt nicht im Bereich dieser Prüfung." : null;
             return new InspectionScanResponse(warning == null ? "ADDED" : "ADDED_OTHER_TYPE",
-                asset.getName() + " hinzugefügt" + (warning == null ? "." : warning),
+                asset.getName() + " wurde hinzugefügt" + (warning == null ? "." : warning),
                 toResponse(added, locations));
         }
 
@@ -517,7 +552,7 @@ public class InspectionService {
             item.setScannedCode(resolution.code());
             check(item, InspectionItemStatus.PRESENT, InspectionCheckMethod.SCAN, user);
             inspectionRepository.save(inspection);
-            return new InspectionScanResponse("CHECKED", asset.getName() + " ist da.", toResponse(item, locations));
+            return new InspectionScanResponse("CHECKED", asset.getName() + " ist vorhanden.", toResponse(item, locations));
         }
         if (item != null) {
             return new InspectionScanResponse("UNEXPECTED", asset.getName() + " gehört nicht zu dieser Prüfung (bereits erfasst).", toResponse(item, locations));
@@ -529,7 +564,18 @@ public class InspectionService {
         inspection.getItems().add(foreign);
         inspectionRepository.save(inspection);
         String home = foreign.getLocationName() == null ? "keinem Standort zugeordnet" : "gehört zu " + foreign.getLocationName();
-        return new InspectionScanResponse("UNEXPECTED", "Fremder Gegenstand: " + asset.getName() + " (" + home + ").", toResponse(foreign, locations));
+        return new InspectionScanResponse("UNEXPECTED", "Nicht zugehöriges Asset: " + asset.getName() + " (" + home + ").", toResponse(foreign, locations));
+    }
+
+    /** Which field of the asset the scanned code matched (the resolver compares case-insensitively). */
+    private static String matchedField(Asset asset, String code) {
+        if (code.equalsIgnoreCase(asset.getInvId())) {
+            return "INV_ID";
+        }
+        if (code.equalsIgnoreCase(asset.getInventoryNumber())) {
+            return "INVENTORY_NUMBER";
+        }
+        return code.equalsIgnoreCase(asset.getSerialNumber()) ? "SERIAL_NUMBER" : null;
     }
 
     @Transactional
@@ -738,6 +784,7 @@ public class InspectionService {
         inspection.setCompletedAt(OffsetDateTime.now());
         inspection.setCompletedByUuid(user.getUuid());
         inspection.setCompletedByName(displayName(user));
+        assetStatuses.applyInspection(inspection, user);
         InspectionDetailResponse completed = toDetail(inspectionRepository.save(inspection), access);
         InspectionCounts counts = completed.summary().counts();
         audit.log(AuditAction.COMPLETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(), AuditDetail.event(
@@ -1188,8 +1235,8 @@ public class InspectionService {
     private static void requireAreas(boolean allowed) {
         if (!allowed) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                "Wähle Bereiche, in denen du Prüfungsvorlagen bearbeiten darfst. Ohne Bereich gilt die Prüfungsvorlage für alle Bereiche, "
-                    + "dafür ist ein Recht für alle Bereiche nötig.");
+                "Bitte nur Bereiche wählen, in denen Prüfungsvorlagen bearbeitet werden dürfen. Ohne Bereich gilt die Prüfungsvorlage "
+                    + "für alle Bereiche; dafür ist eine Berechtigung für alle Bereiche erforderlich.");
         }
     }
 

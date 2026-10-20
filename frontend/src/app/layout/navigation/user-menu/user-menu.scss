@@ -1,0 +1,228 @@
+@use 'breakpoints' as bp;
+:host {
+  display: block;
+
+  .avatar {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: var(--accent);
+    color: var(--on-accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+
+    &.large {
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1rem;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  // the whole row opens the menu; same shape as the area switcher above it
+  .user {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.35rem 0.6rem 0.35rem 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &.open {
+      border-color: var(--border);
+      background: var(--surface-hover);
+    }
+
+    .text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+
+      small {
+        overflow: hidden;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .chevron {
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    @include bp.touch {
+      min-height: 2.75rem;
+    }
+  }
+
+  .user-name {
+    overflow: hidden;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    mask-image: linear-gradient(
+      to right,
+      var(--black) calc(100% - var(--user-name-fade)),
+      transparent
+    );
+  }
+
+  .user-menu {
+    --dropdown-min-width: 15rem;
+    overflow-y: auto;
+    padding: 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+
+    .identity {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.5rem 0.45rem;
+
+      .text {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      strong,
+      small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      strong {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      small {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+      }
+    }
+
+    .divider {
+      height: 1px;
+      margin: 0.25rem 0;
+      background: var(--border);
+    }
+
+    .section-label {
+      padding: 0.35rem 0.45rem 0.3rem;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    app-theme-selector {
+      display: block;
+      margin: 0 0.15rem 0.2rem;
+    }
+
+    .item {
+      width: 100%;
+      min-height: 2.25rem;
+      padding: 0.35rem 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.85rem;
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+
+      svg {
+        flex-shrink: 0;
+        color: var(--text-muted);
+      }
+
+      &:hover {
+        background: var(--surface-hover);
+      }
+
+      &.danger,
+      &.danger svg {
+        color: var(--danger);
+      }
+
+      &.danger:hover {
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+
+      @include bp.touch {
+        min-height: 2.75rem;
+      }
+    }
+
+    .error {
+      padding: 0.25rem 0.45rem 0.4rem;
+      color: var(--danger);
+      font-size: 0.75rem;
+    }
+  }
+
+  .app-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.55rem;
+    margin-top: 0.75rem;
+    padding: 0 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    overflow-wrap: anywhere;
+    .app-name {
+      width: 100%;
+      font-weight: 600;
+    }
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: inherit;
+      text-decoration: none;
+    }
+    a:hover {
+      color: var(--accent-foreground);
+      text-decoration: underline;
+    }
+  }
+}

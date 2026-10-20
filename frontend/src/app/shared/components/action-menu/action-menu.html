@@ -1,0 +1,32 @@
+<button
+  #trigger
+  type="button"
+  class="icon-button"
+  [title]="'common.moreActions' | t"
+  [attr.aria-label]="'common.moreActions' | t"
+  [attr.aria-expanded]="open"
+  aria-haspopup="menu"
+  (click)="open = !open"
+  (keydown.arrowdown)="$event.preventDefault(); open = true"
+>
+  <svg lucideEllipsis size="19"></svg>
+</button>
+@if (open) {
+  <div
+    #panel
+    class="action-panel"
+    role="menu"
+    [attr.aria-label]="'common.moreActions' | t"
+    [appDropdownPosition]="trigger"
+    dropdownPlacement="bottom-end"
+    (dropdownReady)="focusFirst()"
+    (keydown)="key($event)"
+  >
+    @for (action of actions; track action.id) {
+      <button type="button" role="menuitem" [class.danger]="action.danger" (click)="choose(action)">
+        <ng-container *ngComponentOutlet="action.icon; inputs: iconInputs" />
+        <span>{{ action.label }}</span>
+      </button>
+    }
+  </div>
+}

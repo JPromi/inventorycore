@@ -1,0 +1,39 @@
+<button
+  #trigger
+  type="button"
+  class="trigger"
+  [class.open]="open"
+  [class.placeholder]="!value.length"
+  [attr.aria-expanded]="open"
+  [attr.aria-label]="'assetStatus.filter.label' | t"
+  (click)="open = !open"
+>
+  <span class="label">{{ label }}</span>
+  @if (value.length) {
+    <span class="clear" role="button" [title]="'assetStatus.filter.clear' | t" (click)="clear($event)">
+      <svg lucideX size="14"></svg>
+    </span>
+  }
+  <svg class="chevron" lucideChevronDown size="15"></svg>
+</button>
+
+@if (open) {
+  <div class="panel" role="group" [attr.aria-label]="'assetStatus.filter.label' | t" [appDropdownPosition]="trigger">
+    @for (status of statuses; track status.uuid) {
+      <button
+        type="button"
+        class="option"
+        role="menuitemcheckbox"
+        [attr.aria-checked]="isSelected(status)"
+        (click)="toggle(status)"
+      >
+        <span class="check">
+          @if (isSelected(status)) {
+            <svg lucideCheck size="13"></svg>
+          }
+        </span>
+        <app-asset-status-badge [status]="status" />
+      </button>
+    }
+  </div>
+}

@@ -66,6 +66,7 @@ public class AdminController {
     private final LocationRepository locationRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final LabelTemplateRepository labelTemplateRepository;
+    private final com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApiMapper mapper;
     private final AuditService audit;
@@ -85,8 +86,10 @@ public class AdminController {
         ApiMapper mapper,
         AuditService audit,
         InspectionRepository inspectionRepository,
-        InspectionTypeRepository inspectionTypeRepository
+        InspectionTypeRepository inspectionTypeRepository,
+        com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository
     ) {
+        this.assetStatusRepository = assetStatusRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.permissionRepository = permissionRepository;
@@ -142,7 +145,7 @@ public class AdminController {
     public AreaResponse updateArea(@PathVariable UUID uuid, @RequestBody AreaRequest request) {
         Area area = area(uuid);
         if (area.isDefaultArea() && !request.defaultArea()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose another default area instead");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte stattdessen einen anderen Bereich als Standardbereich festlegen.");
         }
         AreaResponse before = toAreaResponse(area);
         applyArea(area, request);
@@ -161,14 +164,15 @@ public class AdminController {
     public void deleteArea(@PathVariable UUID uuid) {
         Area area = area(uuid);
         if (area.isDefaultArea()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The default area cannot be deleted");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der Standardbereich kann nicht gelöscht werden.");
         }
         Area defaultArea = areaRepository.findFirstByDefaultAreaTrue()
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "No default area configured"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Es ist kein Standardbereich festgelegt."));
 
         assetRepository.findByArea(area).forEach(asset -> moveOut(asset.getAreas(), area, defaultArea));
         locationRepository.findByArea(area).forEach(location -> moveOut(location.getAreas(), area, defaultArea));
         assetTypeRepository.findByArea(area).forEach(type -> moveOut(type.getAreas(), area, defaultArea));
+        assetStatusRepository.findByArea(area).forEach(status -> status.setArea(defaultArea));
         labelTemplateRepository.findByArea(area).forEach(template -> {
             template.setArea(defaultArea);
             template.setDefaultForArea(false);
@@ -260,7 +264,7 @@ public class AdminController {
     public void deleteUser(@PathVariable UUID uuid, Authentication authentication) {
         User user = user(uuid);
         if (authentication != null && user.getUsername().equals(authentication.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot delete your own user");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der eigene Benutzer kann nicht gelöscht werden.");
         }
         userRepository.delete(user);
         audit.log(AuditAction.DELETE, AuditObjectType.USER, user.getUuid(), user.getUsername());
@@ -379,7 +383,7 @@ public class AdminController {
 
     private void applyArea(Area area, AreaRequest request) {
         if (request.name() == null || request.name().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Namen angeben.");
         }
         area.setName(request.name().trim());
         area.setDescription(request.description());

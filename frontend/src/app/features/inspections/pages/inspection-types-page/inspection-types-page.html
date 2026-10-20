@@ -1,0 +1,117 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (list.loaded) { {{ 'inspectionTemplateList.count' | tn: list.total }} }</p>
+            <h1>
+                <svg lucideClipboardList size="20"></svg>
+                <span>{{ 'terms.inspectionTemplates' | t }}</span>
+            </h1>
+        </div>
+        @if (canEdit) {
+            <div class="header-actions">
+                <a class="primary-action" routerLink="/config/inspection-templates/new">
+                    <svg lucidePlus size="17"></svg>
+                    <span>{{ 'inspectionTemplateList.new' | t }}</span>
+                </a>
+            </div>
+        }
+    </header>
+
+    <p class="hint intro">
+        {{ 'inspectionTemplateList.intro' | t }}
+    </p>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                [placeholder]="'inspectionTemplateList.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
+            @if (search) {
+                <button type="button" class="clear" [title]="'inspectionTemplateList.clearSearch' | t" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="visibleTypes" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" [deleteWarning]="'inspectionTemplateList.deleteWarning' | t" />
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (list.error && !visibleTypes.length) {
+        <p class="error">{{ 'inspectionTemplateList.loadError' | t }}</p>
+    } @else if (!list.loaded) {
+        <p class="empty">{{ 'inspectionTemplateList.loading' | t }}</p>
+    } @else if (!visibleTypes.length) {
+        <div class="empty-state">
+            {{ search.trim() ? ('inspectionTemplateList.notFound' | t) : ('inspectionTemplateList.empty' | t) }}
+        </div>
+    } @else {
+        <div class="type-grid">
+            @for (type of visibleTypes; track type.uuid) {
+                <article class="card type-card" [appSelectableRow]="selection" [selectionItem]="type" [class.is-selected]="selection.isSelected(type)" [class.clickable]="type.editable" (click)="type.editable && edit(type)">
+                    <app-selection-checkbox [selection]="selection" [item]="type" />
+                    <span class="stripe" [style.background]="type.color || 'var(--border-strong)'"></span>
+                    <div class="type-head">
+                        <h2>{{ type.name }}</h2>
+                        <div class="actions">
+                            @if (type.editable) {
+                                <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); edit(type)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                            }
+                            @if (type.deletable) {
+                                <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(type, $event)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="chip-list">
+                        <span class="badge">{{ type.mode === 'CHECK' ? ('inspectionTemplateList.mode.CHECK' | t) : ('inspectionTemplateList.mode.INVENTORY' | t) }}</span>
+                        @if (type.checkFunction) {
+                            <span class="badge">{{ 'inspectionTemplateList.withFunctionCheck' | t }}</span>
+                        }
+                        @if (type.intervalValue) {
+                            <span class="badge accent">{{ intervalText(type.intervalValue, type.intervalUnit) }}</span>
+                        }
+                        <span class="badge">{{ type.assetTypeNames.length ? type.assetTypeNames.join(', ') : ('inspectionTemplateList.allAssets' | t) }}</span>
+                        <span class="badge">{{ type.areaNames.length ? ('inspectionTemplateList.areas' | t: { areas: type.areaNames.join(', ') }) : ('inspectionTemplateList.allAreas' | t) }}</span>
+                        @if (!type.usable) {
+                            <span class="badge warn" [title]="'inspectionTemplateList.noInspectRightHint' | t">{{ 'inspectionTemplateList.noInspectRight' | t }}</span>
+                        }
+                    </div>
+                    @if (type.description) {
+                        <p class="description">{{ type.description }}</p>
+                    }
+                    <dl>
+                        <div>
+                            <dt>{{ 'inspectionTemplateList.generalFields' | t }}</dt>
+                            <dd>{{ generalFieldCount(type) }}</dd>
+                        </div>
+                        <div>
+                            <dt>{{ 'terms.inspections' | t }}</dt>
+                            <dd>{{ type.inspectionCount }}</dd>
+                        </div>
+                    </dl>
+                    @if (typeFieldSummary(type).length) {
+                        <div class="chip-list">
+                            @for (entry of typeFieldSummary(type); track entry) {
+                                <span class="chip">{{ entry }}</span>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>{{ 'common.loadingMore' | t }}</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'inspectionTemplateList.retry' | t }}</button>
+            }
+        </div>
+    }
+</section>

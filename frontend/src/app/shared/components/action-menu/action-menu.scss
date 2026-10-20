@@ -1,0 +1,42 @@
+:host {
+  display: inline-flex;
+  flex: 0 0 auto;
+
+  .action-panel {
+    width: max-content;
+    min-width: 12rem;
+    padding: 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.5rem 0.65rem;
+      border: 0;
+      border-radius: var(--radius-xs);
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.85rem;
+      text-align: left;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--surface-hover);
+      }
+
+      &.danger {
+        margin-top: 0.25rem;
+        border-top: 1px solid var(--border);
+        border-radius: 0;
+        color: var(--danger);
+      }
+    }
+  }
+}

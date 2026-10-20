@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  CanActivate,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { AuthService } from '../service/auth.service';
@@ -11,7 +17,10 @@ export class AuthGuard implements CanActivate {
     private readonly router: Router,
   ) {}
 
-  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> {
+  canActivate(
+    _route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot,
+  ): Observable<boolean | UrlTree> {
     if (this.authService.getCurrentUser()) {
       return of(true);
     }
@@ -24,7 +33,8 @@ export class AuthGuard implements CanActivate {
 
   /** Remembers the requested page so the user returns there after logging in. */
   private loginUrl(returnUrl: string): UrlTree {
-    const queryParams = returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/login') ? { returnUrl } : {};
+    const queryParams =
+      returnUrl && returnUrl !== '/' && !returnUrl.startsWith('/login') ? { returnUrl } : {};
     return this.router.createUrlTree(['/login'], { queryParams });
   }
 }

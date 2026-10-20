@@ -6,6 +6,7 @@ public enum AuditObjectType {
     LOCATION,
     ASSET_TYPE,
     TAG,
+    ASSET_STATUS,
     INSPECTION,
     INSPECTION_TYPE,
     LABEL_TEMPLATE,

@@ -1,0 +1,257 @@
+@use 'breakpoints' as bp;
+:host {
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: var(--overlay);
+
+    // bottom sheet on phones
+    @include bp.phone {
+      align-items: flex-end;
+      padding: 0;
+    }
+
+    .dialog {
+      width: min(100%, 34rem);
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      padding: 1.1rem 1.25rem;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-md);
+
+      @include bp.phone {
+        width: 100%;
+        max-height: 90vh;
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+
+      h2 {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      .close {
+        width: 2rem;
+        height: 2rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+
+        &:hover {
+          background: var(--surface-hover);
+        }
+
+        @include bp.phone {
+          width: 2.6rem;
+          height: 2.6rem;
+        }
+      }
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+
+        > span {
+          color: var(--text-muted);
+          font-size: 0.8rem;
+          font-weight: 700;
+        }
+
+        &.grow {
+          flex: 1;
+          min-width: 0;
+        }
+
+        &.copies {
+          width: 6rem;
+          flex-shrink: 0;
+        }
+
+        input {
+          width: 100%;
+          min-height: 2.35rem;
+          padding: 0.5rem;
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          background: var(--surface);
+          color: var(--text);
+
+          @include bp.phone {
+            min-height: 2.6rem;
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+
+    .preview {
+      min-height: 12rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-hover);
+
+      @include bp.phone {
+        min-height: 9rem;
+        padding: 0.75rem;
+      }
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      button {
+        width: 2rem;
+        height: 2rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+
+        &:disabled {
+          cursor: default;
+          opacity: 0.55;
+        }
+
+        &:hover:not(:disabled) {
+          background: var(--surface-hover);
+        }
+
+        @include bp.phone {
+          width: 2.6rem;
+          height: 2.6rem;
+        }
+      }
+    }
+
+    // labels are only rendered here to be copied into the print document
+    .print-source {
+      position: fixed;
+      left: -10000px;
+      top: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .hint {
+      margin-top: 0.6rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+
+      a {
+        color: var(--accent-foreground);
+        font-weight: 700;
+      }
+    }
+
+    .error {
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: var(--radius-md);
+      background: var(--accent-soft);
+      color: var(--accent-foreground);
+    }
+
+    footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.1rem;
+
+      button {
+        min-height: 2.25rem;
+        padding: 0 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text);
+        font-weight: 700;
+        cursor: pointer;
+
+        &:disabled {
+          cursor: default;
+          opacity: 0.55;
+        }
+
+        &.secondary:hover {
+          background: var(--surface-hover);
+        }
+
+        &.primary {
+          border-color: var(--accent);
+          background: var(--accent);
+          color: var(--on-accent);
+
+          &:hover:not(:disabled) {
+            background: var(--accent-hover);
+            color: var(--on-accent-hover);
+          }
+        }
+
+        @include bp.phone {
+          min-height: 2.6rem;
+          flex: 1 1 auto;
+        }
+      }
+    }
+  }
+}

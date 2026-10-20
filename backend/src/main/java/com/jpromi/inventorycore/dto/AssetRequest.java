@@ -19,5 +19,9 @@ public record AssetRequest(
     Set<UUID> areaUuids,
     UUID parentAssetUuid,
     String parentAssetNote,
-    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy
+    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy,
+    /** null keeps the current status (new assets: "Vorhanden") */
+    UUID statusUuid,
+    /** comment for the status history when the status changes */
+    String statusComment
 ) {}

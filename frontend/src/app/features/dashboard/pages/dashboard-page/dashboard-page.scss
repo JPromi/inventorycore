@@ -1,0 +1,360 @@
+@use 'breakpoints' as bp;
+
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: opacity 0.15s;
+
+    // keeps the old numbers while the next area selection loads
+    &.refreshing {
+        opacity: 0.6;
+    }
+}
+
+.dashboard-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--danger);
+}
+
+// ---- four headline numbers ----
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+
+    @include bp.tablet {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+}
+
+.tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    transition: background-color 0.15s;
+
+    &:hover {
+        background: var(--surface-hover);
+    }
+
+    // the state is shown by the number and the icon, the label names it
+    &.critical .tile-value,
+    &.critical svg {
+        color: var(--danger);
+    }
+
+    &.warning .tile-value,
+    &.warning svg {
+        color: var(--warning);
+    }
+}
+
+.tile-value {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.tile-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+// ---- two cards per row ----
+
+.columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.panel {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+
+    @include bp.phone {
+        padding: 1rem;
+    }
+}
+
+.panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    h2 {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+}
+
+.panel-foot {
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.more {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+        color: var(--accent);
+    }
+}
+
+// ---- lists of inspections ----
+
+.entries {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+}
+
+.entry-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+
+    a {
+        overflow: hidden;
+        color: var(--text);
+        font-weight: 500;
+        text-decoration: none;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &:hover {
+            color: var(--accent);
+        }
+
+        // narrow screens: wrap long names instead of cutting them off
+        @include bp.phone {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+    }
+}
+
+.meta {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// the text says what it is; color only supports it
+.state {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-active);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+
+    &.critical {
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+        color: var(--danger);
+    }
+
+    &.warning {
+        background: var(--warning-soft);
+        color: var(--warning);
+    }
+
+    &.good {
+        background: var(--success-soft);
+        color: var(--success);
+    }
+}
+
+// ---- inventory: assets per type in one neutral color, the value next to it ----
+
+.bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    list-style: none;
+
+    li {
+        display: grid;
+        grid-template-columns: minmax(0, 8.5rem) 1fr 2.5rem;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+
+.bar-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bar-track {
+    height: 0.45rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-active);
+}
+
+.bar {
+    display: block;
+    min-width: 2px;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--text-muted);
+}
+
+.bar-value {
+    color: var(--text-muted);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.1rem;
+    list-style: none;
+
+    li {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: var(--radius-pill);
+        background: var(--surface-active);
+        font-size: 0.8rem;
+    }
+}
+
+.tag-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--text-subtle);
+}
+
+.tag-count {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+// ---- inspection results: one headline number, the bar, a one-line legend ----
+
+.headline {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+
+    strong {
+        font-size: 2rem;
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    span {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+}
+
+.result-bar {
+    display: flex;
+    gap: 2px;
+    height: 0.5rem;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+}
+
+.result-part {
+    min-width: 2px;
+
+    &.ok {
+        background: var(--success);
+    }
+
+    &.defect {
+        background: var(--warning);
+    }
+
+    &.problem {
+        background: var(--danger);
+    }
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin-top: 0.8rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    list-style: none;
+
+    li {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    strong {
+        color: var(--text);
+        font-weight: 600;
+    }
+
+    .ok svg {
+        color: var(--success);
+    }
+
+    .defect svg {
+        color: var(--warning);
+    }
+
+    .problem svg {
+        color: var(--danger);
+    }
+}

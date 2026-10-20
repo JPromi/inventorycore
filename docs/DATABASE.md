@@ -2,7 +2,7 @@
 
 ## Persistence Model
 
-`customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields. Label templates reference the current branding logically through their JSON elements/placeholders; logo bytes are not copied into label records.
+`customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. The dark variant uses nullable `dark_brand_color`, `dark_logo` (PostgreSQL `bytea`), `dark_logo_content_type`, and `dark_logo_version` columns, with nullable `advanced_theme_enabled` interpreted as false for existing rows. Hibernate update adds these columns; no destructive data conversion is needed. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields; dark/light logo operations are independent and disabling advanced mode does not delete dark data. Label templates reference the light branding logically through their JSON elements/placeholders; logo bytes are not copied into label records. Personal screen appearance is browser-local per user, not a new user database column.
 
 PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities generally have a generated numeric primary key for joins and a separate unique UUID for API use. LDAP/OIDC settings are singleton records with a fixed ID rather than ordinary UUID-addressed resources.
 
@@ -10,6 +10,8 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | --- | --- |
 | Assets | Optional type and location, direct tags, areas, field values, and image records; `invId` is a separate string generated when omitted |
 | Asset types | Custom field definitions, tags, areas, image records, and related assets |
+| Asset statuses | Built-in statuses (`systemKey`, no area) and custom statuses per area with name, color, and category; custom ones are soft deleted and only when no asset uses them |
+| Asset status changes | History per asset: from/to status, comment, author, time, and the inspection that set it |
 | Locations | Optional parent, child locations, assets, areas, images, address parts (`street`, `postal_code`, `city`, `country`) with the formatted `address`, and nullable `latitude` / `longitude` |
 | Users and groups | Many-to-many membership; group permissions apply to a resource type and optional area |
 | Inspections | Types/field definitions, runs/items, item values/photos, and per-asset schedule data |
@@ -32,6 +34,8 @@ Location address parts and coordinates are nullable columns added by Hibernate `
 Inspection runs reference their own area through nullable legacy-compatible `inspections.area_id`. New runs always receive an area. Startup migration assigns older runs their template's sole area, or the default area when applicability was global/multiple or the template was deleted. Reads of any unmigrated rows retain the old template-based authorization. Area deletion moves protocols to the configured default area before deleting the area.
 
 Inspection templates own additional many-to-many joins `inspection_type_default_asset_types`, `inspection_type_default_locations`, and `inspection_type_recurring_tags`. Defaults are empty for existing templates. Soft-deleted default types/locations are not offered or applied to new runs. Recurring tag references are detached before a tag is physically deleted. Runs store multiple selected location UUIDs in `filter_location_uuids` while retaining the legacy singular column for historical runs.
+
+Assets without a status (from before statuses existed) are set to "Vorhanden" on start, without a history entry. Deleting an area moves its custom statuses to the default area.
 
 Assets, locations, and asset types use `deleted` / `deletedAt` soft deletion in inventory handlers. Groups and tags are physically deleted after detaching associations. Group permissions cascade with their group. Do not assume all entities share one deletion policy.
 

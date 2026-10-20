@@ -24,7 +24,11 @@ export class PermissionService {
    * Without `areaUuids` the question is "allowed in any area?" (e.g. show a "new" button),
    * with `areaUuids` it is "allowed for an object in these areas?".
    */
-  can(resourceType: PermissionResourceType, action: PermissionAction, areaUuids?: string[] | null): boolean {
+  can(
+    resourceType: PermissionResourceType,
+    action: PermissionAction,
+    areaUuids?: string[] | null,
+  ): boolean {
     if (this.isAdmin) {
       return true;
     }
@@ -35,7 +39,9 @@ export class PermissionService {
 
   /** Allowed for all areas at once (a permission without area), e.g. for global tags. */
   canEverywhere(resourceType: PermissionResourceType, action: PermissionAction): boolean {
-    return this.isAdmin || this.matching(resourceType, action).some((permission) => !permission.areaUuid);
+    return (
+      this.isAdmin || this.matching(resourceType, action).some((permission) => !permission.areaUuid)
+    );
   }
 
   /** The logged-in user's UUID. */
@@ -44,18 +50,26 @@ export class PermissionService {
   }
 
   /** Allowed in this specific area. */
-  canInArea(resourceType: PermissionResourceType, action: PermissionAction, areaUuid: string): boolean {
+  canInArea(
+    resourceType: PermissionResourceType,
+    action: PermissionAction,
+    areaUuid: string,
+  ): boolean {
     return this.can(resourceType, action, [areaUuid]);
   }
 
-  private matching(resourceType: PermissionResourceType, action: PermissionAction): UserPermissionEntity[] {
+  private matching(
+    resourceType: PermissionResourceType,
+    action: PermissionAction,
+  ): UserPermissionEntity[] {
     const user = this.authState.getCurrentUser();
     if (!user) {
       return [];
     }
     return user.permissions.filter(
       (permission) =>
-        (!permission.resourceType || permission.resourceType === resourceType) && (permission.admin || this.hasAction(permission, action)),
+        (!permission.resourceType || permission.resourceType === resourceType) &&
+        (permission.admin || this.hasAction(permission, action)),
     );
   }
 

@@ -32,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
     private final LocationRepository locationRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final LabelTemplateRepository labelTemplateRepository;
+    private final com.jpromi.inventorycore.service.AssetStatusService assetStatuses;
 
     @Value("${app.default-admin.username:admin}")
     private String defaultAdminUsername;
@@ -46,8 +47,10 @@ public class DataInitializer implements CommandLineRunner {
         AssetRepository assetRepository,
         LocationRepository locationRepository,
         AssetTypeRepository assetTypeRepository,
-        LabelTemplateRepository labelTemplateRepository
+        LabelTemplateRepository labelTemplateRepository,
+        com.jpromi.inventorycore.service.AssetStatusService assetStatuses
     ) {
+        this.assetStatuses = assetStatuses;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.areaRepository = areaRepository;
@@ -66,6 +69,10 @@ public class DataInitializer implements CommandLineRunner {
         locationRepository.findWithoutArea().forEach(location -> location.getAreas().add(defaultArea));
         assetTypeRepository.findWithoutArea().forEach(type -> type.getAreas().add(defaultArea));
         ensureDefaultLabel(defaultArea);
+        assetStatuses.ensureBuiltIns();
+        // assets from before statuses existed are simply there
+        var available = assetStatuses.builtIn(com.jpromi.inventorycore.enums.AssetStatusKey.AVAILABLE);
+        assetRepository.findWithoutStatus().forEach(asset -> asset.setStatus(available));
 
         if (!userRepository.existsByUsername(defaultAdminUsername)) {
             User admin = User.builder()

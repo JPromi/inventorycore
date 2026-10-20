@@ -1,0 +1,41 @@
+:host {
+  dialog {
+    width: min(30rem, calc(100% - 2rem));
+    margin: auto;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
+
+    &::backdrop {
+      background: var(--overlay);
+    }
+  }
+
+  h2 {
+    font-size: 1rem;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+
+    .icon-button {
+      flex-shrink: 0;
+    }
+  }
+
+  .filename {
+    margin-block: 1rem;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .dialog-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

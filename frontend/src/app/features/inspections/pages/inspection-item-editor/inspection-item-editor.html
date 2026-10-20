@@ -1,0 +1,80 @@
+@for (field of fields; track field.uuid) {
+    <div class="check-field" [class.wide]="field.fieldType === 'TEXT'">
+        <span class="check-label">
+            {{ field.name }}
+            @if (field.required) {
+                <span class="required">*</span>
+            }
+            @if (field.assetTypeName) {
+                <span class="scope">{{ field.assetTypeName }}</span>
+            }
+        </span>
+        @switch (field.fieldType) {
+            @case ('BOOLEAN') {
+                <div class="yes-no">
+                    <button type="button" class="yes" [class.active]="value(field) === 'true'" (click)="toggle(field, 'true')">{{ 'common.yes' | t }}</button>
+                    <button type="button" class="no" [class.active]="value(field) === 'false'" (click)="toggle(field, 'false')">{{ 'common.no' | t }}</button>
+                </div>
+            }
+            @case ('SELECT') {
+                <select [ngModel]="value(field)" (ngModelChange)="set(field, $event)">
+                    <option value="">—</option>
+                    @for (option of options(field); track option) {
+                        <option [value]="option">{{ option }}</option>
+                    }
+                </select>
+            }
+            @case ('NUMBER') {
+                <input type="number" [ngModel]="value(field)" (ngModelChange)="set(field, $event?.toString() ?? '', true)" />
+            }
+            @case ('DATE') {
+                <input type="date" [ngModel]="value(field)" (ngModelChange)="set(field, $event)" />
+            }
+            @case ('DATETIME') {
+                <input type="datetime-local" [ngModel]="value(field)" (ngModelChange)="set(field, $event)" />
+            }
+            @default {
+                <input
+                    [type]="field.fieldType === 'EMAIL' ? 'email' : field.fieldType === 'URL' ? 'url' : 'text'"
+                    [ngModel]="value(field)"
+                    (ngModelChange)="set(field, $event, true)"
+                />
+            }
+        }
+    </div>
+}
+
+<label class="check-field wide">
+    <span class="check-label">{{ 'inspectionItemEditor.note' | t }}</span>
+    <input type="text" [ngModel]="item.note ?? ''" #note (blur)="noteChange.emit(note.value)" [placeholder]="'common.optional' | t" />
+</label>
+
+<div class="check-field wide">
+    <span class="check-label">{{ 'inspectionItemEditor.photos' | t }}</span>
+    <div class="photos">
+        @for (photo of item.photos; track photo.uuid) {
+            <div class="photo">
+                <button type="button" class="photo-open" (click)="imageViewer.open(item.photos, $index)" [title]="'inspectionItemEditor.takenBy' | t: { name: photo.takenByName ?? ('common.unknown' | t) }">
+                    <img [src]="photo.thumbnailUrl" [alt]="'inspectionItemEditor.photo' | t" loading="lazy" />
+                </button>
+                <button type="button" class="remove" [title]="'inspectionItemEditor.removePhoto' | t" [attr.aria-label]="'inspectionItemEditor.removePhoto' | t" (click)="photoRemove.emit(photo)">
+                    <svg lucideX size="13"></svg>
+                </button>
+            </div>
+        }
+        <button type="button" class="add" (click)="takePhoto('INSPECTION')">
+            <svg lucideCamera size="18"></svg>
+            <span>{{ 'inspectionItemEditor.toInspection' | t }}</span>
+        </button>
+        @if (item.assetUuid) {
+            <button type="button" class="add" [title]="'inspectionItemEditor.toAssetTitle' | t" (click)="takePhoto('ASSET')">
+                <svg lucideImagePlus size="18"></svg>
+                <span>{{ 'inspectionItemEditor.toAsset' | t }}</span>
+            </button>
+        }
+    </div>
+    @if (photoStatus) {
+        <small class="photo-status">{{ photoStatus }}</small>
+    }
+    <input #fileInput type="file" accept="image/*" capture="environment" hidden (change)="onFile($event)" />
+</div>

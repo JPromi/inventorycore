@@ -2,17 +2,23 @@ import { Routes } from '@angular/router';
 import { LucideBoxes, LucideMapPin, LucideShapes } from '@lucide/angular';
 
 import { adminGuard } from './core/guards/admin.guard';
+import { t } from './core/i18n/i18n';
 import { AuthGuard } from './core/guards/auth.guard';
 import { LoginRedirectGuard } from './core/guards/login-redirect.guard';
-import { InventoryFormPage } from './core/pages/inventory-form-page/inventory-form-page';
-import { InventoryPage } from './core/pages/inventory-page/inventory-page';
-import { LoginPage } from './core/pages/login-page/login-page';
-import { PlaceholderPage } from './core/pages/placeholder-page/placeholder-page';
-import { MainRoute } from './core/routes/main-route/main-route';
-import { ASSET_DETAIL_CONFIG, LOCATION_DETAIL_CONFIG } from './core/pages/inventory-detail-page/detail-configs';
+import { InventoryFormPage } from './features/inventory/pages/inventory-form-page/inventory-form-page';
+import { InventoryPage } from './features/inventory/pages/inventory-page/inventory-page';
+import { LoginPage } from './features/auth/pages/login-page/login-page';
+import { PlaceholderPage } from './shared/pages/placeholder-page/placeholder-page';
+import { MainRoute } from './layout/navigation/main-route';
+import {
+  ASSET_DETAIL_CONFIG,
+  LOCATION_DETAIL_CONFIG,
+} from './features/inventory/pages/inventory-detail-page/detail-configs';
 
 const assetFormConfig = {
-  title: 'Asset',
+  title: t('terms.asset'),
+  createTitle: t('inventory.assets.createTitle'),
+  editTitle: t('inventory.assets.editTitle'),
   endpoint: 'assets',
   listRoute: '/assets',
   detailRoutePrefix: '/assets',
@@ -25,15 +31,17 @@ const assetFormConfig = {
   images: true,
   tags: true,
   fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
-    { key: 'serialNumber', label: 'Seriennummer', type: 'text' },
-    { key: 'inventoryNumber', label: 'Inventarnummer', type: 'text' },
+    { key: 'name', label: t('common.name'), type: 'text', required: true },
+    { key: 'description', label: t('common.description'), type: 'textarea' },
+    { key: 'serialNumber', label: t('terms.serialNumber'), type: 'text' },
+    { key: 'inventoryNumber', label: t('terms.inventoryNumber'), type: 'text' },
   ],
 };
 
 const locationFormConfig = {
-  title: 'Standort',
+  title: t('terms.location'),
+  createTitle: t('inventory.locations.createTitle'),
+  editTitle: t('inventory.locations.editTitle'),
   endpoint: 'locations',
   listRoute: '/locations',
   detailRoutePrefix: '/locations',
@@ -44,13 +52,15 @@ const locationFormConfig = {
   coordinates: true,
   images: true,
   fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+    { key: 'name', label: t('common.name'), type: 'text', required: true },
+    { key: 'description', label: t('common.description'), type: 'textarea' },
   ],
 };
 
 const assetTypeFormConfig = {
-  title: 'Typ',
+  title: t('terms.assetType'),
+  createTitle: t('inventory.assetTypes.createTitle'),
+  editTitle: t('inventory.assetTypes.editTitle'),
   endpoint: 'asset-types',
   listRoute: '/config/types',
   detailRoutePrefix: '/config/types',
@@ -60,8 +70,8 @@ const assetTypeFormConfig = {
   images: true,
   tags: true,
   fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'description', label: 'Beschreibung', type: 'textarea' },
+    { key: 'name', label: t('common.name'), type: 'text', required: true },
+    { key: 'description', label: t('common.description'), type: 'textarea' },
   ],
 };
 
@@ -78,8 +88,14 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/pages/dashboard-page/dashboard-page').then((m) => m.DashboardPage),
+      },
+      {
         path: 'profile',
-        loadComponent: () => import('./core/pages/profile-page/profile-page').then((m) => m.ProfilePage),
+        loadComponent: () =>
+          import('./features/profile/pages/profile-page/profile-page').then((m) => m.ProfilePage),
       },
       {
         path: '',
@@ -93,7 +109,7 @@ export const routes: Routes = [
         component: InventoryPage,
         data: {
           inventoryConfig: {
-            title: 'Inventar',
+            title: t('inventory.assets.listTitle'),
             endpoint: 'assets',
             resourceType: 'ASSET',
             icon: LucideBoxes,
@@ -102,31 +118,56 @@ export const routes: Routes = [
             detailRoutePrefix: '/assets',
             filter: {
               searchFields: ['name', 'description', 'tags'],
-              searchPlaceholder: 'Name, Beschreibung oder Tag suchen...',
+              searchPlaceholder: t('inventory.assets.searchPlaceholder'),
               areas: true,
               tags: true,
               locations: true,
               assetTypes: true,
+              statuses: true,
             },
             fields: assetFormConfig.fields,
           },
         },
       },
-      { path: 'assets/new', component: InventoryFormPage, data: { inventoryFormConfig: assetFormConfig } },
-      { path: 'assets/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: assetFormConfig } },
+      {
+        path: 'assets/new',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetFormConfig },
+      },
+      {
+        path: 'assets/:uuid/edit',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetFormConfig },
+      },
       {
         path: 'assets/:uuid',
-        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        loadComponent: () =>
+          import('./features/inventory/pages/inventory-detail-page/inventory-detail-page').then(
+            (m) => m.InventoryDetailPage,
+          ),
         data: { inventoryDetailConfig: ASSET_DETAIL_CONFIG },
       },
       {
         path: 'assets/:uuid/history',
-        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        loadComponent: () =>
+          import('./features/audit/pages/object-log-page/object-log-page').then(
+            (m) => m.ObjectLogPage,
+          ),
         data: { endpoint: 'assets', view: 'history' },
       },
       {
+        path: 'assets/:uuid/status-history',
+        loadComponent: () =>
+          import('./features/asset-statuses/pages/asset-status-history-page/asset-status-history-page').then(
+            (m) => m.AssetStatusHistoryPage,
+          ),
+      },
+      {
         path: 'assets/:uuid/inspections',
-        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        loadComponent: () =>
+          import('./features/audit/pages/object-log-page/object-log-page').then(
+            (m) => m.ObjectLogPage,
+          ),
         data: { endpoint: 'assets', view: 'inspections' },
       },
 
@@ -136,7 +177,7 @@ export const routes: Routes = [
         component: InventoryPage,
         data: {
           inventoryConfig: {
-            title: 'Standorte',
+            title: t('terms.locations'),
             endpoint: 'locations',
             resourceType: 'LOCATION',
             icon: LucideMapPin,
@@ -145,23 +186,37 @@ export const routes: Routes = [
             detailRoutePrefix: '/locations',
             filter: {
               searchFields: ['name', 'address'],
-              searchPlaceholder: 'Name oder Adresse suchen...',
+              searchPlaceholder: t('inventory.locations.searchPlaceholder'),
               areas: true,
             },
             fields: locationFormConfig.fields,
           },
         },
       },
-      { path: 'locations/new', component: InventoryFormPage, data: { inventoryFormConfig: locationFormConfig } },
-      { path: 'locations/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: locationFormConfig } },
+      {
+        path: 'locations/new',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: locationFormConfig },
+      },
+      {
+        path: 'locations/:uuid/edit',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: locationFormConfig },
+      },
       {
         path: 'locations/:uuid',
-        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        loadComponent: () =>
+          import('./features/inventory/pages/inventory-detail-page/inventory-detail-page').then(
+            (m) => m.InventoryDetailPage,
+          ),
         data: { inventoryDetailConfig: LOCATION_DETAIL_CONFIG },
       },
       {
         path: 'locations/:uuid/history',
-        loadComponent: () => import('./core/pages/object-log-page/object-log-page').then((m) => m.ObjectLogPage),
+        loadComponent: () =>
+          import('./features/audit/pages/object-log-page/object-log-page').then(
+            (m) => m.ObjectLogPage,
+          ),
         data: { endpoint: 'locations', view: 'history' },
       },
 
@@ -171,7 +226,7 @@ export const routes: Routes = [
         component: InventoryPage,
         data: {
           inventoryConfig: {
-            title: 'Typen',
+            title: t('terms.assetTypes'),
             endpoint: 'asset-types',
             resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
@@ -180,84 +235,137 @@ export const routes: Routes = [
             detailRoutePrefix: '/config/types',
             filter: {
               searchFields: ['name', 'description', 'tags'],
-              searchPlaceholder: 'Typ oder Tag suchen...',
+              searchPlaceholder: t('inventory.assetTypes.searchPlaceholder'),
               areas: true,
             },
             fields: assetTypeFormConfig.fields,
           },
         },
       },
-      { path: 'config/types/new', component: InventoryFormPage, data: { inventoryFormConfig: assetTypeFormConfig } },
-      { path: 'config/types/:uuid/edit', component: InventoryFormPage, data: { inventoryFormConfig: assetTypeFormConfig } },
+      {
+        path: 'config/types/new',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetTypeFormConfig },
+      },
+      {
+        path: 'config/types/:uuid/edit',
+        component: InventoryFormPage,
+        data: { inventoryFormConfig: assetTypeFormConfig },
+      },
       {
         path: 'config/types/:uuid',
-        loadComponent: () => import('./core/pages/inventory-detail-page/inventory-detail-page').then((m) => m.InventoryDetailPage),
+        loadComponent: () =>
+          import('./features/inventory/pages/inventory-detail-page/inventory-detail-page').then(
+            (m) => m.InventoryDetailPage,
+          ),
         data: {
           inventoryDetailConfig: {
-            title: 'Typ',
+            title: t('terms.assetType'),
             endpoint: 'asset-types',
             listRoute: '/config/types',
             editRoutePrefix: '/config/types',
             resourceType: 'ASSET_TYPE',
             icon: LucideShapes,
-            fields: [
-              { key: 'description', label: 'Beschreibung' },
-            ],
+            fields: [{ key: 'description', label: t('common.description') }],
           },
         },
       },
       // Prüfungen
       {
         path: 'inspections',
-        loadComponent: () => import('./core/pages/inspections/inspections-page/inspections-page').then((m) => m.InspectionsPage),
+        loadComponent: () =>
+          import('./features/inspections/pages/inspections-page/inspections-page').then(
+            (m) => m.InspectionsPage,
+          ),
       },
       {
         path: 'inspections/new',
-        loadComponent: () => import('./core/pages/inspections/inspection-new-page/inspection-new-page').then((m) => m.InspectionNewPage),
+        loadComponent: () =>
+          import('./features/inspections/pages/inspection-new-page/inspection-new-page').then(
+            (m) => m.InspectionNewPage,
+          ),
       },
       {
         path: 'inspections/:uuid',
-        loadComponent: () => import('./core/pages/inspections/inspection-page/inspection-page').then((m) => m.InspectionPage),
+        loadComponent: () =>
+          import('./features/inspections/pages/inspection-page/inspection-page').then(
+            (m) => m.InspectionPage,
+          ),
       },
       {
         path: 'config/inspection-templates',
         loadComponent: () =>
-          import('./core/pages/inspections/inspection-types-page/inspection-types-page').then((m) => m.InspectionTypesPage),
+          import('./features/inspections/pages/inspection-types-page/inspection-types-page').then(
+            (m) => m.InspectionTypesPage,
+          ),
       },
-      { path: 'config/inspection-types', redirectTo: 'config/inspection-templates', pathMatch: 'full' },
-      { path: 'config/inspection-types/new', redirectTo: 'config/inspection-templates/new', pathMatch: 'full' },
-      { path: 'config/inspection-types/:uuid', redirectTo: 'config/inspection-templates/:uuid', pathMatch: 'full' },
+      {
+        path: 'config/inspection-types',
+        redirectTo: 'config/inspection-templates',
+        pathMatch: 'full',
+      },
+      {
+        path: 'config/inspection-types/new',
+        redirectTo: 'config/inspection-templates/new',
+        pathMatch: 'full',
+      },
+      {
+        path: 'config/inspection-types/:uuid',
+        redirectTo: 'config/inspection-templates/:uuid',
+        pathMatch: 'full',
+      },
       {
         path: 'config/inspection-templates/new',
         loadComponent: () =>
-          import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
+          import('./features/inspections/pages/inspection-type-editor-page/inspection-type-editor-page').then(
+            (m) => m.InspectionTypeEditorPage,
+          ),
       },
       {
         path: 'config/inspection-templates/:uuid',
         loadComponent: () =>
-          import('./core/pages/inspections/inspection-type-editor-page/inspection-type-editor-page').then((m) => m.InspectionTypeEditorPage),
+          import('./features/inspections/pages/inspection-type-editor-page/inspection-type-editor-page').then(
+            (m) => m.InspectionTypeEditorPage,
+          ),
       },
       {
         path: 'scan',
-        loadComponent: () => import('./core/pages/scan-page/scan-page').then((m) => m.ScanPage),
+        loadComponent: () =>
+          import('./features/scanning/pages/scan-page/scan-page').then((m) => m.ScanPage),
+      },
+      {
+        path: 'config/statuses',
+        loadComponent: () =>
+          import('./features/asset-statuses/pages/asset-statuses-page/asset-statuses-page').then(
+            (m) => m.AssetStatusesPage,
+          ),
       },
       {
         path: 'config/tags',
-        loadComponent: () => import('./core/pages/tags-page/tags-page').then((m) => m.TagsPage),
+        loadComponent: () =>
+          import('./features/tags/pages/tags-page/tags-page').then((m) => m.TagsPage),
       },
 
       {
         path: 'config/labels',
         loadComponent: () =>
-          import('./core/pages/labels/label-templates-page/label-templates-page').then((m) => m.LabelTemplatesPage),
+          import('./features/labels/pages/label-templates-page/label-templates-page').then(
+            (m) => m.LabelTemplatesPage,
+          ),
       },
       {
         path: 'config/labels/new',
-        loadComponent: () => import('./core/pages/labels/label-editor-page/label-editor-page').then((m) => m.LabelEditorPage),
+        loadComponent: () =>
+          import('./features/labels/pages/label-editor-page/label-editor-page').then(
+            (m) => m.LabelEditorPage,
+          ),
       },
       {
         path: 'config/labels/:uuid/edit',
-        loadComponent: () => import('./core/pages/labels/label-editor-page/label-editor-page').then((m) => m.LabelEditorPage),
+        loadComponent: () =>
+          import('./features/labels/pages/label-editor-page/label-editor-page').then(
+            (m) => m.LabelEditorPage,
+          ),
       },
 
       // Administration
@@ -266,29 +374,83 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
-          { path: 'customization', loadComponent: () => import('./core/pages/admin/customization-page/customization-page').then(m => m.CustomizationPage) },
+          {
+            path: 'customization',
+            loadComponent: () =>
+              import('./features/admin/pages/customization-page/customization-page').then(
+                (m) => m.CustomizationPage,
+              ),
+          },
           {
             path: 'areas',
-            loadComponent: () => import('./core/pages/admin/areas-page/areas-page').then((m) => m.AreasPage),
+            loadComponent: () =>
+              import('./features/admin/pages/areas-page/areas-page').then((m) => m.AreasPage),
           },
-          { path: 'users', loadComponent: () => import('./core/pages/admin/users-page/users-page').then((m) => m.UsersPage) },
-          { path: 'users/new', loadComponent: () => import('./core/pages/admin/user-form-page/user-form-page').then((m) => m.UserFormPage) },
-          { path: 'users/:uuid/edit', loadComponent: () => import('./core/pages/admin/user-form-page/user-form-page').then((m) => m.UserFormPage) },
-          { path: 'groups', loadComponent: () => import('./core/pages/admin/groups-page/groups-page').then((m) => m.GroupsPage) },
-          { path: 'groups/new', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
-          { path: 'groups/:uuid/edit', loadComponent: () => import('./core/pages/admin/group-form-page/group-form-page').then((m) => m.GroupFormPage) },
-          { path: 'group-permissions', loadComponent: () => import('./core/pages/admin/permissions-page/permissions-page').then((m) => m.PermissionsPage) },
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/admin/pages/users-page/users-page').then((m) => m.UsersPage),
+          },
+          {
+            path: 'users/new',
+            loadComponent: () =>
+              import('./features/admin/pages/user-form-page/user-form-page').then(
+                (m) => m.UserFormPage,
+              ),
+          },
+          {
+            path: 'users/:uuid/edit',
+            loadComponent: () =>
+              import('./features/admin/pages/user-form-page/user-form-page').then(
+                (m) => m.UserFormPage,
+              ),
+          },
+          {
+            path: 'groups',
+            loadComponent: () =>
+              import('./features/admin/pages/groups-page/groups-page').then((m) => m.GroupsPage),
+          },
+          {
+            path: 'groups/new',
+            loadComponent: () =>
+              import('./features/admin/pages/group-form-page/group-form-page').then(
+                (m) => m.GroupFormPage,
+              ),
+          },
+          {
+            path: 'groups/:uuid/edit',
+            loadComponent: () =>
+              import('./features/admin/pages/group-form-page/group-form-page').then(
+                (m) => m.GroupFormPage,
+              ),
+          },
+          {
+            path: 'group-permissions',
+            loadComponent: () =>
+              import('./features/admin/pages/permissions-page/permissions-page').then(
+                (m) => m.PermissionsPage,
+              ),
+          },
           {
             path: 'ldap',
-            loadComponent: () => import('./core/pages/admin/ldap-settings-page/ldap-settings-page').then((m) => m.LdapSettingsPage),
+            loadComponent: () =>
+              import('./features/admin/pages/ldap-settings-page/ldap-settings-page').then(
+                (m) => m.LdapSettingsPage,
+              ),
           },
           {
             path: 'oidc',
-            loadComponent: () => import('./core/pages/admin/oidc-settings-page/oidc-settings-page').then((m) => m.OidcSettingsPage),
+            loadComponent: () =>
+              import('./features/admin/pages/oidc-settings-page/oidc-settings-page').then(
+                (m) => m.OidcSettingsPage,
+              ),
           },
           {
             path: 'logs',
-            loadComponent: () => import('./core/pages/admin/audit-log-page/audit-log-page').then((m) => m.AuditLogPage),
+            loadComponent: () =>
+              import('./features/admin/pages/audit-log-page/audit-log-page').then(
+                (m) => m.AuditLogPage,
+              ),
           },
         ],
       },
@@ -296,7 +458,7 @@ export const routes: Routes = [
       {
         path: '**',
         component: PlaceholderPage,
-        data: { title: 'Placeholder' },
+        data: { title: t('inventory.pageNotFound') },
       },
     ],
   },

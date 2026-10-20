@@ -34,7 +34,7 @@ class PermissionRulesTest {
     private final InspectionService service = new InspectionService(types, inspections, assets,
         mock(AssetTypeRepository.class), mock(LocationRepository.class), mock(TagRepository.class), areas,
         resolver, mock(InspectionItemRepository.class), mock(AssetInspectionScheduleRepository.class),
-        mock(InspectionScheduleService.class), files, mock(AuditService.class));
+        mock(InspectionScheduleService.class), files, mock(AuditService.class), mock(AssetStatusService.class));
 
     private final User inspector = User.builder().username("inspector").displayName("Inspector").build();
 
@@ -62,6 +62,30 @@ class PermissionRulesTest {
         var result = service.scan(edvInspector, inspector, inspection.getUuid(), "FAC-1");
         assertEquals("IGNORED", result.outcome());
         assertTrue(inspection.getItems().isEmpty());
+    }
+
+    @Test
+    void ambiguousCodesRecordNothingUntilTheUserPicksOneOfTheMatches() {
+        Asset laptop = Asset.builder().id(1L).name("Laptop").invId("EDV-1").serialNumber("SN-7").areas(Set.of(edv)).build();
+        Asset monitor = Asset.builder().id(2L).name("Monitor").invId("SN-7").areas(Set.of(edv)).build();
+        Asset other = Asset.builder().id(3L).name("Drucker").areas(Set.of(edv)).build();
+        Inspection inspection = openInspection(laptop);
+        when(resolver.resolve(edvInspector, "SN-7")).thenReturn(new ScanResolver.Resolution("SN-7", "CODE", List.of(monitor, laptop), List.of()));
+
+        var ambiguous = service.scan(edvInspector, inspector, inspection.getUuid(), "SN-7");
+        assertEquals("AMBIGUOUS", ambiguous.outcome());
+        assertEquals(List.of("Laptop", "Monitor"), ambiguous.candidates().stream().map(candidate -> candidate.name()).toList());
+        assertEquals(List.of("SERIAL_NUMBER", "INV_ID"), ambiguous.candidates().stream().map(candidate -> candidate.matchedBy()).toList());
+        assertEquals(List.of(true, false), ambiguous.candidates().stream().map(candidate -> candidate.inInspection()).toList());
+        assertEquals(InspectionItemStatus.PENDING, inspection.getItems().get(0).getStatus());
+
+        // only an asset the code matches can be chosen
+        assertEquals("IGNORED", service.scan(edvInspector, inspector, inspection.getUuid(), "SN-7", other.getUuid()).outcome());
+
+        var chosen = service.scan(edvInspector, inspector, inspection.getUuid(), "SN-7", laptop.getUuid());
+        assertEquals("CHECKED", chosen.outcome());
+        assertEquals(InspectionItemStatus.PRESENT, inspection.getItems().get(0).getStatus());
+        assertEquals(1, inspection.getItems().size());
     }
 
     @Test

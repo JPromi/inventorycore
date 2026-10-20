@@ -1,0 +1,79 @@
+<ng-template #avatar let-large="large">
+  <span class="avatar" [class.large]="large">
+    @if (user?.profileImageUrl && !profileImageFailed) {
+      <img
+        [src]="user?.profileImageUrl"
+        alt=""
+        referrerpolicy="no-referrer"
+        (error)="profileImageFailed = true"
+      />
+    } @else {
+      {{ initial }}
+    }
+  </span>
+</ng-template>
+
+<button
+  #userMenuTrigger
+  type="button"
+  class="user"
+  [class.open]="userMenuOpen"
+  [attr.aria-label]="'userMenu.title' | t"
+  [title]="'userMenu.title' | t"
+  [attr.aria-expanded]="userMenuOpen"
+  aria-haspopup="menu"
+  aria-controls="user-menu"
+  (click)="userMenuOpen = !userMenuOpen"
+>
+  <ng-container *ngTemplateOutlet="avatar; context: { large: false }" />
+  <span class="text">
+    <span class="user-name">{{ name }}</span>
+    <small>{{ roleLabel | t }}</small>
+  </span>
+  <svg class="chevron" lucideChevronsUpDown size="15"></svg>
+</button>
+
+@if (userMenuOpen) {
+  <div
+    #userMenu
+    id="user-menu"
+    class="user-menu"
+    [appDropdownPosition]="userMenuTrigger"
+    dropdownPlacement="top-start"
+  >
+    <div class="identity">
+      <ng-container *ngTemplateOutlet="avatar; context: { large: true }" />
+      <span class="text">
+        <strong [title]="name">{{ name }}</strong>
+        @if (username && username !== name) {
+          <small [title]="username">{{ username }}</small>
+        }
+      </span>
+    </div>
+    <div class="divider"></div>
+    <a class="item" routerLink="/profile">
+      <svg lucideUser size="16"></svg><span>{{ 'userMenu.profile' | t }}</span>
+    </a>
+    <div class="divider"></div>
+    <p class="section-label">{{ 'theme.appearance' | t }}</p>
+    <app-theme-selector />
+    <div class="divider"></div>
+    <button type="button" class="item danger" (click)="logout()" [disabled]="loggingOut">
+      <svg lucideLogOut size="16"></svg
+      ><span>{{ (loggingOut ? 'userMenu.loggingOut' : 'userMenu.logout') | t }}</span>
+    </button>
+    @if (logoutError) {
+      <p class="error" role="alert">{{ 'userMenu.logoutFailed' | t }}</p>
+    }
+  </div>
+}
+
+@if (appInfo.info$ | async; as info) {
+  <div class="app-info">
+    <span class="app-name">{{ info.name }}</span>
+    <span>{{ 'userMenu.version' | t: { version: info.version } }}</span>
+    <a [href]="info.githubUrl" target="_blank" rel="noopener noreferrer"
+      ><svg lucideExternalLink size="13"></svg>{{ 'userMenu.github' | t }}</a
+    >
+  </div>
+}

@@ -1,0 +1,66 @@
+<section class="card status-card" [class.retired]="retired">
+  <div class="card-title">
+    <h2>{{ 'assetStatus.title' | t }}</h2>
+    <div class="title-actions">
+      <a class="secondary-action compact" [routerLink]="['/assets', asset.uuid, 'status-history']">
+        <svg lucideHistory size="15"></svg>
+        <span>{{ 'assetStatus.history' | t }}</span>
+      </a>
+      @if (canChange && !editing) {
+        <button type="button" class="secondary-action compact" (click)="startEdit()">
+          <svg lucideRefreshCw size="15"></svg>
+          <span>{{ 'assetStatus.change' | t }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="current">
+    <app-asset-status-badge [status]="asset.status" [large]="true" />
+    @if (asset.statusChangedAt) {
+      <small>{{ 'assetStatus.since' | t: { date: (asset.statusChangedAt | date: 'dd.MM.yyyy') } }}</small>
+    }
+  </div>
+  @if (retired) {
+    <p class="hint">{{ 'assetStatus.retiredHint' | t }}</p>
+  }
+
+  @if (editing) {
+    <form class="change-form" (ngSubmit)="save()">
+      <fieldset>
+        <legend>{{ 'assetStatus.newStatus' | t }}</legend>
+        <div class="options">
+          @for (option of options; track option.uuid) {
+            <label class="option" [class.selected]="selected === option.uuid">
+              <input type="radio" name="status" [value]="option.uuid" [(ngModel)]="selected" />
+              <app-asset-status-badge [status]="option" />
+            </label>
+          }
+        </div>
+      </fieldset>
+      <label class="field">
+        <span>{{ 'assetStatus.comment' | t }}</span>
+        <textarea
+          name="comment"
+          rows="3"
+          maxlength="2000"
+          [(ngModel)]="comment"
+          [placeholder]="'assetStatus.commentPlaceholder' | t"
+        ></textarea>
+      </label>
+      @if (error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+      <div class="form-actions">
+        <button type="button" class="secondary-action" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+        <button
+          type="submit"
+          class="primary-action"
+          [disabled]="saving || !selected || selected === asset.status?.uuid"
+        >
+          {{ (saving ? 'common.saving' : 'common.save') | t }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

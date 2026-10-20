@@ -57,6 +57,13 @@ public class OidcSettings {
     private boolean crossProviderLogin = false;
 
     /**
+     * The login page goes straight to the identity provider (like Nextcloud). {@code /login?direct=1}
+     * still shows the normal login page, e.g. for local admins.
+     */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean autoRedirect = false;
+
+    /**
      * Public address of the frontend, e.g. https://inventar.example.com. Used for the redirect URI
      * and the redirect after login. Empty = derived from the request.
      */

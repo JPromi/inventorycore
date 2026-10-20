@@ -2,11 +2,15 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
     <title>InventoryCore</title>
     <base href="/" />
     <!-- viewport-fit=cover: the layout uses env(safe-area-inset-*) for notch and home indicator -->
     <!-- no zooming on phones: the layout is made for the screen width (inputs use 16px, so iOS does not zoom into them) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <meta name="description" content="Inventar, Standorte und Prüfungen an einem Ort." />
 
     <!-- PWA -->
@@ -19,9 +23,411 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="InventoryCore" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <!--
+      Start screen and no-JavaScript page. They are shown before Angular, the texts and the stylesheets
+      are loaded, so they carry their own styles (colors as in styles/_themes.scss) and fixed German
+      texts. main.ts fades the start screen out once the app runs.
+    -->
+    <style>
+      .app-splash,
+      .app-noscript {
+        --splash-bg: #f5f5f5;
+        --splash-text: #212121;
+        --splash-muted: #64748b;
+        --splash-track: rgba(0, 0, 0, 0.08);
+        --splash-brand: #b62f2f;
+        --splash-on-brand: #ffffff;
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.1rem;
+        padding: 2rem;
+        background: var(--splash-bg);
+        color: var(--splash-text);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        text-align: center;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .app-splash,
+        .app-noscript {
+          --splash-bg: #17181a;
+          --splash-text: #f1f2f4;
+          --splash-muted: #bbc0c9;
+          --splash-track: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      .app-splash {
+        transition:
+          opacity 0.4s ease,
+          visibility 0.4s;
+      }
+
+      .app-splash.app-splash-done {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .splash-mark {
+        position: relative;
+        width: 6.5rem;
+        height: 6.5rem;
+        filter: drop-shadow(0 14px 28px color-mix(in srgb, var(--splash-brand) 32%, transparent));
+        animation: splash-tile-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .splash-mark svg,
+      .splash-mark img {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .splash-mark img {
+        object-fit: contain;
+        animation: splash-breathe 2.8s ease-in-out 0.8s infinite;
+      }
+
+      .splash-tile {
+        fill: var(--splash-brand);
+      }
+
+      .splash-boxes {
+        fill: none;
+        stroke: var(--splash-on-brand);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* each box is drawn, then set down; the top one lands last on the two below */
+      .splash-box {
+        transform-box: fill-box;
+        transform-origin: center bottom;
+        animation:
+          splash-drop 0.65s cubic-bezier(0.2, 0.8, 0.25, 1.15) both,
+          splash-float 2.8s ease-in-out infinite;
+      }
+
+      .splash-box path {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: splash-draw 0.9s cubic-bezier(0.45, 0, 0.2, 1) both;
+      }
+
+      .splash-box.left {
+        animation-delay: 0.2s, 1.5s;
+      }
+
+      .splash-box.left path {
+        animation-delay: 0.2s;
+      }
+
+      .splash-box.right {
+        animation-delay: 0.35s, 1.75s;
+      }
+
+      .splash-box.right path {
+        animation-delay: 0.35s;
+      }
+
+      .splash-box.top {
+        --splash-drop: -5px;
+        animation-delay: 0.55s, 2s;
+      }
+
+      .splash-box.top path {
+        animation-delay: 0.55s;
+      }
+
+      /* soft light that passes over the tile now and then */
+      .splash-shine {
+        transform: translateX(-120%) skewX(-18deg);
+        animation: splash-shine 3.4s ease-in-out 1.3s infinite;
+      }
+
+      .splash-name {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        animation: splash-fade-up 0.6s ease 0.45s both;
+      }
+
+      /* only appears when loading takes a moment, so fast starts stay calm */
+      .splash-progress {
+        position: relative;
+        width: 8.5rem;
+        height: 3px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--splash-track);
+        animation: splash-fade-up 0.4s ease 1s both;
+      }
+
+      .splash-progress::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        width: 40%;
+        border-radius: inherit;
+        background: var(--splash-brand);
+        animation: splash-progress 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+
+      .splash-error,
+      .app-noscript p {
+        max-width: 26rem;
+        margin: 0;
+        color: var(--splash-muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .splash-error {
+        display: none;
+      }
+
+      .app-splash-failed .splash-progress {
+        display: none;
+      }
+
+      .app-splash-failed .splash-error {
+        display: block;
+      }
+
+      .splash-error button {
+        display: block;
+        margin: 1rem auto 0;
+        padding: 0.55rem 1.1rem;
+        border: 0;
+        border-radius: 0.55rem;
+        background: var(--splash-brand);
+        color: var(--splash-on-brand);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .splash-sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      .app-noscript h1 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+      }
+
+      .app-noscript .splash-mark {
+        width: 4.5rem;
+        height: 4.5rem;
+        animation: none;
+      }
+
+      @keyframes splash-tile-in {
+        from {
+          opacity: 0;
+          transform: scale(0.86) translateY(6px);
+        }
+      }
+
+      /* hidden at first: the round line caps would otherwise show as dots before the line is drawn */
+      @keyframes splash-draw {
+        from {
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        to {
+          stroke-dashoffset: 0;
+          opacity: 1;
+        }
+      }
+
+      @keyframes splash-drop {
+        from {
+          opacity: 0;
+          transform: translateY(var(--splash-drop, -3px));
+        }
+      }
+
+      @keyframes splash-float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        45% {
+          transform: translateY(-0.7px);
+        }
+      }
+
+      @keyframes splash-shine {
+        0% {
+          transform: translateX(-120%) skewX(-18deg);
+        }
+        45%,
+        100% {
+          transform: translateX(220%) skewX(-18deg);
+        }
+      }
+
+      @keyframes splash-fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+      }
+
+      @keyframes splash-progress {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(250%);
+        }
+      }
+
+      @keyframes splash-breathe {
+        50% {
+          transform: scale(1.035);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .app-splash *,
+        .app-splash *::after {
+          animation: none !important;
+        }
+
+        .splash-box path {
+          stroke-dashoffset: 0;
+        }
+
+        .splash-shine {
+          display: none;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="app-splash" class="app-splash" role="status">
+      <div class="splash-mark">
+        <svg viewBox="0 0 512 512" aria-hidden="true">
+          <defs>
+            <clipPath id="splash-clip"><rect width="512" height="512" rx="112" /></clipPath>
+            <linearGradient id="splash-light" x1="0" x2="1">
+              <stop offset="0" stop-color="#fff" stop-opacity="0" />
+              <stop offset="0.5" stop-color="#fff" stop-opacity="0.22" />
+              <stop offset="1" stop-color="#fff" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <g clip-path="url(#splash-clip)">
+            <rect class="splash-tile" width="512" height="512" />
+            <rect class="splash-shine" x="0" y="-60" width="170" height="632" fill="url(#splash-light)" />
+          </g>
+          <g class="splash-boxes" transform="translate(107.52 107.52) scale(12.3733)">
+            <g class="splash-box left">
+              <path pathLength="1" d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
+              <path pathLength="1" d="m7 16.5-4.74-2.85" />
+              <path pathLength="1" d="m7 16.5 5-3" />
+              <path pathLength="1" d="M7 16.5v5.17" />
+            </g>
+            <g class="splash-box right">
+              <path pathLength="1" d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" />
+              <path pathLength="1" d="m17 16.5-5-3" />
+              <path pathLength="1" d="m17 16.5 4.74-2.85" />
+              <path pathLength="1" d="M17 16.5v5.17" />
+            </g>
+            <g class="splash-box top">
+              <path pathLength="1" d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" />
+              <path pathLength="1" d="M12 8 7.26 5.15" />
+              <path pathLength="1" d="m12 8 4.74-2.85" />
+              <path pathLength="1" d="M12 13.5V8" />
+            </g>
+          </g>
+        </svg>
+      </div>
+      <p class="splash-name">InventoryCore</p>
+      <div class="splash-progress" aria-hidden="true"></div>
+      <span class="splash-sr">Wird geladen …</span>
+      <div class="splash-error" role="alert">
+        Die Anwendung konnte nicht gestartet werden. Bitte die Verbindung prüfen und die Seite neu laden.
+        <button type="button" id="app-splash-reload">Neu laden</button>
+      </div>
+    </div>
+    <script>
+      // branding remembered by the app (CustomizationService), so the next start looks the same
+      (function () {
+        var splash = document.getElementById('app-splash');
+        try {
+          var brand = JSON.parse(localStorage.getItem('inventorycore.splash') || 'null');
+          if (!brand) return;
+          var dark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+          var color = (dark && brand.darkColor) || brand.color;
+          if (/^#[0-9a-f]{6}$/i.test(color || '')) {
+            var r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16);
+            splash.style.setProperty('--splash-brand', color);
+            splash.style.setProperty('--splash-on-brand', 0.299 * r + 0.587 * g + 0.114 * b > 165 ? '#1f2328' : '#ffffff');
+          }
+          if (brand.name) {
+            splash.querySelector('.splash-name').textContent = brand.name;
+          }
+          var logo = (dark && brand.darkLogo) || brand.logo;
+          if (logo) {
+            var image = new Image();
+            image.alt = '';
+            image.onload = function () {
+              var mark = splash.querySelector('.splash-mark');
+              mark.replaceChildren(image);
+            };
+            image.src = logo;
+          }
+        } catch (error) {
+          // the default branding stays
+        }
+      })();
+    </script>
     <app-root></app-root>
-    <noscript>Bitte JavaScript aktivieren, um InventoryCore zu verwenden.</noscript>
+    <noscript>
+      <style>
+        #app-splash {
+          display: none;
+        }
+      </style>
+      <div class="app-noscript">
+        <div class="splash-mark">
+          <svg viewBox="0 0 512 512" aria-hidden="true">
+            <rect class="splash-tile" width="512" height="512" rx="112" />
+            <g class="splash-boxes" transform="translate(107.52 107.52) scale(12.3733)">
+              <path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" />
+              <path d="m7 16.5-4.74-2.85" /><path d="m7 16.5 5-3" /><path d="M7 16.5v5.17" />
+              <path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" />
+              <path d="m17 16.5-5-3" /><path d="m17 16.5 4.74-2.85" /><path d="M17 16.5v5.17" />
+              <path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" />
+              <path d="M12 8 7.26 5.15" /><path d="m12 8 4.74-2.85" /><path d="M12 13.5V8" />
+            </g>
+          </svg>
+        </div>
+        <h1>JavaScript wird benötigt</h1>
+        <p>
+          InventoryCore ist eine Webanwendung und funktioniert nur mit aktiviertem JavaScript. Bitte JavaScript im
+          Browser aktivieren und die Seite neu laden.
+        </p>
+      </div>
+    </noscript>
   </body>
 </html>

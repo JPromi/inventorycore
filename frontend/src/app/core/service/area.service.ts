@@ -4,7 +4,8 @@ import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
-import { InventoryItem } from './inventory-api.service';
+import { InventoryItem } from '../../features/inventory/data-access/inventory-api.service';
+import { t } from '../i18n/i18n';
 
 export interface AreaItem {
   uuid: string;
@@ -76,11 +77,13 @@ export class AreaService {
    */
   overlapsSelection(areaUuids: string[] | null | undefined): boolean {
     const selected = this.selected;
-    return !selected.length || !areaUuids?.length || areaUuids.some((uuid) => selected.includes(uuid));
+    return (
+      !selected.length || !areaUuids?.length || areaUuids.some((uuid) => selected.includes(uuid))
+    );
   }
 
   name(uuid: string): string {
-    return this.areas.find((area) => area.uuid === uuid)?.name ?? 'Unbekannter Bereich';
+    return this.areas.find((area) => area.uuid === uuid)?.name ?? t('services.unknownArea');
   }
 
   /**
@@ -93,7 +96,8 @@ export class AreaService {
 
   /** Same rule as {@link matchesSelection}, for an explicit list of areas. */
   matchesAreas(item: InventoryItem, selected: string[], locations: InventoryItem[] = []): boolean {
-    const inSelection = (entry: InventoryItem) => (entry.areaUuids ?? []).some((uuid) => selected.includes(uuid));
+    const inSelection = (entry: InventoryItem) =>
+      (entry.areaUuids ?? []).some((uuid) => selected.includes(uuid));
     if (inSelection(item)) {
       return true;
     }

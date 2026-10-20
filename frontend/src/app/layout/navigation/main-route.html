@@ -1,0 +1,118 @@
+<!-- phones and tablets: top bar with menu button, the navigation slides in -->
+<header class="mobile-bar">
+  <button
+    type="button"
+    class="menu-button"
+    [attr.aria-label]="'nav.openMenu' | t"
+    [attr.aria-expanded]="menuOpen"
+    (click)="menuOpen = true"
+  >
+    <svg lucideMenu size="22"></svg>
+  </button>
+  <span class="mobile-title">{{ currentTitle }}</span>
+</header>
+@if (menuOpen) {
+  <div class="nav-backdrop" (click)="menuOpen = false" aria-hidden="true"></div>
+}
+
+<nav [class.open]="menuOpen">
+  <header>
+    <a class="brand" routerLink="/dashboard">
+      <img [src]="customization.logoUrl || 'icons/icon.svg'" alt="" width="28" height="28" />
+      <span>{{ customization.brandName }}</span>
+    </a>
+    <button
+      type="button"
+      class="menu-close"
+      [attr.aria-label]="'nav.closeMenu' | t"
+      (click)="menuOpen = false"
+    >
+      <svg lucideX size="20"></svg>
+    </button>
+  </header>
+  <div class="nav-groups">
+    <ul class="nav-list">
+      @for (item of visibleNavItems; track item.label) {
+        <li>
+          @if (item.children) {
+            <button
+              type="button"
+              class="nav-item"
+              [class.active]="isGroupActive(item)"
+              [class.disabled]="item.disabled"
+              (click)="toggleGroup(item.label)"
+              [attr.aria-expanded]="isGroupExpanded(item)"
+            >
+              <span class="nav-label">
+                @if (item.icon) {
+                  <ng-container
+                    *ngComponentOutlet="item.icon; inputs: navIconInputs"
+                  ></ng-container>
+                }
+                <span>{{ item.label }}</span>
+              </span>
+              <svg class="chevron" lucideChevronDown size="15"></svg>
+            </button>
+            @if (isGroupExpanded(item)) {
+              <ul class="sub-nav">
+                @for (child of item.children; track child.label) {
+                  <li>
+                    @if (child.route) {
+                      <a [routerLink]="child.route" routerLinkActive="active">
+                        @if (child.icon) {
+                          <ng-container
+                            *ngComponentOutlet="child.icon; inputs: navIconInputs"
+                          ></ng-container>
+                        }
+                        <span>{{ child.label }}</span>
+                      </a>
+                    } @else {
+                      <span>
+                        @if (child.icon) {
+                          <ng-container
+                            *ngComponentOutlet="child.icon; inputs: navIconInputs"
+                          ></ng-container>
+                        }
+                        <span>{{ child.label }}</span>
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          } @else {
+            <a
+              class="nav-item"
+              [class.active]="isItemActive(item)"
+              [routerLink]="item.route"
+              routerLinkActive="active"
+            >
+              <span class="nav-label">
+                @if (item.icon) {
+                  <ng-container
+                    *ngComponentOutlet="item.icon; inputs: navIconInputs"
+                  ></ng-container>
+                }
+                <span>{{ item.label }}</span>
+              </span>
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+  <footer>
+    @if (pwa.canInstall()) {
+      <button type="button" class="install" (click)="pwa.install()">
+        <svg lucideDownload size="17"></svg>
+        <span>{{ 'pwa.install' | t }}</span>
+      </button>
+    }
+    <app-area-switcher />
+    <app-user-menu />
+  </footer>
+</nav>
+<main>
+  <router-outlet />
+</main>
+<app-confirm-dialog />

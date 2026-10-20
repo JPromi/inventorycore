@@ -63,9 +63,21 @@ public class Asset {
     @Builder.Default
     private com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy = com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD;
 
+    /** Retired assets are no longer inspected, whatever their policy says. */
     public boolean isInspectionRequired() {
-        return inspectionPolicy != com.jpromi.inventorycore.enums.AssetInspectionPolicy.EXCLUDED;
+        return inspectionPolicy != com.jpromi.inventorycore.enums.AssetInspectionPolicy.EXCLUDED && !isRetired();
     }
+
+    public boolean isRetired() {
+        return status != null && status.getCategory() == com.jpromi.inventorycore.enums.AssetStatusCategory.RETIRED;
+    }
+
+    /** Current status; the history is in {@link AssetStatusChange}. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id")
+    private AssetStatus status;
+
+    private OffsetDateTime statusChangedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "asset_type_id")

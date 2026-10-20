@@ -1,0 +1,217 @@
+@use 'breakpoints' as bp;
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  .content-section {
+    > h2,
+    .card-title h2 {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  .field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    > span,
+    .field-label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+  }
+
+  // ---- general ----
+
+  .general {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.85rem 1rem;
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    @include bp.phone {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .mode-choice {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+
+    .mode {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      padding: 0.8rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+
+      input {
+        display: none;
+      }
+
+      span {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      strong {
+        color: var(--text);
+      }
+
+      small {
+        font-size: 0.8rem;
+        line-height: 1.45;
+      }
+
+      &.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent-foreground);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+    }
+
+    @include bp.phone {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .interval {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.35rem 0;
+
+    input:not([type='checkbox']) {
+      width: 5rem;
+    }
+
+    select {
+      width: auto;
+    }
+  }
+
+  // ---- check fields ----
+
+  .field-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 11rem auto auto;
+    align-items: end;
+    gap: 0.6rem;
+    padding: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+
+    .order {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+
+      .icon-button {
+        width: 1.6rem;
+        height: 1.3rem;
+      }
+    }
+
+    .required {
+      min-height: 2.35rem;
+    }
+
+    .options {
+      grid-column: 2 / -1;
+    }
+
+    // stacked; order buttons side by side and big enough to tap
+    @include bp.phone {
+      grid-template-columns: minmax(0, 1fr);
+
+      .order {
+        flex-direction: row;
+
+        .icon-button {
+          width: 2.5rem;
+          height: 2.25rem;
+        }
+      }
+
+      .options {
+        grid-column: auto;
+      }
+    }
+  }
+
+  .add {
+    margin-top: 0.75rem;
+  }
+
+  .add-type {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-style: dashed;
+
+    h2 {
+      margin-bottom: 0.2rem;
+    }
+
+    app-search-select {
+      min-width: min(100%, 16rem);
+
+      @include bp.phone {
+        flex: 1 1 100%;
+      }
+    }
+  }
+
+  // sticky save bar; layout comes from the global .editor-actions
+
+  .editor-actions {
+    position: sticky;
+    bottom: 0;
+    padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--background) 70%, transparent);
+  }
+
+  // "Funktion prüfen" below the inventory / single check choice
+
+  .function-check {
+    align-items: flex-start;
+    margin-top: 0.85rem;
+
+    > span {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    small {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  }
+}

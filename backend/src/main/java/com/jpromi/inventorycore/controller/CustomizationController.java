@@ -8,16 +8,22 @@ import com.jpromi.inventorycore.dto.CustomizationDto;
 import com.jpromi.inventorycore.service.CustomizationService;
 import com.jpromi.inventorycore.service.AuditService;
 import com.jpromi.inventorycore.enums.AuditObjectType;
+import com.jpromi.inventorycore.enums.BrandingMode;
 
 @RestController
 public class CustomizationController {
     private final CustomizationService service;
     private final AuditService audit;
 
-    public CustomizationController(CustomizationService service, AuditService audit) { this.service = service; this.audit = audit; }
+    public CustomizationController(CustomizationService service, AuditService audit) {
+        this.service = service;
+        this.audit = audit;
+    }
 
     @GetMapping({"/api/customization", "/api/admin/customization"})
-    public CustomizationDto get() { return service.get(); }
+    public CustomizationDto get() {
+        return service.get();
+    }
 
     @PutMapping("/api/admin/customization")
     public CustomizationDto save(@RequestBody CustomizationDto request) {
@@ -28,24 +34,27 @@ public class CustomizationController {
     }
 
     @PostMapping(value = "/api/admin/customization/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public CustomizationDto upload(@RequestParam("file") MultipartFile file) throws IOException {
+    public CustomizationDto upload(@RequestParam("file") MultipartFile file,
+        @RequestParam(defaultValue = "light") BrandingMode mode) throws IOException {
         if (file.getSize() > 5 * 1024 * 1024) {
             throw new org.springframework.web.server.ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Das Logo darf maximal 5 MB groß sein.");
         }
         var before = service.get();
-        var result = service.logo(file.getBytes());
+        var result = service.logo(file.getBytes(), mode);
         audit.logChanges(AuditObjectType.SETTINGS, null, "Customization", before, result);
         return result;
     }
 
     @DeleteMapping("/api/admin/customization/logo")
-    public CustomizationDto removeLogo() {
+    public CustomizationDto removeLogo(@RequestParam(defaultValue = "light") BrandingMode mode) {
         var before = service.get();
-        var result = service.removeLogo();
+        var result = service.removeLogo(mode);
         audit.logChanges(AuditObjectType.SETTINGS, null, "Customization", before, result);
         return result;
     }
 
     @GetMapping("/api/customization/logo")
-    public ResponseEntity<byte[]> logo() { return service.image(); }
+    public ResponseEntity<byte[]> logo(@RequestParam(defaultValue = "light") BrandingMode mode) {
+        return service.image(mode);
+    }
 }

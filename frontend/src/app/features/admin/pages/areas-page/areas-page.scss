@@ -1,0 +1,82 @@
+@use 'breakpoints' as bp;
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  .intro {
+    max-width: 48rem;
+    margin-bottom: 1rem;
+  }
+
+  .editor {
+    margin-bottom: 1rem;
+
+    .field-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1.5rem;
+      margin-top: 0.9rem;
+
+      @include bp.phone {
+        gap: 1rem;
+      }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .editor-actions {
+      margin-top: 1rem;
+    }
+  }
+
+  .data-table {
+    .area-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+
+      > span:last-child {
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.2rem 0.5rem;
+      }
+
+      .area-dot {
+        width: 0.85rem;
+        height: 0.85rem;
+        flex-shrink: 0;
+        border-radius: 50%;
+      }
+
+      .description {
+        flex-basis: 100%;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    td.actions .icon-button {
+      width: 2rem;
+      height: 2rem;
+      margin-left: 0.3rem;
+
+      @include bp.phone {
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+    }
+  }
+}

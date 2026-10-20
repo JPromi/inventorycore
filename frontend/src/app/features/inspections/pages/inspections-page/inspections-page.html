@@ -1,0 +1,325 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">
+        {{ 'inspectionList.summary' | t: { open: count('OPEN'), completed: count('COMPLETED') } }}
+        @if (overdueCount) {
+          ·
+          <span class="overdue-text">{{
+            'inspectionList.overdue' | t: { count: overdueCount }
+          }}</span>
+        }
+      </p>
+      <h1>
+        <svg lucideClipboardCheck size="20"></svg>
+        <span>{{ 'terms.inspections' | t }}</span>
+      </h1>
+    </div>
+    @if (canStart) {
+      <div class="header-actions">
+        <a class="primary-action" routerLink="/inspections/new">
+          <svg lucidePlus size="17"></svg>
+          <span>{{ 'inspectionList.new' | t }}</span>
+        </a>
+      </div>
+    }
+  </header>
+
+  <div class="toolbar">
+    <div class="segmented-tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="statusFilter === 'DUE'"
+        (click)="setStatus('DUE')"
+      >
+        {{ 'inspectionList.tabs.due' | t }}
+        <span class="count" [class.alert]="overdueCount">{{ count('DUE') }}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="statusFilter === 'OPEN'"
+        (click)="setStatus('OPEN')"
+      >
+        {{ 'inspectionList.tabs.open' | t }} <span class="count">{{ count('OPEN') }}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="statusFilter === 'COMPLETED'"
+        (click)="setStatus('COMPLETED')"
+      >
+        {{ 'inspectionList.tabs.completed' | t }}
+        <span class="count">{{ count('COMPLETED') }}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="statusFilter === 'ALL'"
+        (click)="setStatus('ALL')"
+      >
+        {{ 'common.all' | t }} <span class="count">{{ count('ALL') }}</span>
+      </button>
+    </div>
+    <div class="search-box">
+      <svg class="search-icon" lucideSearch size="18"></svg>
+      <input
+        type="text"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+        (keydown.escape)="clearSearch()"
+        [placeholder]="'inspectionList.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+      @if (search) {
+        <button
+          type="button"
+          class="clear"
+          [title]="'inspectionList.clearSearch' | t"
+          (click)="clearSearch()"
+        >
+          <svg lucideX size="15"></svg>
+        </button>
+      }
+    </div>
+  </div>
+
+  <app-list-actions
+    #selection
+    [items]="visible"
+    [disabled]="loading || !list.loaded || statusFilter === 'DUE'"
+    [canDelete]="canBulkDelete"
+    [deleteItem]="bulkDelete"
+    (deleted)="bulkDeleted($event)"
+  />
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @if (loading) {
+    <p class="empty">{{ 'inspectionList.loading' | t }}</p>
+  } @else if (statusFilter === 'DUE') {
+    @if (!dueGroups.length) {
+      <div class="empty-state">{{ 'inspectionList.due.empty' | t }}</div>
+    }
+    <div class="due-groups">
+      @for (group of dueGroups; track group.typeUuid) {
+        <section class="card due-group">
+          <div class="due-head">
+            <span class="stripe" [style.background]="group.color || 'var(--border-strong)'"></span>
+            <button
+              type="button"
+              class="due-disclosure"
+              [attr.aria-expanded]="expandedGroups.has(group.typeUuid)"
+              (click)="toggleGroup(group.typeUuid)"
+            >
+              <svg lucideCalendarClock size="18"></svg>
+              <span class="due-title">
+                <strong>{{ group.typeName }}</strong>
+                <small>{{ group.interval }}</small>
+              </span>
+              @if (group.overdue) {
+                <span class="badge accent">{{
+                  'inspectionList.overdue' | t: { count: group.overdue }
+                }}</span>
+              }
+              @if (group.entries.length - group.overdue) {
+                <span class="badge warn">{{
+                  'inspectionList.due.soon' | t: { count: group.entries.length - group.overdue }
+                }}</span>
+              }
+              <svg
+                class="chevron"
+                [class.open]="expandedGroups.has(group.typeUuid)"
+                lucideChevronDown
+                size="16"
+              ></svg>
+            </button>
+            @if (canStart) {
+              <button type="button" class="primary-action compact" (click)="startDue(group)">
+                <svg lucidePlay size="14"></svg>
+                <span>{{ 'inspectionList.due.start' | t }}</span>
+              </button>
+            }
+          </div>
+          @if (expandedGroups.has(group.typeUuid)) {
+            <ul class="due-list">
+              @for (entry of group.entries; track entry.assetUuid) {
+                <li [class.overdue]="entry.state === 'OVERDUE'">
+                  <a [routerLink]="['/assets', entry.assetUuid]">{{ entry.assetName }}</a>
+                  <span class="meta">{{
+                    [entry.invId, entry.locationName].filter(isSet).join(' · ')
+                  }}</span>
+                  <span class="when">
+                    {{ dueText(entry.daysUntilDue) }}
+                    @if (entry.fixedDueDate) {
+                      <small>{{ 'inspectionList.due.fixedDate' | t }}</small>
+                    }
+                  </span>
+                  <span class="last">
+                    @if (entry.lastCheckedAt) {
+                      {{
+                        entry.lastResult === 'FAILED'
+                          ? ('inspectionList.due.lastCheckedFailed'
+                            | t: { date: (entry.lastCheckedAt | date: 'dd.MM.yyyy') })
+                          : ('inspectionList.due.lastChecked'
+                            | t: { date: (entry.lastCheckedAt | date: 'dd.MM.yyyy') })
+                      }}
+                    } @else {
+                      {{ 'inspectionList.due.neverChecked' | t }}
+                    }
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    </div>
+  } @else if (list.error && !visible.length) {
+    <p class="error">{{ 'inspectionList.loadError' | t }}</p>
+  } @else if (!list.loaded) {
+    <p class="empty">{{ 'inspectionList.loading' | t }}</p>
+  } @else if (!visible.length) {
+    <div class="empty-state">
+      @if (search.trim() || count('ALL')) {
+        {{ 'inspectionList.notFound' | t }}
+      } @else {
+        {{ 'inspectionList.empty' | t }}
+      }
+    </div>
+  } @else {
+    <div class="inspection-list">
+      @for (inspection of visible; track inspection.uuid) {
+        <article
+          class="card inspection-row"
+          [appSelectableRow]="selection"
+          [selectionItem]="inspection"
+          [class.is-selected]="selection.isSelected(inspection)"
+        >
+          <app-selection-checkbox [selection]="selection" [item]="inspection" />
+          <button type="button" class="inspection-open" (click)="open(inspection)">
+            <div class="main">
+              <div class="title-line">
+                @if (inspection.status === 'OPEN') {
+                  <span class="badge accent">{{ 'inspectionList.status.OPEN' | t }}</span>
+                } @else {
+                  <span class="badge success">{{ 'inspectionList.status.COMPLETED' | t }}</span>
+                }
+                <strong>{{ inspection.title }}</strong>
+                @if (inspection.title !== inspection.typeName) {
+                  <span class="type">{{ inspection.typeName }}</span>
+                }
+                @for (area of inspection.areaNames; track area) {
+                  <span class="badge">{{ area }}</span>
+                }
+              </div>
+              <span class="filter">{{ inspection.filterSummary }}</span>
+              <span class="meta">
+                {{
+                  'inspectionList.started'
+                    | t
+                      : {
+                          date: (inspection.createdAt | date: 'dd.MM.yyyy HH:mm'),
+                          name: inspection.createdByName,
+                        }
+                }}
+                @if (inspection.completedAt) {
+                  ·
+                  {{
+                    'inspectionList.completed'
+                      | t
+                        : {
+                            date: (inspection.completedAt | date: 'dd.MM.yyyy HH:mm'),
+                            name: inspection.completedByName,
+                          }
+                  }}
+                }
+              </span>
+            </div>
+            <div class="stats">
+              <div
+                class="progress"
+                [title]="'inspectionList.progress' | t: { percent: progress(inspection) }"
+              >
+                <span
+                  class="present"
+                  [style.width.%]="
+                    inspection.counts.expected
+                      ? (good(inspection) / inspection.counts.expected) * 100
+                      : 0
+                  "
+                ></span>
+                <span
+                  class="missing"
+                  [style.width.%]="
+                    inspection.counts.expected
+                      ? (bad(inspection) / inspection.counts.expected) * 100
+                      : 0
+                  "
+                ></span>
+              </div>
+              <div class="numbers">
+                @if (inspection.mode === 'CHECK') {
+                  <span
+                    ><strong>{{ inspection.counts.passed }}</strong>
+                    {{ 'inspectionStatus.PASSED' | t }}</span
+                  >
+                  <span
+                    ><strong>{{ inspection.counts.failed }}</strong>
+                    {{ 'inspectionStatus.FAILED' | t }}</span
+                  >
+                } @else {
+                  <span
+                    ><strong>{{ inspection.counts.present }}</strong>
+                    {{ 'inspectionStatus.PRESENT' | t }}</span
+                  >
+                  <span
+                    ><strong>{{
+                      inspection.counts.missing +
+                        (inspection.status === 'COMPLETED' ? inspection.counts.pending : 0)
+                    }}</strong>
+                    {{ 'inspectionStatus.MISSING' | t }}</span
+                  >
+                  @if (inspection.checkFunction && inspection.counts.defect) {
+                    <span class="warning"
+                      ><strong>{{ inspection.counts.defect }}</strong>
+                      {{ 'inspectionCondition.DEFECT' | t }}</span
+                    >
+                  }
+                }
+                @if (inspection.status === 'OPEN') {
+                  <span
+                    ><strong>{{ inspection.counts.pending }}</strong>
+                    {{ 'inspectionList.counts.pending' | t }}</span
+                  >
+                }
+                @if (inspection.counts.unexpected) {
+                  <span class="warning">
+                    <svg lucideTriangleAlert size="13"></svg>
+                    <strong>{{ inspection.counts.unexpected }}</strong>
+                    {{ 'inspectionList.counts.unexpected' | t }}
+                  </span>
+                }
+              </div>
+            </div>
+          </button>
+        </article>
+      }
+    </div>
+    <div
+      class="list-end"
+      (appInfiniteScroll)="list.loadMore()"
+      [scrollDisabled]="list.loading || !list.hasMore"
+    >
+      @if (list.loading) {
+        <span>{{ 'common.loadingMore' | t }}</span>
+      } @else if (list.error) {
+        <button type="button" class="secondary-action compact" (click)="list.loadMore()">
+          {{ 'inspectionList.retry' | t }}
+        </button>
+      }
+    </div>
+  }
+</section>

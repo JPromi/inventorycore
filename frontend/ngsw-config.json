@@ -19,6 +19,7 @@
           "/favicon.ico",
           "/index.html",
           "/manifest.webmanifest",
+          "/i18n/*.json",
           "/icons/icon.svg",
           "/*.css",
           "/*.js"

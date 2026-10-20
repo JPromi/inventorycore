@@ -15,6 +15,8 @@ public class Customization {
     @Column(length = 100)
     private String brandName;
     private String brandColor;
+    private String darkBrandColor;
+    private Boolean advancedThemeEnabled = false;
     @Column(length = 200)
     private String loginTitle;
     @Column(length = 1000)
@@ -31,4 +33,8 @@ public class Customization {
     private byte[] logo;
     private String logoContentType;
     private UUID logoVersion;
+    @Column(columnDefinition = "bytea")
+    private byte[] darkLogo;
+    private String darkLogoContentType;
+    private UUID darkLogoVersion;
 }

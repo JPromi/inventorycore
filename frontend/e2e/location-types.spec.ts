@@ -61,5 +61,5 @@ test('the list and the location view show the icon and name of the type', async 
   await page.goto('/locations/van');
   await expect(page.locator('.title-icon svg')).toHaveClass(/lucide-truck/);
   await expect(page.locator('.details')).toContainText('ArtFahrzeug');
-  await expect(page.locator('.no-image svg')).toHaveClass(/lucide-truck/);
+  await expect(page.locator('.gallery')).toHaveCount(0);
 });

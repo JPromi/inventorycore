@@ -1,0 +1,66 @@
+<div class="image-grid">
+    @for (image of images; track $index) {
+        <figure class="tile" [class.cover]="image.kind === 'THUMBNAIL'">
+            <button type="button" class="image-preview" (click)="imageViewer.open(images, $index)" [title]="'imageViewer.title' | t"><img [src]="preview(image)" [alt]="image.fileName || ('components.imageUpload.imageAlt' | t)" loading="lazy" /></button>
+            @if (image.kind === 'THUMBNAIL') {
+                <span class="cover-badge">
+                    <svg lucideStar size="12"></svg>
+                    {{ 'components.imageUpload.cover' | t }}
+                </span>
+            }
+            @if (!disabled) {
+                <div class="tile-actions">
+                    <button type="button" [title]="'components.imageUpload.moveForward' | t" [disabled]="$first" (click)="move($index, -1)">
+                        <svg lucideChevronLeft size="15"></svg>
+                    </button>
+                    @if (image.kind !== 'THUMBNAIL') {
+                        <button type="button" [title]="'components.imageUpload.setCover' | t" (click)="setCover($index)">
+                            <svg lucideStar size="15"></svg>
+                        </button>
+                    }
+                    <button type="button" [title]="'components.imageUpload.moveBack' | t" [disabled]="$last" (click)="move($index, 1)">
+                        <svg lucideChevronRight size="15"></svg>
+                    </button>
+                    <button type="button" class="danger" [title]="'common.remove' | t" (click)="remove($index)">
+                        <svg lucideTrash2 size="15"></svg>
+                    </button>
+                </div>
+            }
+            @if (image.fileName) {
+                <figcaption [title]="image.fileName">{{ image.fileName }}</figcaption>
+            }
+        </figure>
+    }
+
+    @for (upload of pending; track upload.id) {
+        <div class="tile pending" [class.failed]="upload.error">
+            @if (upload.error) {
+                <svg class="state-icon" lucideCircleAlert size="22"></svg>
+                <span class="pending-name" [title]="upload.name">{{ upload.name }}</span>
+                <span class="pending-error">{{ upload.error }}</span>
+                <button type="button" class="dismiss" [title]="'components.imageUpload.dismiss' | t" (click)="dismiss(upload)">
+                    <svg lucideX size="14"></svg>
+                </button>
+            } @else {
+                <span class="pending-name" [title]="upload.name">{{ upload.name }}</span>
+                <div class="progress"><span [style.width.%]="upload.progress"></span></div>
+                <span class="hint">{{ upload.progress < 100 ? ('components.imageUpload.progress' | t: { progress: upload.progress }) : ('components.imageUpload.processing' | t) }}</span>
+            }
+        </div>
+    }
+
+    @if (!disabled) {
+        <label
+            class="tile drop-zone"
+            [class.dragging]="dragging"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+        >
+            <input type="file" multiple [accept]="accept" (change)="onFileInput($event)" />
+            <svg lucideImageUp size="26"></svg>
+            <strong>{{ 'components.imageUpload.upload' | t }}</strong>
+            <span class="hint">{{ 'components.imageUpload.dropHint' | t }}</span>
+        </label>
+    }
+</div>

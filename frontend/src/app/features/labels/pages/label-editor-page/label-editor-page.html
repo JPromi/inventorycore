@@ -1,0 +1,269 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">{{ 'labelEditor.eyebrow' | t }}</p>
+            <h1>
+                <svg lucideQrCode size="20"></svg>
+                <span>{{ title }}</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <a class="secondary-action" routerLink="/config/labels">
+                <svg lucideArrowLeft size="16"></svg>
+                <span>{{ 'common.back' | t }}</span>
+            </a>
+            @if (uuid) {
+                <button type="button" class="danger-action" (click)="deleteTemplate()">
+                    <svg lucideTrash2 size="16"></svg>
+                    <span>{{ 'common.delete' | t }}</span>
+                </button>
+            }
+            <button type="button" class="primary-action" (click)="save()" [disabled]="saving || loading">
+                <svg lucideSave size="16"></svg>
+                <span>{{ (saving ? 'common.saving' : 'common.save') | t }}</span>
+            </button>
+        </div>
+    </header>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+        <p class="empty">{{ 'labelEditor.loading' | t }}</p>
+    } @else {
+        <div class="editor-layout">
+            <aside class="stack sidebar">
+                <section class="card">
+                    <h2>{{ 'labelEditor.template' | t }}</h2>
+                    <div class="fields">
+                        <label class="field">
+                            <span>{{ 'labelEditor.nameRequired' | t }}</span>
+                            <input type="text" [(ngModel)]="name" [placeholder]="'labelEditor.namePlaceholder' | t" />
+                        </label>
+                        <div class="field">
+                            <span class="field-label">{{ 'terms.area' | t }}</span>
+                            <app-search-select [options]="areaOptions" [(ngModel)]="areaUuid" [placeholder]="'labelEditor.areaPlaceholder' | t" [searchPlaceholder]="'labelEditor.areaSearch' | t" />
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" [(ngModel)]="defaultForArea" />
+                            <span>{{ 'labelEditor.defaultForArea' | t }}</span>
+                        </label>
+                        <label class="field">
+                            <span>{{ 'common.description' | t }}</span>
+                            <input type="text" [(ngModel)]="description" />
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>{{ 'labelEditor.size' | t }}</h2>
+                    <div class="fields">
+                        <label class="field">
+                            <span>{{ 'labelEditor.sizePreset' | t }}</span>
+                            <select #presetSelect (change)="applyPreset(presetSelect.value); presetSelect.value = ''">
+                                <option value="" selected disabled>{{ 'labelEditor.sizePresetPlaceholder' | t }}</option>
+                                @for (preset of presets; track preset.label; let index = $index) {
+                                    <option [value]="index">{{ preset.label }}</option>
+                                }
+                            </select>
+                        </label>
+                        <div class="two">
+                            <label class="field">
+                                <span>{{ 'labelEditor.widthMm' | t }}</span>
+                                <input type="number" min="5" step="0.5" [(ngModel)]="widthMm" (change)="onSizeChange()" />
+                            </label>
+                            <label class="field">
+                                <span>{{ 'labelEditor.heightMm' | t }}</span>
+                                <input type="number" min="5" step="0.5" [(ngModel)]="heightMm" (change)="onSizeChange()" />
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-title">
+                        <h2>{{ 'labelEditor.elements' | t }}</h2>
+                    </div>
+                    <div class="add-buttons">
+                        <button type="button" class="secondary-action compact" (click)="add('logo')"
+                            [disabled]="!customization.settings.logoUrl" [title]="'labelEditor.globalLogo' | t">
+                            <svg lucideImage size="15"></svg><span>{{ 'labelEditor.add.logo' | t }}</span>
+                        </button>
+                        <button type="button" class="secondary-action compact" (click)="add('text')">
+                            <svg lucideType size="15"></svg><span>{{ 'labelEditor.add.text' | t }}</span>
+                        </button>
+                        <button type="button" class="secondary-action compact" (click)="add('barcode')">
+                            <svg lucideQrCode size="15"></svg><span>{{ 'labelEditor.add.barcode' | t }}</span>
+                        </button>
+                        <button type="button" class="secondary-action compact" (click)="add('box')">
+                            <svg lucideSquare size="15"></svg><span>{{ 'labelEditor.add.box' | t }}</span>
+                        </button>
+                    </div>
+                    <ul class="element-list">
+                        @for (element of elements; track element.id; let first = $first; let last = $last) {
+                            <li [class.active]="element.id === selectedId" (click)="selectedId = element.id">
+                                @switch (element.type) {
+                                    @case ('text') { <svg lucideType size="14"></svg> }
+                                    @case ('barcode') { <svg lucideQrCode size="14"></svg> }
+                                    @case ('box') { <svg lucideSquare size="14"></svg> }
+                                    @case ('logo') { <svg lucideImage size="14"></svg> }
+                                }
+                                <span class="element-name">{{ elementLabel(element) }}</span>
+                                <button type="button" [title]="'labelEditor.moveBack' | t" [disabled]="first" (click)="$event.stopPropagation(); moveLayer(element, -1)">
+                                    <svg lucideChevronUp size="14"></svg>
+                                </button>
+                                <button type="button" [title]="'labelEditor.moveForward' | t" [disabled]="last" (click)="$event.stopPropagation(); moveLayer(element, 1)">
+                                    <svg lucideChevronDown size="14"></svg>
+                                </button>
+                            </li>
+                        } @empty {
+                            <li class="empty-item">{{ 'labelEditor.noElements' | t }}</li>
+                        }
+                    </ul>
+                </section>
+
+                @if (selected; as element) {
+                    <section class="card">
+                        <div class="card-title">
+                            <h2>{{ 'labelEditor.elementTypes.' + element.type | t }}</h2>
+                            <div class="inline-actions">
+                                <button type="button" class="icon-button" [title]="'labelEditor.duplicateShortcut' | t" (click)="duplicate(element)">
+                                    <svg lucideCopy size="15"></svg>
+                                </button>
+                                <button type="button" class="icon-button danger" [title]="'labelEditor.removeShortcut' | t" (click)="remove(element)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="fields">
+                            @if (element.type === 'barcode') {
+                                <div class="field">
+                                    <span class="field-label">{{ 'labelEditor.symbology' | t }}</span>
+                                    <app-search-select
+                                        [options]="symbologyOptions"
+                                        [ngModel]="element.symbology"
+                                        (ngModelChange)="changeSymbology($event)"
+                                        [searchPlaceholder]="'labelEditor.symbologySearch' | t"
+                                    />
+                                </div>
+                            }
+                            @if (element.type === 'text' || element.type === 'barcode') {
+                                <label class="field">
+                                    <span>{{ (element.type === 'barcode' ? 'labelEditor.content' : 'labelEditor.text') | t }}</span>
+                                    <textarea rows="2" [(ngModel)]="element.content"></textarea>
+                                </label>
+                                <div class="placeholders">
+                                    @for (placeholder of placeholders; track placeholder.key) {
+                                        <button type="button" (click)="insertPlaceholder(placeholder.key)" [title]="'{' + placeholder.key + '}'">
+                                            {{ placeholder.label }}
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @if (element.type === 'barcode') {
+                                @if (selectedSymbology?.hint) {
+                                    <p class="hint">{{ selectedSymbology?.hint }}</p>
+                                }
+                                @if (!selectedSymbology?.twoDimensional) {
+                                    <label class="toggle">
+                                        <input type="checkbox" [(ngModel)]="element.showText" />
+                                        <span>{{ 'labelEditor.showText' | t }}</span>
+                                    </label>
+                                }
+                            }
+                            @if (element.type === 'text') {
+                                <label class="toggle"><input type="checkbox" [(ngModel)]="element.useBrandColor" />{{ 'labelEditor.useBrandColor' | t }}</label>
+                                <div class="two">
+                                    <label class="field">
+                                        <span>{{ 'labelEditor.fontSize' | t }}</span>
+                                        <input type="number" min="3" max="72" step="0.5" [(ngModel)]="element.fontSize" />
+                                    </label>
+                                    <label class="field">
+                                        <span>{{ 'labelEditor.align' | t }}</span>
+                                        <select [(ngModel)]="element.align">
+                                            <option value="left">{{ 'labelEditor.alignLeft' | t }}</option>
+                                            <option value="center">{{ 'labelEditor.alignCenter' | t }}</option>
+                                            <option value="right">{{ 'labelEditor.alignRight' | t }}</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="two">
+                                    <label class="field">
+                                        <span>{{ 'labelEditor.verticalAlign' | t }}</span>
+                                        <select [(ngModel)]="element.verticalAlign">
+                                            <option value="top">{{ 'labelEditor.alignTop' | t }}</option>
+                                            <option value="middle">{{ 'labelEditor.alignMiddle' | t }}</option>
+                                            <option value="bottom">{{ 'labelEditor.alignBottom' | t }}</option>
+                                        </select>
+                                    </label>
+                                    <div class="field">
+                                        <span class="field-label">{{ 'labelEditor.style' | t }}</span>
+                                        <div class="style-toggles">
+                                            <label class="toggle"><input type="checkbox" [(ngModel)]="element.bold" /><b>{{ 'labelEditor.bold' | t }}</b></label>
+                                            <label class="toggle"><input type="checkbox" [(ngModel)]="element.italic" /><i>{{ 'labelEditor.italic' | t }}</i></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            @if (element.type === 'box') {
+                                <label class="toggle"><input type="checkbox" [(ngModel)]="element.useBrandColor" />{{ 'labelEditor.useBrandColor' | t }}</label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.borderWidth' | t }}</span>
+                                    <input type="number" min="0.1" max="5" step="0.1" [(ngModel)]="element.borderWidth" />
+                                </label>
+                            }
+                            <div class="four">
+                                <label class="field"><span>{{ 'labelEditor.x' | t }}</span><input type="number" step="0.5" min="0" [(ngModel)]="element.x" /></label>
+                                <label class="field"><span>{{ 'labelEditor.y' | t }}</span><input type="number" step="0.5" min="0" [(ngModel)]="element.y" /></label>
+                                <label class="field"><span>{{ 'labelEditor.width' | t }}</span><input type="number" step="0.5" min="1" [(ngModel)]="element.width" /></label>
+                                <label class="field"><span>{{ 'labelEditor.height' | t }}</span><input type="number" step="0.5" min="1" [(ngModel)]="element.height" /></label>
+                            </div>
+                            <p class="hint">{{ 'labelEditor.measureHint' | t }}</p>
+                        </div>
+                    </section>
+                }
+            </aside>
+
+            <div class="canvas-column">
+                <div class="canvas-toolbar">
+                    <div class="sample">
+                        <span class="field-label">{{ 'labelEditor.previewWith' | t }}</span>
+                        <app-search-select
+                            class="sample-select"
+                            [options]="assetOptions"
+                            [(ngModel)]="sampleAssetUuid"
+                            [placeholder]="'labelEditor.sampleData' | t"
+                            [clearLabel]="'labelEditor.sampleData' | t"
+                            [searchPlaceholder]="'labelEditor.assetSearch' | t"
+                        />
+                    </div>
+                    <div class="zoom">
+                        <button type="button" class="icon-button" [title]="'labelEditor.zoomOut' | t" (click)="setZoom(zoom - 0.25)">
+                            <svg lucideZoomOut size="16"></svg>
+                        </button>
+                        <button type="button" class="zoom-value" [title]="'labelEditor.zoomFit' | t" (click)="fitZoom()">{{ (zoom * 100).toFixed(0) }} %</button>
+                        <button type="button" class="icon-button" [title]="'labelEditor.zoomIn' | t" (click)="setZoom(zoom + 0.25)">
+                            <svg lucideZoomIn size="16"></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas">
+                    <app-label-renderer
+                        [style.zoom]="zoom"
+                        [widthMm]="widthMm"
+                        [heightMm]="heightMm"
+                        [elements]="elements"
+                        [context]="context"
+                        [editable]="true"
+                        [(selectedId)]="selectedId"
+                    />
+                </div>
+                <p class="hint canvas-hint">
+                    {{ 'labelEditor.canvasHint' | t }}
+                    {{ 'labelEditor.placeholderHintPrefix' | t }} <code>{{ '{' }}name{{ '}' }}</code> {{ 'labelEditor.placeholderHintSuffix' | t }}
+                </p>
+            </div>
+        </div>
+    }
+</section>

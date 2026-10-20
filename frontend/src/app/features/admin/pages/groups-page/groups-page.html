@@ -1,0 +1,116 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (list.loaded) { {{ 'adminGroups.count' | tn: list.total }} }</p>
+            <h1>
+                <svg lucideUsers size="20"></svg>
+                <span>{{ 'terms.groups' | t }}</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="primary-action" (click)="create()">
+                <svg lucidePlus size="17"></svg>
+                <span>{{ 'adminGroups.create' | t }}</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                [placeholder]="'adminGroups.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
+            @if (search) {
+                <button type="button" class="clear" [title]="'adminGroups.clearSearch' | t" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="groups" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" />
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (list.error && !groups.length) {
+        <p class="error">{{ 'adminGroups.errors.load' | t }}</p>
+    } @else if (!list.loaded) {
+        <p class="empty">{{ 'adminGroups.loading' | t }}</p>
+    } @else if (!groups.length) {
+        <div class="empty-state">{{ 'adminGroups.empty' | t }}</div>
+    } @else {
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        @if (selection.active) { <th class="selection-column"></th> }
+                        <th>{{ 'terms.group' | t }}</th>
+                        <th>{{ 'adminGroups.columns.members' | t }}</th>
+                        <th>{{ 'terms.areas' | t }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (group of groups; track group.uuid) {
+                        <tr class="clickable" [appSelectableRow]="selection" [selectionItem]="group" [class.is-selected]="selection.isSelected(group)" (click)="edit(group)">
+                            @if (selection.active) { <td><app-selection-checkbox [selection]="selection" [item]="group" /></td> }
+                            <td>
+                                <strong>{{ group.name }}</strong>
+                                @if (group.adminGroup) {
+                                    <span class="badge accent provider">{{ 'adminGroups.adminBadge' | t }}</span>
+                                }
+                                @if (group.sourceProvider !== 'LOCAL') {
+                                    <span class="badge provider">{{ group.sourceProvider }}</span>
+                                }
+                            </td>
+                            <td>
+                                @if (group.memberCount) {
+                                    <div class="avatars">
+                                        @for (user of members(group).slice(0, 5); track user.uuid) {
+                                            <span class="avatar" [title]="user.displayName || user.username">
+                                                @if (user.profileImageUrl) {
+                                                    <img [src]="user.profileImageUrl" alt="" referrerpolicy="no-referrer" (error)="user.profileImageUrl = null" />
+                                                } @else {
+                                                    {{ (user.displayName || user.username).charAt(0).toUpperCase() }}
+                                                }
+                                            </span>
+                                        }
+                                        <span class="muted count">{{ group.memberCount }}</span>
+                                    </div>
+                                } @else {
+                                    <span class="muted">{{ 'common.none' | t }}</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="chip-list">
+                                    @for (area of permissionAreas(group); track area.name) {
+                                        <span class="chip"><span class="dot" [style.background]="area.color || null"></span>{{ area.name }}</span>
+                                    } @empty {
+                                        <span class="muted">{{ 'adminGroups.noPermissions' | t }}</span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="actions">
+                                <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); edit(group)">
+                                    <svg lucidePencil size="15"></svg>
+                                </button>
+                                <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(group, $event)">
+                                    <svg lucideTrash2 size="15"></svg>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>{{ 'adminGroups.loadingMore' | t }}</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'adminGroups.retry' | t }}</button>
+            }
+        </div>
+    }
+</section>

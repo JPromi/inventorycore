@@ -1,0 +1,87 @@
+<div class="backdrop" (click)="close()">
+    <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="'labelPrint.dialogLabel' | t" (click)="$event.stopPropagation()">
+        <header>
+            <h2>
+                <svg lucidePrinter size="18"></svg>
+                <span>{{ 'labelPrint.title' | tn: assets.length }}</span>
+            </h2>
+            <button type="button" class="close" [title]="'common.close' | t" (click)="close()">
+                <svg lucideX size="16"></svg>
+            </button>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="hint">{{ 'labelPrint.loading' | t }}</p>
+        } @else if (!templates.length) {
+            <p class="hint">
+                {{ 'labelPrint.noTemplates' | t }}
+                <a routerLink="/config/labels/new" (click)="close()">{{ 'labelPrint.createTemplate' | t }}</a>
+            </p>
+        } @else {
+            <div class="controls">
+                <div class="field grow">
+                    <span>{{ 'labelPrint.template' | t }}</span>
+                    <app-search-select
+                        [options]="options"
+                        [ngModel]="templateUuid"
+                        (ngModelChange)="select($event)"
+                        [placeholder]="'labelPrint.templatePlaceholder' | t"
+                        [searchPlaceholder]="'labelPrint.templateSearch' | t"
+                    />
+                </div>
+                <label class="field copies">
+                    <span>{{ (assets.length > 1 ? 'labelPrint.copiesPerAsset' : 'labelPrint.copies') | t }}</span>
+                    <input type="number" min="1" max="100" [(ngModel)]="copies" />
+                </label>
+            </div>
+
+            <div class="preview">
+                @if (template; as current) {
+                    <app-label-renderer
+                        [style.zoom]="zoom"
+                        [widthMm]="current.widthMm"
+                        [heightMm]="current.heightMm"
+                        [elements]="elements"
+                        [context]="contexts[index]"
+                    />
+                }
+            </div>
+            @if (assets.length > 1) {
+                <div class="pager">
+                    <button type="button" [title]="'labelPrint.previousAsset' | t" [attr.aria-label]="'labelPrint.previousAsset' | t" [disabled]="index === 0" (click)="index = index - 1">
+                        <svg lucideChevronLeft size="16"></svg>
+                    </button>
+                    <span>{{ assets[index].name }} · {{ index + 1 }} / {{ assets.length }}</span>
+                    <button type="button" [title]="'labelPrint.nextAsset' | t" [attr.aria-label]="'labelPrint.nextAsset' | t" [disabled]="index === assets.length - 1" (click)="index = index + 1">
+                        <svg lucideChevronRight size="16"></svg>
+                    </button>
+                </div>
+            }
+            @if (template; as current) {
+                <div class="print-source" aria-hidden="true">
+                    @for (context of contexts; track $index) {
+                        <app-label-renderer #printLabel [widthMm]="current.widthMm" [heightMm]="current.heightMm" [elements]="elements" [context]="context" />
+                    }
+                </div>
+                <p class="hint">
+                    @if (assets.length > 1) {
+                        {{ 'labelPrint.total' | tn: total }}
+                    }
+                    {{ 'labelPrint.printHint' | t: { width: current.widthMm, height: current.heightMm } }}
+                </p>
+            }
+        }
+
+        <footer>
+            <button type="button" class="secondary" (click)="close()">{{ 'common.cancel' | t }}</button>
+            <button type="button" class="primary" [disabled]="!template || preparing" (click)="print()">
+                <svg lucidePrinter size="16"></svg>
+                <span>{{ (preparing ? 'components.printDocument.preparing' : 'common.print') | t }}</span>
+            </button>
+        </footer>
+    </div>
+</div>

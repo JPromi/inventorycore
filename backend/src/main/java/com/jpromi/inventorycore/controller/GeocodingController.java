@@ -37,7 +37,7 @@ public class GeocodingController {
     public GeocodingResult reverse(@RequestParam("lat") double latitude, @RequestParam("lon") double longitude, Authentication authentication) {
         requireLocationEditor(authentication);
         return geocoding.reverse(latitude, longitude)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No address found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Zu den Koordinaten wurde keine Adresse gefunden."));
     }
 
     /** Only needed while creating or editing locations; keeps the external service out of reach otherwise. */

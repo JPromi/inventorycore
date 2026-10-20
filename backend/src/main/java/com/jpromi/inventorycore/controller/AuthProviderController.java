@@ -233,6 +233,7 @@ public class AuthProviderController {
         settings.setAutoCreateUsers(request.autoCreateUsers());
         settings.setSyncGroups(request.syncGroups());
         settings.setCrossProviderLogin(request.crossProviderLogin());
+        settings.setAutoRedirect(request.autoRedirect());
         settings.setPublicUrl(trim(request.publicUrl()));
     }
 
@@ -252,6 +253,7 @@ public class AuthProviderController {
             settings.isAutoCreateUsers(),
             settings.isSyncGroups(),
             settings.isCrossProviderLogin(),
+            settings.isAutoRedirect(),
             settings.getPublicUrl(),
             DynamicClientRegistrationRepository.redirectUriTemplate(settings).replace("{registrationId}", DynamicClientRegistrationRepository.REGISTRATION_ID)
         );

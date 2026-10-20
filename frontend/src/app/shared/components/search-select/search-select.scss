@@ -1,0 +1,205 @@
+@use 'breakpoints' as bp;
+:host {
+  position: relative;
+  display: block;
+  min-width: 0;
+
+  // color dot in the trigger and the options
+
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--text-subtle);
+  }
+
+  .trigger {
+    width: 100%;
+    min-height: 2.35rem;
+    padding: 0 0.55rem 0 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      border-color: var(--border-strong);
+    }
+
+    &.open {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+
+      .chevron {
+        transform: rotate(180deg);
+      }
+    }
+
+    &.placeholder .label {
+      color: var(--text-subtle);
+    }
+
+    &:disabled {
+      cursor: default;
+      background: var(--surface-active);
+    }
+
+    .label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .clear {
+      width: 1.4rem;
+      height: 1.4rem;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: var(--text-muted);
+
+      &:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+      }
+    }
+
+    .chevron {
+      flex-shrink: 0;
+      color: var(--text-muted);
+      transition: transform 0.15s;
+    }
+
+    @include bp.phone {
+      min-height: 2.6rem;
+      font-size: 1rem;
+
+      .clear {
+        width: 2rem;
+        height: 2rem;
+      }
+    }
+  }
+
+  .panel {
+    --dropdown-min-width: var(--dropdown-select-min-width);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+
+    @include bp.phone {
+      --dropdown-min-width: 0px;
+    }
+
+    .panel-search {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-subtle);
+
+      input {
+        flex: 1;
+        min-width: 0;
+        min-height: 1.9rem;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 0.9rem;
+
+        &:focus {
+          box-shadow: none;
+        }
+
+        @include bp.phone {
+          min-height: 2.4rem;
+          font-size: 1rem;
+        }
+      }
+    }
+
+    .options {
+      min-height: 0;
+      max-height: min(16rem, 50vh);
+      overflow-y: auto;
+      padding: 0.3rem;
+      list-style: none;
+    }
+
+    .option {
+      width: 100%;
+      min-height: 2.1rem;
+      padding: 0.35rem 0.55rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.9rem;
+      text-align: left;
+      cursor: pointer;
+
+      &.active {
+        background: var(--surface-hover);
+      }
+
+      &.selected {
+        font-weight: 700;
+      }
+
+      &.empty-option .label {
+        color: var(--text-muted);
+      }
+
+      .label {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow-wrap: anywhere;
+
+        small {
+          color: var(--text-muted);
+          font-size: 0.75rem;
+          font-weight: 400;
+        }
+      }
+
+      .check {
+        flex-shrink: 0;
+        color: var(--accent-foreground);
+      }
+
+      @include bp.phone {
+        min-height: 2.75rem;
+      }
+    }
+
+    .no-results {
+      padding: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+  }
+}

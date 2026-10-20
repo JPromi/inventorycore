@@ -7,35 +7,35 @@ $laptop: 1100px;
 
 /// Phones (narrow screens).
 @mixin phone {
-    @media (max-width: $phone) {
-        @content;
-    }
+  @media (max-width: $phone) {
+    @content;
+  }
 }
 
 /// Tablets and phones; the navigation turns into a drawer below this width.
 @mixin tablet {
-    @media (max-width: $tablet) {
-        @content;
-    }
+  @media (max-width: $tablet) {
+    @content;
+  }
 }
 
 /// Small laptops: wide layouts (editor with side panel, wide tables) with the side navigation still visible.
 @mixin laptop {
-    @media (max-width: $laptop) {
-        @content;
-    }
+  @media (max-width: $laptop) {
+    @content;
+  }
 }
 
 /// Devices without hover (touch): show things that otherwise appear on hover.
 @mixin touch {
-    @media (hover: none) {
-        @content;
-    }
+  @media (hover: none) {
+    @content;
+  }
 }
 
 /// Everything wider than a phone (tablets and up).
 @mixin above-phone {
-    @media (min-width: $phone + 1px) {
-        @content;
-    }
+  @media (min-width: $phone + 1px) {
+    @content;
+  }
 }

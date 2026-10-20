@@ -1,0 +1,123 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (list.loaded) { {{ 'tags.count' | tn: list.total }} }</p>
+            <h1>
+                <svg lucideTags size="20"></svg>
+                <span>{{ 'terms.tags' | t }}</span>
+            </h1>
+        </div>
+    </header>
+
+    @if (canCreate) {
+        <form class="card create-row" (ngSubmit)="create()">
+            <app-color-picker [(ngModel)]="newColor" name="newColor" [label]="'tags.newColorLabel' | t" />
+            <input
+                type="text"
+                class="name-input"
+                [(ngModel)]="newName"
+                name="newName"
+                [placeholder]="'tags.newPlaceholder' | t"
+                [attr.aria-label]="'tags.newNameLabel' | t"
+                maxlength="80"
+            />
+            <span
+                class="tag-preview"
+                [style.background]="newColor || 'var(--surface-active)'"
+                [style.color]="newColor ? textColor(newColor) : 'var(--text)'"
+            >
+                {{ newName.trim() || ('tags.preview' | t) }}
+            </span>
+            <button type="submit" class="primary-action" [disabled]="!newName.trim() || creating">
+                <svg lucidePlus size="17"></svg>
+                <span>{{ (creating ? 'tags.creating' : 'common.create') | t }}</span>
+            </button>
+        </form>
+    }
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" [placeholder]="'tags.searchPlaceholder' | t" [attr.aria-label]="'tags.searchLabel' | t" />
+            @if (search) {
+                <button type="button" class="clear" [title]="'tags.clearSearch' | t" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="rows" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" />
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (list.error && !rows.length) {
+        <p class="error">{{ 'tags.loadError' | t }}</p>
+    } @else if (!list.loaded) {
+        <p class="empty">{{ 'tags.loading' | t }}</p>
+    } @else if (!rows.length) {
+        <div class="empty-state">{{ (search.trim() ? 'tags.noneFound' : 'tags.empty') | t }}</div>
+    } @else {
+        <div class="tag-list">
+            @for (row of rows; track row.uuid) {
+                <div class="tag-row" [appSelectableRow]="selection" [selectionItem]="row" [class.is-selected]="selection.isSelected(row)">
+                    <app-selection-checkbox [selection]="selection" [item]="row" />
+                    <app-color-picker
+                        [ngModel]="row.color"
+                        (ngModelChange)="colorChanged(row, $event)"
+                        [disabled]="!canEdit || selection.active"
+                        [label]="'tags.colorOf' | t: { name: row.name }"
+                    />
+                    <input
+                        type="text"
+                        class="name-input"
+                        [(ngModel)]="row.name"
+                        [readOnly]="selection.active"
+                        [disabled]="!canEdit"
+                        (blur)="saveName(row)"
+                        (keydown.enter)="$any($event.target).blur()"
+                        (keydown.escape)="row.name = row.savedName; $any($event.target).blur()"
+                        [attr.aria-label]="'tags.nameOf' | t: { name: row.savedName }"
+                        maxlength="80"
+                    />
+                    <span
+                        class="tag-preview"
+                        [style.background]="row.color || 'var(--surface-active)'"
+                        [style.color]="row.color ? textColor(row.color) : 'var(--text)'"
+                    >
+                        {{ row.name || row.savedName }}
+                    </span>
+                    <span class="usage">{{ usageText(row) || ('tags.notUsed' | t) }}</span>
+                    <span class="state" [class.failed]="row.state === 'error'">
+                        @switch (row.state) {
+                            @case ('saving') {
+                                {{ 'common.saving' | t }}
+                            }
+                            @case ('saved') {
+                                <svg lucideCheck size="14"></svg>
+                                {{ 'tags.saved' | t }}
+                            }
+                            @case ('error') {
+                                {{ 'tags.saveError' | t }}
+                            }
+                        }
+                    </span>
+                    @if (canDelete) {
+                        <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(row)">
+                            <svg lucideTrash2 size="15"></svg>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>{{ 'tags.loadingMore' | t }}</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'tags.retry' | t }}</button>
+            }
+        </div>
+    }
+</section>

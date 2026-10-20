@@ -1,0 +1,96 @@
+@use 'breakpoints' as bp;
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+:host {
+  .notices {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    z-index: 1100;
+    width: min(calc(100% - 2rem), 26rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    @include bp.phone {
+      right: 0.75rem;
+      bottom: calc(0.75rem + env(safe-area-inset-bottom));
+      width: calc(100% - 1.5rem);
+    }
+
+    @media print {
+      display: none;
+    }
+  }
+
+  .notice {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-md);
+    background: var(--text);
+    color: var(--surface);
+    box-shadow: var(--shadow-md);
+    font-size: 0.88rem;
+    animation: slide-in 0.2s ease-out;
+
+    > svg {
+      flex-shrink: 0;
+    }
+
+    > span {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &.offline {
+      background: var(--warning-soft);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+
+    button {
+      flex-shrink: 0;
+      min-height: 2.1rem;
+      border: 0;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      cursor: pointer;
+
+      @include bp.phone {
+        min-height: 2.5rem;
+      }
+    }
+
+    .action {
+      padding: 0 0.8rem;
+      background: var(--accent);
+      color: var(--on-accent);
+
+      &:hover {
+        background: var(--accent-hover);
+        color: var(--on-accent-hover);
+      }
+    }
+
+    .close {
+      width: 2.1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: inherit;
+      opacity: 0.75;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}

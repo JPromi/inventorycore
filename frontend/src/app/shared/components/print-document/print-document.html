@@ -1,0 +1,98 @@
+<!-- moved to <body> on init; the source is copied into .print-pages when printing -->
+<article #sheet class="print-document">
+    <div #source class="print-source">
+        <header class="doc-header">
+            <div class="brand">
+                @if (customization.settings.logoUrl) {
+                    <img class="logo" [src]="customization.settings.logoUrl" [alt]="'components.printDocument.logoAlt' | t" />
+                }
+                <span class="brand-name">{{ customization.brandName }}</span>
+            </div>
+            @if (kind) {
+                <span class="kind">{{ kind }}</span>
+            }
+        </header>
+
+        <h1 class="doc-title">{{ title }}</h1>
+
+        @if (visibleMeta.length) {
+            <dl class="doc-meta">
+                @for (entry of visibleMeta; track entry.label) {
+                    <div>
+                        <dt>{{ entry.label }}</dt>
+                        <dd>{{ entry.value }}</dd>
+                    </div>
+                }
+            </dl>
+        }
+
+        <div class="doc-body">
+            <ng-content />
+        </div>
+
+        @if (signatures.length && settings.signatures) {
+            <section class="doc-signatures">
+                @for (caption of signatures; track caption) {
+                    <div class="signature">
+                        <span class="line"></span>
+                        <span class="caption">{{ caption }}</span>
+                        <span class="hint-text">{{ 'components.printDocument.signatureHint' | t }}</span>
+                    </div>
+                }
+            </section>
+        }
+    </div>
+    <div #pages class="print-pages"></div>
+</article>
+
+@if (dialogOpen) {
+    <div class="dialog-backdrop" (click)="close()">
+        <div class="card dialog print-settings" role="dialog" aria-modal="true" aria-labelledby="print-settings-title" (click)="$event.stopPropagation()">
+            <header class="dialog-header">
+                <h2 id="print-settings-title">
+                    <svg lucidePrinter size="18"></svg>
+                    <span>{{ 'components.printDocument.dialogTitle' | t: { kind: kind || ('components.printDocument.defaultKind' | t) } }}</span>
+                </h2>
+                <button type="button" class="icon-button" [title]="'common.close' | t" [attr.aria-label]="'common.close' | t" (click)="close()">
+                    <svg lucideX size="16"></svg>
+                </button>
+            </header>
+
+            <div class="field-grid">
+                <div class="field">
+                    <span>{{ 'components.printDocument.paperSize' | t }}</span>
+                    <app-search-select name="size" [options]="sizes" [(ngModel)]="settings.size" [searchPlaceholder]="'components.printDocument.paperSizeSearch' | t" />
+                </div>
+                <div class="field">
+                    <span>{{ 'components.printDocument.orientation' | t }}</span>
+                    <app-search-select name="orientation" [options]="orientations" [(ngModel)]="settings.orientation" [searchPlaceholder]="'components.printDocument.orientationSearch' | t" />
+                </div>
+                <div class="field">
+                    <span>{{ 'components.printDocument.margins' | t }}</span>
+                    <app-search-select name="margin" [options]="margins" [(ngModel)]="settings.margin" [searchPlaceholder]="'components.printDocument.marginsSearch' | t" />
+                </div>
+            </div>
+
+            <div class="options">
+                <ng-content select="[printOptions]" />
+                @if (signatures.length) {
+                    <label class="toggle">
+                        <input type="checkbox" name="signatures" [(ngModel)]="settings.signatures" />
+                        <span>{{ 'components.printDocument.signatures' | t }}</span>
+                    </label>
+                }
+            </div>
+
+            <div class="dialog-actions">
+                @if (error) {
+                    <p class="error" role="alert">{{ error }}</p>
+                }
+                <button type="button" class="secondary-action" (click)="close()">{{ 'common.cancel' | t }}</button>
+                <button type="button" class="primary-action" [disabled]="preparing" (click)="print()">
+                    <svg lucidePrinter size="16"></svg>
+                    <span>{{ (preparing ? 'components.printDocument.preparing' : 'common.print') | t }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+}

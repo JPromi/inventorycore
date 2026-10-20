@@ -1,5 +1,7 @@
 # API
 
+`GET /api/app-info` is public and returns `name`, `version`, and `githubUrl`. The version comes from Gradle-generated Spring Boot build information (`-PappVersion` for releases); direct IDE runs without build information report `development`. The navigation footer loads this endpoint independently of branding settings.
+
 Inspection templates accept and return `defaultTagUuids` and `includeChildAssets` (default false). Starting an inspection locks the template tags; users may add selections but cannot remove template defaults. Preview and creation always merge template defaults into supplied filters, including empty lists. They accept a nullable `includeChildAssets` override; null uses the template default. With child inclusion enabled, all descendants of matching roots are added regardless of tag, location, type, area, or due-date filters, but each child still requires view/inspect permission and must not be excluded from inspections. Assets are deduplicated; the resulting run items and filter summary preserve the selection independently of later template edits.
 
 ## Contract
@@ -9,6 +11,8 @@ Locations have a fixed `locationType` (`SITE`, `BUILDING`, `FLOOR`, `ROOM`, `WAR
 Global customization: public `GET /api/customization` returns branding and login texts/links; `GET /api/customization/logo` serves the reencoded logo. Admin-only `GET/PUT /api/admin/customization` use `CustomizationDto` (`brandName`, `brandColor`, `loginTitle`, `loginMessage`, `imprintUrl`, `privacyUrl`, `websiteUrl`, `supportUrl`, read-only `logoUrl`). Blank values restore defaults/hide links. Colors are six-digit HEX; links must be absolute HTTP(S) without embedded credentials. `POST /api/admin/customization/logo` accepts multipart `file` (5 MB, 25 megapixels, readable raster images); `DELETE` removes it. Uploads are reencoded with maximum edge 1200 pixels, preserving transparency, and receive versioned URLs. Admin changes are audited.
 
 The admin SPA route is `/admin/customization`. Public settings are applied on app load and immediately after saving. Label JSON supports `type: "logo"` and `useBrandColor` for text/frames. Logo elements and branding placeholders resolve from current global settings at preview/print time rather than storing duplicated image data in every template. Supported branding placeholders are `{brandName}`, `{brandColor}`, `{website}`, `{imprint}`, `{privacy}`, `{support}`, `{loginTitle}`, and `{loginMessage}`. Printing waits for logo images to decode in the print frame.
+
+Customization also exposes `advancedThemeEnabled` (default false), `darkBrandColor`, and read-only `darkLogoUrl`. Existing `brandColor` and `logoUrl` remain the light/print variant. The logo GET, admin POST and admin DELETE accept optional `mode=light|dark` (default light); invalid modes return 400. Both logos use the same upload validation and independent bytes/content types/versioned URLs. An absent dark logo returns 404 and a null URL; display fallback is the frontend's responsibility. Disabling advanced mode preserves the dark variant in storage but uses light branding for both screen themes. In advanced mode, a missing dark color/logo falls back to the corresponding light value. Labels and print documents always use light branding, independent of screen appearance.
 
 Inspection templates expose nullable `protocolAreaUuid`. A configured area is mandatory for runs created from that template and overrides the run request's `areaUuid`. Without it, the current sidebar/default-area behavior is retained. Template assignment requires ASSET_TYPE create/edit permission in the target area; starting a run additionally requires ASSET/INSPECT there. Existing runs retain their own area when a template changes. Deleting an area moves both template protocol-area assignments and runs to the default area.
 
@@ -26,7 +30,8 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 
 | Routes | Responsibility / source controller |
 | --- | --- |
-| `/auth`, `/auth/me`, `/auth/providers`, `/auth/logout` | Session login, restoration, provider discovery, logout; `AuthController` |
+| `/auth`, `/auth/me`, `/auth/providers`, `/auth/logout` | Session login, restoration, provider discovery, logout; `AuthController`. Sign-ins, failures and sign-outs are logged via `LoginAuditService` |
+| `/admin/users/{uuid}/logins` | Sign-in history of one user (admins only); `AuditController` |
 | `/auth/me/profile-image`, `/profile-images/{uuid}` | Local profile image upload/removal and authenticated image delivery; `ProfileImageController` |
 | `/assets`, `/locations`, `/asset-types`, `/tags` | Inventory read/write operations; `InventoryController` |
 | `/areas` | Areas accessible to the current user; `AreaController` |
@@ -36,18 +41,24 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/admin/oidc`, `/admin/oidc/test` | OIDC configuration/discovery test; `AuthProviderController` |
 | `/inspection-types`, `/inspections`, `/inspection-schedules` | Types, runs, items, scans, photos, completion and due dates; `InspectionController` |
 | `/label-templates` | Printable label configuration; `LabelTemplateController` |
+| `/dashboard` | Start-page numbers and short lists for the sidebar area selection; `DashboardController` |
 | `/scan` | Resolve a scanned value; `ScanController` |
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |
 | `/audit-logs`, `/assets/{uuid}/logs`, `/locations/{uuid}/logs` | Admin activity search and authorized object histories; `AuditController` |
 | `/health` | Public health response; `HealthController` |
-| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` |
+| `/assets/page`, `/locations/page`, `/asset-types/page`, `/tags/page` | Searched, paged inventory lists; `InventoryListController` delegates to `InventoryListService`. `/assets/page` also filters by repeated `status` UUIDs |
+| `/asset-statuses`, `/assets/{uuid}/status`, `/assets/{uuid}/status-history` | Built-in and custom asset statuses, status changes with comment, and the status history; `AssetStatusController` |
 | `/inspection-types/page`, `/inspections/page`, `/label-templates/page`, `/admin/users/page`, `/admin/groups/page`, `/admin/areas/page` | Searched, paged lists of the other list pages; their controllers |
 
 ### Paged lists
 
 All `/page` endpoints take `page` (from 0), `size` (default 50, max 200) and `q` (every word must occur), and return `PageResponse` (`items`, `total`, `page`, `size`, `hasMore`). `areas` (repeatable) is the sidebar area selection. Further filters: assets `tag`, `location` (with sub-locations), `assetType`, `area`; locations `type`, `area`; asset types `area`; protocols `status` (`OPEN`/`COMPLETED`, response adds `openCount` / `completedCount` within the area selection, independent of search and status); users `group`, `status` (`enabled`, `disabled`, `admin`). Tags return `TagUsageResponse` with `assetCount` / `assetTypeCount` of visible objects; groups return `GroupRowResponse` with `memberCount` and up to five `members`. Sorting is fixed per list (by name; protocols newest first; label templates by area, default area first).
 
-OIDC browser redirects additionally use `/oauth2/authorization/oidc` and `/login/oauth2/**` outside `/api`.
+OIDC browser redirects additionally use `/oauth2/authorization/oidc` and `/login/oauth2/**` outside `/api`. `/auth/providers` returns `oidcEnabled`, `oidcLabel`, `oidcLoginUrl` and `oidcAutoRedirect`; the login page follows the redirect unless it was opened with `?direct=1`.
+
+### Dashboard
+
+`GET /api/dashboard` takes the sidebar selection as repeatable `areas` (empty = all) and returns `DashboardResponse`. Every number uses the list rules: permission filter first, then the area selection (assets and locations also through their location or parent locations, types through their own areas, inspections through the protocol area, due dates through their asset). It contains `assetCount`, `locationCount`, `assetTypeCount`, `tagCount` (distinct own and inherited tags of those assets), `topTags` (6, assets per tag), `assetsByType` (5 types with the most assets; an entry without `uuid`/`name` counts assets without type) plus `otherTypeAssetCount`. For users with the right to inspect somewhere (`canInspect`) it adds `due` (OVERDUE/DUE/OK counts), `nextDue` (5 most urgent `InspectionDueResponse`), `openInspectionCount`, `completedInspectionCount` (last 30 days), `recentInspections` (4 newest completed) and `results` (checked assets of inspections completed in the last 90 days: `ok`, `defect`, `missing`, `failed`); without that right these stay empty and no inspection data is read.
 
 ## Authentication and Access
 
@@ -57,7 +68,7 @@ The frontend sends credentials with HTTP requests and restores the user through 
 
 ## Lists, Files, and Errors
 
-Inventory endpoints currently return authorized arrays; the frontend implements their pagination. The admin audit endpoint instead accepts zero-based `page` and `size` and returns `{ items, total, page, size }`; size is capped at 200. Do not add pagination query parameters to inventory clients without implementing a matching backend contract.
+Inventory `/page` endpoints accept zero-based `page`, `size`, server search, and resource-specific filters and return `{ items, total, page, size, hasMore }`. Permission and area filters run before totals and slicing; the frontend uses these pages for incremental loading. Plain inventory list endpoints remain authorized arrays for pickers. The current service loads candidate entities and filters/pages in memory, not with database pagination; moving this work to SQL must preserve permission-aware totals and inherited areas/tags. The admin audit endpoint returns `{ items, total, page, size }`; its size is capped at 200.
 
 Image upload uses `multipart/form-data` with a `file` part. File content supports `?variant=thumb`. Profile uploads use a distinct endpoint and return a user DTO. Do not serialize raw inventory image bytes into inventory JSON responses.
 
@@ -68,3 +79,5 @@ No generated OpenAPI specification or API collection is currently checked in. Co
 Asset form requests/responses include nullable `parentAssetUuid` and `parentAssetNote` (up to 1000 characters). A null parent detaches the asset and clears its link note. The existing asset create/update routes handle these fields; no separate relationship endpoint is required. Parent deletion returns 409 while live children exist. Related asset names and child lists in the UI come from the authorized asset list, so hierarchy links do not grant additional visibility.
 
 Assets also expose `inspectionPolicy`: `STANDARD` (default, label-based), `MANUAL` (no label; confirm manually), or `EXCLUDED` (omit from new inspections and due dates). Inspection items snapshot this policy and the parent UUID/link note at creation; later asset edits do not rewrite existing runs. Scanning a manual or excluded asset returns `IGNORED`, and an excluded asset cannot be explicitly added to a run.
+
+A scanned code can match several assets, because inventory id, inventory number and serial number are all scan codes and serial or inventory numbers need not be unique. `GET /api/scan` returns every visible match. `POST /api/inspections/{uuid}/scan` then records nothing and returns `AMBIGUOUS` with `candidates` (`InspectionScanCandidate`: `uuid`, `name`, `invId`, `assetTypeName`, `locationName`, `matchedBy` = `INV_ID` / `INVENTORY_NUMBER` / `SERIAL_NUMBER`, `inInspection`), sorted by name. The client repeats the scan with the same `code` and the chosen `assetUuid`; a uuid that is not among the code's matches returns `IGNORED`, so the choice cannot reach other assets.

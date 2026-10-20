@@ -22,7 +22,14 @@ export interface StoredFileInfo {
 
 /** Same limits as the backend (spring.servlet.multipart.max-file-size). */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
+export const ACCEPTED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+  'image/tiff',
+];
 
 @Injectable({ providedIn: 'root' })
 export class FileApiService {

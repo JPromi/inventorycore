@@ -1,0 +1,184 @@
+<div class="page">
+    <div class="page-shell">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">{{ (filtered ? 'dashboard.scopeSelected' : 'dashboard.scopeAll') | t }}</p>
+                <h1>{{ 'dashboard.title' | t }}</h1>
+            </div>
+        </header>
+
+        @if (error) {
+            <p class="dashboard-error" role="alert"><svg lucideCircleAlert size="18"></svg> {{ error }}</p>
+        }
+
+        @if (!dashboard && loading) {
+            <p class="empty">{{ 'common.loading' | t }}</p>
+        } @else if (dashboard; as data) {
+            <div class="dashboard" [class.refreshing]="loading" [attr.aria-busy]="loading">
+                <!-- four headline numbers -->
+                <section class="tiles" [attr.aria-label]="'dashboard.tiles.label' | t">
+                    <a class="tile" routerLink="/assets">
+                        <strong class="tile-value">{{ data.assetCount }}</strong>
+                        <span class="tile-label"><svg lucideBoxes size="15"></svg> {{ 'terms.assets' | t }}</span>
+                    </a>
+                    <a class="tile" routerLink="/locations">
+                        <strong class="tile-value">{{ data.locationCount }}</strong>
+                        <span class="tile-label"><svg lucideMapPin size="15"></svg> {{ 'terms.locations' | t }}</span>
+                    </a>
+                    @if (data.canInspect) {
+                        <a class="tile" routerLink="/inspections" [class.critical]="data.due.overdue > 0">
+                            <strong class="tile-value">{{ data.due.overdue }}</strong>
+                            <span class="tile-label"><svg lucideTriangleAlert size="15"></svg> {{ 'dashboard.tiles.overdue' | t }}</span>
+                        </a>
+                        <a class="tile" routerLink="/inspections" [class.warning]="data.due.dueSoon > 0">
+                            <strong class="tile-value">{{ data.due.dueSoon }}</strong>
+                            <span class="tile-label"><svg lucideCalendarClock size="15"></svg> {{ 'dashboard.tiles.dueSoon' | t }}</span>
+                        </a>
+                    } @else {
+                        <a class="tile" routerLink="/config/types">
+                            <strong class="tile-value">{{ data.assetTypeCount }}</strong>
+                            <span class="tile-label"><svg lucideShapes size="15"></svg> {{ 'terms.assetTypes' | t }}</span>
+                        </a>
+                        <a class="tile" routerLink="/config/tags">
+                            <strong class="tile-value">{{ data.tagCount }}</strong>
+                            <span class="tile-label"><svg lucideTags size="15"></svg> {{ 'dashboard.tiles.tagsInUse' | t }}</span>
+                        </a>
+                    }
+                </section>
+
+                @if (data.canInspect) {
+                    <div class="columns">
+                        <section class="card panel">
+                            <div class="panel-head">
+                                <h2>{{ 'dashboard.next.title' | t }}</h2>
+                                <a class="more" routerLink="/inspections">{{ 'dashboard.showAll' | t }}</a>
+                            </div>
+                            @if (data.nextDue.length) {
+                                <ul class="entries">
+                                    @for (entry of data.nextDue; track entry.assetUuid + entry.inspectionTypeUuid) {
+                                        <li>
+                                            <div class="entry-main">
+                                                <a [routerLink]="['/assets', entry.assetUuid]">{{ entry.assetName }}</a>
+                                                <span class="meta">{{ entry.inspectionTypeName }}</span>
+                                            </div>
+                                            <span class="state" [class.critical]="entry.state === 'OVERDUE'" [class.warning]="entry.state === 'DUE'">
+                                                {{ dueText(entry) }}
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            } @else {
+                                <p class="empty">{{ 'dashboard.next.empty' | t }}</p>
+                            }
+                        </section>
+
+                        <section class="card panel">
+                            <div class="panel-head">
+                                <h2>{{ 'dashboard.recent.title' | t }}</h2>
+                                <a class="more" routerLink="/inspections">{{ 'dashboard.showAll' | t }}</a>
+                            </div>
+                            @if (data.recentInspections.length) {
+                                <ul class="entries">
+                                    @for (inspection of data.recentInspections; track inspection.uuid) {
+                                        <li>
+                                            <div class="entry-main">
+                                                <a [routerLink]="['/inspections', inspection.uuid]">{{ inspection.title }}</a>
+                                                <span class="meta">{{ inspection.completedAt | date: 'dd.MM.yyyy' }} · {{ inspectionResult(inspection) }}</span>
+                                            </div>
+                                            @if (inspectionProblems(inspection); as problems) {
+                                                <span class="state warning">{{ 'dashboard.recent.problems' | tn: problems }}</span>
+                                            } @else {
+                                                <span class="state good"><svg lucideCircleCheck size="14"></svg> {{ 'dashboard.recent.noProblems' | t }}</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            } @else {
+                                <p class="empty">{{ 'dashboard.recent.empty' | t }}</p>
+                            }
+                            <p class="panel-foot">
+                                {{ 'dashboard.recent.open' | tn: data.openInspectionCount }} ·
+                                {{ 'dashboard.recent.completed' | tn: data.completedInspectionCount }}
+                            </p>
+                        </section>
+                    </div>
+                }
+
+                <div class="columns">
+                    <!-- inventory: assets per type, most used tags -->
+                    <section class="card panel">
+                        <div class="panel-head">
+                            <h2>{{ 'dashboard.stats.title' | t }}</h2>
+                        </div>
+                        @if (data.assetsByType.length) {
+                            <ul class="bars">
+                                @for (entry of data.assetsByType; track entry.uuid ?? 'none') {
+                                    <li [title]="typeName(entry) + ': ' + assetsLabel(entry.count)">
+                                        <span class="bar-label">{{ typeName(entry) }}</span>
+                                        <span class="bar-track"><span class="bar" [style.width.%]="typeShare(entry)"></span></span>
+                                        <span class="bar-value">{{ entry.count }}</span>
+                                    </li>
+                                }
+                            </ul>
+                        } @else {
+                            <p class="empty">{{ 'dashboard.stats.noAssets' | t }}</p>
+                        }
+                        @if (data.topTags.length) {
+                            <ul class="tags" [attr.aria-label]="'dashboard.stats.tags' | t">
+                                @for (tag of data.topTags; track tag.uuid) {
+                                    <li [title]="tag.name + ': ' + assetsLabel(tag.count)">
+                                        <span class="tag-dot" [style.background]="tag.color || null"></span>
+                                        {{ tag.name }} <span class="tag-count">{{ tag.count }}</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        <p class="panel-foot">
+                            {{ 'dashboard.stats.types' | tn: data.assetTypeCount }} ·
+                            {{ 'dashboard.stats.tagsInUse' | tn: data.tagCount }}
+                            @if (data.otherTypeAssetCount) {
+                                · {{ 'dashboard.stats.otherTypes' | tn: data.otherTypeAssetCount }}
+                            }
+                        </p>
+                    </section>
+
+                    @if (data.canInspect) {
+                        <section class="card panel">
+                            <div class="panel-head">
+                                <h2>{{ 'dashboard.results.title' | t }}</h2>
+                            </div>
+                            @if (resultTotal) {
+                                <p class="headline">
+                                    <strong>{{ okShare }}&nbsp;%</strong>
+                                    <span>{{ 'dashboard.results.okShare' | t }}</span>
+                                </p>
+                                <div class="result-bar" role="img" [attr.aria-label]="'dashboard.results.summary' | tn: resultTotal">
+                                    @for (part of resultParts; track part.key) {
+                                        @if (part.count) {
+                                            <span [class]="'result-part ' + part.key" [style.flex-grow]="part.count" [title]="resultTitle(part)"></span>
+                                        }
+                                    }
+                                </div>
+                                <ul class="legend">
+                                    @for (part of resultParts; track part.key) {
+                                        <li [class]="part.key">
+                                            @switch (part.key) {
+                                                @case ('ok') { <svg lucideCircleCheck size="14"></svg> }
+                                                @case ('defect') { <svg lucideWrench size="14"></svg> }
+                                                @default { <svg lucideCircleX size="14"></svg> }
+                                            }
+                                            {{ part.label }} <strong>{{ part.count }}</strong>
+                                        </li>
+                                    }
+                                </ul>
+                                <p class="panel-foot">{{ 'dashboard.results.summary' | tn: resultTotal }}</p>
+                            } @else {
+                                <p class="empty">{{ 'dashboard.results.empty' | t }}</p>
+                            }
+                        </section>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

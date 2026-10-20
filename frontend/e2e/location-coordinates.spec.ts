@@ -140,7 +140,7 @@ test('an older free-text address is offered in the street field for splitting up
   await setup(page);
   await page.goto('/locations/old/edit');
   await expect(field(page, 'Straße und Hausnummer')).toHaveValue('Industriestraße 5, 4020 Linz');
-  await expect(page.getByText('Die bisherige Adresse')).toBeVisible();
+  await expect(page.getByText('Bisherige Adresse')).toBeVisible();
 });
 
 test('the location view shows the OpenStreetMap map below the image', async ({ page }) => {
@@ -153,7 +153,7 @@ test('the location view shows the OpenStreetMap map below the image', async ({ p
   await expect(map.locator('.leaflet-control-attribution')).toHaveText('© OpenStreetMap');
   await expect(map.getByRole('link', { name: 'In OpenStreetMap öffnen' })).toHaveAttribute('href', /mlat=48\.208493&mlon=16\.373149/);
   // directly below the gallery
-  const order = await page.locator('aside > .card').evaluateAll(cards => cards.map(card => card.classList.contains('gallery') ? 'gallery' : card.textContent?.includes('Karte') ? 'map' : 'other'));
+  const order = await page.locator('aside > section').evaluateAll(cards => cards.map(card => card.classList.contains('gallery') ? 'gallery' : card.textContent?.includes('Karte') ? 'map' : 'other'));
   expect(order.indexOf('map')).toBe(order.indexOf('gallery') + 1);
 
   await page.goto('/locations/plain');

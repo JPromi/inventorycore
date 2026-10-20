@@ -24,5 +24,7 @@ public record AssetResponse(
     Set<UUID> areaUuids,
     UUID parentAssetUuid,
     String parentAssetNote,
-    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy
+    com.jpromi.inventorycore.enums.AssetInspectionPolicy inspectionPolicy,
+    AssetStatusResponse status,
+    OffsetDateTime statusChangedAt
 ) {}

@@ -1,0 +1,1346 @@
+<section class="page">
+  <div class="page-shell">
+    <a class="back-link no-print" routerLink="/inspections">
+      <svg lucideArrowLeft size="16"></svg>
+      <span>{{ 'inspectionRun.backToList' | t }}</span>
+    </a>
+
+    @if (error) {
+      <p class="error no-print">
+        {{ error }}
+        <button
+          type="button"
+          class="icon-button"
+          [title]="'inspectionRun.dismiss' | t"
+          (click)="error = ''"
+        >
+          <svg lucideX size="14"></svg>
+        </button>
+      </p>
+    }
+
+    @if (loading && !detail) {
+      <p class="empty">{{ 'inspectionRun.loading' | t }}</p>
+    } @else if (detail) {
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">
+            {{ detail.summary.typeName }} · {{ modeLabel }}
+            @if (open) {
+              · <span class="badge accent">{{ 'inspectionRun.open' | t }}</span>
+            } @else {
+              ·
+              <span class="badge success"
+                ><svg lucideLock size="11"></svg> {{ 'inspectionRun.completed' | t }}</span
+              >
+            }
+          </p>
+          <h1>
+            <svg lucideClipboardCheck size="20"></svg>
+            <span>{{ detail.summary.title }}</span>
+          </h1>
+          <p class="filter-summary">{{ detail.summary.filterSummary }}</p>
+          @if (detail.summary.areaNames.length) {
+            <p class="filter-summary">
+              {{ 'inspectionRun.areaLine' | t: { areas: detail.summary.areaNames.join(', ') } }}
+            </p>
+          }
+        </div>
+        <div class="header-actions no-print">
+          @if (canDelete) {
+            <button type="button" class="danger-action" (click)="remove()">
+              <svg lucideTrash2 size="16"></svg>
+              <span>{{ 'common.delete' | t }}</span>
+            </button>
+          }
+          @if (open) {
+            <button type="button" class="primary-action" (click)="startCompleting()">
+              <svg lucideCircleCheck size="16"></svg>
+              <span>{{ 'inspectionRun.complete' | t }}</span>
+            </button>
+          } @else {
+            <button type="button" class="primary-action" (click)="print()">
+              <svg lucidePrinter size="16"></svg>
+              <span>{{ 'common.print' | t }}</span>
+            </button>
+          }
+        </div>
+      </header>
+
+      @if (open) {
+        <div class="progress-wrap">
+          <span class="hint"
+            >{{ 'inspectionRun.stats.progress' | t: { percent: progress } }} ·
+            {{ 'inspectionRun.stats.pending' | t }}: {{ count('PENDING') }}</span
+          >
+          <div
+            class="progress"
+            role="progressbar"
+            [attr.aria-label]="'inspectionRun.stats.progress' | t: { percent: progress }"
+            [attr.aria-valuenow]="progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <span class="present" [style.width.%]="progress"></span>
+          </div>
+        </div>
+      } @else {
+        <div class="stats">
+          <div class="stat">
+            <span class="value">{{ count('ALL') }}</span>
+            <span class="label">{{
+              isCheck ? ('inspectionRun.stats.devices' | t) : ('inspectionRun.stats.expected' | t)
+            }}</span>
+          </div>
+          <div class="stat present">
+            <span class="value">{{ count(goodStatus) }}</span>
+            <span class="label">{{ goodLabel }}</span>
+          </div>
+          <div class="stat missing">
+            <span class="value">{{
+              isCheck ? count(badStatus) : count(badStatus) + count('PENDING')
+            }}</span>
+            <span class="label">{{
+              isCheck ? ('inspectionRun.stats.defects' | t) : ('inspectionRun.stats.missing' | t)
+            }}</span>
+          </div>
+          @if (checkFunction) {
+            <div class="stat missing">
+              <span class="value">{{ count('DEFECT') }}</span>
+              <span class="label">{{ 'inspectionCondition.DEFECT' | t }}</span>
+            </div>
+          }
+          @if (isCheck) {
+            <div class="stat">
+              <span class="value">{{ count('PENDING') }}</span>
+              <span class="label">{{ 'inspectionStatus.PENDING' | t }}</span>
+            </div>
+          }
+          @if (!isCheck) {
+            <div class="stat" [class.warning]="unexpectedItems.length">
+              <span class="value">{{ unexpectedItems.length }}</span>
+              <span class="label">{{ 'inspectionRun.stats.unexpected' | t }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (open) {
+        <!-- ================= DOING THE INSPECTION ================= -->
+        <section class="card scan-card">
+          <form class="scan-row" (ngSubmit)="submitCode()">
+            <label class="scan-field" [class.busy]="scanning">
+              <svg class="field-icon" lucideScanBarcode size="20"></svg>
+              <input
+                #scanInput
+                type="text"
+                name="code"
+                [(ngModel)]="code"
+                [placeholder]="
+                  isCheck
+                    ? ('inspectionRun.scan.placeholderCheck' | t)
+                    : ('inspectionRun.scan.placeholderInventory' | t)
+                "
+                [attr.aria-label]="'inspectionRun.scan.codeLabel' | t"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                enterkeyhint="send"
+              />
+              <button
+                type="submit"
+                class="submit"
+                [title]="'inspectionRun.scan.submit' | t"
+                [disabled]="!code.trim()"
+              >
+                <svg lucideCornerDownLeft size="17"></svg>
+              </button>
+            </label>
+            @if (cameraAvailable) {
+              <button
+                type="button"
+                class="secondary-action camera-toggle"
+                [class.active]="cameraOn"
+                (click)="toggleCamera()"
+              >
+                @if (cameraOn) {
+                  <svg lucideCameraOff size="17"></svg>
+                  <span>{{ 'inspectionRun.scan.cameraOff' | t }}</span>
+                } @else {
+                  <svg lucideCamera size="17"></svg>
+                  <span>{{ 'inspectionRun.scan.camera' | t }}</span>
+                }
+              </button>
+            }
+          </form>
+
+          @if (isCheck) {
+            <div class="add-asset">
+              <span class="hint">{{ 'inspectionRun.scan.orSearch' | t }}</span>
+              <app-search-select
+                [options]="assetOptions"
+                [(ngModel)]="assetToAdd"
+                (ngModelChange)="addAsset($event)"
+                name="assetToAdd"
+                [placeholder]="'inspectionRun.scan.addPlaceholder' | t"
+                [searchPlaceholder]="'inspectionRun.scan.addSearchPlaceholder' | t"
+                [emptyText]="'inspectionRun.scan.addEmpty' | t"
+              />
+            </div>
+          }
+
+          @if (cameraOn) {
+            <app-camera-view
+              class="camera"
+              [title]="
+                isCheck
+                  ? ('inspectionRun.scan.cameraTitleCheck' | t)
+                  : ('inspectionRun.scan.cameraTitleInventory' | t)
+              "
+              [hint]="
+                isCheck
+                  ? ('inspectionRun.scan.cameraHintCheck' | t)
+                  : ('inspectionRun.scan.cameraHintInventory' | t)
+              "
+              [sheetOpen]="sheetOpen"
+              (code)="onCameraCode($event)"
+              (closed)="cameraOn = false"
+              (sheetClose)="sheetOpen = false"
+              [photoMode]="!!photoTarget"
+              [photoHint]="
+                photoTarget?.target === 'ASSET'
+                  ? ('inspectionRun.scan.photoHintAsset' | t)
+                  : ('inspectionRun.scan.photoHintInspection' | t)
+              "
+              (photo)="onCameraPhoto($event)"
+              (photoCancel)="photoTarget = null; sheetOpen = true"
+            >
+              @if (error) {
+                <div class="scan-result">
+                  <svg lucideCircleAlert size="20"></svg>
+                  <span>{{ error }}</span>
+                </div>
+              } @else if (lastScan; as scan) {
+                <ng-container *ngTemplateOutlet="scanMessage; context: { $implicit: scan }" />
+                @if (sheetItem; as item) {
+                  <div class="sheet-item">
+                    <div>
+                      <strong>{{ item.assetName }}</strong>
+                      <span class="meta">{{ itemMeta(item) }}</span>
+                    </div>
+                    <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
+                      @if (checkFunction) {
+                        <button
+                          type="button"
+                          class="present"
+                          [class.active]="item.condition === 'OK'"
+                          (click)="setCondition(item, 'OK')"
+                          [title]="'inspectionRun.status.presentAndWorking' | t"
+                        >
+                          <svg lucideCheck size="18"></svg>
+                          <span>{{ 'inspectionCondition.OK' | t }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="missing"
+                          [class.active]="item.condition === 'DEFECT'"
+                          (click)="setCondition(item, 'DEFECT')"
+                          [title]="'inspectionRun.status.presentButDefect' | t"
+                        >
+                          <svg lucideWrench size="18"></svg>
+                          <span>{{ 'inspectionCondition.DEFECT' | t }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="missing"
+                          [class.active]="item.status === 'MISSING'"
+                          (click)="setStatus(item, 'MISSING')"
+                        >
+                          <svg lucideX size="18"></svg>
+                          <span>{{ 'inspectionStatus.MISSING' | t }}</span>
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="present"
+                          [class.active]="item.status === goodStatus"
+                          (click)="setStatus(item, goodStatus)"
+                        >
+                          <svg lucideCheck size="18"></svg>
+                          <span>{{ goodLabel }}</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="missing"
+                          [class.active]="item.status === badStatus"
+                          (click)="setStatus(item, badStatus)"
+                        >
+                          <svg lucideX size="18"></svg>
+                          <span>{{ badLabel }}</span>
+                        </button>
+                      }
+                    </div>
+                    <app-inspection-item-editor
+                      [item]="item"
+                      [fields]="fieldsFor(item)"
+                      [liveCamera]="true"
+                      [photoStatus]="photoStatus[item.uuid]"
+                      (valueChange)="setValue(item, $event.field, $event.value, $event.debounce)"
+                      (noteChange)="saveNote(item, $event)"
+                      (photoRemove)="removePhoto(item, $event)"
+                      (photoRequest)="
+                        photoTarget = { itemUuid: item.uuid, target: $event }; sheetOpen = false
+                      "
+                    />
+                  </div>
+                }
+              }
+            </app-camera-view>
+          }
+
+          @if (lastScan; as scan) {
+            <ng-container *ngTemplateOutlet="scanMessage; context: { $implicit: scan }" />
+          }
+
+          <ng-template #scanMessage let-scan>
+            <div
+              class="scan-result"
+              [class.success]="
+                scan.outcome === 'CHECKED' || scan.outcome === 'ADDED' || scan.outcome === 'OPENED'
+              "
+              [class.warning]="
+                scan.outcome === 'UNEXPECTED' ||
+                scan.outcome === 'UNKNOWN' ||
+                scan.outcome === 'ADDED_OTHER_TYPE' ||
+                scan.outcome === 'AMBIGUOUS'
+              "
+              [class.neutral]="scan.outcome === 'ALREADY_CHECKED' || scan.outcome === 'IGNORED'"
+              role="status"
+            >
+              @switch (scan.outcome) {
+                @case ('UNEXPECTED') {
+                  <svg lucideTriangleAlert size="20"></svg>
+                }
+                @case ('UNKNOWN') {
+                  <svg lucideTriangleAlert size="20"></svg>
+                }
+                @case ('ADDED_OTHER_TYPE') {
+                  <svg lucideTriangleAlert size="20"></svg>
+                }
+                @case ('AMBIGUOUS') {
+                  <svg lucideTriangleAlert size="20"></svg>
+                }
+                @case ('ALREADY_CHECKED') {
+                  <svg lucideCircleAlert size="20"></svg>
+                }
+                @case ('IGNORED') {
+                  <svg lucideCircleAlert size="20"></svg>
+                }
+                @default {
+                  <svg lucideCircleCheck size="20"></svg>
+                }
+              }
+              <span>{{ scanText(scan) }}</span>
+            </div>
+            @if (scan.outcome === 'AMBIGUOUS') {
+              <div
+                class="scan-choices"
+                role="group"
+                [attr.aria-label]="'inspectionRun.scan.chooseAsset' | t"
+              >
+                @for (candidate of scan.candidates ?? []; track candidate.uuid) {
+                  <button
+                    type="button"
+                    class="scan-choice"
+                    [disabled]="scanning"
+                    (click)="choose(candidate)"
+                  >
+                    <span>
+                      <strong>{{ candidate.name }}</strong>
+                      <small>{{ candidateMeta(candidate) }}</small>
+                    </span>
+                    @if (candidate.inInspection) {
+                      <span class="in-inspection">{{ 'inspectionRun.scan.inInspection' | t }}</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </ng-template>
+        </section>
+
+        @if (unexpectedItems.length) {
+          <section class="card unexpected">
+            <h2>
+              <svg lucideTriangleAlert size="18"></svg>
+              {{ 'inspectionRun.unexpected.title' | t: { count: unexpectedItems.length } }}
+            </h2>
+            <p class="hint">{{ 'inspectionRun.unexpected.hint' | t }}</p>
+            <ul>
+              @for (item of unexpectedItems; track item.uuid) {
+                <li>
+                  <div>
+                    @if (item.assetUuid) {
+                      <a [routerLink]="['/assets', item.assetUuid]" target="_blank">{{
+                        item.assetName
+                      }}</a>
+                    } @else {
+                      <strong>{{ item.assetName }}</strong>
+                    }
+                    <span class="meta">
+                      @if (item.invId) {
+                        {{ item.invId }} ·
+                      }
+                      @if (item.assetUuid) {
+                        {{
+                          item.locationName
+                            ? ('inspectionRun.unexpected.belongsTo'
+                              | t: { location: item.locationName })
+                            : ('inspectionRun.unexpected.noLocation' | t)
+                        }}
+                      } @else {
+                        {{ 'inspectionRun.unexpected.code' | t }}
+                        <code>{{ item.scannedCode }}</code>
+                      }
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    class="icon-button"
+                    [title]="'inspectionRun.unexpected.remove' | t"
+                    (click)="removeUnexpected(item)"
+                  >
+                    <svg lucideX size="15"></svg>
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        <div class="toolbar list-toolbar">
+          <div class="segmented-tabs" role="tablist">
+            <button
+              type="button"
+              [class.active]="itemFilter === 'ALL'"
+              (click)="itemFilter = 'ALL'"
+            >
+              {{ 'common.all' | t }} <span class="count">{{ count('ALL') }}</span>
+            </button>
+            <button
+              type="button"
+              [class.active]="itemFilter === 'PENDING'"
+              (click)="itemFilter = 'PENDING'"
+            >
+              {{ 'inspectionRun.status.open' | t }}
+              <span class="count">{{ count('PENDING') }}</span>
+            </button>
+            <button
+              type="button"
+              [class.active]="itemFilter === goodStatus"
+              (click)="itemFilter = goodStatus"
+            >
+              {{ goodLabel }} <span class="count">{{ count(goodStatus) }}</span>
+            </button>
+            <button
+              type="button"
+              [class.active]="itemFilter === badStatus"
+              (click)="itemFilter = badStatus"
+            >
+              {{ badLabel }} <span class="count">{{ count(badStatus) }}</span>
+            </button>
+            @if (checkFunction) {
+              <button
+                type="button"
+                [class.active]="itemFilter === 'DEFECT'"
+                (click)="itemFilter = 'DEFECT'"
+              >
+                {{ 'inspectionCondition.DEFECT' | t }}
+                <span class="count" [class.alert]="count('DEFECT')">{{ count('DEFECT') }}</span>
+              </button>
+            }
+          </div>
+          <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input
+              type="text"
+              [(ngModel)]="search"
+              [placeholder]="'inspectionRun.list.searchPlaceholder' | t"
+              [attr.aria-label]="'common.search' | t"
+            />
+            @if (search) {
+              <button
+                type="button"
+                class="clear"
+                [title]="'inspectionRun.list.clearSearch' | t"
+                (click)="search = ''"
+              >
+                <svg lucideX size="15"></svg>
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (!expectedItems.length) {
+          <div class="empty-state">
+            @if (isCheck) {
+              {{ 'inspectionRun.list.emptyCheck' | t }}
+            } @else {
+              {{ 'inspectionRun.list.emptyInventory' | t }}
+            }
+          </div>
+        } @else if (!visibleItems.length) {
+          <div class="empty-state">{{ 'inspectionRun.list.emptyView' | t }}</div>
+        }
+
+        <div class="item-list">
+          @for (row of visibleRows; track row.item.uuid) {
+            @let item = row.item;
+            <article
+              class="item"
+              [style.--asset-depth]="row.ancestors.length"
+              [id]="'item-' + item.uuid"
+              [class.present]="item.status === goodStatus && item.condition !== 'DEFECT'"
+              [class.missing]="item.status === badStatus || item.condition === 'DEFECT'"
+              [class.highlight]="highlighted === item.uuid"
+            >
+              <div class="item-row">
+                @if (row.children.length) {
+                  <button
+                    type="button"
+                    class="icon-button asset-group-toggle"
+                    [attr.aria-expanded]="!collapsedAssets.has(item.uuid)"
+                    [class.collapsed]="collapsedAssets.has(item.uuid)"
+                    [attr.aria-label]="
+                      'inspectionRun.list.childAssets' | t: { name: item.assetName }
+                    "
+                    (click)="toggleAssetGroup(item.uuid)"
+                  >
+                    <svg lucideChevronDown size="16"></svg>
+                  </button>
+                }
+                <span class="status-dot" [title]="statusLabel(item)"></span>
+                <div class="item-main">
+                  <a [routerLink]="['/assets', item.assetUuid]" target="_blank" class="item-name">{{
+                    item.assetName
+                  }}</a>
+                  <span class="meta">{{ itemMeta(item) }}</span>
+                  @if (item.parentAssetNote) {
+                    <span class="meta asset-link-note">{{ item.parentAssetNote }}</span>
+                  }
+                  @if (item.inspectionPolicy === 'MANUAL') {
+                    <span class="badge">{{ 'inspectionRun.list.manualBadge' | t }}</span>
+                  }
+                  @if (row.children.length) {
+                    <span class="meta">{{
+                      'inspectionRun.list.childrenChecked'
+                        | t: { checked: checkedChildren(row), total: row.children.length }
+                    }}</span>
+                  }
+                  @if (item.checkedAt) {
+                    <span class="checked">
+                      @if (item.method === 'SCAN') {
+                        {{
+                          'inspectionRun.list.checkedByScan'
+                            | t
+                              : {
+                                  name: item.checkedByName,
+                                  date: (item.checkedAt | date: 'dd.MM. HH:mm'),
+                                }
+                        }}
+                      } @else {
+                        {{
+                          'inspectionRun.list.checkedManually'
+                            | t
+                              : {
+                                  name: item.checkedByName,
+                                  date: (item.checkedAt | date: 'dd.MM. HH:mm'),
+                                }
+                        }}
+                      }
+                    </span>
+                  }
+                  @if (checkFunction && item.status === 'PRESENT' && !item.condition) {
+                    <span class="checked function-open">{{
+                      'inspectionRun.status.functionOpen' | t
+                    }}</span>
+                  }
+                </div>
+                @if (item.assetUuid) {
+                  <button
+                    type="button"
+                    class="fields-toggle"
+                    [class.open]="expanded.has(item.uuid)"
+                    (click)="toggleExpanded(item)"
+                  >
+                    <span [class.incomplete]="item.status !== 'PENDING' && missingRequired(item)">
+                      {{
+                        fieldsFor(item).length
+                          ? ('inspectionRun.list.fieldsFilled'
+                            | t: { filled: filledCount(item), total: fieldsFor(item).length })
+                          : ('common.details' | t)
+                      }}
+                      @if (item.photos.length) {
+                        · {{ 'inspectionRun.list.photos' | tn: item.photos.length }}
+                      }
+                    </span>
+                    <svg lucideChevronDown size="15"></svg>
+                  </button>
+                }
+                <div class="status-buttons" [class.busy]="busy.has(item.uuid)">
+                  @if (checkFunction) {
+                    <button
+                      type="button"
+                      class="present"
+                      [class.active]="item.condition === 'OK'"
+                      (click)="setCondition(item, 'OK')"
+                      [title]="'inspectionRun.status.presentAndWorking' | t"
+                    >
+                      <svg lucideCheck size="15"></svg>
+                      <span>{{ 'inspectionCondition.OK' | t }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="missing"
+                      [class.active]="item.condition === 'DEFECT'"
+                      (click)="setCondition(item, 'DEFECT')"
+                      [title]="'inspectionRun.status.presentButDefect' | t"
+                    >
+                      <svg lucideWrench size="15"></svg>
+                      <span>{{ 'inspectionCondition.DEFECT' | t }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="missing"
+                      [class.active]="item.status === 'MISSING'"
+                      (click)="setStatus(item, 'MISSING')"
+                    >
+                      <svg lucideX size="15"></svg>
+                      <span>{{ 'inspectionStatus.MISSING' | t }}</span>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="present"
+                      [class.active]="item.status === goodStatus"
+                      (click)="setStatus(item, goodStatus)"
+                    >
+                      <svg lucideCheck size="15"></svg>
+                      <span>{{ goodLabel }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="missing"
+                      [class.active]="item.status === badStatus"
+                      (click)="setStatus(item, badStatus)"
+                    >
+                      <svg lucideX size="15"></svg>
+                      <span>{{ badLabel }}</span>
+                    </button>
+                  }
+                </div>
+                @if (isCheck && item.status === 'PENDING') {
+                  <button
+                    type="button"
+                    class="icon-button"
+                    [title]="'inspectionRun.list.removeItem' | t"
+                    (click)="removeUnexpected(item)"
+                  >
+                    <svg lucideTrash2 size="14"></svg>
+                  </button>
+                }
+              </div>
+
+              @if (expanded.has(item.uuid)) {
+                <app-inspection-item-editor
+                  class="item-fields"
+                  [item]="item"
+                  [fields]="fieldsFor(item)"
+                  [photoStatus]="photoStatus[item.uuid]"
+                  (valueChange)="setValue(item, $event.field, $event.value, $event.debounce)"
+                  (noteChange)="saveNote(item, $event)"
+                  (photoRemove)="removePhoto(item, $event)"
+                  (photoFile)="uploadPhoto(item, $event.file, $event.target)"
+                />
+              }
+            </article>
+          }
+        </div>
+
+        @if (completing) {
+          <div class="dialog-backdrop" (click)="completing = false">
+            <div
+              class="card dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="complete-title"
+              (click)="$event.stopPropagation()"
+            >
+              <h2 id="complete-title">{{ 'inspectionRun.completeDialog.title' | t }}</h2>
+              <ul class="complete-summary">
+                <li>
+                  <strong>{{ count(goodStatus) }}</strong>
+                  {{
+                    isCheck
+                      ? ('inspectionRun.completeDialog.goodOfTotalCheck'
+                        | t: { total: count('ALL') })
+                      : ('inspectionRun.completeDialog.goodOfTotalInventory'
+                        | t: { total: count('ALL') })
+                  }}
+                </li>
+                @if (count(badStatus)) {
+                  <li class="bad">
+                    <strong>{{ count(badStatus) }}</strong>
+                    {{
+                      isCheck
+                        ? ('inspectionRun.completeDialog.badCheck' | t)
+                        : ('inspectionRun.completeDialog.badInventory' | t)
+                    }}
+                  </li>
+                }
+                @if (count('PENDING')) {
+                  <li class="bad">
+                    <strong>{{ count('PENDING') }}</strong>
+                    {{ 'inspectionRun.completeDialog.pending' | t }}
+                  </li>
+                }
+                @if (unexpectedItems.length) {
+                  <li class="warn">
+                    <strong>{{ unexpectedItems.length }}</strong>
+                    {{ 'inspectionRun.completeDialog.unexpected' | t }}
+                  </li>
+                }
+                @if (checkFunction && count('DEFECT')) {
+                  <li class="bad">
+                    <strong>{{ count('DEFECT') }}</strong>
+                    {{ 'inspectionRun.completeDialog.defect' | t }}
+                  </li>
+                }
+                @if (checkFunction && functionOpenCount) {
+                  <li class="warn">
+                    <strong>{{ functionOpenCount }}</strong>
+                    {{ 'inspectionRun.completeDialog.functionOpen' | t }}
+                  </li>
+                }
+                @if (missingRequiredTotal) {
+                  <li class="warn">
+                    <strong>{{ missingRequiredTotal }}</strong>
+                    {{ 'inspectionRun.completeDialog.missingRequired' | t }}
+                  </li>
+                }
+              </ul>
+              <label class="check-field wide">
+                <span class="check-label">{{ 'inspectionRun.completeDialog.comment' | t }}</span>
+                <textarea
+                  [(ngModel)]="comment"
+                  rows="4"
+                  [placeholder]="'inspectionRun.completeDialog.commentPlaceholder' | t"
+                ></textarea>
+              </label>
+              <p class="hint lock-hint">
+                <svg lucideLock size="14"></svg>
+                {{ 'inspectionRun.completeDialog.lockHint' | t }}
+              </p>
+              <div class="dialog-actions">
+                <button type="button" class="secondary-action" (click)="completing = false">
+                  {{ 'common.cancel' | t }}
+                </button>
+                <button
+                  type="button"
+                  class="primary-action"
+                  [disabled]="submitting"
+                  (click)="complete()"
+                >
+                  <svg lucideLock size="15"></svg>
+                  <span>{{
+                    submitting
+                      ? ('inspectionRun.completeDialog.submitting' | t)
+                      : ('inspectionRun.completeDialog.submit' | t)
+                  }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      } @else {
+        <!-- ================= PROTOCOL ================= -->
+        @if (hierarchyRows.length) {
+          <section class="card">
+            <h2>{{ 'inspectionRun.protocol.structure' | t }}</h2>
+            @for (row of hierarchyRows; track row.item.uuid) {
+              <div class="protocol-asset" [style.--asset-depth]="row.ancestors.length">
+                <strong>{{ row.item.assetName }}</strong>
+                <span class="meta">{{ row.item.parentAssetNote || row.item.invId }}</span>
+                <span>{{ statusLabel(row.item) }}</span>
+              </div>
+            }
+          </section>
+        }
+        <section class="card protocol-meta">
+          <dl>
+            <div>
+              <dt>{{ 'terms.inspectionTemplate' | t }}</dt>
+              <dd>
+                {{
+                  'inspectionRun.typeWithMode'
+                    | t: { type: detail.summary.typeName, mode: modeLabel }
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ 'inspectionRun.protocol.scope' | t }}</dt>
+              <dd>{{ detail.summary.filterSummary }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'inspectionRun.protocol.started' | t }}</dt>
+              <dd>
+                {{
+                  'inspectionRun.protocol.byLine'
+                    | t
+                      : {
+                          date: (detail.summary.createdAt | date: 'dd.MM.yyyy HH:mm'),
+                          name: detail.summary.createdByName,
+                        }
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ 'inspectionRun.protocol.completed' | t }}</dt>
+              <dd>
+                {{
+                  'inspectionRun.protocol.byLine'
+                    | t
+                      : {
+                          date: (detail.summary.completedAt | date: 'dd.MM.yyyy HH:mm'),
+                          name: detail.summary.completedByName,
+                        }
+                }}
+              </dd>
+            </div>
+          </dl>
+          @if (detail.comment) {
+            <div class="comment">
+              <dt>{{ 'inspectionRun.protocol.comment' | t }}</dt>
+              <dd>{{ detail.comment }}</dd>
+            </div>
+          }
+        </section>
+
+        @if (isCheck) {
+          <section class="card report-section">
+            <h2 class="bad">
+              {{ 'inspectionRun.protocol.defects' | t: { count: reportWith('FAILED').length } }}
+            </h2>
+            <ng-container
+              *ngTemplateOutlet="
+                checkedTable;
+                context: {
+                  $implicit: reportWith('FAILED'),
+                  empty: ('inspectionRun.protocol.noDefects' | t),
+                }
+              "
+            />
+          </section>
+          <section
+            class="card report-section"
+            [class.empty-section]="!reportWith('PENDING').length"
+          >
+            <h2 class="warn">
+              {{ 'inspectionRun.protocol.notChecked' | t: { count: reportWith('PENDING').length } }}
+            </h2>
+            <ng-container
+              *ngTemplateOutlet="
+                simpleTable;
+                context: {
+                  $implicit: reportWith('PENDING'),
+                  empty: ('inspectionRun.protocol.allChecked' | t),
+                }
+              "
+            />
+          </section>
+          <section class="card report-section">
+            <h2 class="good">
+              {{ 'inspectionRun.protocol.passed' | t: { count: reportWith('PASSED').length } }}
+            </h2>
+            <ng-container
+              *ngTemplateOutlet="
+                checkedTable;
+                context: {
+                  $implicit: reportWith('PASSED'),
+                  empty: ('inspectionRun.protocol.none' | t),
+                }
+              "
+            />
+          </section>
+        } @else {
+          @if (checkFunction) {
+            <section class="card report-section" [class.empty-section]="!reportDefect.length">
+              <h2 class="bad">
+                {{ 'inspectionRun.protocol.defectAssets' | t: { count: reportDefect.length } }}
+              </h2>
+              <ng-container
+                *ngTemplateOutlet="
+                  checkedTable;
+                  context: {
+                    $implicit: reportDefect,
+                    empty: ('inspectionRun.protocol.noDefectAssets' | t),
+                  }
+                "
+              />
+            </section>
+          }
+          <section class="card report-section" [class.empty-section]="!reportMissing.length">
+            <h2 class="bad">
+              {{ 'inspectionRun.protocol.missingAssets' | t: { count: reportMissing.length } }}
+            </h2>
+            <ng-container
+              *ngTemplateOutlet="
+                simpleTable;
+                context: {
+                  $implicit: reportMissing,
+                  empty: ('inspectionRun.protocol.noMissing' | t),
+                }
+              "
+            />
+          </section>
+
+          <section class="card report-section" [class.empty-section]="!unexpectedItems.length">
+            <h2 class="warn">
+              {{ 'inspectionRun.protocol.unexpected' | t: { count: unexpectedItems.length } }}
+            </h2>
+            @if (unexpectedItems.length) {
+              <div class="table-wrap">
+                <table class="report-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'inspectionRun.protocol.columns.object' | t }}</th>
+                      <th>{{ 'inspectionRun.protocol.columns.invIdOrCode' | t }}</th>
+                      <th>{{ 'inspectionRun.protocol.columns.belongsTo' | t }}</th>
+                      <th>{{ 'inspectionRun.protocol.columns.recorded' | t }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of unexpectedItems; track item.uuid) {
+                      <tr>
+                        <td>{{ item.assetName }}</td>
+                        <td class="mono">{{ item.invId || item.scannedCode || '—' }}</td>
+                        <td>
+                          {{
+                            item.assetUuid
+                              ? item.locationName || ('inspectionRun.unexpected.noLocation' | t)
+                              : ('inspectionRun.unexpected.unknownCode' | t)
+                          }}
+                        </td>
+                        <td>
+                          {{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="hint">{{ 'inspectionRun.protocol.none' | t }}</p>
+            }
+          </section>
+
+          <section class="card report-section">
+            <h2 class="good">
+              {{ 'inspectionRun.protocol.checkedAssets' | t: { count: reportPresent.length } }}
+            </h2>
+            <ng-container
+              *ngTemplateOutlet="
+                checkedTable;
+                context: { $implicit: reportPresent, empty: ('inspectionRun.protocol.none' | t) }
+              "
+            />
+          </section>
+        }
+
+        <!-- ================= PRINTED PROTOCOL ================= -->
+        <app-print-document
+          [kind]="'inspectionRun.print.kind' | t"
+          [title]="detail.summary.title"
+          [meta]="printMeta"
+          [signatures]="printSignatures"
+        >
+          <label printOptions class="toggle">
+            <input type="checkbox" name="printPhotos" [(ngModel)]="printPhotos" />
+            <span>{{ 'inspectionRun.print.printPhotos' | t }}</span>
+          </label>
+          <label printOptions class="toggle">
+            <input type="checkbox" name="printPassed" [(ngModel)]="printPassed" />
+            <span>{{
+              isCheck
+                ? ('inspectionRun.print.listPassed' | t)
+                : ('inspectionRun.print.listFound' | t)
+            }}</span>
+          </label>
+
+          <div class="print-stats">
+            <div>
+              <strong>{{ count('ALL') }}</strong
+              ><span>{{
+                isCheck ? ('inspectionRun.stats.devices' | t) : ('inspectionRun.stats.expected' | t)
+              }}</span>
+            </div>
+            <div>
+              <strong>{{ count(goodStatus) }}</strong
+              ><span>{{ goodLabel }}</span>
+            </div>
+            <div>
+              <strong>{{ isCheck ? count(badStatus) : count(badStatus) + count('PENDING') }}</strong
+              ><span>{{
+                isCheck ? ('inspectionRun.stats.defects' | t) : ('inspectionRun.stats.missing' | t)
+              }}</span>
+            </div>
+            @if (checkFunction) {
+              <div>
+                <strong>{{ count('DEFECT') }}</strong
+                ><span>{{ 'inspectionCondition.DEFECT' | t }}</span>
+              </div>
+            }
+            @if (isCheck) {
+              <div>
+                <strong>{{ count('PENDING') }}</strong
+                ><span>{{ 'inspectionStatus.PENDING' | t }}</span>
+              </div>
+            } @else {
+              <div>
+                <strong>{{ unexpectedItems.length }}</strong
+                ><span>{{ 'inspectionRun.stats.unexpected' | t }}</span>
+              </div>
+            }
+          </div>
+
+          @if (detail.comment) {
+            <section class="print-section">
+              <h2>{{ 'inspectionRun.protocol.comment' | t }}</h2>
+              <p class="print-text">{{ detail.comment }}</p>
+            </section>
+          }
+
+          @if (isCheck) {
+            <ng-container
+              *ngTemplateOutlet="
+                printSection;
+                context: {
+                  title: ('inspectionRun.print.defects' | t),
+                  items: reportWith('FAILED'),
+                  empty: ('inspectionRun.protocol.noDefects' | t),
+                }
+              "
+            />
+            <ng-container
+              *ngTemplateOutlet="
+                printSection;
+                context: {
+                  title: ('inspectionRun.print.notChecked' | t),
+                  items: reportWith('PENDING'),
+                  empty: ('inspectionRun.protocol.allChecked' | t),
+                }
+              "
+            />
+            @if (printPassed) {
+              <ng-container
+                *ngTemplateOutlet="
+                  printSection;
+                  context: {
+                    title: ('inspectionRun.print.passed' | t),
+                    items: reportWith('PASSED'),
+                    empty: ('inspectionRun.protocol.none' | t),
+                  }
+                "
+              />
+            }
+          } @else {
+            @if (checkFunction) {
+              <ng-container
+                *ngTemplateOutlet="
+                  printSection;
+                  context: {
+                    title: ('inspectionRun.print.defectAssets' | t),
+                    items: reportDefect,
+                    empty: ('inspectionRun.protocol.noDefectAssets' | t),
+                  }
+                "
+              />
+            }
+            <ng-container
+              *ngTemplateOutlet="
+                printSection;
+                context: {
+                  title: ('inspectionRun.print.missingAssets' | t),
+                  items: reportMissing,
+                  empty: ('inspectionRun.protocol.noMissing' | t),
+                }
+              "
+            />
+            <ng-container
+              *ngTemplateOutlet="
+                printSection;
+                context: {
+                  title: ('inspectionRun.print.unexpected' | t),
+                  items: unexpectedItems,
+                  empty: ('inspectionRun.protocol.none' | t),
+                }
+              "
+            />
+            @if (printPassed) {
+              <ng-container
+                *ngTemplateOutlet="
+                  printSection;
+                  context: {
+                    title: ('inspectionRun.print.foundAssets' | t),
+                    items: reportPresent,
+                    empty: ('inspectionRun.protocol.none' | t),
+                  }
+                "
+              />
+            }
+          }
+
+          @if (hasHierarchy) {
+            <section class="print-section">
+              <h2>{{ 'inspectionRun.protocol.structure' | t }}</h2>
+              @for (row of hierarchyRows; track row.item.uuid) {
+                <div class="print-tree-row" [style.--asset-depth]="row.ancestors.length">
+                  <span
+                    >{{ row.item.assetName }}
+                    <span class="print-muted">{{
+                      row.item.parentAssetNote || row.item.invId
+                    }}</span></span
+                  >
+                  <span [class.print-alert]="printBad(row.item)">{{ printStatus(row.item) }}</span>
+                </div>
+              }
+            </section>
+          }
+        </app-print-document>
+      }
+    }
+  </div>
+</section>
+
+<!-- assets without check values: missing / not checked -->
+<ng-template #simpleTable let-items let-empty="empty">
+  @if (items.length) {
+    <div class="table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>{{ 'terms.asset' | t }}</th>
+            <th>{{ 'terms.invId' | t }}</th>
+            <th>{{ 'terms.assetType' | t }}</th>
+            <th>{{ 'terms.location' | t }}</th>
+            <th>{{ 'inspectionRun.protocol.columns.status' | t }}</th>
+            <th>{{ 'inspectionRun.protocol.columns.note' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.uuid) {
+            <tr>
+              <td>
+                {{ item.assetName }}
+                @if (item.photos.length) {
+                  <span class="report-photos">
+                    @for (photo of item.photos; track photo.uuid) {
+                      <button type="button" (click)="imageViewer.open(item.photos, $index)">
+                        <img
+                          [src]="photo.thumbnailUrl"
+                          [alt]="'inspectionRun.protocol.photo' | t"
+                        />
+                      </button>
+                    }
+                  </span>
+                }
+              </td>
+              <td class="mono">{{ item.invId || '—' }}</td>
+              <td>{{ item.assetTypeName || '—' }}</td>
+              <td>{{ item.locationName || '—' }}</td>
+              <td>
+                {{ statusLabel(item) }}
+                @if (item.checkedByName) {
+                  <span class="by"
+                    >({{ item.checkedByName }}, {{ item.checkedAt | date: 'dd.MM. HH:mm' }})</span
+                  >
+                }
+              </td>
+              <td>{{ item.note || '' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="hint">{{ empty }}</p>
+  }
+</ng-template>
+
+<!-- checked assets with their check values -->
+<ng-template #checkedTable let-items let-empty="empty">
+  @if (items.length) {
+    <div class="table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>{{ 'terms.asset' | t }}</th>
+            <th>{{ 'terms.invId' | t }}</th>
+            <th>{{ 'terms.assetType' | t }}</th>
+            @if (checkFunction) {
+              <th>{{ 'inspectionRun.protocol.columns.function' | t }}</th>
+            }
+            <th>{{ 'inspectionRun.protocol.columns.values' | t }}</th>
+            <th>{{ 'inspectionRun.protocol.columns.checked' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.uuid) {
+            <tr>
+              <td>
+                {{ item.assetName }}
+                @if (item.note) {
+                  <span class="note">{{
+                    'inspectionRun.protocol.note' | t: { note: item.note }
+                  }}</span>
+                }
+                @if (item.photos.length) {
+                  <span class="report-photos">
+                    @for (photo of item.photos; track photo.uuid) {
+                      <button type="button" (click)="imageViewer.open(item.photos, $index)">
+                        <img
+                          [src]="photo.thumbnailUrl"
+                          [alt]="'inspectionRun.protocol.photo' | t"
+                        />
+                      </button>
+                    }
+                  </span>
+                }
+              </td>
+              <td class="mono">{{ item.invId || '—' }}</td>
+              <td>{{ item.assetTypeName || '—' }}</td>
+              @if (checkFunction) {
+                <td [class.bad]="item.condition === 'DEFECT'">{{ conditionLabel(item) }}</td>
+              }
+              <td>
+                @if (item.values.length) {
+                  <dl class="values">
+                    @for (entry of item.values; track entry.fieldUuid) {
+                      <div>
+                        <dt>{{ entry.fieldName }}</dt>
+                        <dd [class.no]="entry.fieldType === 'BOOLEAN' && entry.value === 'false'">
+                          {{ formatValue(entry.value, entry.fieldType) }}
+                        </dd>
+                      </div>
+                    }
+                  </dl>
+                } @else {
+                  <span class="by">—</span>
+                }
+              </td>
+              <td>
+                {{ item.checkedByName }}
+                <span class="by"
+                  >{{ item.checkedAt | date: 'dd.MM. HH:mm' }} ·
+                  {{
+                    item.method === 'SCAN'
+                      ? ('inspectionRun.protocol.methodScan' | t)
+                      : ('inspectionRun.protocol.methodManual' | t)
+                  }}</span
+                >
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="hint">{{ empty }}</p>
+  }
+</ng-template>
+
+<!-- one section of the printed protocol; the table header repeats on every page -->
+<ng-template #printSection let-title="title" let-items="items" let-empty="empty">
+  <section class="print-section">
+    <h2>
+      {{ title }} <span class="print-muted">({{ items.length }})</span>
+    </h2>
+    @if (items.length) {
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>{{ 'terms.asset' | t }}</th>
+            <th>{{ 'terms.invId' | t }}</th>
+            <th>{{ 'inspectionRun.protocol.columns.typeLocation' | t }}</th>
+            <th>{{ 'inspectionRun.protocol.columns.result' | t }}</th>
+            @if (detail?.fields?.length) {
+              <th>{{ 'inspectionRun.protocol.columns.values' | t }}</th>
+            }
+            <th>{{ 'inspectionRun.protocol.columns.recorded' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items; track item.uuid) {
+            <tr>
+              <td>
+                <strong>{{ item.assetName }}</strong>
+                @if (item.parentAssetNote) {
+                  <span class="print-muted print-block">{{ item.parentAssetNote }}</span>
+                }
+                @if (item.note) {
+                  <span class="print-block">{{
+                    'inspectionRun.protocol.note' | t: { note: item.note }
+                  }}</span>
+                }
+                @if (printPhotos && item.photos.length) {
+                  <span class="print-photos">
+                    @for (photo of item.photos; track photo.uuid) {
+                      <img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" />
+                    }
+                  </span>
+                }
+              </td>
+              <td class="print-mono">{{ item.invId || item.scannedCode || '—' }}</td>
+              <td>
+                {{ item.assetTypeName || '—' }}
+                @if (item.expected && item.locationName) {
+                  <span class="print-muted print-block">{{ item.locationName }}</span>
+                }
+              </td>
+              <td [class.print-alert]="printBad(item)">{{ printStatus(item) }}</td>
+              @if (detail?.fields?.length) {
+                <td>
+                  @for (entry of item.values; track entry.fieldUuid) {
+                    <span class="print-block"
+                      ><span class="print-muted">{{ entry.fieldName }}:</span>
+                      {{ formatValue(entry.value, entry.fieldType) }}</span
+                    >
+                  } @empty {
+                    <span class="print-muted">—</span>
+                  }
+                </td>
+              }
+              <td>
+                @if (item.checkedAt) {
+                  {{ item.checkedByName }}
+                  <span class="print-muted print-block"
+                    >{{ item.checkedAt | date: 'dd.MM.yyyy HH:mm' }} ·
+                    {{
+                      item.method === 'SCAN'
+                        ? ('inspectionRun.protocol.methodScan' | t)
+                        : ('inspectionRun.protocol.methodManual' | t)
+                    }}</span
+                  >
+                } @else {
+                  <span class="print-muted">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="print-muted">{{ empty }}</p>
+    }
+  </section>
+</ng-template>

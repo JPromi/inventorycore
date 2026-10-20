@@ -178,7 +178,21 @@ public class ApiMapper {
             asset.getAreas().stream().map(Area::getUuid).collect(Collectors.toSet()),
             asset.getParentAsset() == null ? null : asset.getParentAsset().getUuid(),
             asset.getParentAssetNote(),
-            asset.getInspectionPolicy()
+            asset.getInspectionPolicy(),
+            asset.getStatus() == null ? null : toResponse(asset.getStatus()),
+            asset.getStatusChangedAt()
+        );
+    }
+
+    public com.jpromi.inventorycore.dto.AssetStatusResponse toResponse(com.jpromi.inventorycore.entity.AssetStatus status) {
+        return new com.jpromi.inventorycore.dto.AssetStatusResponse(
+            status.getUuid(),
+            status.getSystemKey(),
+            status.getName(),
+            status.getColor(),
+            status.getCategory(),
+            status.getArea() == null ? null : status.getArea().getUuid(),
+            status.isDeleted()
         );
     }
 

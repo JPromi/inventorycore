@@ -1,0 +1,57 @@
+<section class="page">
+  <div class="page-shell">
+    <a class="back-link" [routerLink]="['/assets', uuid]">
+      <svg lucideArrowLeft size="16"></svg>
+      <span>{{ 'objectLog.backTo' | t: { name: asset?.name || ('terms.asset' | t) } }}</span>
+    </a>
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ 'terms.asset' | t }} · {{ asset?.name }}</p>
+        <h1>
+          <svg lucideCircleDot size="20"></svg>
+          <span>{{ 'assetStatus.historyPage.title' | t }}</span>
+        </h1>
+      </div>
+    </header>
+
+    @if (loading) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else if (error) {
+      <p class="error">{{ error }}</p>
+    } @else if (!history.length) {
+      <div class="empty-state">{{ 'assetStatus.historyPage.empty' | t }}</div>
+    } @else {
+      <ol class="card history">
+        @for (entry of history; track entry.uuid) {
+          <li>
+            <div class="change">
+              @if (entry.fromStatus) {
+                <app-asset-status-badge [status]="entry.fromStatus" />
+                <svg lucideArrowRight size="14" aria-hidden="true"></svg>
+              } @else {
+                <span class="first">{{ 'assetStatus.historyPage.initial' | t }}</span>
+              }
+              <app-asset-status-badge [status]="entry.toStatus" />
+            </div>
+            @if (entry.comment) {
+              <p class="comment">{{ entry.comment }}</p>
+            }
+            <p class="meta">
+              <time [attr.datetime]="entry.changedAt">{{ entry.changedAt | date: 'dd.MM.yyyy HH:mm' }}</time>
+              @if (entry.changedByName) {
+                · {{ entry.changedByName }}
+              }
+              @if (entry.inspectionUuid) {
+                ·
+                <a [routerLink]="['/inspections', entry.inspectionUuid]">
+                  <svg lucideClipboardCheck size="13"></svg
+                  >{{ 'assetStatus.fromInspection' | t: { title: entry.inspectionTitle } }}
+                </a>
+              }
+            </p>
+          </li>
+        }
+      </ol>
+    }
+  </div>
+</section>

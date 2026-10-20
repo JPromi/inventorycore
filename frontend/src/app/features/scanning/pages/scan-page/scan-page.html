@@ -1,0 +1,290 @@
+<section class="page">
+    <div class="page-shell">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">{{ 'scan.eyebrow' | t }}</p>
+                <h1>
+                    <svg lucideScanBarcode size="20"></svg>
+                    <span>{{ 'scan.title' | t }}</span>
+                </h1>
+            </div>
+            <div class="header-actions">
+                <button
+                    type="button"
+                    class="icon-button"
+                    [title]="(sound ? 'scan.soundOff' : 'scan.soundOn') | t"
+                    [attr.aria-pressed]="sound"
+                    (click)="toggleSound()"
+                >
+                    @if (sound) {
+                        <svg lucideVolume2 size="17"></svg>
+                    } @else {
+                        <svg lucideVolumeX size="17"></svg>
+                    }
+                </button>
+                <label class="toggle auto-open" [title]="'scan.autoOpenHint' | t">
+                    <input type="checkbox" [checked]="autoOpen" (change)="toggleAutoOpen()" />
+                    <span>{{ 'scan.autoOpen' | t }}</span>
+                </label>
+            </div>
+        </header>
+
+        <div class="mode-switch" role="tablist" [attr.aria-label]="'scan.modeLabel' | t">
+            <button type="button" role="tab" [class.active]="mode === 'scanner'" [attr.aria-selected]="mode === 'scanner'" (click)="setMode('scanner')">
+                <svg lucideKeyboard size="18"></svg>
+                <span>
+                    <strong>{{ 'scan.modeScanner' | t }}</strong>
+                    <small>{{ 'scan.modeScannerHint' | t }}</small>
+                </span>
+            </button>
+            <button
+                type="button"
+                role="tab"
+                [class.active]="mode === 'camera'"
+                [attr.aria-selected]="mode === 'camera'"
+                [disabled]="!cameraAvailable"
+                [title]="cameraAvailable ? '' : ('scan.cameraUnavailable' | t)"
+                (click)="setMode('camera')"
+            >
+                <svg lucideCamera size="18"></svg>
+                <span>
+                    <strong>{{ 'scan.modeCamera' | t }}</strong>
+                    <small>{{ (cameraAvailable ? 'scan.modeCameraHint' : 'scan.cameraHttpsOnly') | t }}</small>
+                </span>
+            </button>
+        </div>
+
+        <div class="scan-layout">
+            <div class="input-panel">
+                @if (mode === 'scanner') {
+                    <form class="card scanner-card" (ngSubmit)="submitManual()">
+                        <label class="scan-field" [class.busy]="lookingUp">
+                            <svg class="field-icon" lucideScanBarcode size="22"></svg>
+                            <input
+                                #scanInput
+                                type="text"
+                                name="code"
+                                [(ngModel)]="manualCode"
+                                [placeholder]="'scan.placeholder' | t"
+                                [attr.aria-label]="'scan.inputLabel' | t"
+                                autocomplete="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                enterkeyhint="search"
+                            />
+                            <button type="submit" class="submit" [title]="'scan.submit' | t" [disabled]="!manualCode.trim()">
+                                <svg lucideCornerDownLeft size="18"></svg>
+                            </button>
+                        </label>
+                        <p class="hint">
+                            {{ 'scan.scannerHint.active' | t }} {{ 'scan.scannerHint.enterBefore' | t }} <kbd>Enter</kbd> {{ 'scan.scannerHint.enterAfter' | t }}
+                            {{ 'scan.scannerHint.fields' | t }}
+                        </p>
+                    </form>
+                } @else if (cameraOpen) {
+                    <app-camera-view
+                        [title]="'scan.title' | t"
+                        [hint]="'scan.cameraHint' | t"
+                        [sheetOpen]="sheetOpen"
+                        (code)="onCameraCode($event)"
+                        (closed)="cameraOpen = false"
+                        (sheetClose)="sheetOpen = false"
+                    >
+                        @if (error) {
+                            <p class="sheet-message failure">
+                                <svg lucideCircleAlert size="20"></svg>
+                                <span>{{ error }}</span>
+                            </p>
+                        } @else if (lookingUp && !result) {
+                            <p class="sheet-message">{{ 'scan.searching' | t }}</p>
+                        } @else if (result) {
+                            @if (!matchCount) {
+                                <p class="sheet-message failure">
+                                    <svg lucideCircleAlert size="20"></svg>
+                                    <span><strong>{{ 'scan.nothingFoundFor' | t }}</strong> <code>{{ result.code }}</code></span>
+                                </p>
+                            } @else {
+                                <p class="sheet-title">
+                                    {{ matchCount > 1 ? ('scan.selectHit' | t: { count: matchCount }) : matchText(result, result.assets[0]) }}
+                                </p>
+                                <div class="sheet-hits">
+                                    @for (asset of result.assets; track asset.uuid) {
+                                        <a class="sheet-hit" [routerLink]="['/assets', asset.uuid]">
+                                            <span class="thumb">
+                                                @if (thumbnail(asset); as url) {
+                                                    <img [src]="url" alt="" />
+                                                } @else {
+                                                    <svg lucideBoxes size="26"></svg>
+                                                }
+                                            </span>
+                                            <span class="info">
+                                                <strong>{{ asset.name }}</strong>
+                                                @for (line of assetLines(asset); track $index) {
+                                                    <small>{{ line }}</small>
+                                                }
+                                            </span>
+                                            <svg class="go" lucideChevronRight size="20"></svg>
+                                        </a>
+                                    }
+                                    @for (location of result.locations; track location.uuid) {
+                                        <a class="sheet-hit" [routerLink]="['/locations', location.uuid]">
+                                            <span class="thumb">
+                                                @if (thumbnail(location); as url) {
+                                                    <img [src]="url" alt="" />
+                                                } @else {
+                                                    <svg lucideMapPin size="26"></svg>
+                                                }
+                                            </span>
+                                            <span class="info">
+                                                <strong>{{ locationName(location.uuid) ?? location.name }}</strong>
+                                                <small>{{ 'scan.locationAssets' | tn: (location.assetUuids?.length ?? 0) }}</small>
+                                            </span>
+                                            <svg class="go" lucideChevronRight size="20"></svg>
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        }
+                    </app-camera-view>
+                } @else {
+                    <div class="card camera-off">
+                        <svg lucideCameraOff size="30"></svg>
+                        <span>{{ 'scan.cameraOff' | t }}</span>
+                        <button type="button" class="primary-action" (click)="openCamera()">
+                            <svg lucideCamera size="17"></svg>
+                            <span>{{ 'scan.startCamera' | t }}</span>
+                        </button>
+                    </div>
+                }
+
+                @if (history.length) {
+                    <section class="card history">
+                        <div class="card-title">
+                            <h2><svg lucideHistory size="16"></svg> {{ 'common.history' | t }}</h2>
+                            <button type="button" class="icon-button" [title]="'scan.clearHistory' | t" (click)="clearHistory()">
+                                <svg lucideTrash2 size="15"></svg>
+                            </button>
+                        </div>
+                        <ul>
+                            @for (entry of history; track $index) {
+                                <li [class.missing]="!entry.label">
+                                    <span class="time">{{ entry.time.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}</span>
+                                    @if (entry.route) {
+                                        <a [routerLink]="entry.route">{{ entry.label }}</a>
+                                    } @else {
+                                        <span class="label">{{ entry.label ?? ('scan.notFound' | t) }}</span>
+                                    }
+                                    <code [title]="entry.code">{{ entry.code }}</code>
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </div>
+
+            <div class="result-panel" aria-live="polite">
+                @if (error) {
+                    <div class="card result-message failure">
+                        <svg lucideCircleAlert size="22"></svg>
+                        <span>{{ error }}</span>
+                    </div>
+                } @else if (lookingUp && !result) {
+                    <div class="card result-message">{{ 'scan.searching' | t }}</div>
+                } @else if (!result) {
+                    <div class="card result-message placeholder">
+                        <svg lucideScanBarcode size="34"></svg>
+                        <strong>{{ 'scan.ready' | t }}</strong>
+                        <span>{{ 'scan.readyHint' | t }}</span>
+                    </div>
+                } @else if (!matchCount) {
+                    <div class="card result-message failure">
+                        <svg lucideCircleAlert size="22"></svg>
+                        <span>
+                            <strong>{{ 'scan.nothingFoundFor' | t }}</strong> <code>{{ result.code }}</code>.
+                            {{ 'scan.noMatchReason' | t }}
+                        </span>
+                    </div>
+                } @else {
+                    @if (matchCount > 1) {
+                        <p class="hint">{{ 'scan.hitsFor' | t: { count: matchCount } }} <code>{{ result.code }}</code> {{ 'scan.pleaseSelect' | t }}</p>
+                    }
+                    @for (asset of result.assets; track asset.uuid) {
+                        <article class="card result-card" [class.compact]="matchCount > 1">
+                            <a class="result-image" [routerLink]="['/assets', asset.uuid]">
+                                @if (thumbnail(asset); as url) {
+                                    <img [src]="url" [alt]="asset.name" />
+                                } @else {
+                                    <svg lucideBoxes size="34"></svg>
+                                }
+                            </a>
+                            <div class="result-body">
+                                <p class="eyebrow">{{ matchText(result, asset, 'asset') }}</p>
+                                <h2>{{ asset.name }}</h2>
+                                <dl>
+                                    @if (asset.invId) {
+                                        <div><dt>{{ 'terms.invId' | t }}</dt><dd>{{ asset.invId }}</dd></div>
+                                    }
+                                    @if (typeName(asset); as type) {
+                                        <div><dt>{{ 'terms.assetType' | t }}</dt><dd>{{ type }}</dd></div>
+                                    }
+                                    @if (locationName(asset.locationUuid); as location) {
+                                        <div><dt>{{ 'terms.location' | t }}</dt><dd>{{ location }}</dd></div>
+                                    }
+                                    @if (asset.inventoryNumber) {
+                                        <div><dt>{{ 'terms.inventoryNumber' | t }}</dt><dd>{{ asset.inventoryNumber }}</dd></div>
+                                    }
+                                    @if (asset.serialNumber) {
+                                        <div><dt>{{ 'terms.serialNumber' | t }}</dt><dd>{{ asset.serialNumber }}</dd></div>
+                                    }
+                                </dl>
+                                @if (asset.tags?.length) {
+                                    <div class="chip-list">
+                                        @for (tag of asset.tags; track tag.uuid) {
+                                            <span class="chip"><span class="dot" [style.background]="tag.color || null"></span>{{ tag.name }}</span>
+                                        }
+                                    </div>
+                                }
+                                @if (asset.description && matchCount === 1) {
+                                    <p class="description">{{ asset.description }}</p>
+                                }
+                                <div class="result-actions">
+                                    <a class="primary-action" [routerLink]="['/assets', asset.uuid]">
+                                        <svg lucideExternalLink size="16"></svg>
+                                        <span>{{ 'scan.openDetails' | t }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                    @for (location of result.locations; track location.uuid) {
+                        <article class="card result-card" [class.compact]="matchCount > 1">
+                            <a class="result-image" [routerLink]="['/locations', location.uuid]">
+                                @if (thumbnail(location); as url) {
+                                    <img [src]="url" [alt]="location.name" />
+                                } @else {
+                                    <svg lucideMapPin size="34"></svg>
+                                }
+                            </a>
+                            <div class="result-body">
+                                <p class="eyebrow">{{ matchText(result, undefined, 'location') }}</p>
+                                <h2>{{ locationName(location.uuid) ?? location.name }}</h2>
+                                <dl>
+                                    @if (location.address) {
+                                        <div><dt>{{ 'scan.address' | t }}</dt><dd>{{ location.address }}</dd></div>
+                                    }
+                                    <div><dt>{{ 'terms.assets' | t }}</dt><dd>{{ location.assetUuids?.length ?? 0 }}</dd></div>
+                                </dl>
+                                <div class="result-actions">
+                                    <a class="primary-action" [routerLink]="['/locations', location.uuid]">
+                                        <svg lucideExternalLink size="16"></svg>
+                                        <span>{{ 'scan.openLocation' | t }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>

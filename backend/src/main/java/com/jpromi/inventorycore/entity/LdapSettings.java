@@ -96,7 +96,7 @@ public class LdapSettings {
         }
         String attribute = groupNameAttribute;
         if (attribute == null || !attribute.matches("[a-zA-Z][a-zA-Z0-9-]*")) {
-            throw new IllegalArgumentException("Ungueltiges Attribut fuer Gruppennamen.");
+            throw new IllegalArgumentException("Ungültiges Attribut für Gruppennamen.");
         }
         String choices = selectedGroupNames.stream().sorted()
             .map(name -> "(" + attribute + "=" + org.springframework.ldap.support.LdapEncoder.filterEncode(name) + ")")

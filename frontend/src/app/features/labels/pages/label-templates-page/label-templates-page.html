@@ -1,0 +1,103 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (list.loaded) { {{ 'labelTemplates.count' | tn: list.total }} }</p>
+            <h1>
+                <svg lucideQrCode size="20"></svg>
+                <span>{{ 'terms.labelTemplates' | t }}</span>
+            </h1>
+        </div>
+        @if (canCreate) {
+            <div class="header-actions">
+                <button type="button" class="primary-action" (click)="create()">
+                    <svg lucidePlus size="17"></svg>
+                    <span>{{ 'labelTemplates.newTemplate' | t }}</span>
+                </button>
+            </div>
+        }
+    </header>
+
+    <p class="hint intro">{{ 'labelTemplates.intro' | t }}</p>
+
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" lucideSearch size="18"></svg>
+            <input type="text" [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keydown.escape)="clearSearch()"
+                [placeholder]="'labelTemplates.searchPlaceholder' | t" [attr.aria-label]="'common.search' | t" />
+            @if (search) {
+                <button type="button" class="clear" [title]="'labelTemplates.clearSearch' | t" (click)="clearSearch()">
+                    <svg lucideX size="15"></svg>
+                </button>
+            }
+        </div>
+    </div>
+
+    <app-list-actions #selection [items]="selectionItems" [disabled]="!list.loaded" [canDelete]="canBulkDelete"
+        [deleteItem]="bulkDelete" (deleted)="removed($event)" />
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (list.error && !templates.length) {
+        <p class="error">{{ 'labelTemplates.loadFailed' | t }}</p>
+    } @else if (!list.loaded) {
+        <p class="empty">{{ 'labelTemplates.loading' | t }}</p>
+    } @else if (!templates.length) {
+        <div class="empty-state">{{ (search.trim() ? 'labelTemplates.noneFound' : 'labelTemplates.empty') | t }}</div>
+    } @else {
+        @for (group of groups; track group.areaUuid) {
+            <section class="area-group">
+                <h2>{{ group.areaName }}</h2>
+                <div class="cards">
+                    @for (template of group.templates; track template.uuid) {
+                        <article class="template-card" [appSelectableRow]="selection" [selectionItem]="template" [class.is-selected]="selection.isSelected(template)" [class.clickable]="canEdit(template)" (click)="edit(template)">
+                            <app-selection-checkbox [selection]="selection" [item]="template" />
+                            <div class="preview">
+                                <app-label-renderer
+                                    [style.zoom]="zoom(template)"
+                                    [widthMm]="template.widthMm"
+                                    [heightMm]="template.heightMm"
+                                    [elements]="elements(template)"
+                                    [context]="sample"
+                                />
+                            </div>
+                            <div class="info">
+                                <div>
+                                    <strong>{{ template.name }}</strong>
+                                    <span class="muted">{{ template.widthMm }} × {{ template.heightMm }} mm</span>
+                                </div>
+                                @if (template.defaultForArea) {
+                                    <span class="badge accent">{{ 'labelTemplates.default' | t }}</span>
+                                }
+                            </div>
+                            <div class="actions">
+                                @if (canEdit(template)) {
+                                    <button type="button" class="icon-button" [title]="'common.edit' | t" (click)="$event.stopPropagation(); edit(template)">
+                                        <svg lucidePencil size="15"></svg>
+                                    </button>
+                                }
+                                @if (canCreate) {
+                                    <button type="button" class="icon-button" [title]="'labelTemplates.duplicate' | t" (click)="duplicate(template, $event)">
+                                        <svg lucideCopy size="15"></svg>
+                                    </button>
+                                }
+                                @if (canDelete(template)) {
+                                    <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(template, $event)">
+                                        <svg lucideTrash2 size="15"></svg>
+                                    </button>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+        <div class="list-end" (appInfiniteScroll)="list.loadMore()" [scrollDisabled]="list.loading || !list.hasMore">
+            @if (list.loading) {
+                <span>{{ 'labelTemplates.loadingMore' | t }}</span>
+            } @else if (list.error) {
+                <button type="button" class="secondary-action compact" (click)="list.loadMore()">{{ 'labelTemplates.retry' | t }}</button>
+            }
+        </div>
+    }
+</section>

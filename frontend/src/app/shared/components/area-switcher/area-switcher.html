@@ -1,0 +1,48 @@
+@if (areaService.areas$ | async; as areas) {
+    @if (areas.length > 1) {
+        @let selected = (areaService.selected$ | async) ?? [];
+        <button
+            #dropdownTrigger
+            type="button"
+            class="trigger"
+            [class.filtered]="selected.length"
+            (click)="open = !open"
+            [attr.aria-expanded]="open"
+            [title]="'components.areaSwitcher.triggerTitle' | t"
+        >
+            <svg lucideLayers size="16"></svg>
+            <span class="text">
+                <small>{{ 'terms.area' | t }}</small>
+                <span>{{ label(areas, selected) }}</span>
+            </span>
+            <svg class="chevron" lucideChevronsUpDown size="15"></svg>
+        </button>
+
+        @if (open) {
+            <div class="panel" role="menu" [appDropdownPosition]="dropdownTrigger" dropdownPlacement="top-start">
+                <button type="button" class="option" [class.selected]="!selected.length" (click)="selectAll()">
+                    <span class="check">
+                        @if (!selected.length) {
+                            <svg lucideCheck size="14"></svg>
+                        }
+                    </span>
+                    <span class="name">{{ 'components.areaSwitcher.allAreas' | t }}</span>
+                </button>
+                <div class="divider"></div>
+                @for (area of areas; track area.uuid) {
+                    <button type="button" class="option" [class.selected]="isSelected(area.uuid)" (click)="toggle(area.uuid)">
+                        <span class="check box">
+                            @if (isSelected(area.uuid)) {
+                                <svg lucideCheck size="13"></svg>
+                            }
+                        </span>
+                        <span class="dot" [style.background]="area.color || 'var(--text-subtle)'"></span>
+                        <span class="name">{{ area.name }}</span>
+                        <span class="only" role="button" (click)="only(area.uuid, $event)">{{ 'components.areaSwitcher.only' | t }}</span>
+                    </button>
+                }
+                <p class="note">{{ 'components.areaSwitcher.note' | t }}</p>
+            </div>
+        }
+    }
+}

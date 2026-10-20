@@ -9,10 +9,13 @@ Local development uses Angular's proxy for `/api`, `/oauth2`, and `/login/oauth2
 ## Frontend
 
 - `app.routes.ts` defines guarded routes, lazy-loaded feature pages, and reusable inventory page/form configuration.
-- `core/pages` contains inventory, inspection, scan, profile, and administration workflows. Create/edit inventory forms share a page rather than a dialog.
-- `core/components` contains shared controls, confirmation dialogs, uploads, and activity displays. `core/routes` contains the navigation shell.
-- `core/service` owns HTTP access and application state. Auth and area selection use RxJS subjects; permissions determine UI visibility.
-- `core/labels` renders label layouts and barcodes using bwip-js. Camera scanning uses ZXing. PWA support handles installation, connectivity, and updates.
+- `features/<domain>/pages` owns inventory, inspection, scanning, tags, profile, authentication, label, audit, and administration workflows. Feature HTTP clients live in their domain's `data-access` folder. Inventory create/edit still shares a page rather than duplicating forms.
+- `shared/components` contains reusable controls, confirmation dialogs, image viewing/uploads, and printing. `shared/util` contains reusable helpers. A shared placeholder page handles unfinished/missing pages.
+- `layout/navigation` owns the shell, navigation configuration, and the extracted `user-menu`. Icons and routes have one navigation configuration; profile/logout/build-info state belongs to the user-menu component.
+- `core` is reserved for cross-application auth, guards, permissions, area selection, customization, app metadata, PWA, i18n, and authentication models. Auth and area selection use RxJS subjects.
+- `features/labels` renders label layouts and barcodes with bwip-js. `features/scanning` owns scanner helpers using ZXing. Shared controls that still depend on domain types are listed for a later ownership cleanup in [optimization review](OPTIMIZATION.md).
+
+Relative imports, dynamic page imports, and documentation file links were migrated with the folder moves; public browser routes are unchanged. `/dashboard` is the start page (`features/dashboard`, also the target of `/` and the brand link); its numbers come from one `GET /api/dashboard` call counted on the server. Do not infer routes from physical folder names.
 
 Change detection is zone-based. Both the root provider and the build's Zone.js polyfill are necessary for async workflows; see [conventions](CONVENTIONS.md). List pages load server-side pages with search and filters; see [conventions](CONVENTIONS.md).
 
@@ -28,12 +31,14 @@ Change detection is zone-based. Both the root provider and the build's Zone.js p
 | `files` | Validated image processing, filesystem storage, and thumbnails |
 | `initializer` | Startup schema compatibility and default data |
 
-This is not a strict service-only business layer: inventory and administration controllers contain mutation logic. Extend the local pattern unless the task justifies a focused extraction. A WebSocket dependency exists, but no WebSocket configuration or application message flow is currently implemented.
+`InventoryListController` only binds HTTP parameters and delegates to `InventoryListService`, whose read-only transaction covers authorization, filtering, sorting, paging, and DTO mapping. Other inventory and administration controllers still contain mutation logic. Extract one cohesive use case at a time, preserving transaction and authorization boundaries rather than creating generic CRUD base classes. A WebSocket dependency exists, but no WebSocket configuration or application message flow is currently implemented.
 
 ## Domain Rules to Preserve
 
 Assets reference an optional type and location; locations form a tree. Types provide custom field definitions and inherited tags. Asset responses combine type tags with directly assigned tags. Assets, types, and locations belong to areas used by the permission matrix.
 
-Inspection runs support inventory and individual-check modes. Expected items are selected at creation; completed runs become immutable. Stored name snapshots keep protocols readable after related objects change. Recurring due dates are calculated separately from individual inspection runs.
+Every asset has a status (`AssetStatusService`). Six built-in statuses (Vorhanden, In Lieferung, Defekt, In Reparatur, Nicht auffindbar, Ausgeschieden) exist everywhere and cannot be changed; custom statuses belong to one area, are maintained with the configuration rights (`ASSET_TYPE`) of that area, and are visible only to users with access to it. Each status has a category (`ACTIVE`, `DEFECT`, `MISSING`, `RETIRED`) that drives behavior: retired assets are shown grey and are no longer due for or added to inspections. Status changes need the right to edit or inspect the asset, may carry a comment, and are recorded in `asset_status_changes`. Completing an inspection sets statuses from the results: defects and failed checks give "Defekt" (an asset already in a defect status keeps it), expected assets not found give "Nicht auffindbar", passed checks end defect, missing, and in-delivery statuses, while only finding an asset ends missing and in-delivery but not a defect. Retired assets are never changed automatically.
+
+Inspection runs support inventory and individual-check modes. Expected items are selected at creation; API writes reject completed runs. This is not yet a concurrency guarantee: completion and in-flight writes need coordinated locking/version checks. Stored name snapshots keep protocols readable after related objects change, but template field definitions are still read live. See the remaining integrity work in [optimization review](OPTIMIZATION.md). Recurring due dates are calculated separately from individual inspection runs.
 
 The current model uses `AssetType`, not a separate category entity. Permissions are area-based, not arbitrary per-object grants. See [database](DATABASE.md) and [security](SECURITY.md) before changing these boundaries.

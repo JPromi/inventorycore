@@ -1,0 +1,38 @@
+<dialog
+  #dialog
+  [attr.aria-label]="'pdfPrint.title' | t"
+  (cancel)="$event.preventDefault(); pdf.close()"
+>
+  @if (state; as document) {
+    <header class="dialog-header">
+      <h2>{{ 'pdfPrint.title' | t }}</h2>
+      <button
+        type="button"
+        class="icon-button"
+        [attr.aria-label]="'common.close' | t"
+        (click)="pdf.close()"
+      >
+        <svg lucideX size="18" />
+      </button>
+    </header>
+    <p class="filename">{{ document.file.name }}</p>
+    @if (failed) {
+      <p class="error" role="alert">{{ 'pdfPrint.shareFailed' | t }}</p>
+    }
+    <div class="dialog-actions">
+      <a
+        class="secondary-action"
+        [href]="document.url"
+        [download]="document.file.name"
+        target="_blank"
+        rel="noopener"
+        ><svg lucideDownload size="16" />{{ 'pdfPrint.download' | t }}</a
+      >
+      @if (canShare) {
+        <button type="button" class="primary-action" [disabled]="sharing" (click)="share()">
+          <svg lucideShare2 size="16" />{{ 'pdfPrint.share' | t }}
+        </button>
+      }
+    </div>
+  }
+</dialog>

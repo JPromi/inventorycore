@@ -1,0 +1,27 @@
+@if (!pwa.online() || pwa.updateReady() || pwa.broken()) {
+    <div class="notices" role="status" aria-live="polite">
+        @if (!pwa.online()) {
+            <div class="notice offline">
+                <svg lucideWifiOff size="17"></svg>
+                <span>{{ 'components.pwaStatus.offline' | t }}</span>
+            </div>
+        }
+
+        @if (pwa.broken()) {
+            <div class="notice">
+                <svg lucideTriangleAlert size="17"></svg>
+                <span>{{ 'components.pwaStatus.reloadRequired' | t }}</span>
+                <button type="button" class="action" (click)="pwa.reload()">{{ 'components.pwaStatus.reload' | t }}</button>
+            </div>
+        } @else if (pwa.updateReady()) {
+            <div class="notice">
+                <svg lucideRefreshCw size="17"></svg>
+                <span>{{ 'components.pwaStatus.updateAvailable' | t }}</span>
+                <button type="button" class="action" (click)="pwa.applyUpdate()">{{ 'components.pwaStatus.update' | t }}</button>
+                <button type="button" class="close" [title]="'components.pwaStatus.later' | t" [attr.aria-label]="'components.pwaStatus.later' | t" (click)="pwa.dismissUpdate()">
+                    <svg lucideX size="16"></svg>
+                </button>
+            </div>
+        }
+    </div>
+}

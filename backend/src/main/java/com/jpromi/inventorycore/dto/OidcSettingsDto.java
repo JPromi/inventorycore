@@ -19,6 +19,7 @@ public record OidcSettingsDto(
     boolean autoCreateUsers,
     boolean syncGroups,
     boolean crossProviderLogin,
+    boolean autoRedirect,
     String publicUrl,
     /** Read only: the redirect URI to register at the identity provider. */
     String redirectUri

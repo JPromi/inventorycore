@@ -74,7 +74,9 @@ export class PwaService {
 
   private watchInstall(): void {
     const standalone = window.matchMedia('(display-mode: standalone)');
-    this.standalone.set(standalone.matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
+    this.standalone.set(
+      standalone.matches || (navigator as Navigator & { standalone?: boolean }).standalone === true,
+    );
     standalone.addEventListener('change', (event) => this.standalone.set(event.matches));
 
     window.addEventListener('beforeinstallprompt', (event) => {

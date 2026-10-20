@@ -144,7 +144,8 @@ test('asset data sheet prints details, images, last inspection and due dates by 
   });
 
   await page.goto('/assets/nb');
-  await page.getByRole('button', { name: 'Drucken', exact: true }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Drucken', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Asset-Datenblatt drucken' });
   await expect(dialog.locator('.field', { hasText: 'Bilder' }).locator('.trigger')).toContainText('Alle Bilder');
   // Escape closes an open dropdown, not the whole print dialog
@@ -180,7 +181,8 @@ test('asset data sheet prints details, images, last inspection and due dates by 
   // second print without images and without the inspection; the header still names the last result
   await page.emulateMedia({ media: 'screen' });
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
-  await page.getByRole('button', { name: 'Drucken', exact: true }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Drucken', exact: true }).click();
   await choose(dialog, 'Bilder', 'Keine Bilder');
   await dialog.getByLabel('Letzte Prüfung mit Prüfwerten').uncheck();
   await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();

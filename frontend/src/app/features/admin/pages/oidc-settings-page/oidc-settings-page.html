@@ -1,0 +1,186 @@
+<section class="page">
+    <div class="page-shell">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">{{ 'adminOidc.eyebrow' | t }}</p>
+                <h1>
+                    <svg lucideKeyRound size="20"></svg>
+                    <span>{{ 'adminOidc.title' | t }}</span>
+                </h1>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="secondary-action" (click)="test()" [disabled]="!settings || testing">
+                    <svg lucidePlugZap size="16"></svg>
+                    <span>{{ (testing ? 'adminOidc.testing' : 'adminOidc.test') | t }}</span>
+                </button>
+                <button type="button" class="primary-action" (click)="save()" [disabled]="!settings || saving">
+                    <svg lucideSave size="16"></svg>
+                    <span>{{ (saving ? 'common.saving' : saved ? 'adminOidc.saved' : 'common.save') | t }}</span>
+                </button>
+            </div>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (testResult; as result) {
+            <section class="result" [class.success]="result.success" [class.failure]="!result.success">
+                <div class="result-head">
+                    @if (result.success) {
+                        <svg lucideCircleCheck size="20"></svg>
+                    } @else {
+                        <svg lucideCircleX size="20"></svg>
+                    }
+                    <strong>{{ result.message }}</strong>
+                </div>
+                @if (result.success) {
+                    <dl>
+                        <dt>{{ 'adminOidc.issuer' | t }}</dt>
+                        <dd>{{ result.issuer }}</dd>
+                        <dt>{{ 'adminOidc.authorizationEndpoint' | t }}</dt>
+                        <dd>{{ result.authorizationEndpoint }}</dd>
+                    </dl>
+                }
+            </section>
+        }
+
+        @if (loading) {
+            <p class="empty">{{ 'adminOidc.loading' | t }}</p>
+        } @else if (settings) {
+            <form class="stack" (ngSubmit)="save()" (input)="changed()" (change)="changed()">
+                <section class="card">
+                    <div class="card-title">
+                        <h2>{{ 'adminOidc.identityProvider' | t }}</h2>
+                        <label class="toggle switch">
+                            <input type="checkbox" [(ngModel)]="settings.enabled" name="enabled" />
+                            <span>{{ (settings.enabled ? 'adminOidc.enabled' : 'adminOidc.disabled') | t }}</span>
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field wide">
+                            <span>{{ 'adminOidc.issuerUrl' | t }}</span>
+                            <input type="url" [(ngModel)]="settings.issuerUri" name="issuerUri" [placeholder]="'adminOidc.issuerUrlPlaceholder' | t" />
+                            <small>{{ 'adminOidc.issuerUrlHint' | t }}</small>
+                        </label>
+                        <label class="field">
+                            <span>{{ 'adminOidc.clientId' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.clientId" name="clientId" autocomplete="off" />
+                        </label>
+                        <label class="field">
+                            <span>{{ 'adminOidc.clientSecret' | t }}</span>
+                            <input
+                                type="password"
+                                [(ngModel)]="settings.clientSecret"
+                                name="clientSecret"
+                                autocomplete="new-password"
+                                [placeholder]="settings.clientSecretSet ? ('adminOidc.secretStored' | t) : ''"
+                            />
+                            <small>{{ (settings.clientSecretSet ? 'adminOidc.secretKeep' : 'adminOidc.secretMissing') | t }}</small>
+                        </label>
+                        <label class="field">
+                            <span>{{ 'adminOidc.scopes' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.scopes" name="scopes" />
+                        </label>
+                        <label class="field">
+                            <span>{{ 'adminOidc.buttonLabel' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.buttonLabel" name="buttonLabel" [placeholder]="'adminOidc.buttonLabelPlaceholder' | t" />
+                        </label>
+                        <label class="field wide">
+                            <span>{{ 'adminOidc.publicUrl' | t }}</span>
+                            <input type="url" [(ngModel)]="settings.publicUrl" name="publicUrl" [placeholder]="'adminOidc.publicUrlPlaceholder' | t" />
+                            <small>{{ 'adminOidc.publicUrlHint' | t }}</small>
+                        </label>
+                    </div>
+                    <div class="redirect">
+                        <span class="field-label">{{ 'adminOidc.redirectUri' | t }}</span>
+                        <div class="redirect-row">
+                            <code>{{ redirectUri }}</code>
+                            <button type="button" class="secondary-action compact" (click)="copy('redirect')">
+                                <svg lucideCopy size="14"></svg>
+                                <span>{{ (copied === 'redirect' ? 'adminOidc.copied' : 'adminOidc.copy') | t }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>{{ 'adminOidc.loginPage' | t }}</h2>
+                    <div class="options">
+                        <label class="toggle option">
+                            <input type="checkbox" [(ngModel)]="settings.autoRedirect" name="autoRedirect" />
+                            <span>
+                                {{ 'adminOidc.autoRedirect' | t }}
+                                <small>{{ 'adminOidc.autoRedirectHint' | t }}</small>
+                            </span>
+                        </label>
+                    </div>
+                    @if (settings.autoRedirect) {
+                        <div class="redirect">
+                            <span class="field-label">{{ 'adminOidc.directLogin' | t }}</span>
+                            <div class="redirect-row">
+                                <code>{{ directLoginUrl }}</code>
+                                <button type="button" class="secondary-action compact" (click)="copy('direct')">
+                                    <svg lucideCopy size="14"></svg>
+                                    <span>{{ (copied === 'direct' ? 'adminOidc.copied' : 'adminOidc.copy') | t }}</span>
+                                </button>
+                            </div>
+                            <small class="hint">{{ 'adminOidc.directLoginHint' | t }}</small>
+                        </div>
+                    }
+                </section>
+
+                <section class="card">
+                    <h2>{{ 'adminOidc.claims' | t }}</h2>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>{{ 'adminOidc.usernameClaim' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.usernameClaim" name="usernameClaim" />
+                            <small>{{ 'adminOidc.usernameClaimHint' | t }}</small>
+                        </label>
+                        <label class="field">
+                            <span>{{ 'adminOidc.displayNameClaim' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.displayNameClaim" name="displayNameClaim" />
+                        </label>
+                        <label class="field">
+                            <span>{{ 'adminOidc.emailClaim' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.emailClaim" name="emailClaim" />
+                        </label>
+                        <label class="field">
+                            <span>{{ 'terms.groups' | t }}</span>
+                            <input type="text" [(ngModel)]="settings.groupsClaim" name="groupsClaim" />
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>{{ 'adminOidc.usersAndGroups' | t }}</h2>
+                    <div class="options">
+                        <label class="toggle option">
+                            <input type="checkbox" [(ngModel)]="settings.autoCreateUsers" name="autoCreateUsers" />
+                            <span>
+                                {{ 'adminOidc.autoCreateUsers' | t }}
+                                <small>{{ 'adminOidc.autoCreateUsersHint' | t }}</small>
+                            </span>
+                        </label>
+                        <label class="toggle option">
+                            <input type="checkbox" [(ngModel)]="settings.syncGroups" name="syncGroups" />
+                            <span>
+                                {{ 'adminOidc.syncGroups' | t }}
+                                <small>{{ 'adminOidc.syncGroupsHint' | t }}</small>
+                            </span>
+                        </label>
+                        <label class="toggle option">
+                            <input type="checkbox" [(ngModel)]="settings.crossProviderLogin" name="crossProviderLogin" />
+                            <span>
+                                {{ 'adminOidc.crossProviderLogin' | t }}
+                                <small>{{ 'adminOidc.crossProviderLoginHint' | t }}</small>
+                            </span>
+                        </label>
+                    </div>
+                    <p class="note">{{ 'adminOidc.note' | t }}</p>
+                </section>
+            </form>
+        }
+    </div>
+</section>

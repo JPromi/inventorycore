@@ -1,0 +1,59 @@
+<div
+    #root
+    class="label"
+    [class.editable]="editable"
+    style="position: relative; overflow: hidden; box-sizing: border-box; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif"
+    [style.width.mm]="widthMm"
+    [style.height.mm]="heightMm"
+    (pointerdown)="onBackgroundPointerDown($event)"
+>
+    @for (element of elements; track element.id) {
+        <div
+            class="element"
+            [class.selected]="editable && element.id === selectedId"
+            style="position: absolute; box-sizing: border-box; overflow: hidden"
+            [style.left.mm]="element.x"
+            [style.top.mm]="element.y"
+            [style.width.mm]="element.width"
+            [style.height.mm]="element.height"
+            [style.color]="element.useBrandColor ? customization.labelColor : null"
+            (pointerdown)="startDrag($event, element, 'move')"
+        >
+            @switch (element.type) {
+                @case ('logo') {
+                    @if (customization.settings.logoUrl) {
+                        <img [src]="customization.settings.logoUrl" [alt]="'labels.logo' | t" draggable="false"
+                            style="width: 100%; height: 100%; object-fit: contain; display: block" />
+                    }
+                }
+                @case ('text') {
+                    <div
+                        style="width: 100%; height: 100%; display: flex; flex-direction: column; line-height: 1.15; white-space: pre-wrap; word-break: break-word"
+                        [style.justify-content]="justify(element)"
+                        [style.text-align]="element.align ?? 'left'"
+                        [style.font-size.pt]="element.fontSize ?? 9"
+                        [style.font-weight]="element.bold ? 700 : 400"
+                        [style.font-style]="element.italic ? 'italic' : 'normal'"
+                    >{{ text(element) }}</div>
+                }
+                @case ('barcode') {
+                    @if (barcode(element); as code) {
+                        @if (code.svg) {
+                            <div style="width: 100%; height: 100%" [innerHTML]="code.svg"></div>
+                        } @else {
+                            <div
+                                style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 0.5mm; box-sizing: border-box; border: 0.2mm dashed #c00; color: #c00; font-size: 6pt; text-align: center"
+                            >{{ code.error }}</div>
+                        }
+                    }
+                }
+                @case ('box') {
+                    <div style="width: 100%; height: 100%; box-sizing: border-box; border-style: solid; border-color: currentColor" [style.border-width.mm]="element.borderWidth ?? 0.3"></div>
+                }
+            }
+            @if (editable && element.id === selectedId) {
+                <span class="resize-handle" (pointerdown)="startDrag($event, element, 'resize')"></span>
+            }
+        </div>
+    }
+</div>
