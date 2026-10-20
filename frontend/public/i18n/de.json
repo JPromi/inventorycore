@@ -1723,7 +1723,8 @@
       "disabledUser": "Dieses Konto ist deaktiviert.",
       "noUsername": "Der Identity Provider hat keinen Benutzernamen geliefert.",
       "failed": "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
-    }
+    },
+    "copyright": "© {year} JPromi"
   },
   "profile": {
     "title": "Mein Profil",
