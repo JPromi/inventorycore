@@ -21,6 +21,9 @@ export interface Customization {
   advancedThemeEnabled: boolean;
 }
 
+/** Read by the inline script of the start screen in index.html; keep both in line. */
+const SPLASH_STORAGE_KEY = 'inventorycore.splash';
+
 const DEFAULTS: Customization = {
   brandName: null,
   brandColor: null,
@@ -115,6 +118,29 @@ export class CustomizationService {
     this.settings = { ...DEFAULTS, ...value };
     this.applyBrand();
     this.document.title = this.brandName;
+    this.rememberForSplash();
+  }
+
+  /**
+   * The start screen in index.html is shown before Angular and the API; it reads this copy of the
+   * branding so the next start already shows the configured name, color and logo.
+   */
+  private rememberForSplash(): void {
+    const advanced = this.settings.advancedThemeEnabled;
+    try {
+      this.document.defaultView?.localStorage.setItem(
+        SPLASH_STORAGE_KEY,
+        JSON.stringify({
+          name: this.settings.brandName || null,
+          color: this.settings.brandColor || null,
+          darkColor: (advanced && this.settings.darkBrandColor) || null,
+          logo: this.settings.logoUrl || null,
+          darkLogo: (advanced && this.settings.darkLogoUrl) || null,
+        }),
+      );
+    } catch {
+      // without browser storage the start screen shows the default branding
+    }
   }
 
   private applyBrand(): void {

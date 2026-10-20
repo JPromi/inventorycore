@@ -51,6 +51,8 @@ Backend: `PagingTest` covers page slicing, size limits, search words and the are
 
 `dashboard.spec.ts` covers the start page with a mocked `/api/dashboard`: number tiles linking to the lists, overdue/due entries and recent inspections with their result, the type bars, result legend and tags, reloading with the `areas` of a new sidebar selection, and hiding the inspection parts without the right to inspect. Backend: `DashboardServiceTest` covers the area rule through an asset's location, tags counted once per asset, assets without type, no inspection data without the inspect right, and due dates/inspections/results limited to the selection and time windows.
 
+`splash.spec.ts` covers the start screen of `index.html` (visible while the texts load, removed after the bootstrap, remembered brand name and color) and the `<noscript>` page with JavaScript disabled.
+
 `list-selection.spec.ts` covers shared multi-selection across inventory, tags, label/inspection templates, protocols, and admin user/group/area lists. It exercises explicit selection mode, hidden inactive controls, whole-row/card clicks, restoring navigation on exit, keyboard selection, Shift ranges, selecting all loaded entries and indeterminate state, loading the next page by scrolling and selecting across loaded pages, server search with the total in the header, grid/mobile menus, selection pruning after a new search, cancellation, permission restrictions, partial failures, child-before-parent deletion, and batch label printing (template, copies per asset, print pages). APIs are mocked; existing backend delete authorization remains authoritative.
 
 ```sh
