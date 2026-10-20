@@ -67,6 +67,19 @@ import { Observable, Subject, Subscription, debounceTime, skip } from 'rxjs';
 
 type ViewMode = 'grid' | 'list' | 'tree';
 
+/** Chosen view per list page (endpoint), kept in this browser. */
+const VIEW_STORAGE_KEY = 'inventorycore.listViews';
+
+function readViews(): Record<string, ViewMode> {
+  try {
+    const value = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) ?? '{}');
+    return value && typeof value === 'object' ? value : {};
+  } catch {
+    // no storage (private mode, blocked) or broken value: start with the list
+    return {};
+  }
+}
+
 interface PageConfig {
   title: string;
   endpoint: string;
@@ -204,9 +217,7 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.route.data.subscribe((data) => {
       this.config = data['inventoryConfig'];
       const endpoint = this.config.endpoint;
-      if (this.viewMode === 'tree' && endpoint !== 'assets' && endpoint !== 'locations') {
-        this.viewMode = 'list';
-      }
+      this.viewMode = this.storedView(endpoint);
       this.bulkDelete = (item) => this.api.delete(endpoint, item.uuid);
       this.bulkActions =
         endpoint === 'assets'
@@ -253,6 +264,28 @@ export class InventoryPage implements OnInit, OnDestroy {
       status: this.statusFilter,
       areas: this.config.endpoint === 'tags' ? [] : this.areaService.selected,
     };
+  }
+
+  protected setViewMode(mode: ViewMode): void {
+    this.viewMode = mode;
+    try {
+      localStorage.setItem(
+        VIEW_STORAGE_KEY,
+        JSON.stringify({ ...readViews(), [this.config.endpoint]: mode }),
+      );
+    } catch {
+      // the view still changes, it is just not remembered
+    }
+  }
+
+  /** The view last used on this page; the tree only exists for assets and locations. */
+  private storedView(endpoint: string): ViewMode {
+    const stored = readViews()[endpoint];
+    const treeAllowed = endpoint === 'assets' || endpoint === 'locations';
+    if (stored === 'grid' || stored === 'list' || (stored === 'tree' && treeAllowed)) {
+      return stored;
+    }
+    return 'list';
   }
 
   /** "/" focuses the search like in many web apps. */
