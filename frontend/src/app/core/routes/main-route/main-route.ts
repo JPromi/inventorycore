@@ -1,4 +1,7 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { DropdownPosition } from '../../components/dropdown-position.directive';
+import { AppInfoService } from '../../service/app-info.service';
+import { AuthService } from '../../service/auth.service';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { filter } from 'rxjs';
@@ -28,6 +31,9 @@ import {
   LucideKeyRound,
   LucideLayers,
   LucideMenu,
+  LucideEllipsis,
+  LucideLogOut,
+  LucideExternalLink,
   LucideMapPin,
   LucideNetwork,
   LucidePalette,
@@ -71,11 +77,21 @@ type NavItem = NavChild & {
     LucideMenu,
     LucideX,
     TranslatePipe,
+    DropdownPosition,
+    LucideEllipsis,
+    LucideLogOut,
+    LucideExternalLink,
+    LucideUser,
   ],
   templateUrl: './main-route.html',
   styleUrl: './main-route.scss',
 })
 export class MainRoute implements OnInit {
+  @ViewChild('userMenu') private userMenu?: ElementRef<HTMLElement>;
+  @ViewChild('userMenuTrigger') private userMenuTrigger?: ElementRef<HTMLElement>;
+  protected userMenuOpen = false;
+  protected loggingOut = false;
+  protected logoutError = false;
   protected user: UserEntity | null = null;
   protected profileImageFailed = false;
   /** Phones and tablets: the navigation is a drawer that slides in. */
@@ -124,6 +140,8 @@ export class MainRoute implements OnInit {
   }
 
   constructor(
+    protected readonly appInfo: AppInfoService,
+    private readonly auth: AuthService,
     private readonly authStateService: AuthStateService,
     private readonly router: Router,
     protected readonly pwa: PwaService,
@@ -146,6 +164,7 @@ export class MainRoute implements OnInit {
         this.expandActiveGroups();
         // a link was chosen: close the drawer
         this.menuOpen = false;
+        this.userMenuOpen = false;
       });
   }
 
@@ -165,7 +184,27 @@ export class MainRoute implements OnInit {
 
   @HostListener('document:keydown.escape')
   protected closeMenu(): void {
+    if (this.userMenuOpen) this.userMenuTrigger?.nativeElement.focus();
+    this.userMenuOpen = false;
     this.menuOpen = false;
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  protected outsideUserMenu(event: PointerEvent): void {
+    const target = event.target as Node;
+    if (!this.userMenu?.nativeElement.contains(target) && !this.userMenuTrigger?.nativeElement.contains(target)) {
+      this.userMenuOpen = false;
+    }
+  }
+
+  protected logout(): void {
+    if (this.loggingOut) return;
+    this.loggingOut = true;
+    this.logoutError = false;
+    this.auth.logout().subscribe({
+      next: () => { void this.router.navigate(['/login']); },
+      error: () => { this.loggingOut = false; this.logoutError = true; },
+    });
   }
 
   protected toggleGroup(groupLabel: string): void {

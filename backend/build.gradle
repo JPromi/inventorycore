@@ -8,6 +8,10 @@ group = 'com.jpromi'
 // release builds pass the version, e.g. -PappVersion=1.2.0 (the container build does this from the Git tag)
 version = findProperty('appVersion') ?: '0.0.1-SNAPSHOT'
 
+springBoot {
+	buildInfo()
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)

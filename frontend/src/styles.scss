@@ -55,6 +55,7 @@ body {
 
     // states
     --success: #15803d;
+    --danger: #b62f2f;
     --success-soft: rgba(21, 128, 61, .12);
     --warning: #b45309;
     --warning-soft: #fef3c7;
@@ -67,6 +68,7 @@ body {
     // camera and image areas, overlays
     --media-background: #111827;
     --viewer-background: #101114;
+    --user-name-fade: 1.25rem;
     --viewer-toolbar: #202226;
     --viewer-hover: #34373d;
     --viewer-border: #494d55;

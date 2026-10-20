@@ -1,4 +1,13 @@
 {
+  "userMenu": {
+    "title": "Benutzermenü",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "loggingOut": "Wird abgemeldet …",
+    "logoutFailed": "Abmelden fehlgeschlagen. Bitte erneut versuchen.",
+    "version": "Version {version}",
+    "github": "GitHub"
+  },
   "imageViewer": {
     "title": "Bildansicht",
     "zoomIn": "Vergrößern",

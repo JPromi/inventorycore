@@ -1,5 +1,7 @@
 # API
 
+`GET /api/app-info` is public and returns `name`, `version`, and `githubUrl`. The version comes from Gradle-generated Spring Boot build information (`-PappVersion` for releases); direct IDE runs without build information report `development`. The navigation footer loads this endpoint independently of branding settings.
+
 Inspection templates accept and return `defaultTagUuids` and `includeChildAssets` (default false). Starting an inspection locks the template tags; users may add selections but cannot remove template defaults. Preview and creation always merge template defaults into supplied filters, including empty lists. They accept a nullable `includeChildAssets` override; null uses the template default. With child inclusion enabled, all descendants of matching roots are added regardless of tag, location, type, area, or due-date filters, but each child still requires view/inspect permission and must not be excluded from inspections. Assets are deduplicated; the resulting run items and filter summary preserve the selection independently of later template edits.
 
 ## Contract
