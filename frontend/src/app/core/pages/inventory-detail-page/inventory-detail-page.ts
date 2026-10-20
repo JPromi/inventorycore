@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { ImageViewerService } from '../../components/image-viewer/image-viewer.service';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -134,6 +135,7 @@ export class InventoryDetailPage implements OnInit {
   @ViewChild(AssetPrint) private assetPrint?: AssetPrint;
 
   constructor(
+    protected readonly imageViewer: ImageViewerService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly api: InventoryApiService,

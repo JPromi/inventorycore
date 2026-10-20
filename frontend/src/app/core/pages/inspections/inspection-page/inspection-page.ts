@@ -1,4 +1,5 @@
 import { DatePipe, NgTemplateOutlet, formatDate } from '@angular/common';
+import { ImageViewerService } from '../../../components/image-viewer/image-viewer.service';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpEventType } from '@angular/common/http';
@@ -152,6 +153,7 @@ export class InspectionPage implements OnInit, OnDestroy {
   private readonly pendingSaves = new Map<string, { timer: ReturnType<typeof setTimeout>; run: () => Observable<unknown> }>();
 
   constructor(
+    protected readonly imageViewer: ImageViewerService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly api: InspectionService,

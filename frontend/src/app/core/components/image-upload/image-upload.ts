@@ -1,4 +1,5 @@
 import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
+import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import {
   LucideChevronLeft,
@@ -46,7 +47,7 @@ export class ImageUpload implements OnDestroy {
   protected dragging = false;
   private nextId = 0;
 
-  constructor(private readonly files: FileApiService) {}
+  constructor(private readonly files: FileApiService, protected readonly imageViewer: ImageViewerService) {}
 
   ngOnDestroy(): void {
     this.pending.forEach((upload) => upload.subscription?.unsubscribe());

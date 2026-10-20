@@ -235,6 +235,7 @@
 
 // photos in the protocol
 .report-photos {
+    button { border: 0; padding: 0; background: transparent; cursor: zoom-in; }
     display: flex;
     flex-wrap: wrap;
     gap: .3rem;

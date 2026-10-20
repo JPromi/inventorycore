@@ -54,9 +54,9 @@
     <div class="photos">
         @for (photo of item.photos; track photo.uuid) {
             <div class="photo">
-                <a [href]="photo.url" target="_blank" [title]="'inspectionItemEditor.takenBy' | t: { name: photo.takenByName ?? ('common.unknown' | t) }">
+                <button type="button" class="photo-open" (click)="imageViewer.open(item.photos, $index)" [title]="'inspectionItemEditor.takenBy' | t: { name: photo.takenByName ?? ('common.unknown' | t) }">
                     <img [src]="photo.thumbnailUrl" [alt]="'inspectionItemEditor.photo' | t" loading="lazy" />
-                </a>
+                </button>
                 <button type="button" class="remove" [title]="'inspectionItemEditor.removePhoto' | t" [attr.aria-label]="'inspectionItemEditor.removePhoto' | t" (click)="photoRemove.emit(photo)">
                     <svg lucideX size="13"></svg>
                 </button>

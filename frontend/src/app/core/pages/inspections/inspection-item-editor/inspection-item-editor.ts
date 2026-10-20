@@ -1,4 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ImageViewerService } from '../../../components/image-viewer/image-viewer.service';
 import { FormsModule } from '@angular/forms';
 import { LucideCamera, LucideImagePlus, LucideX } from '@lucide/angular';
 
@@ -35,6 +36,7 @@ export interface PhotoFile {
   styleUrl: './inspection-item-editor.scss',
 })
 export class InspectionItemEditor {
+  constructor(protected readonly imageViewer: ImageViewerService) {}
   @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
 
   @Input({ required: true }) item!: InspectionItem;

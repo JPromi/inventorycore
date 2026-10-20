@@ -679,7 +679,7 @@
                                 @if (item.photos.length) {
                                     <span class="report-photos">
                                         @for (photo of item.photos; track photo.uuid) {
-                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" /></a>
+                                            <button type="button" (click)="imageViewer.open(item.photos, $index)"><img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" /></button>
                                         }
                                     </span>
                                 }
@@ -732,7 +732,7 @@
                                 @if (item.photos.length) {
                                     <span class="report-photos">
                                         @for (photo of item.photos; track photo.uuid) {
-                                            <a [href]="photo.url" target="_blank"><img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" /></a>
+                                            <button type="button" (click)="imageViewer.open(item.photos, $index)"><img [src]="photo.thumbnailUrl" [alt]="'inspectionRun.protocol.photo' | t" /></button>
                                         }
                                     </span>
                                 }

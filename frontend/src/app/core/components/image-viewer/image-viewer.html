@@ -1,0 +1,27 @@
+<dialog #dialog class="image-viewer" [attr.aria-label]="'imageViewer.title' | t" (cancel)="$event.preventDefault(); viewer.close()">
+    @if (state; as gallery) {
+        @let current = gallery.images[gallery.index];
+        <header>
+            <div class="caption"><strong>{{ current.fileName || current.alt || ('imageViewer.title' | t) }}</strong><span aria-live="polite">{{ gallery.index + 1 }} / {{ gallery.images.length }}</span></div>
+            <div class="controls">
+                <button type="button" [disabled]="zoom === 1" (click)="setZoom(zoom - .25)" [title]="'imageViewer.zoomOut' | t" [attr.aria-label]="'imageViewer.zoomOut' | t"><svg lucideZoomOut size="20"></svg></button>
+                <span class="zoom-value">{{ 'imageViewer.zoomValue' | t: { value: round(zoom * 100) } }}</span>
+                <button type="button" [disabled]="zoom === 6" (click)="setZoom(zoom + .25)" [title]="'imageViewer.zoomIn' | t" [attr.aria-label]="'imageViewer.zoomIn' | t"><svg lucideZoomIn size="20"></svg></button>
+                <button type="button" (click)="reset()" [title]="'imageViewer.fit' | t" [attr.aria-label]="'imageViewer.fit' | t"><svg lucideMaximize size="20"></svg></button>
+                <button type="button" autofocus (click)="viewer.close()" [title]="'common.close' | t" [attr.aria-label]="'common.close' | t"><svg lucideX size="22"></svg></button>
+            </div>
+        </header>
+        <div #stage class="stage" [class.zoomed]="zoom > 1" (wheel)="wheel($event)" (pointerdown)="down($event)" (pointermove)="move($event)" (pointerup)="up($event)" (pointercancel)="up($event, true)" (click)="background($event)" (dblclick)="setZoom(zoom > 1 ? 1 : 2)">
+            @if (failed) {
+                <div class="message" role="alert"><p>{{ 'imageViewer.failed' | t }}</p><button type="button" (pointerdown)="$event.stopPropagation()" (click)="reset(true)"><svg lucideRotateCw size="18"></svg>{{ 'imageViewer.retry' | t }}</button></div>
+            } @else {
+                @if (loading) { <span class="loading" role="status">{{ 'imageViewer.loading' | t }}</span> }
+                <img #picture [src]="current.url || current.thumbnailUrl" [alt]="current.alt || current.fileName || ('imageViewer.title' | t)" draggable="false" [style.transform]="'translate(' + x + 'px, ' + y + 'px) scale(' + zoom + ')'" (load)="loading = false" (error)="loading = false; failed = true" />
+            }
+        </div>
+        @if (gallery.images.length > 1) {
+            <button type="button" class="previous navigation" [disabled]="gallery.index === 0" (click)="navigate(-1)" [title]="'imageViewer.previous' | t" [attr.aria-label]="'imageViewer.previous' | t"><svg lucideChevronLeft size="24"></svg></button>
+            <button type="button" class="next navigation" [disabled]="gallery.index === gallery.images.length - 1" (click)="navigate(1)" [title]="'imageViewer.next' | t" [attr.aria-label]="'imageViewer.next' | t"><svg lucideChevronRight size="24"></svg></button>
+        }
+    }
+</dialog>

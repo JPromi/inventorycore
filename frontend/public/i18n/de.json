@@ -1,4 +1,16 @@
 {
+  "imageViewer": {
+    "title": "Bildansicht",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "fit": "Bild einpassen",
+    "zoomValue": "{value} %",
+    "previous": "Vorheriges Bild",
+    "next": "Nächstes Bild",
+    "loading": "Bild wird geladen …",
+    "failed": "Das Bild konnte nicht geladen werden.",
+    "retry": "Erneut laden"
+  },
   "common": {
     "save": "Speichern",
     "saving": "Wird gespeichert …",

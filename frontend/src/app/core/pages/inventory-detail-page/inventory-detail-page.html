@@ -384,9 +384,9 @@
                     <section class="card gallery">
                         <div class="main-image">
                             @if (activeImage) {
-                                <a [href]="activeImage.url" target="_blank" rel="noopener" [title]="'inventoryDetail.gallery.openOriginal' | t">
+                                <button type="button" class="image-preview" (click)="imageViewer.open(images, images.indexOf(activeImage))" [title]="'imageViewer.title' | t">
                                     <img [src]="activeImage.url" [alt]="activeImage.fileName || item.name" />
-                                </a>
+                                </button>
                             } @else {
                                 <div class="no-image">
                                     <ng-container *ngComponentOutlet="icon; inputs: placeholderIconInputs"></ng-container>
@@ -397,7 +397,7 @@
                         @if (images.length > 1) {
                             <div class="thumbs">
                                 @for (image of images; track $index) {
-                                    <button type="button" [class.active]="image === activeImage" (click)="activeImage = image" [title]="image.fileName || ''">
+                                    <button type="button" [class.active]="image === activeImage" (click)="activeImage = image" [attr.aria-pressed]="image === activeImage" [title]="image.fileName || ''">
                                         <img [src]="image.thumbnailUrl || image.url" [alt]="image.fileName || item.name" loading="lazy" />
                                     </button>
                                 }

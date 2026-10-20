@@ -1,7 +1,7 @@
 <div class="image-grid">
     @for (image of images; track $index) {
         <figure class="tile" [class.cover]="image.kind === 'THUMBNAIL'">
-            <img [src]="preview(image)" [alt]="image.fileName || ('components.imageUpload.imageAlt' | t)" loading="lazy" />
+            <button type="button" class="image-preview" (click)="imageViewer.open(images, $index)" [title]="'imageViewer.title' | t"><img [src]="preview(image)" [alt]="image.fileName || ('components.imageUpload.imageAlt' | t)" loading="lazy" /></button>
             @if (image.kind === 'THUMBNAIL') {
                 <span class="cover-badge">
                     <svg lucideStar size="12"></svg>

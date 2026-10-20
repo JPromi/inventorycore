@@ -81,6 +81,7 @@
 }
 
 .photo {
+    .photo-open { display: block; border: 0; padding: 0; background: transparent; cursor: zoom-in; }
     position: relative;
 
     img {

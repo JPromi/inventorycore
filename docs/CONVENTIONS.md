@@ -15,6 +15,8 @@ Use Lucide components from `@lucide/angular`. Navigation icon choices belong in 
 
 Dropdown panels use the shared `DropdownPosition` directive with Floating UI and the browser popover top layer. Reuse it for anchored menus so clipping containers, viewport edges, scrolling, and resizing are handled consistently. Shared sizing and spacing tokens remain in SCSS.
 
+Image previews use the shared `ImageViewerService.open(images, index)`. The single `ImageViewer` in the app shell opens a native modal dialog in the browser top layer, including above other dialogs. Pass full-size URLs and optional thumbnails, filenames, and alt texts. It supports previous/next navigation, keyboard arrows/Escape, zoom buttons/wheel/double-click, panning, and touch pinch/swipe. Navigation resets the zoom; route changes close the viewer. Use buttons for image triggers so keyboard access remains available.
+
 ## Lists: Paging and Server Search
 
 Every list page loads its entries from a `GET /api/<resource>/page` endpoint, 50 at a time (`PAGE_SIZE`), and loads the next page while scrolling. Rules:

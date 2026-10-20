@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { PwaStatus } from './core/components/pwa-status/pwa-status';
+import { ImageViewer } from './core/components/image-viewer/image-viewer';
 import { AuthService } from './core/service/auth.service';
 import { CustomizationService } from './core/service/customization.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, PwaStatus],
+  imports: [RouterOutlet, PwaStatus, ImageViewer],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
