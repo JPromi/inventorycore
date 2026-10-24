@@ -12,6 +12,7 @@ import com.jpromi.inventorycore.dto.InspectionCreateRequest;
 import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
 import com.jpromi.inventorycore.entity.*;
 import com.jpromi.inventorycore.enums.*;
+import com.jpromi.inventorycore.files.FileCleanupService;
 import com.jpromi.inventorycore.repository.*;
 
 class AssetInspectionPolicyTest {
@@ -33,7 +34,8 @@ class AssetInspectionPolicyTest {
     private final InspectionService service = new InspectionService(types, inspections, assets,
         mock(AssetTypeRepository.class), locations, mock(TagRepository.class), areas,
         resolver, items, mock(AssetInspectionScheduleRepository.class),
-        mock(InspectionScheduleService.class), mock(StoredFileRepository.class), mock(AuditService.class), mock(AssetStatusService.class));
+        mock(InspectionScheduleService.class), mock(StoredFileRepository.class), mock(AuditService.class), mock(AssetStatusService.class),
+        mock(FileCleanupService.class));
 
     @Test
     void excludesOptedOutAssetsButKeepsManualChildrenAsIndividuallyCountedSnapshots() {

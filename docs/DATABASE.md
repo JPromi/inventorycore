@@ -19,7 +19,7 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | Inspections | Types/field definitions, runs/items, item values/photos, and per-asset schedule data |
 | Labels | One owning area and a layout stored as JSON text with millimeter dimensions and a safe area (`safe_area_mm`, `default 0` so templates from before keep their layout) and an optional print sheet in nullable `sheet_*` columns (paper size, columns, rows, margins, gaps; all null = single labels). `label_settings` is a singleton row (`id = 1`) with the default safe area (5 mm) and the ordered size presets in `label_size_presets` (nullable `safe_area_mm` per size, null = default); `DataInitializer` creates it with the former built-in sizes |
 | Activity logs | Object/user snapshots and language-neutral event/diff details stored as JSON text |
-| Stored files | Metadata and relative disk paths; inventory file content is outside PostgreSQL |
+| Stored files | Metadata and relative disk paths; inventory file content is outside PostgreSQL. A file belongs to at most one image or protocol photo. When images are removed from an asset, location or type, a protocol photo or item is removed, or a protocol is deleted, `FileCleanupService` deletes the row and the content after the commit once nothing references it. A nightly job (`app.files.cleanup-cron`, default 03:30) deletes files unreferenced for more than a day (cancelled uploads, files of photos removed before this cleanup existed). Soft-deleted assets, locations and types keep their images |
 
 Type tags are merged into asset responses at read time. Asset-specific field values and type field definitions are distinct. Avoid copying inherited tags into the direct asset association just to make the frontend display them.
 

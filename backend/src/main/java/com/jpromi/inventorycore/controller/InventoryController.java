@@ -80,6 +80,7 @@ public class InventoryController {
     private final com.jpromi.inventorycore.service.AssetHierarchyService hierarchy;
     private final com.jpromi.inventorycore.service.FileAccess fileAccess;
     private final com.jpromi.inventorycore.service.AssetStatusService statuses;
+    private final com.jpromi.inventorycore.files.FileCleanupService fileCleanup;
 
     public InventoryController(
         AssetRepository assetRepository,
@@ -93,8 +94,10 @@ public class InventoryController {
         AuditService audit,
         com.jpromi.inventorycore.service.AssetHierarchyService hierarchy,
         com.jpromi.inventorycore.service.FileAccess fileAccess,
-        com.jpromi.inventorycore.service.AssetStatusService statuses
+        com.jpromi.inventorycore.service.AssetStatusService statuses,
+        com.jpromi.inventorycore.files.FileCleanupService fileCleanup
     ) {
+        this.fileCleanup = fileCleanup;
         this.fileAccess = fileAccess;
         this.statuses = statuses;
         this.assetRepository = assetRepository;
@@ -148,9 +151,10 @@ public class InventoryController {
         LocationResponse before = mapper.toResponse(location);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.LOCATION, location.getAreas(), areas);
-        applyLocation(access, location, request);
+        List<StoredFile> previousFiles = applyLocation(access, location, request);
         location.setAreas(areas);
         LocationResponse after = mapper.toResponse(locationRepository.save(location), access);
+        fileCleanup.deleteWhenUnused(previousFiles);
         audit.logChanges(AuditObjectType.LOCATION, after.uuid(), after.name(), before, after);
         return after;
     }
@@ -205,9 +209,10 @@ public class InventoryController {
         AssetTypeResponse before = mapper.toResponse(type);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.ASSET_TYPE, type.getAreas(), areas);
-        applyAssetType(type, request);
+        List<StoredFile> previousFiles = applyAssetType(type, request);
         type.setAreas(areas);
         AssetTypeResponse after = mapper.toResponse(assetTypeRepository.save(type));
+        fileCleanup.deleteWhenUnused(previousFiles);
         audit.logChanges(AuditObjectType.ASSET_TYPE, after.uuid(), after.name(), before, after);
         return after;
     }
@@ -327,13 +332,14 @@ public class InventoryController {
         AssetResponse before = mapper.toResponse(asset);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.ASSET, asset.getAreas(), areas);
-        applyAsset(access, asset, request);
+        List<StoredFile> previousFiles = applyAsset(access, asset, request);
         asset.setAreas(areas);
         if (request.statusUuid() != null) {
             statuses.change(asset, statuses.resolve(request.statusUuid(), asset), request.statusComment(),
                 permissionService.currentUser(authentication), null);
         }
         AssetResponse after = mapper.toResponse(assetRepository.save(asset));
+        fileCleanup.deleteWhenUnused(previousFiles);
         audit.logChanges(AuditObjectType.ASSET, after.uuid(), after.name(), before, after);
         return after;
     }
@@ -385,7 +391,8 @@ public class InventoryController {
         }
     }
 
-    private void applyLocation(AccessContext access, Location location, LocationRequest request) {
+    /** Returns the files of the images before the change, so removed ones can be deleted. */
+    private List<StoredFile> applyLocation(AccessContext access, Location location, LocationRequest request) {
         location.setName(request.name());
         location.setDescription(request.description());
         location.setLocationType(request.locationType() == null
@@ -416,19 +423,22 @@ public class InventoryController {
                 || access.canInAll(PermissionResourceType.LOCATION, PermissionAction.EDIT, location.getAreas()));
             location.setShared(request.shared());
         }
-        java.util.Set<UUID> attached = attachedFiles(location.getImages().stream().map(LocationImage::getFile));
+        List<StoredFile> previousFiles = location.getImages().stream().map(LocationImage::getFile).toList();
+        java.util.Set<UUID> attached = attachedFiles(previousFiles.stream());
         location.getImages().clear();
         if (request.images() != null) {
             request.images().stream().filter(InventoryController::hasSource)
                 .forEach(imageRequest -> location.getImages().add(locationImage(location, imageRequest, attached)));
         }
+        return previousFiles;
     }
 
     private static String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private void applyAssetType(AssetType type, AssetTypeRequest request) {
+    /** Returns the files of the images before the change, so removed ones can be deleted. */
+    private List<StoredFile> applyAssetType(AssetType type, AssetTypeRequest request) {
         type.setName(request.name());
         type.setDescription(request.description());
         type.setInspectionIntervalDays(request.inspectionIntervalDays());
@@ -436,7 +446,8 @@ public class InventoryController {
         if (request.fieldDefinitions() != null) {
             request.fieldDefinitions().forEach(fieldRequest -> type.getFieldDefinitions().add(fieldDefinition(type, fieldRequest)));
         }
-        java.util.Set<UUID> attached = attachedFiles(type.getImages().stream().map(AssetTypeImage::getFile));
+        List<StoredFile> previousFiles = type.getImages().stream().map(AssetTypeImage::getFile).toList();
+        java.util.Set<UUID> attached = attachedFiles(previousFiles.stream());
         type.getImages().clear();
         if (request.images() != null) {
             request.images().stream().filter(InventoryController::hasSource)
@@ -446,9 +457,11 @@ public class InventoryController {
         if (request.tagUuids() != null) {
             request.tagUuids().forEach(tagUuid -> type.getTags().add(tagOr404(tagUuid)));
         }
+        return previousFiles;
     }
 
-    private void applyAsset(AccessContext access, Asset asset, AssetRequest request) {
+    /** Returns the files of the images before the change, so removed ones can be deleted. */
+    private List<StoredFile> applyAsset(AccessContext access, Asset asset, AssetRequest request) {
         hierarchy.assign(access, asset, request.parentAssetUuid(), request.parentAssetNote());
         asset.setInspectionPolicy(request.inspectionPolicy() == null
             ? com.jpromi.inventorycore.enums.AssetInspectionPolicy.STANDARD : request.inspectionPolicy());
@@ -490,12 +503,14 @@ public class InventoryController {
         if (request.fieldValues() != null) {
             request.fieldValues().forEach(fieldRequest -> asset.getFieldValues().add(fieldValue(asset, fieldRequest)));
         }
-        java.util.Set<UUID> attached = attachedFiles(asset.getImages().stream().map(AssetImage::getFile));
+        List<StoredFile> previousFiles = asset.getImages().stream().map(AssetImage::getFile).toList();
+        java.util.Set<UUID> attached = attachedFiles(previousFiles.stream());
         asset.getImages().clear();
         if (request.images() != null) {
             request.images().stream().filter(InventoryController::hasSource)
                 .forEach(imageRequest -> asset.getImages().add(assetImage(asset, imageRequest, attached)));
         }
+        return previousFiles;
     }
 
     private AssetFieldDefinition fieldDefinition(AssetType type, AssetFieldDefinitionRequest request) {

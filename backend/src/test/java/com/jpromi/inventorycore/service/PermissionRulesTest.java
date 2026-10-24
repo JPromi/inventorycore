@@ -18,6 +18,7 @@ import com.jpromi.inventorycore.dto.InspectionItemUpdateRequest;
 import com.jpromi.inventorycore.dto.InspectionTypeRequest;
 import com.jpromi.inventorycore.entity.*;
 import com.jpromi.inventorycore.enums.*;
+import com.jpromi.inventorycore.files.FileCleanupService;
 import com.jpromi.inventorycore.repository.*;
 
 /** Server-side permission rules: what the UI hides must also be refused by the backend. */
@@ -34,7 +35,8 @@ class PermissionRulesTest {
     private final InspectionService service = new InspectionService(types, inspections, assets,
         mock(AssetTypeRepository.class), mock(LocationRepository.class), mock(TagRepository.class), areas,
         resolver, mock(InspectionItemRepository.class), mock(AssetInspectionScheduleRepository.class),
-        mock(InspectionScheduleService.class), files, mock(AuditService.class), mock(AssetStatusService.class));
+        mock(InspectionScheduleService.class), files, mock(AuditService.class), mock(AssetStatusService.class),
+        mock(FileCleanupService.class));
 
     private final User inspector = User.builder().username("inspector").displayName("Inspector").build();
 

@@ -45,6 +45,7 @@ import com.jpromi.inventorycore.entity.Inspection;
 import com.jpromi.inventorycore.entity.InspectionFieldDefinition;
 import com.jpromi.inventorycore.entity.InspectionItem;
 import com.jpromi.inventorycore.entity.InspectionItemPhoto;
+import com.jpromi.inventorycore.files.FileCleanupService;
 import com.jpromi.inventorycore.entity.InspectionItemValue;
 import com.jpromi.inventorycore.entity.InspectionType;
 import com.jpromi.inventorycore.entity.Location;
@@ -98,6 +99,7 @@ public class InspectionService {
     private final StoredFileRepository fileRepository;
     private final AuditService audit;
     private final AssetStatusService assetStatuses;
+    private final FileCleanupService fileCleanup;
 
     public InspectionService(
         InspectionTypeRepository typeRepository,
@@ -113,8 +115,10 @@ public class InspectionService {
         InspectionScheduleService scheduleService,
         StoredFileRepository fileRepository,
         AuditService audit,
-        AssetStatusService assetStatuses
+        AssetStatusService assetStatuses,
+        FileCleanupService fileCleanup
     ) {
+        this.fileCleanup = fileCleanup;
         this.typeRepository = typeRepository;
         this.inspectionRepository = inspectionRepository;
         this.assetRepository = assetRepository;
@@ -719,10 +723,13 @@ public class InspectionService {
         requireInspect(access);
         Inspection inspection = openInspection(access, uuid);
         InspectionItem item = itemOr404(inspection, itemUuid);
-        if (!item.getPhotos().removeIf(photo -> photo.getUuid().equals(photoUuid))) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden");
-        }
+        InspectionItemPhoto removed = item.getPhotos().stream()
+            .filter(photo -> photo.getUuid().equals(photoUuid))
+            .findFirst()
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Foto nicht gefunden"));
+        item.getPhotos().remove(removed);
         inspectionRepository.save(inspection);
+        fileCleanup.deleteWhenUnused(List.of(removed.getFile()));
         return toResponse(item, locationsById());
     }
 
@@ -769,6 +776,7 @@ public class InspectionService {
         }
         inspection.getItems().remove(item);
         inspectionRepository.save(inspection);
+        fileCleanup.deleteWhenUnused(item.getPhotos().stream().map(InspectionItemPhoto::getFile).toList());
     }
 
     /**
@@ -809,7 +817,12 @@ public class InspectionService {
         // or who may delete assets in the protocol's area.
         require(inspection.isCompleted() ? access.isAdmin()
             : user.getUuid().equals(inspection.getCreatedByUuid()) || canDeleteIn(access, inspection));
+        List<StoredFile> photos = inspection.getItems().stream()
+            .flatMap(item -> item.getPhotos().stream())
+            .map(InspectionItemPhoto::getFile)
+            .toList();
         inspectionRepository.delete(inspection);
+        fileCleanup.deleteWhenUnused(photos);
         audit.log(AuditAction.DELETE, AuditObjectType.INSPECTION, inspection.getUuid(), inspection.getTitle(),
             AuditDetail.event("INSPECTION_DELETED", "completed", inspection.isCompleted()));
     }

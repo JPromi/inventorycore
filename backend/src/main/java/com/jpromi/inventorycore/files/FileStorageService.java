@@ -125,6 +125,11 @@ public class FileStorageService {
         return content;
     }
 
+    /** Removes the content and its preview from disk (the row is the caller's business). */
+    public void deleteContent(StoredFile file) {
+        delete(file.getStoragePath());
+    }
+
     private void write(String relativePath, byte[] data) throws IOException {
         Path target = resolve(relativePath);
         Files.createDirectories(target.getParent());
