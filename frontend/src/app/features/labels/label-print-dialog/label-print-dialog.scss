@@ -75,6 +75,7 @@
 
     .controls {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.75rem;
       margin-bottom: 0.9rem;
 
@@ -90,8 +91,13 @@
         }
 
         &.grow {
-          flex: 1;
+          flex: 1 1 14rem;
           min-width: 0;
+        }
+
+        &.skip {
+          width: 9rem;
+          flex-shrink: 0;
         }
 
         &.copies {
@@ -175,6 +181,14 @@
           width: 2.6rem;
           height: 2.6rem;
         }
+      }
+    }
+
+    .sheet {
+      margin-top: 0.75rem;
+
+      .hint {
+        text-align: center;
       }
     }
 

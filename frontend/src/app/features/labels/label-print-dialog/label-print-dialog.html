@@ -37,6 +37,12 @@
                     <span>{{ (assets.length > 1 ? 'labelPrint.copiesPerAsset' : 'labelPrint.copies') | t }}</span>
                     <input type="number" min="1" max="100" [(ngModel)]="copies" />
                 </label>
+                @if (sheet) {
+                    <label class="field skip">
+                        <span>{{ 'labelPrint.skip' | t }}</span>
+                        <input type="number" min="0" [max]="perSheet - 1" step="1" [(ngModel)]="skip" />
+                    </label>
+                }
             </div>
 
             <div class="preview">
@@ -71,8 +77,26 @@
                     @if (assets.length > 1) {
                         {{ 'labelPrint.total' | tn: total }}
                     }
-                    {{ 'labelPrint.printHint' | t: { width: current.widthMm, height: current.heightMm } }}
+                    @if (current.sheet; as sheet) {
+                        {{ 'labelPrint.sheetHint' | tn: sheetCount : { width: sheet.paperWidthMm, height: sheet.paperHeightMm } }}
+                    } @else {
+                        {{ 'labelPrint.printHint' | t: { width: current.widthMm, height: current.heightMm } }}
+                    }
                 </p>
+                @if (current.sheet; as sheet) {
+                    <div class="sheet">
+                        <app-label-sheet-preview
+                            [sheet]="sheet"
+                            [widthMm]="current.widthMm"
+                            [heightMm]="current.heightMm"
+                            [skip]="skip"
+                            [count]="total"
+                            [selectable]="true"
+                            (skipChange)="skip = $event"
+                        />
+                        <p class="hint">{{ 'labelPrint.skipHint' | t }}</p>
+                    </div>
+                }
             }
         }
 

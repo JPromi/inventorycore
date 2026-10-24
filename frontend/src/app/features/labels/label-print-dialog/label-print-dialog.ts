@@ -20,10 +20,12 @@ import { TranslateCountPipe, TranslatePipe } from '../../../core/i18n/translate.
 import { AreaService } from '../../../core/service/area.service';
 import { InventoryItem } from '../../inventory/data-access/inventory-api.service';
 import { LabelRenderer } from '../label-renderer/label-renderer';
+import { LabelSheetPreview } from '../label-sheet-preview/label-sheet-preview';
 import { LabelTemplateService } from '../label-template.service';
 import {
   LabelContext,
   LabelElement,
+  LabelSheet,
   LabelTemplate,
   assetLabelContext,
   defaultTemplateFor,
@@ -42,6 +44,7 @@ const MM_TO_PX = 96 / 25.4;
     RouterLink,
     SearchSelect,
     LabelRenderer,
+    LabelSheetPreview,
     TranslatePipe,
     TranslateCountPipe,
     LucideChevronLeft,
@@ -65,6 +68,8 @@ export class LabelPrintDialog implements OnInit, OnChanges {
   protected templateUuid: string | null = null;
   protected elements: LabelElement[] = [];
   protected copies = 1;
+  /** Positions on the first sheet that are already used (sheet templates only). */
+  protected skip = 0;
   /** Asset shown in the preview. */
   protected index = 0;
   protected contexts: LabelContext[] = [];
@@ -127,6 +132,9 @@ export class LabelPrintDialog implements OnInit, OnChanges {
       hint: [
         this.areaService.name(template.areaUuid),
         t('labels.size', { width: template.widthMm, height: template.heightMm }),
+        template.sheet
+          ? t('labels.sheetSize', { columns: template.sheet.columns, rows: template.sheet.rows })
+          : '',
         template.defaultForArea ? t('labelTemplates.default') : '',
       ]
         .filter(Boolean)
@@ -136,6 +144,22 @@ export class LabelPrintDialog implements OnInit, OnChanges {
 
   protected get total(): number {
     return this.assets.length * this.clampedCopies;
+  }
+
+  protected get sheet(): LabelSheet | null {
+    return this.template?.sheet ?? null;
+  }
+
+  protected get perSheet(): number {
+    return this.sheet ? this.sheet.columns * this.sheet.rows : 1;
+  }
+
+  protected get sheetCount(): number {
+    return Math.ceil((this.clampedSkip + this.total) / this.perSheet);
+  }
+
+  private get clampedSkip(): number {
+    return Math.min(this.perSheet - 1, Math.max(0, Math.floor(this.skip || 0)));
   }
 
   private get clampedCopies(): number {
@@ -152,6 +176,7 @@ export class LabelPrintDialog implements OnInit, OnChanges {
 
   protected select(uuid: string | null): void {
     this.templateUuid = uuid;
+    this.skip = 0;
     this.elements = parseElements(this.template?.elementsJson);
   }
 
@@ -170,6 +195,7 @@ export class LabelPrintDialog implements OnInit, OnChanges {
         this.clampedCopies,
         this.pdf,
         this.printAbort.signal,
+        template.sheet ? { sheet: template.sheet, skip: this.clampedSkip } : undefined,
       );
     } catch {
       if (!this.destroyRef.destroyed) {

@@ -17,7 +17,7 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | Locations | Optional parent, child locations, assets, areas, images, address parts (`street`, `postal_code`, `city`, `country`) with the formatted `address`, and nullable `latitude` / `longitude` |
 | Users and groups | Many-to-many membership; group permissions apply to a resource type and optional area |
 | Inspections | Types/field definitions, runs/items, item values/photos, and per-asset schedule data |
-| Labels | One owning area and a layout stored as JSON text with millimeter dimensions and a safe area (`safe_area_mm`, `default 0` so templates from before keep their layout). `label_settings` is a singleton row (`id = 1`) with the default safe area (5 mm) and the ordered size presets in `label_size_presets` (nullable `safe_area_mm` per size, null = default); `DataInitializer` creates it with the former built-in sizes |
+| Labels | One owning area and a layout stored as JSON text with millimeter dimensions and a safe area (`safe_area_mm`, `default 0` so templates from before keep their layout) and an optional print sheet in nullable `sheet_*` columns (paper size, columns, rows, margins, gaps; all null = single labels). `label_settings` is a singleton row (`id = 1`) with the default safe area (5 mm) and the ordered size presets in `label_size_presets` (nullable `safe_area_mm` per size, null = default); `DataInitializer` creates it with the former built-in sizes |
 | Activity logs | Object/user snapshots and language-neutral event/diff details stored as JSON text |
 | Stored files | Metadata and relative disk paths; inventory file content is outside PostgreSQL |
 

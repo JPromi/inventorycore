@@ -39,6 +39,8 @@ export interface LabelTemplate {
   heightMm: number;
   /** Margin along every edge that no element may reach into. */
   safeAreaMm: number;
+  /** Printed side by side on a sheet; null = single labels (roll). */
+  sheet: LabelSheet | null;
   elementsJson: string;
 }
 
@@ -50,7 +52,87 @@ export interface LabelTemplateRequest {
   widthMm: number;
   heightMm: number;
   safeAreaMm: number;
+  sheet: LabelSheet | null;
   elementsJson: string;
+}
+
+/**
+ * Grid of labels on a sheet of paper, e.g. 3 × 5 on A4. Margins run from the top left paper
+ * corner to the first label, gaps lie between neighbouring labels. All values in millimeters.
+ */
+export interface LabelSheet {
+  paperWidthMm: number;
+  paperHeightMm: number;
+  columns: number;
+  rows: number;
+  marginTopMm: number;
+  marginLeftMm: number;
+  gapXMm: number;
+  gapYMm: number;
+}
+
+export const PAPER_SIZES: { label: string; width: number; height: number }[] = [
+  { label: t('labels.paper.a4'), width: 210, height: 297 },
+  { label: t('labels.paper.a4Landscape'), width: 297, height: 210 },
+  { label: t('labels.paper.a5'), width: 148, height: 210 },
+  { label: t('labels.paper.a3'), width: 297, height: 420 },
+  { label: t('labels.paper.letter'), width: 215.9, height: 279.4 },
+];
+
+/** Space the grid takes on the paper. */
+export function sheetGridSize(
+  sheet: LabelSheet,
+  widthMm: number,
+  heightMm: number,
+): { width: number; height: number } {
+  return {
+    width: sheet.columns * widthMm + (sheet.columns - 1) * sheet.gapXMm,
+    height: sheet.rows * heightMm + (sheet.rows - 1) * sheet.gapYMm,
+  };
+}
+
+/** The grid lies completely on the paper (0.01 mm tolerance like the backend). */
+export function sheetFits(sheet: LabelSheet, widthMm: number, heightMm: number): boolean {
+  const grid = sheetGridSize(sheet, widthMm, heightMm);
+  return (
+    sheet.marginLeftMm + grid.width <= sheet.paperWidthMm + 0.01 &&
+    sheet.marginTopMm + grid.height <= sheet.paperHeightMm + 0.01
+  );
+}
+
+/** Centers the grid on the paper by setting both margins. */
+export function centerSheet(sheet: LabelSheet, widthMm: number, heightMm: number): void {
+  const grid = sheetGridSize(sheet, widthMm, heightMm);
+  sheet.marginLeftMm = roundMm(Math.max(0, (sheet.paperWidthMm - grid.width) / 2));
+  sheet.marginTopMm = roundMm(Math.max(0, (sheet.paperHeightMm - grid.height) / 2));
+}
+
+/** As many columns and rows as fit with the current gaps, centered on the paper. */
+export function fillSheet(sheet: LabelSheet, widthMm: number, heightMm: number): void {
+  const fit = (paper: number, size: number, gap: number) =>
+    Math.max(1, Math.floor((paper + gap + 0.01) / (size + gap)));
+  sheet.columns = Math.min(50, fit(sheet.paperWidthMm, widthMm, sheet.gapXMm));
+  sheet.rows = Math.min(100, fit(sheet.paperHeightMm, heightMm, sheet.gapYMm));
+  centerSheet(sheet, widthMm, heightMm);
+}
+
+/** Top left corner of the label at `position` (0 = top left, row by row). */
+export function sheetSlot(
+  sheet: LabelSheet,
+  widthMm: number,
+  heightMm: number,
+  position: number,
+): { x: number; y: number } {
+  const column = position % sheet.columns;
+  const row = Math.floor(position / sheet.columns) % sheet.rows;
+  return {
+    x: sheet.marginLeftMm + column * (widthMm + sheet.gapXMm),
+    y: sheet.marginTopMm + row * (heightMm + sheet.gapYMm),
+  };
+}
+
+function roundMm(value: number): number {
+  return Math.floor(value * 10) / 10;
 }
 
 export interface LabelSizePreset {

@@ -1429,6 +1429,15 @@
   "labels": {
     "logo": "Logo",
     "size": "{width} × {height} mm",
+    "sheetSize": "{columns} × {rows} pro Bogen",
+    "sheetPosition": "Platz {position}",
+    "paper": {
+      "a4": "A4 hoch (210 × 297 mm)",
+      "a4Landscape": "A4 quer (297 × 210 mm)",
+      "a5": "A5 hoch (148 × 210 mm)",
+      "a3": "A3 hoch (297 × 420 mm)",
+      "letter": "US Letter (215,9 × 279,4 mm)"
+    },
     "barcode": {
       "noContent": "Kein Inhalt",
       "invalid": "Ungültiger Inhalt"
@@ -1499,6 +1508,12 @@
       "other": "{count} Labels insgesamt."
     },
     "printHint": "{width} × {height} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.",
+    "sheetHint": {
+      "one": "{count} Bogen ({width} × {height} mm). Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen und Ränder auf „Keine“.",
+      "other": "{count} Bögen ({width} × {height} mm). Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen und Ränder auf „Keine“."
+    },
+    "skip": "Bereits benutzte Plätze",
+    "skipHint": "Klicken Sie auf den ersten freien Platz des Bogens; die Plätze davor bleiben leer.",
     "dialogLabel": "Label drucken"
   },
   "labelTemplates": {
@@ -1543,6 +1558,25 @@
     "heightMm": "Höhe (mm)",
     "safeAreaMm": "Sicherheitsabstand (mm)",
     "safeAreaHint": "Rand, auf dem keine Elemente liegen dürfen, damit der Drucker nichts abschneidet.",
+    "sheet": {
+      "title": "Druckbogen",
+      "enable": "Auf Bogen drucken",
+      "hint": "Ohne Bogen wird jedes Label als eigene Seite in Label-Größe gedruckt, z. B. für Rollen-Labeldrucker.",
+      "paper": "Papierformat",
+      "paperPlaceholder": "Format wählen …",
+      "paperWidth": "Papierbreite (mm)",
+      "paperHeight": "Papierhöhe (mm)",
+      "columns": "Spalten",
+      "rows": "Zeilen",
+      "marginTop": "Rand oben (mm)",
+      "marginLeft": "Rand links (mm)",
+      "gapX": "Abstand waagrecht (mm)",
+      "gapY": "Abstand senkrecht (mm)",
+      "fill": "Bogen füllen",
+      "center": "Zentrieren",
+      "summary": "{count} Labels pro Bogen ({columns} × {rows}).",
+      "doesNotFit": "Die Labels passen mit diesen Rändern und Abständen nicht auf das Papier."
+    },
     "elements": "Elemente",
     "globalLogo": "Globales Logo",
     "add": {
@@ -1971,6 +2005,7 @@
       "widthMm": "Breite (mm)",
       "heightMm": "Höhe (mm)",
       "safeAreaMm": "Sicherheitsabstand (mm)",
+      "sheet": "Druckbogen",
       "sizePresets": "Label-Größen",
       "defaultForArea": "Standard im Bereich",
       "elementsJson": "Layout",

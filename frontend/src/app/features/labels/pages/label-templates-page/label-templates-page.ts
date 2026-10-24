@@ -170,6 +170,7 @@ export class LabelTemplatesPage implements OnInit, OnDestroy {
         widthMm: template.widthMm,
         heightMm: template.heightMm,
         safeAreaMm: template.safeAreaMm,
+        sheet: template.sheet,
         elementsJson: template.elementsJson,
       })
       .subscribe({

@@ -1,0 +1,21 @@
+<div
+    class="paper"
+    [class.overflow]="!fits"
+    [class.selectable]="selectable"
+    [style.aspect-ratio]="sheet.paperWidthMm + ' / ' + sheet.paperHeightMm"
+>
+    @for (position of positions; track $index; let index = $index) {
+        <button
+            type="button"
+            class="slot"
+            [class]="position.state"
+            [disabled]="!selectable"
+            [style.left.%]="position.left"
+            [style.top.%]="position.top"
+            [style.width.%]="slotWidth"
+            [style.height.%]="slotHeight"
+            [title]="'labels.sheetPosition' | t: { position: index + 1 }"
+            (click)="pick(index)"
+        ></button>
+    }
+</div>

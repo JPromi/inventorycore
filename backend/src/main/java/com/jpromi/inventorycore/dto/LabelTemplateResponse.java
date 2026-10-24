@@ -11,5 +11,6 @@ public record LabelTemplateResponse(
     double widthMm,
     double heightMm,
     double safeAreaMm,
+    LabelSheetDto sheet,
     String elementsJson
 ) {}

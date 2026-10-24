@@ -1,0 +1,53 @@
+:host {
+  display: block;
+
+  .paper {
+    position: relative;
+    width: 100%;
+    max-width: 14rem;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--white);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--black) 20%, transparent);
+
+    // the grid runs over the paper edge
+    &.overflow {
+      border-color: var(--accent);
+      outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+  }
+
+  .slot {
+    position: absolute;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--text-muted) 55%, transparent);
+    border-radius: 1px;
+    background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+    cursor: default;
+
+    &.printed {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+
+    // already used positions: crossed out
+    &.skipped {
+      border-style: dashed;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent 0 3px,
+        color-mix(in srgb, var(--text-muted) 30%, transparent) 3px 4px
+      );
+    }
+  }
+
+  .selectable .slot {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+    }
+  }
+}

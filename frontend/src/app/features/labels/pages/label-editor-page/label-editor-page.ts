@@ -26,22 +26,28 @@ import {
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LabelRenderer } from '../../label-renderer/label-renderer';
+import { LabelSheetPreview } from '../../label-sheet-preview/label-sheet-preview';
 import { LabelTemplateService } from '../../label-template.service';
 import {
   LabelContext,
   LabelElement,
   LabelElementType,
   LabelSettings,
+  LabelSheet,
   LabelSizePreset,
+  PAPER_SIZES,
   PLACEHOLDERS,
   Placeholder,
   SAMPLE_CONTEXT,
   SYMBOLOGIES,
   assetLabelContext,
+  centerSheet,
+  fillSheet,
   keepInSafeArea,
   maxSafeAreaMm,
   newElementId,
   parseElements,
+  sheetFits,
 } from '../../label.model';
 import { AreaService } from '../../../../core/service/area.service';
 import {
@@ -62,6 +68,7 @@ const FALLBACK_SETTINGS: LabelSettings = { safeAreaMm: 5, sizePresets: [] };
     RouterLink,
     SearchSelect,
     LabelRenderer,
+    LabelSheetPreview,
     TranslatePipe,
     LucideArrowLeft,
     LucideChevronDown,
@@ -81,6 +88,7 @@ const FALLBACK_SETTINGS: LabelSettings = { safeAreaMm: 5, sizePresets: [] };
 })
 export class LabelEditorPage implements OnInit {
   protected presets: LabelSizePreset[] = [];
+  protected readonly paperSizes = PAPER_SIZES;
   private defaultSafeAreaMm = FALLBACK_SETTINGS.safeAreaMm;
   protected readonly symbologies = SYMBOLOGIES;
   protected readonly symbologyOptions: SelectOption[] = SYMBOLOGIES.map((entry) => ({
@@ -96,6 +104,8 @@ export class LabelEditorPage implements OnInit {
   protected widthMm = 62;
   protected heightMm = 29;
   protected safeAreaMm = 0;
+  /** Printed side by side on a sheet of paper; null = single labels. */
+  protected sheet: LabelSheet | null = null;
   protected elements: LabelElement[] = [];
   protected selectedId: string | null = null;
   protected zoom = 2;
@@ -208,6 +218,70 @@ export class LabelEditorPage implements OnInit {
   /** Moves an element back out of the safe area, e.g. after typing a position. */
   protected keepInside(element: LabelElement): void {
     keepInSafeArea(element, this.widthMm, this.heightMm, this.safeAreaMm);
+  }
+
+  // ---- sheet ----
+
+  protected get sheetFits(): boolean {
+    return !this.sheet || sheetFits(this.sheet, this.widthMm, this.heightMm);
+  }
+
+  /** Starts with A4 filled with as many labels as fit. */
+  protected toggleSheet(enabled: boolean): void {
+    if (!enabled) {
+      this.sheet = null;
+      return;
+    }
+    const [paper] = PAPER_SIZES;
+    this.sheet = {
+      paperWidthMm: paper.width,
+      paperHeightMm: paper.height,
+      columns: 1,
+      rows: 1,
+      marginTopMm: 0,
+      marginLeftMm: 0,
+      gapXMm: 0,
+      gapYMm: 0,
+    };
+    fillSheet(this.sheet, this.widthMm, this.heightMm);
+  }
+
+  protected applyPaper(index: string): void {
+    const paper = PAPER_SIZES[Number(index)];
+    if (this.sheet && paper) {
+      this.sheet.paperWidthMm = paper.width;
+      this.sheet.paperHeightMm = paper.height;
+      fillSheet(this.sheet, this.widthMm, this.heightMm);
+    }
+  }
+
+  /** Whole numbers for the grid, no negative margins or gaps. */
+  protected normalizeSheet(): void {
+    const sheet = this.sheet;
+    if (!sheet) {
+      return;
+    }
+    const length = (value: number, min = 0) => Math.max(min, Number(value) || 0);
+    sheet.paperWidthMm = length(sheet.paperWidthMm, 10);
+    sheet.paperHeightMm = length(sheet.paperHeightMm, 10);
+    sheet.columns = Math.min(50, Math.max(1, Math.round(Number(sheet.columns) || 1)));
+    sheet.rows = Math.min(100, Math.max(1, Math.round(Number(sheet.rows) || 1)));
+    sheet.marginTopMm = length(sheet.marginTopMm);
+    sheet.marginLeftMm = length(sheet.marginLeftMm);
+    sheet.gapXMm = length(sheet.gapXMm);
+    sheet.gapYMm = length(sheet.gapYMm);
+  }
+
+  protected centerSheet(): void {
+    if (this.sheet) {
+      centerSheet(this.sheet, this.widthMm, this.heightMm);
+    }
+  }
+
+  protected fillSheet(): void {
+    if (this.sheet) {
+      fillSheet(this.sheet, this.widthMm, this.heightMm);
+    }
   }
 
   protected setZoom(zoom: number): void {
@@ -412,6 +486,10 @@ export class LabelEditorPage implements OnInit {
       this.error = t('labelEditor.nameMissing');
       return;
     }
+    if (!this.sheetFits) {
+      this.error = t('labelEditor.sheet.doesNotFit');
+      return;
+    }
     this.saving = true;
     this.error = '';
     const request = {
@@ -422,6 +500,7 @@ export class LabelEditorPage implements OnInit {
       widthMm: this.widthMm,
       heightMm: this.heightMm,
       safeAreaMm: this.safeAreaMm,
+      sheet: this.sheet,
       elementsJson: JSON.stringify(this.elements.map((element) => this.round(element))),
     };
     const save$ = this.uuid ? this.api.update(this.uuid, request) : this.api.create(request);
@@ -483,6 +562,7 @@ export class LabelEditorPage implements OnInit {
           this.widthMm = template.widthMm;
           this.heightMm = template.heightMm;
           this.safeAreaMm = template.safeAreaMm ?? 0;
+          this.sheet = template.sheet ? { ...template.sheet } : null;
           this.elements = parseElements(template.elementsJson);
           this.onSizeChange();
         } else {

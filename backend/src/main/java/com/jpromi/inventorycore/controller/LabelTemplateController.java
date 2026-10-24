@@ -21,11 +21,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.jpromi.inventorycore.dto.LabelSheetDto;
 import com.jpromi.inventorycore.dto.LabelTemplateRequest;
 import com.jpromi.inventorycore.dto.LabelTemplateResponse;
 import com.jpromi.inventorycore.dto.PageResponse;
 import com.jpromi.inventorycore.service.Paging;
 import com.jpromi.inventorycore.entity.Area;
+import com.jpromi.inventorycore.entity.LabelSheet;
 import com.jpromi.inventorycore.entity.LabelTemplate;
 import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
@@ -181,12 +183,14 @@ public class LabelTemplateController {
         }
         String elements = request.elementsJson() == null || request.elementsJson().isBlank() ? "[]" : request.elementsJson();
         requireInsideSafeArea(elements, request.widthMm(), request.heightMm(), safeArea);
+        LabelSheet sheet = sheet(request.sheet(), request.widthMm(), request.heightMm());
         template.setName(request.name().trim());
         template.setDescription(request.description());
         template.setWidthMm(request.widthMm());
         template.setHeightMm(request.heightMm());
         template.setSafeAreaMm(safeArea);
         template.setElementsJson(elements);
+        template.setSheet(sheet);
         if (request.defaultForArea() && !template.isDefaultForArea()) {
             // only one default per area
             templateRepository.findByAreaAndDefaultForAreaTrue(template.getArea()).forEach(previous -> {
@@ -195,6 +199,34 @@ public class LabelTemplateController {
             });
         }
         template.setDefaultForArea(request.defaultForArea());
+    }
+
+    /** Checks that the grid of labels fits on the paper; null stays null (single labels). */
+    private static LabelSheet sheet(LabelSheetDto sheet, double labelWidth, double labelHeight) {
+        if (sheet == null) {
+            return null;
+        }
+        if (!isLength(sheet.paperWidthMm(), 10, 2000) || !isLength(sheet.paperHeightMm(), 10, 2000)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Das Papierformat muss zwischen 10 und 2000 mm liegen.");
+        }
+        if (sheet.columns() < 1 || sheet.columns() > 50 || sheet.rows() < 1 || sheet.rows() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte 1 bis 50 Spalten und 1 bis 100 Zeilen angeben.");
+        }
+        if (!isLength(sheet.marginTopMm(), 0, 1000) || !isLength(sheet.marginLeftMm(), 0, 1000)
+            || !isLength(sheet.gapXMm(), 0, 1000) || !isLength(sheet.gapYMm(), 0, 1000)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ränder und Abstände dürfen nicht negativ sein.");
+        }
+        double right = sheet.marginLeftMm() + sheet.columns() * labelWidth + (sheet.columns() - 1) * sheet.gapXMm();
+        double bottom = sheet.marginTopMm() + sheet.rows() * labelHeight + (sheet.rows() - 1) * sheet.gapYMm();
+        if (right > sheet.paperWidthMm() + TOLERANCE_MM || bottom > sheet.paperHeightMm() + TOLERANCE_MM) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Labels passen mit diesen Rändern und Abständen nicht auf das Papier.");
+        }
+        return new LabelSheet(sheet.paperWidthMm(), sheet.paperHeightMm(), sheet.columns(), sheet.rows(),
+            sheet.marginTopMm(), sheet.marginLeftMm(), sheet.gapXMm(), sheet.gapYMm());
+    }
+
+    private static boolean isLength(double value, double min, double max) {
+        return Double.isFinite(value) && value >= min && value <= max;
     }
 
     /** No element may reach into the margin along the edges (the safe area). */
@@ -232,8 +264,23 @@ public class LabelTemplateController {
             template.getWidthMm(),
             template.getHeightMm(),
             template.getSafeAreaMm(),
+            sheetDto(template.getSheet()),
             template.getElementsJson()
         );
+    }
+
+    /** Hibernate may return an empty embeddable instead of null; incomplete sheets count as none. */
+    private static LabelSheetDto sheetDto(LabelSheet sheet) {
+        if (sheet == null || sheet.getPaperWidthMm() == null || sheet.getPaperHeightMm() == null
+            || sheet.getColumns() == null || sheet.getRows() == null) {
+            return null;
+        }
+        return new LabelSheetDto(sheet.getPaperWidthMm(), sheet.getPaperHeightMm(), sheet.getColumns(), sheet.getRows(),
+            orZero(sheet.getMarginTopMm()), orZero(sheet.getMarginLeftMm()), orZero(sheet.getGapXMm()), orZero(sheet.getGapYMm()));
+    }
+
+    private static double orZero(Double value) {
+        return value == null ? 0 : value;
     }
 
     private LabelTemplate templateOr404(UUID uuid) {
