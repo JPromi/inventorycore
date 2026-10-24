@@ -46,7 +46,7 @@
 
 <label class="check-field wide">
     <span class="check-label">{{ 'inspectionItemEditor.note' | t }}</span>
-    <input type="text" [ngModel]="item.note ?? ''" #note (blur)="noteChange.emit(note.value)" [placeholder]="'common.optional' | t" />
+    <input type="text" [ngModel]="item.note ?? ''" (ngModelChange)="noteChange.emit($event)" [placeholder]="'common.optional' | t" />
 </label>
 
 <div class="check-field wide">
