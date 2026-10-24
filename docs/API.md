@@ -40,7 +40,8 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/admin/ldap`, `/admin/ldap/test`, `/admin/ldap/sync` | Directory configuration, connection test, sync; `AuthProviderController` |
 | `/admin/oidc`, `/admin/oidc/test` | OIDC configuration/discovery test; `AuthProviderController` |
 | `/inspection-types`, `/inspections`, `/inspection-schedules` | Types, runs, items, scans, photos, completion and due dates; `InspectionController` |
-| `/label-templates` | Printable label configuration; `LabelTemplateController` |
+| `/label-templates` | Printable label configuration; `LabelTemplateController`. `safeAreaMm` is the margin along every edge that no element may reach into; the request may omit it (null = admin default). Saving returns 400 when an element lies outside `safeAreaMm .. size - safeAreaMm` (0.01 mm tolerance), the layout is not a JSON array, or the safe area leaves less than 1 mm |
+| `/label-settings`, `/admin/label-settings` | Label editor defaults (`safeAreaMm`, ordered `sizePresets` with `name`, `widthMm`, `heightMm` and optional `safeAreaMm`, null = the general `safeAreaMm`; choosing a size in the editor applies its safe area); every signed-in user reads, only admins `PUT`; `LabelSettingsController` |
 | `/dashboard` | Start-page numbers and short lists for the sidebar area selection; `DashboardController` |
 | `/scan` | Resolve a scanned value; `ScanController` |
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |

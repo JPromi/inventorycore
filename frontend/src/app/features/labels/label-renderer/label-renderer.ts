@@ -44,6 +44,8 @@ export class LabelRenderer {
   @Input() editable = false;
   @Input() selectedId: string | null = null;
   @Input() snapMm = 0.5;
+  /** Margin along the edges that elements cannot be moved or resized into. */
+  @Input() safeAreaMm = 0;
   @Output() readonly selectedIdChange = new EventEmitter<string | null>();
   @Output() readonly changed = new EventEmitter<void>();
 
@@ -125,12 +127,14 @@ export class LabelRenderer {
     const { element, origin, mode, pxPerMm } = this.drag;
     const dx = (event.clientX - this.drag.startX) / pxPerMm;
     const dy = (event.clientY - this.drag.startY) / pxPerMm;
+    const right = this.widthMm - this.safeAreaMm;
+    const bottom = this.heightMm - this.safeAreaMm;
     if (mode === 'move') {
-      element.x = this.clamp(this.snap(origin.x + dx), 0, this.widthMm - element.width);
-      element.y = this.clamp(this.snap(origin.y + dy), 0, this.heightMm - element.height);
+      element.x = this.clamp(this.snap(origin.x + dx), this.safeAreaMm, right - element.width);
+      element.y = this.clamp(this.snap(origin.y + dy), this.safeAreaMm, bottom - element.height);
     } else {
-      element.width = this.clamp(this.snap(origin.width + dx), 1, this.widthMm - element.x);
-      element.height = this.clamp(this.snap(origin.height + dy), 1, this.heightMm - element.y);
+      element.width = this.clamp(this.snap(origin.width + dx), 1, right - element.x);
+      element.height = this.clamp(this.snap(origin.height + dy), 1, bottom - element.y);
     }
   }
 

@@ -1,0 +1,86 @@
+<section class="page">
+    <div class="page-shell">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">{{ 'adminLabels.eyebrow' | t }}</p>
+                <h1>
+                    <svg lucideRuler size="20"></svg>
+                    <span>{{ 'adminLabels.title' | t }}</span>
+                </h1>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="primary-action" (click)="save()" [disabled]="!settings || saving">
+                    <svg lucideSave size="16"></svg>
+                    <span>{{ (saving ? 'common.saving' : saved ? 'adminLabels.saved' : 'common.save') | t }}</span>
+                </button>
+            </div>
+        </header>
+
+        @if (error) {
+            <p class="error">{{ error }}</p>
+        }
+
+        @if (loading) {
+            <p class="empty">{{ 'adminLabels.loading' | t }}</p>
+        } @else if (settings) {
+            <form class="stack" (ngSubmit)="save()" (input)="changed()" (change)="changed()">
+                <section class="card">
+                    <h2>{{ 'adminLabels.safeArea' | t }}</h2>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>{{ 'adminLabels.safeAreaMm' | t }}</span>
+                            <input type="number" min="0" max="50" step="0.5" [(ngModel)]="settings.safeAreaMm" name="safeAreaMm" />
+                            <small>{{ 'adminLabels.safeAreaHint' | t }}</small>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="card-title">
+                        <h2>{{ 'adminLabels.sizes' | t }}</h2>
+                        <button type="button" class="secondary-action compact" (click)="addPreset()">
+                            <svg lucidePlus size="15"></svg>
+                            <span>{{ 'adminLabels.addSize' | t }}</span>
+                        </button>
+                    </div>
+                    <p class="hint">{{ 'adminLabels.sizesHint' | t }}</p>
+                    <ul class="presets">
+                        @for (preset of settings.sizePresets; track $index; let index = $index; let first = $first; let last = $last) {
+                            <li>
+                                <label class="field name">
+                                    <span>{{ 'common.name' | t }}</span>
+                                    <input type="text" maxlength="100" [(ngModel)]="preset.name" [name]="'name' + index" [placeholder]="'adminLabels.namePlaceholder' | t" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.widthMm' | t }}</span>
+                                    <input type="number" min="1" max="1000" step="0.5" [(ngModel)]="preset.widthMm" [name]="'width' + index" (change)="suggestName(index)" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.heightMm' | t }}</span>
+                                    <input type="number" min="1" max="1000" step="0.5" [(ngModel)]="preset.heightMm" [name]="'height' + index" (change)="suggestName(index)" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'adminLabels.presetSafeAreaMm' | t }}</span>
+                                    <input type="number" min="0" max="50" step="0.5" [(ngModel)]="preset.safeAreaMm" [name]="'safeArea' + index" [placeholder]="'adminLabels.presetSafeAreaDefault' | t: { value: settings.safeAreaMm }" />
+                                </label>
+                                <div class="row-actions">
+                                    <button type="button" class="icon-button" [title]="'adminLabels.moveUp' | t" [disabled]="first" (click)="movePreset(index, -1)">
+                                        <svg lucideChevronUp size="15"></svg>
+                                    </button>
+                                    <button type="button" class="icon-button" [title]="'adminLabels.moveDown' | t" [disabled]="last" (click)="movePreset(index, 1)">
+                                        <svg lucideChevronDown size="15"></svg>
+                                    </button>
+                                    <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="removePreset(index)">
+                                        <svg lucideTrash2 size="15"></svg>
+                                    </button>
+                                </div>
+                            </li>
+                        } @empty {
+                            <li class="empty-item">{{ 'adminLabels.noSizes' | t }}</li>
+                        }
+                    </ul>
+                </section>
+            </form>
+        }
+    </div>
+</section>

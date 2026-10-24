@@ -28,6 +28,14 @@
       }
     }
 
+    // shades the margin elements must keep free; only shown in the editor, never printed
+    .safe-area {
+      position: absolute;
+      pointer-events: none;
+      outline: 1px dashed color-mix(in srgb, var(--accent) 70%, transparent);
+      box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--accent) 10%, transparent);
+    }
+
     .resize-handle {
       position: absolute;
       right: -5px;

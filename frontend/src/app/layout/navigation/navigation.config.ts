@@ -18,6 +18,7 @@ import {
   LucideNetwork,
   LucideKeyRound,
   LucideHistory,
+  LucideRuler,
   type LucideIcon,
 } from '@lucide/angular';
 import { t } from '../../core/i18n/i18n';
@@ -68,6 +69,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     children: [
       { label: t('nav.areas'), route: '/admin/areas', icon: LucideLayers },
       { label: t('nav.customization'), route: '/admin/customization', icon: LucidePalette },
+      { label: t('nav.labelSettings'), route: '/admin/labels', icon: LucideRuler },
       { label: t('nav.users'), route: '/admin/users', icon: LucideUser },
       { label: t('nav.groups'), route: '/admin/groups', icon: LucideUsers },
       { label: t('nav.groupPermissions'), route: '/admin/group-permissions', icon: LucideShield },

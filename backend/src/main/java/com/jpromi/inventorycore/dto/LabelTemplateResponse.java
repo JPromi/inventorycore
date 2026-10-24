@@ -10,5 +10,6 @@ public record LabelTemplateResponse(
     boolean defaultForArea,
     double widthMm,
     double heightMm,
+    double safeAreaMm,
     String elementsJson
 ) {}

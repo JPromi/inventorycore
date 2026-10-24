@@ -399,6 +399,13 @@ export const routes: Routes = [
               import('./features/admin/pages/areas-page/areas-page').then((m) => m.AreasPage),
           },
           {
+            path: 'labels',
+            loadComponent: () =>
+              import('./features/admin/pages/label-settings-page/label-settings-page').then(
+                (m) => m.LabelSettingsPage,
+              ),
+          },
+          {
             path: 'users',
             loadComponent: () =>
               import('./features/admin/pages/users-page/users-page').then((m) => m.UsersPage),

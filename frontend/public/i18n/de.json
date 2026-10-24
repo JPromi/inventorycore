@@ -287,6 +287,28 @@
       "sync": "Synchronisation fehlgeschlagen."
     }
   },
+  "adminLabels": {
+    "eyebrow": "Administration · Labels",
+    "title": "Label-Standards",
+    "loading": "Label-Standards werden geladen …",
+    "saved": "Gespeichert",
+    "safeArea": "Sicherheitsabstand",
+    "safeAreaMm": "Standard-Sicherheitsabstand (mm)",
+    "safeAreaHint": "Gilt für neue Label-Vorlagen und für Größen ohne eigenen Abstand; lässt sich je Vorlage anpassen. Auf diesem Rand dürfen keine Elemente liegen.",
+    "sizes": "Label-Größen",
+    "sizesHint": "Diese Größen stehen im Label-Editor zur Auswahl, in dieser Reihenfolge. Wird eine Größe gewählt, übernimmt die Vorlage ihren Sicherheitsabstand; ein leeres Feld verwendet den Standard.",
+    "presetSafeAreaMm": "Sicherheitsabstand (mm)",
+    "presetSafeAreaDefault": "Standard ({value} mm)",
+    "addSize": "Größe hinzufügen",
+    "namePlaceholder": "z. B. 62 × 29 mm (Brother DK-11209)",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "noSizes": "Keine Label-Größen festgelegt. Breite und Höhe lassen sich im Editor trotzdem frei eingeben.",
+    "errors": {
+      "load": "Die Label-Standards konnten nicht geladen werden.",
+      "invalidPreset": "Bitte für jede Label-Größe einen Namen sowie Breite und Höhe größer als 0 angeben."
+    }
+  },
   "adminOidc": {
     "loginPage": "Anmeldeseite",
     "autoRedirect": "Automatisch zum Identity Provider weiterleiten",
@@ -1444,9 +1466,6 @@
       "uuid": "UUID",
       "date": "Druckdatum"
     },
-    "sizePresets": {
-      "tape24": "24 mm Band, 60 mm lang"
-    },
     "sample": {
       "name": "Atemschutzgerät PA 1",
       "type": "Atemschutzgerät",
@@ -1522,6 +1541,8 @@
     "sizePresetPlaceholder": "Etikettengröße wählen …",
     "widthMm": "Breite (mm)",
     "heightMm": "Höhe (mm)",
+    "safeAreaMm": "Sicherheitsabstand (mm)",
+    "safeAreaHint": "Rand, auf dem keine Elemente liegen dürfen, damit der Drucker nichts abschneidet.",
     "elements": "Elemente",
     "globalLogo": "Globales Logo",
     "add": {
@@ -1751,6 +1772,7 @@
     "administration": "Administration",
     "areas": "Bereiche",
     "customization": "Erscheinungsbild",
+    "labelSettings": "Label-Standards",
     "users": "Benutzer",
     "groups": "Gruppen",
     "groupPermissions": "Berechtigungen",
@@ -1948,6 +1970,8 @@
       "assetTypeUuids": "Typen",
       "widthMm": "Breite (mm)",
       "heightMm": "Höhe (mm)",
+      "safeAreaMm": "Sicherheitsabstand (mm)",
+      "sizePresets": "Label-Größen",
       "defaultForArea": "Standard im Bereich",
       "elementsJson": "Layout",
       "optionsJson": "Auswahlwerte",

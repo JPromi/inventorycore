@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jpromi.inventorycore.entity.Area;
+import com.jpromi.inventorycore.entity.LabelSettings;
 import com.jpromi.inventorycore.entity.LabelTemplate;
 import com.jpromi.inventorycore.entity.User;
 import com.jpromi.inventorycore.enums.Provider;
@@ -15,6 +16,7 @@ import com.jpromi.inventorycore.repository.AppUserRepository;
 import com.jpromi.inventorycore.repository.AreaRepository;
 import com.jpromi.inventorycore.repository.AssetRepository;
 import com.jpromi.inventorycore.repository.AssetTypeRepository;
+import com.jpromi.inventorycore.repository.LabelSettingsRepository;
 import com.jpromi.inventorycore.repository.LabelTemplateRepository;
 import com.jpromi.inventorycore.repository.LocationRepository;
 
@@ -23,7 +25,7 @@ import com.jpromi.inventorycore.repository.LocationRepository;
 public class DataInitializer implements CommandLineRunner {
 
     private static final String DEFAULT_LABEL_ELEMENTS = """
-        [{"id":"code","type":"barcode","x":1.5,"y":1.5,"width":26,"height":26,"content":"{invId}","symbology":"qrcode"},{"id":"name","type":"text","x":30,"y":2,"width":30,"height":11,"content":"{name}","fontSize":10,"bold":true,"align":"left"},{"id":"inv","type":"text","x":30,"y":14,"width":30,"height":5,"content":"{invId}","fontSize":8,"bold":false,"align":"left"},{"id":"location","type":"text","x":30,"y":20,"width":30,"height":7,"content":"{location}","fontSize":7,"bold":false,"align":"left"}]""";
+        [{"id":"code","type":"barcode","x":5,"y":5,"width":19,"height":19,"content":"{invId}","symbology":"qrcode"},{"id":"name","type":"text","x":26,"y":5,"width":31,"height":8,"content":"{name}","fontSize":9,"bold":true,"align":"left"},{"id":"inv","type":"text","x":26,"y":13.5,"width":31,"height":4,"content":"{invId}","fontSize":7,"bold":false,"align":"left"},{"id":"location","type":"text","x":26,"y":18,"width":31,"height":6,"content":"{location}","fontSize":6.5,"bold":false,"align":"left"}]""";
 
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,6 +34,7 @@ public class DataInitializer implements CommandLineRunner {
     private final LocationRepository locationRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final LabelTemplateRepository labelTemplateRepository;
+    private final LabelSettingsRepository labelSettingsRepository;
     private final com.jpromi.inventorycore.service.AssetStatusService assetStatuses;
     private final com.jpromi.inventorycore.repository.GroupRepository groupRepository;
 
@@ -49,6 +52,7 @@ public class DataInitializer implements CommandLineRunner {
         LocationRepository locationRepository,
         AssetTypeRepository assetTypeRepository,
         LabelTemplateRepository labelTemplateRepository,
+        LabelSettingsRepository labelSettingsRepository,
         com.jpromi.inventorycore.service.AssetStatusService assetStatuses,
         com.jpromi.inventorycore.repository.GroupRepository groupRepository
     ) {
@@ -61,6 +65,7 @@ public class DataInitializer implements CommandLineRunner {
         this.locationRepository = locationRepository;
         this.assetTypeRepository = assetTypeRepository;
         this.labelTemplateRepository = labelTemplateRepository;
+        this.labelSettingsRepository = labelSettingsRepository;
     }
 
     @Override
@@ -71,6 +76,7 @@ public class DataInitializer implements CommandLineRunner {
         assetRepository.findWithoutArea().forEach(asset -> asset.getAreas().add(defaultArea));
         locationRepository.findWithoutArea().forEach(location -> location.getAreas().add(defaultArea));
         assetTypeRepository.findWithoutArea().forEach(type -> type.getAreas().add(defaultArea));
+        ensureLabelSettings();
         ensureDefaultLabel(defaultArea);
         assetStatuses.ensureBuiltIns();
         ensureEveryoneGroup();
@@ -104,8 +110,16 @@ public class DataInitializer implements CommandLineRunner {
             .defaultForArea(true)
             .widthMm(62)
             .heightMm(29)
+            .safeAreaMm(LabelSettings.DEFAULT_SAFE_AREA_MM)
             .elementsJson(DEFAULT_LABEL_ELEMENTS)
             .build());
+    }
+
+    /** Label editor defaults (5 mm safe area, common label sizes) that admins can change afterwards. */
+    private void ensureLabelSettings() {
+        if (!labelSettingsRepository.existsById(LabelSettings.SINGLETON_ID)) {
+            labelSettingsRepository.save(new LabelSettings());
+        }
     }
 
     /** The group "Alle Benutzer" (no permissions at first, so nothing changes for existing installations). */

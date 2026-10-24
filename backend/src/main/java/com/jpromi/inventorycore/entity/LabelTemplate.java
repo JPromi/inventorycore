@@ -62,6 +62,14 @@ public class LabelTemplate {
     @Column(nullable = false)
     private double heightMm;
 
+    /**
+     * Margin along every edge that elements must keep free. Templates from before the safe area
+     * existed get 0, so their layout stays valid.
+     */
+    @Column(nullable = false, columnDefinition = "double precision default 0")
+    @Builder.Default
+    private double safeAreaMm = 0;
+
     @Column(nullable = false, columnDefinition = "text")
     @Builder.Default
     private String elementsJson = "[]";

@@ -169,6 +169,7 @@ export class LabelTemplatesPage implements OnInit, OnDestroy {
         defaultForArea: false,
         widthMm: template.widthMm,
         heightMm: template.heightMm,
+        safeAreaMm: template.safeAreaMm,
         elementsJson: template.elementsJson,
       })
       .subscribe({
