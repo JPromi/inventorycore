@@ -1123,7 +1123,6 @@
     "retry": "Erneut versuchen"
   },
   "inventoryDetail": {
-    "backToList": "Zurück zur Übersicht",
     "printLabel": "Label drucken",
     "fields": {
       "inspectionPolicy": "Prüferfassung",

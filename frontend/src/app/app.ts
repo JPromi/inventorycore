@@ -6,6 +6,7 @@ import { PwaStatus } from './shared/components/pwa-status/pwa-status';
 import { ImageViewer } from './shared/components/image-viewer/image-viewer';
 import { AuthService } from './core/service/auth.service';
 import { CustomizationService } from './core/service/customization.service';
+import { NavigationHistoryService } from './core/service/navigation-history.service';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +20,8 @@ export class App implements OnInit {
   constructor(
     private readonly authService: AuthService,
     private readonly customization: CustomizationService,
+    // created here so it records from the first navigation on
+    private readonly navigationHistory: NavigationHistoryService,
   ) {}
 
   ngOnInit(): void {

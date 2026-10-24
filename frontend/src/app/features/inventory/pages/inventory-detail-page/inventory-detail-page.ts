@@ -58,6 +58,7 @@ import {
 import { PermissionService } from '../../../../core/service/permission.service';
 import { locationPath, locationWithDescendants } from '../../../../shared/util/location-utils';
 import { locationTypeInfo, LocationTypeInfo } from '../../../../shared/util/location-types';
+import { NavigationHistoryService } from '../../../../core/service/navigation-history.service';
 
 interface LinkedItem {
   uuid: string;
@@ -113,6 +114,7 @@ export class InventoryDetailPage implements OnInit {
   protected activeImage: InventoryImage | null = null;
   protected images: InventoryImage[] = [];
   private loadSubscription?: Subscription;
+  private uuid = '';
   protected locations: InventoryItem[] = [];
   protected assetTypes: InventoryItem[] = [];
   protected assets: InventoryItem[] = [];
@@ -171,6 +173,7 @@ export class InventoryDetailPage implements OnInit {
     protected readonly permissions: PermissionService,
     private readonly areaService: AreaService,
     private readonly inspectionService: InspectionService,
+    private readonly navigationHistory: NavigationHistoryService,
   ) {}
 
   ngOnInit(): void {
@@ -180,9 +183,32 @@ export class InventoryDetailPage implements OnInit {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const uuid = params.get('uuid');
       if (uuid) {
+        this.uuid = uuid;
         this.load(uuid);
       }
     });
+  }
+
+  // ---- back ----
+
+  /** Pages of this object itself (detail, edit, history) are no place to go back to. */
+  private readonly isOwnPage = (url: string): boolean => {
+    const own = `${this.config.listRoute}/${this.uuid}`;
+    return url.startsWith(own) && (url.length === own.length || '/?#'.includes(url[own.length]));
+  };
+
+  /** Where the back link leads: the page the user came from (e.g. the scanner), else the list. */
+  protected get backUrl(): string {
+    return this.navigationHistory.previous(this.isOwnPage) ?? this.config.listRoute;
+  }
+
+  /** Goes back in the browser history, so the previous page keeps its state; new tab etc. use the link. */
+  protected goBack(event: MouseEvent): void {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    this.navigationHistory.back(this.isOwnPage, this.config.listRoute);
   }
 
   /** Inspection history is shown on assets to users who may inspect. */
