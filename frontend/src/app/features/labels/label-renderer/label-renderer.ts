@@ -108,6 +108,8 @@ export class LabelRenderer {
     }
     event.preventDefault();
     event.stopPropagation();
+    // preventDefault keeps the focus in the last form field, which would swallow Delete and the arrow keys
+    (document.activeElement as HTMLElement | null)?.blur();
     this.select(element.id);
     this.drag = {
       element,
