@@ -465,6 +465,11 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'storage',
+            loadComponent: () =>
+              import('./features/admin/pages/storage-page/storage-page').then((m) => m.StoragePage),
+          },
+          {
             path: 'logs',
             loadComponent: () =>
               import('./features/admin/pages/audit-log-page/audit-log-page').then(

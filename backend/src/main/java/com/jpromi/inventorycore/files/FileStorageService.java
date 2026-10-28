@@ -3,11 +3,13 @@ package com.jpromi.inventorycore.files;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -128,6 +130,43 @@ public class FileStorageService {
     /** Removes the content and its preview from disk (the row is the caller's business). */
     public void deleteContent(StoredFile file) {
         delete(file.getStoragePath());
+    }
+
+    /** Bytes the content and the preview take on disk; a missing part counts 0. */
+    public DiskSize diskSize(StoredFile file) {
+        return new DiskSize(sizeOf(file.getStoragePath()),
+            file.isHasThumbnail() ? sizeOf(file.getStoragePath() + THUMBNAIL_SUFFIX) : 0);
+    }
+
+    /** Total and usable space of the drive holding the files; empty if the system does not tell. */
+    public Optional<VolumeSpace> volumeSpace() {
+        try {
+            Path existing = root;
+            while (existing != null && !Files.exists(existing)) {
+                existing = existing.getParent();
+            }
+            if (existing == null) {
+                return Optional.empty();
+            }
+            FileStore store = Files.getFileStore(existing);
+            return Optional.of(new VolumeSpace(store.getTotalSpace(), store.getUsableSpace()));
+        } catch (IOException exception) {
+            log.warn("Could not read the free space of {}", root, exception);
+            return Optional.empty();
+        }
+    }
+
+    public record DiskSize(long content, long preview) {}
+
+    public record VolumeSpace(long total, long usable) {}
+
+    private long sizeOf(String relativePath) {
+        try {
+            Path path = resolve(relativePath);
+            return Files.exists(path) ? Files.size(path) : 0;
+        } catch (IOException | IllegalArgumentException exception) {
+            return 0;
+        }
     }
 
     private void write(String relativePath, byte[] data) throws IOException {

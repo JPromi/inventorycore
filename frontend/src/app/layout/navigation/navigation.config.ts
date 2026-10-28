@@ -19,6 +19,7 @@ import {
   LucideKeyRound,
   LucideHistory,
   LucideRuler,
+  LucideHardDrive,
   type LucideIcon,
 } from '@lucide/angular';
 import { t } from '../../core/i18n/i18n';
@@ -75,6 +76,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
       { label: t('nav.groupPermissions'), route: '/admin/group-permissions', icon: LucideShield },
       { label: t('nav.ldap'), route: '/admin/ldap', icon: LucideNetwork },
       { label: t('nav.oidc'), route: '/admin/oidc', icon: LucideKeyRound },
+      { label: t('nav.storage'), route: '/admin/storage', icon: LucideHardDrive },
       { label: t('nav.logs'), route: '/admin/logs', icon: LucideHistory },
     ],
   },

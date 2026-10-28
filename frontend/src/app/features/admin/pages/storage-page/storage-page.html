@@ -1,0 +1,148 @@
+<section class="page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">@if (usage) { {{ 'adminStorage.total' | t: { size: bytes(totalSize) } }} }</p>
+            <h1>
+                <svg lucideHardDrive size="20"></svg>
+                <span>{{ 'adminStorage.title' | t }}</span>
+            </h1>
+        </div>
+        <div class="header-actions">
+            <button type="button" class="secondary-action" (click)="load()" [disabled]="loading">
+                <svg lucideRefreshCw size="16"></svg>
+                <span>{{ 'adminStorage.refresh' | t }}</span>
+            </button>
+        </div>
+    </header>
+
+    <p class="hint intro">{{ 'adminStorage.intro' | t }}</p>
+
+    @if (error) {
+        <p class="error">{{ error }}</p>
+    }
+
+    @if (!usage) {
+        @if (loading) {
+            <p class="empty">{{ 'common.loading' | t }}</p>
+        }
+    } @else {
+        <div class="summary">
+            <div class="card stat">
+                <span class="stat-label">
+                    <svg lucideDatabase size="16"></svg>
+                    {{ 'adminStorage.database' | t }}
+                </span>
+                <strong>{{ bytes(usage.database.size) }}</strong>
+                <span class="hint">{{ 'adminStorage.databaseHint' | t: { profileImages: bytes(profileImageSize) } }}</span>
+            </div>
+            <div class="card stat">
+                <span class="stat-label">
+                    <svg lucideImage size="16"></svg>
+                    {{ 'adminStorage.files' | t }}
+                </span>
+                <strong>{{ bytes(fileSize) }}</strong>
+                <span class="hint">
+                    {{ 'adminStorage.fileCount' | tn: usage.files.count : { count: count(usage.files.count) } }}
+                    · {{ 'adminStorage.previews' | t: { size: bytes(usage.files.previewSize) } }}
+                </span>
+                <span class="hint">{{ 'adminStorage.originalSize' | t: { size: bytes(usage.files.originalSize) } }}</span>
+            </div>
+            @if (volumeUsed !== null) {
+                <div class="card stat">
+                    <span class="stat-label">
+                        <svg lucideHardDrive size="16"></svg>
+                        {{ 'adminStorage.volume' | t }}
+                    </span>
+                    <strong>{{ 'adminStorage.volumeFree' | t: { size: bytes(usage.files.volumeUsable) } }}</strong>
+                    <span class="meter" [attr.aria-label]="'adminStorage.volumeUsed' | t: { used: bytes(volumeUsed), total: bytes(usage.files.volumeTotal) }">
+                        <span [style.width.%]="usage.files.volumeTotal ? (volumeUsed / usage.files.volumeTotal) * 100 : 0"></span>
+                    </span>
+                    <span class="hint">{{ 'adminStorage.volumeUsed' | t: { used: bytes(volumeUsed), total: bytes(usage.files.volumeTotal) } }}</span>
+                </div>
+            }
+        </div>
+
+        @if (usage.files.unattachedCount) {
+            <p class="hint notice">
+                {{ 'adminStorage.unattached' | tn: usage.files.unattachedCount : { count: count(usage.files.unattachedCount), size: bytes(usage.files.unattachedSize) } }}
+            </p>
+        }
+
+        <section class="content-section">
+            <h2>{{ 'adminStorage.perUser' | t }}</h2>
+            <p class="hint section-hint">{{ 'adminStorage.perUserHint' | t }}</p>
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'terms.user' | t }}</th>
+                            <th class="number">{{ 'adminStorage.columns.images' | t }}</th>
+                            <th class="number">{{ 'adminStorage.columns.imageSize' | t }}</th>
+                            <th class="number">{{ 'adminStorage.columns.profileImage' | t }}</th>
+                            <th class="share-column">{{ 'adminStorage.columns.total' | t }}</th>
+                            <th>{{ 'adminStorage.columns.lastUpload' | t }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (user of usage.users; track user.uuid) {
+                            <tr [class.muted-row]="!userTotal(user)">
+                                <td>
+                                    <span class="user-name">
+                                        <strong>{{ userName(user) }}</strong>
+                                        @if (user.username && user.username !== user.displayName) {
+                                            <span class="muted">{{ user.username }}</span>
+                                        }
+                                        @if (user.deleted) {
+                                            <span class="muted">{{ 'adminStorage.deletedUser' | t }}</span>
+                                        }
+                                    </span>
+                                </td>
+                                <td class="number">{{ count(user.fileCount) }}</td>
+                                <td class="number" [title]="'adminStorage.originalSize' | t: { size: bytes(user.originalSize) }">{{ bytes(user.fileSize) }}</td>
+                                <td class="number">{{ user.profileImageSize ? bytes(user.profileImageSize) : '—' }}</td>
+                                <td class="share-column">
+                                    <span class="share">
+                                        <strong>{{ bytes(userTotal(user)) }}</strong>
+                                        <span class="muted">{{ userPercent(user) }}</span>
+                                    </span>
+                                    <span class="meter small"><span [style.width.%]="userShare(user)"></span></span>
+                                </td>
+                                <td>{{ date(user.lastUploadAt) }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2>{{ 'adminStorage.tables' | t }}</h2>
+            <p class="hint section-hint">{{ 'adminStorage.tablesHint' | t }}</p>
+            <div class="data-table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'adminStorage.columns.table' | t }}</th>
+                            <th class="number">{{ 'adminStorage.columns.rows' | t }}</th>
+                            <th class="number">{{ 'adminStorage.columns.size' | t }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (table of tables; track table.name) {
+                            <tr>
+                                <td class="table-name">{{ table.name }}</td>
+                                <td class="number">{{ table.rows < 0 ? '—' : count(table.rows) }}</td>
+                                <td class="number">{{ bytes(table.size) }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (usage.database.tables.length > tableLimit) {
+                <button type="button" class="secondary-action more" (click)="showAllTables = !showAllTables">
+                    {{ (showAllTables ? 'adminStorage.showFewerTables' : 'adminStorage.showAllTables') | t: { count: usage.database.tables.length } }}
+                </button>
+            }
+        </section>
+    }
+</section>

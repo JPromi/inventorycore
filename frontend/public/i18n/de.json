@@ -171,6 +171,49 @@
     "empty": "Noch keine Einträge.",
     "loadError": "Protokoll konnte nicht geladen werden."
   },
+  "adminStorage": {
+    "title": "Speicherplatz",
+    "total": "Gesamt ca. {size}",
+    "refresh": "Aktualisieren",
+    "intro": "Zeigt, wie viel Speicherplatz die Datenbank und die hochgeladenen Bilder belegen und wie viel davon auf die einzelnen Benutzer entfällt. Die Werte werden beim Öffnen der Seite ermittelt und sind Richtwerte.",
+    "database": "Datenbank",
+    "databaseHint": "Alle Daten inklusive Indizes, davon Profilbilder: {profileImages}",
+    "files": "Bilder und Fotos",
+    "fileCount": {
+      "one": "{count} Datei",
+      "other": "{count} Dateien"
+    },
+    "previews": "davon Vorschaubilder: {size}",
+    "originalSize": "Hochgeladen vor dem Verkleinern: {size}",
+    "volume": "Laufwerk der Dateiablage",
+    "volumeFree": "{size} frei",
+    "volumeUsed": "{used} von {total} belegt",
+    "unattached": {
+      "one": "{count} Datei ({size}) wird nirgends mehr verwendet und von der nächtlichen Bereinigung gelöscht.",
+      "other": "{count} Dateien ({size}) werden nirgends mehr verwendet und von der nächtlichen Bereinigung gelöscht."
+    },
+    "perUser": "Pro Benutzer",
+    "perUserHint": "Bilder und Fotos, die der Benutzer hochgeladen hat (z. B. Fotos von Prüfungen oder Bilder eines Fahrzeugs), samt Vorschaubildern, sowie sein Profilbild. Der Anteil bezieht sich auf alle Bilder und Profilbilder.",
+    "unknownUploader": "Ohne bekannten Benutzer",
+    "deletedUser": "Benutzer gelöscht",
+    "tables": "Datenbank-Tabellen",
+    "tablesHint": "Größte Tabellen zuerst, inklusive Indizes. Die Zeilenanzahl ist eine Schätzung der Datenbank.",
+    "showAllTables": "Alle {count} Tabellen anzeigen",
+    "showFewerTables": "Weniger Tabellen anzeigen",
+    "columns": {
+      "images": "Bilder",
+      "imageSize": "Bildgröße",
+      "profileImage": "Profilbild",
+      "total": "Gesamt",
+      "lastUpload": "Zuletzt hochgeladen",
+      "table": "Tabelle",
+      "rows": "Zeilen (ca.)",
+      "size": "Größe"
+    },
+    "errors": {
+      "load": "Der Speicherplatz konnte nicht ermittelt werden."
+    }
+  },
   "adminCustomization": {
     "eyebrow": "Administration",
     "title": "Erscheinungsbild",
@@ -1814,7 +1857,8 @@
     "logs": "Protokoll",
     "openMenu": "Menü öffnen",
     "closeMenu": "Menü schließen",
-    "statuses": "Status"
+    "statuses": "Status",
+    "storage": "Speicherplatz"
   },
   "pwa": {
     "install": "App installieren"
