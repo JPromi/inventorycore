@@ -1,5 +1,6 @@
 package com.jpromi.inventorycore.controller;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -20,21 +21,28 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.jpromi.inventorycore.dto.LabelSheetDto;
 import com.jpromi.inventorycore.dto.LabelTemplateRequest;
 import com.jpromi.inventorycore.dto.LabelTemplateResponse;
 import com.jpromi.inventorycore.dto.PageResponse;
 import com.jpromi.inventorycore.service.Paging;
 import com.jpromi.inventorycore.entity.Area;
+import com.jpromi.inventorycore.entity.LabelSheet;
 import com.jpromi.inventorycore.entity.LabelTemplate;
 import com.jpromi.inventorycore.enums.PermissionAction;
 import com.jpromi.inventorycore.enums.PermissionResourceType;
 import com.jpromi.inventorycore.repository.AreaRepository;
+import com.jpromi.inventorycore.repository.LabelSettingsRepository;
 import com.jpromi.inventorycore.repository.LabelTemplateRepository;
 import com.jpromi.inventorycore.service.AccessContext;
 import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
 import com.jpromi.inventorycore.service.AuditService;
 import com.jpromi.inventorycore.service.PermissionService;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import static com.jpromi.inventorycore.service.PermissionService.require;
 
@@ -48,9 +56,13 @@ import static com.jpromi.inventorycore.service.PermissionService.require;
 public class LabelTemplateController {
 
     private static final PermissionResourceType CONFIG = PermissionResourceType.ASSET_TYPE;
+    private static final JsonMapper JSON = JsonMapper.builder().build();
+    /** Rounding of the editor (0.01 mm) must not count as leaving the safe area. */
+    private static final double TOLERANCE_MM = 0.01;
 
     private final LabelTemplateRepository templateRepository;
     private final AreaRepository areaRepository;
+    private final LabelSettingsRepository settingsRepository;
     private final PermissionService permissionService;
 
     private final AuditService audit;
@@ -58,11 +70,13 @@ public class LabelTemplateController {
     public LabelTemplateController(
         LabelTemplateRepository templateRepository,
         AreaRepository areaRepository,
+        LabelSettingsRepository settingsRepository,
         PermissionService permissionService,
         AuditService audit
     ) {
         this.templateRepository = templateRepository;
         this.areaRepository = areaRepository;
+        this.settingsRepository = settingsRepository;
         this.permissionService = permissionService;
         this.audit = audit;
     }
@@ -162,11 +176,21 @@ public class LabelTemplateController {
         if (request.widthMm() <= 0 || request.heightMm() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Breite und Höhe des Labels müssen größer als 0 sein.");
         }
+        double safeArea = request.safeAreaMm() == null ? settingsRepository.load().getSafeAreaMm() : request.safeAreaMm();
+        if (!Double.isFinite(safeArea) || safeArea < 0 || safeArea > LabelSettingsController.MAX_SAFE_AREA_MM
+            || 2 * safeArea + 1 > Math.min(request.widthMm(), request.heightMm())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der Sicherheitsabstand ist für diese Label-Größe zu groß.");
+        }
+        String elements = request.elementsJson() == null || request.elementsJson().isBlank() ? "[]" : request.elementsJson();
+        requireInsideSafeArea(elements, request.widthMm(), request.heightMm(), safeArea);
+        LabelSheet sheet = sheet(request.sheet(), request.widthMm(), request.heightMm());
         template.setName(request.name().trim());
         template.setDescription(request.description());
         template.setWidthMm(request.widthMm());
         template.setHeightMm(request.heightMm());
-        template.setElementsJson(request.elementsJson() == null || request.elementsJson().isBlank() ? "[]" : request.elementsJson());
+        template.setSafeAreaMm(safeArea);
+        template.setElementsJson(elements);
+        template.setSheet(sheet);
         if (request.defaultForArea() && !template.isDefaultForArea()) {
             // only one default per area
             templateRepository.findByAreaAndDefaultForAreaTrue(template.getArea()).forEach(previous -> {
@@ -175,6 +199,59 @@ public class LabelTemplateController {
             });
         }
         template.setDefaultForArea(request.defaultForArea());
+    }
+
+    /** Checks that the grid of labels fits on the paper; null stays null (single labels). */
+    private static LabelSheet sheet(LabelSheetDto sheet, double labelWidth, double labelHeight) {
+        if (sheet == null) {
+            return null;
+        }
+        if (!isLength(sheet.paperWidthMm(), 10, 2000) || !isLength(sheet.paperHeightMm(), 10, 2000)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Das Papierformat muss zwischen 10 und 2000 mm liegen.");
+        }
+        if (sheet.columns() < 1 || sheet.columns() > 50 || sheet.rows() < 1 || sheet.rows() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte 1 bis 50 Spalten und 1 bis 100 Zeilen angeben.");
+        }
+        if (!isLength(sheet.marginTopMm(), 0, 1000) || !isLength(sheet.marginLeftMm(), 0, 1000)
+            || !isLength(sheet.gapXMm(), 0, 1000) || !isLength(sheet.gapYMm(), 0, 1000)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ränder und Abstände dürfen nicht negativ sein.");
+        }
+        double right = sheet.marginLeftMm() + sheet.columns() * labelWidth + (sheet.columns() - 1) * sheet.gapXMm();
+        double bottom = sheet.marginTopMm() + sheet.rows() * labelHeight + (sheet.rows() - 1) * sheet.gapYMm();
+        if (right > sheet.paperWidthMm() + TOLERANCE_MM || bottom > sheet.paperHeightMm() + TOLERANCE_MM) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Labels passen mit diesen Rändern und Abständen nicht auf das Papier.");
+        }
+        return new LabelSheet(sheet.paperWidthMm(), sheet.paperHeightMm(), sheet.columns(), sheet.rows(),
+            sheet.marginTopMm(), sheet.marginLeftMm(), sheet.gapXMm(), sheet.gapYMm());
+    }
+
+    private static boolean isLength(double value, double min, double max) {
+        return Double.isFinite(value) && value >= min && value <= max;
+    }
+
+    /** No element may reach into the margin along the edges (the safe area). */
+    private static void requireInsideSafeArea(String elementsJson, double width, double height, double safeArea) {
+        JsonNode elements;
+        try {
+            elements = JSON.readTree(elementsJson);
+        } catch (JacksonException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Das Label-Layout ist ungültig.", exception);
+        }
+        if (!elements.isArray()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Das Label-Layout ist ungültig.");
+        }
+        for (JsonNode element : elements) {
+            double x = element.path("x").asDouble(0);
+            double y = element.path("y").asDouble(0);
+            double right = x + element.path("width").asDouble(0);
+            double bottom = y + element.path("height").asDouble(0);
+            if (x < safeArea - TOLERANCE_MM || y < safeArea - TOLERANCE_MM
+                || right > width - safeArea + TOLERANCE_MM || bottom > height - safeArea + TOLERANCE_MM) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Alle Elemente müssen innerhalb des Sicherheitsabstands von "
+                        + BigDecimal.valueOf(safeArea).stripTrailingZeros().toPlainString().replace('.', ',') + " mm liegen.");
+            }
+        }
     }
 
     private LabelTemplateResponse toResponse(LabelTemplate template) {
@@ -186,8 +263,24 @@ public class LabelTemplateController {
             template.isDefaultForArea(),
             template.getWidthMm(),
             template.getHeightMm(),
+            template.getSafeAreaMm(),
+            sheetDto(template.getSheet()),
             template.getElementsJson()
         );
+    }
+
+    /** Hibernate may return an empty embeddable instead of null; incomplete sheets count as none. */
+    private static LabelSheetDto sheetDto(LabelSheet sheet) {
+        if (sheet == null || sheet.getPaperWidthMm() == null || sheet.getPaperHeightMm() == null
+            || sheet.getColumns() == null || sheet.getRows() == null) {
+            return null;
+        }
+        return new LabelSheetDto(sheet.getPaperWidthMm(), sheet.getPaperHeightMm(), sheet.getColumns(), sheet.getRows(),
+            orZero(sheet.getMarginTopMm()), orZero(sheet.getMarginLeftMm()), orZero(sheet.getGapXMm()), orZero(sheet.getGapYMm()));
+    }
+
+    private static double orZero(Double value) {
+        return value == null ? 0 : value;
     }
 
     private LabelTemplate templateOr404(UUID uuid) {

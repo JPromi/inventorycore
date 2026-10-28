@@ -18,6 +18,8 @@ import {
   LucideNetwork,
   LucideKeyRound,
   LucideHistory,
+  LucideRuler,
+  LucideHardDrive,
   type LucideIcon,
 } from '@lucide/angular';
 import { t } from '../../core/i18n/i18n';
@@ -68,11 +70,13 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     children: [
       { label: t('nav.areas'), route: '/admin/areas', icon: LucideLayers },
       { label: t('nav.customization'), route: '/admin/customization', icon: LucidePalette },
+      { label: t('nav.labelSettings'), route: '/admin/labels', icon: LucideRuler },
       { label: t('nav.users'), route: '/admin/users', icon: LucideUser },
       { label: t('nav.groups'), route: '/admin/groups', icon: LucideUsers },
       { label: t('nav.groupPermissions'), route: '/admin/group-permissions', icon: LucideShield },
       { label: t('nav.ldap'), route: '/admin/ldap', icon: LucideNetwork },
       { label: t('nav.oidc'), route: '/admin/oidc', icon: LucideKeyRound },
+      { label: t('nav.storage'), route: '/admin/storage', icon: LucideHardDrive },
       { label: t('nav.logs'), route: '/admin/logs', icon: LucideHistory },
     ],
   },

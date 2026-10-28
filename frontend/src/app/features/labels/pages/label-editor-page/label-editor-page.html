@@ -63,8 +63,8 @@
                             <span>{{ 'labelEditor.sizePreset' | t }}</span>
                             <select #presetSelect (change)="applyPreset(presetSelect.value); presetSelect.value = ''">
                                 <option value="" selected disabled>{{ 'labelEditor.sizePresetPlaceholder' | t }}</option>
-                                @for (preset of presets; track preset.label; let index = $index) {
-                                    <option [value]="index">{{ preset.label }}</option>
+                                @for (preset of presets; track $index; let index = $index) {
+                                    <option [value]="index">{{ preset.name }}</option>
                                 }
                             </select>
                         </label>
@@ -78,6 +78,84 @@
                                 <input type="number" min="5" step="0.5" [(ngModel)]="heightMm" (change)="onSizeChange()" />
                             </label>
                         </div>
+                        <label class="field">
+                            <span>{{ 'labelEditor.safeAreaMm' | t }}</span>
+                            <input type="number" min="0" [max]="maxSafeArea" step="0.5" [(ngModel)]="safeAreaMm" (change)="onSizeChange()" />
+                        </label>
+                        <p class="hint">{{ 'labelEditor.safeAreaHint' | t }}</p>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h2>{{ 'labelEditor.sheet.title' | t }}</h2>
+                    <div class="fields">
+                        <label class="toggle">
+                            <input type="checkbox" [ngModel]="!!sheet" (ngModelChange)="toggleSheet($event)" />
+                            <span>{{ 'labelEditor.sheet.enable' | t }}</span>
+                        </label>
+                        @if (sheet; as current) {
+                            <label class="field">
+                                <span>{{ 'labelEditor.sheet.paper' | t }}</span>
+                                <select #paperSelect (change)="applyPaper(paperSelect.value); paperSelect.value = ''">
+                                    <option value="" selected disabled>{{ 'labelEditor.sheet.paperPlaceholder' | t }}</option>
+                                    @for (paper of paperSizes; track paper.label; let index = $index) {
+                                        <option [value]="index">{{ paper.label }}</option>
+                                    }
+                                </select>
+                            </label>
+                            <div class="two">
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.paperWidth' | t }}</span>
+                                    <input type="number" min="10" step="0.1" [(ngModel)]="current.paperWidthMm" (change)="normalizeSheet()" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.paperHeight' | t }}</span>
+                                    <input type="number" min="10" step="0.1" [(ngModel)]="current.paperHeightMm" (change)="normalizeSheet()" />
+                                </label>
+                            </div>
+                            <div class="two">
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.columns' | t }}</span>
+                                    <input type="number" min="1" max="50" step="1" [(ngModel)]="current.columns" (change)="normalizeSheet()" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.rows' | t }}</span>
+                                    <input type="number" min="1" max="100" step="1" [(ngModel)]="current.rows" (change)="normalizeSheet()" />
+                                </label>
+                            </div>
+                            <div class="two">
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.marginTop' | t }}</span>
+                                    <input type="number" min="0" step="0.1" [(ngModel)]="current.marginTopMm" (change)="normalizeSheet()" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.marginLeft' | t }}</span>
+                                    <input type="number" min="0" step="0.1" [(ngModel)]="current.marginLeftMm" (change)="normalizeSheet()" />
+                                </label>
+                            </div>
+                            <div class="two">
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.gapX' | t }}</span>
+                                    <input type="number" min="0" step="0.1" [(ngModel)]="current.gapXMm" (change)="normalizeSheet()" />
+                                </label>
+                                <label class="field">
+                                    <span>{{ 'labelEditor.sheet.gapY' | t }}</span>
+                                    <input type="number" min="0" step="0.1" [(ngModel)]="current.gapYMm" (change)="normalizeSheet()" />
+                                </label>
+                            </div>
+                            <div class="add-buttons">
+                                <button type="button" class="secondary-action compact" (click)="fillSheet()">{{ 'labelEditor.sheet.fill' | t }}</button>
+                                <button type="button" class="secondary-action compact" (click)="centerSheet()">{{ 'labelEditor.sheet.center' | t }}</button>
+                            </div>
+                            <app-label-sheet-preview [sheet]="current" [widthMm]="widthMm" [heightMm]="heightMm" />
+                            @if (sheetFits) {
+                                <p class="hint">{{ 'labelEditor.sheet.summary' | t: { count: current.columns * current.rows, columns: current.columns, rows: current.rows } }}</p>
+                            } @else {
+                                <p class="sheet-error">{{ 'labelEditor.sheet.doesNotFit' | t }}</p>
+                            }
+                        } @else {
+                            <p class="hint">{{ 'labelEditor.sheet.hint' | t }}</p>
+                        }
                     </div>
                 </section>
 
@@ -214,10 +292,10 @@
                                 </label>
                             }
                             <div class="four">
-                                <label class="field"><span>{{ 'labelEditor.x' | t }}</span><input type="number" step="0.5" min="0" [(ngModel)]="element.x" /></label>
-                                <label class="field"><span>{{ 'labelEditor.y' | t }}</span><input type="number" step="0.5" min="0" [(ngModel)]="element.y" /></label>
-                                <label class="field"><span>{{ 'labelEditor.width' | t }}</span><input type="number" step="0.5" min="1" [(ngModel)]="element.width" /></label>
-                                <label class="field"><span>{{ 'labelEditor.height' | t }}</span><input type="number" step="0.5" min="1" [(ngModel)]="element.height" /></label>
+                                <label class="field"><span>{{ 'labelEditor.x' | t }}</span><input type="number" step="0.5" [min]="safeAreaMm" [(ngModel)]="element.x" (change)="keepInside(element)" /></label>
+                                <label class="field"><span>{{ 'labelEditor.y' | t }}</span><input type="number" step="0.5" [min]="safeAreaMm" [(ngModel)]="element.y" (change)="keepInside(element)" /></label>
+                                <label class="field"><span>{{ 'labelEditor.width' | t }}</span><input type="number" step="0.5" min="1" [(ngModel)]="element.width" (change)="keepInside(element)" /></label>
+                                <label class="field"><span>{{ 'labelEditor.height' | t }}</span><input type="number" step="0.5" min="1" [(ngModel)]="element.height" (change)="keepInside(element)" /></label>
                             </div>
                             <p class="hint">{{ 'labelEditor.measureHint' | t }}</p>
                         </div>
@@ -253,6 +331,7 @@
                         [style.zoom]="zoom"
                         [widthMm]="widthMm"
                         [heightMm]="heightMm"
+                        [safeAreaMm]="safeAreaMm"
                         [elements]="elements"
                         [context]="context"
                         [editable]="true"

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Page, pageParams } from '../../shared/util/paged-list';
-import { LabelTemplate, LabelTemplateRequest } from './label.model';
+import { LabelSettings, LabelTemplate, LabelTemplateRequest } from './label.model';
 
 @Injectable({ providedIn: 'root' })
 export class LabelTemplateService {
@@ -39,5 +39,18 @@ export class LabelTemplateService {
 
   delete(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${uuid}`, this.options);
+  }
+
+  /** Safe area and label sizes the editor starts with (maintained by admins). */
+  settings(): Observable<LabelSettings> {
+    return this.http.get<LabelSettings>(`${environment.apiUrl}/label-settings`, this.options);
+  }
+
+  saveSettings(settings: LabelSettings): Observable<LabelSettings> {
+    return this.http.put<LabelSettings>(
+      `${environment.apiUrl}/admin/label-settings`,
+      settings,
+      this.options,
+    );
   }
 }

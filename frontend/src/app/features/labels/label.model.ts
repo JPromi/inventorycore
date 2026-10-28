@@ -37,6 +37,10 @@ export interface LabelTemplate {
   defaultForArea: boolean;
   widthMm: number;
   heightMm: number;
+  /** Margin along every edge that no element may reach into. */
+  safeAreaMm: number;
+  /** Printed side by side on a sheet; null = single labels (roll). */
+  sheet: LabelSheet | null;
   elementsJson: string;
 }
 
@@ -47,7 +51,103 @@ export interface LabelTemplateRequest {
   defaultForArea: boolean;
   widthMm: number;
   heightMm: number;
+  safeAreaMm: number;
+  sheet: LabelSheet | null;
   elementsJson: string;
+}
+
+/**
+ * Grid of labels on a sheet of paper, e.g. 3 × 5 on A4. Margins run from the top left paper
+ * corner to the first label, gaps lie between neighbouring labels. All values in millimeters.
+ */
+export interface LabelSheet {
+  paperWidthMm: number;
+  paperHeightMm: number;
+  columns: number;
+  rows: number;
+  marginTopMm: number;
+  marginLeftMm: number;
+  gapXMm: number;
+  gapYMm: number;
+}
+
+export const PAPER_SIZES: { label: string; width: number; height: number }[] = [
+  { label: t('labels.paper.a4'), width: 210, height: 297 },
+  { label: t('labels.paper.a4Landscape'), width: 297, height: 210 },
+  { label: t('labels.paper.a5'), width: 148, height: 210 },
+  { label: t('labels.paper.a3'), width: 297, height: 420 },
+  { label: t('labels.paper.letter'), width: 215.9, height: 279.4 },
+];
+
+/** Space the grid takes on the paper. */
+export function sheetGridSize(
+  sheet: LabelSheet,
+  widthMm: number,
+  heightMm: number,
+): { width: number; height: number } {
+  return {
+    width: sheet.columns * widthMm + (sheet.columns - 1) * sheet.gapXMm,
+    height: sheet.rows * heightMm + (sheet.rows - 1) * sheet.gapYMm,
+  };
+}
+
+/** The grid lies completely on the paper (0.01 mm tolerance like the backend). */
+export function sheetFits(sheet: LabelSheet, widthMm: number, heightMm: number): boolean {
+  const grid = sheetGridSize(sheet, widthMm, heightMm);
+  return (
+    sheet.marginLeftMm + grid.width <= sheet.paperWidthMm + 0.01 &&
+    sheet.marginTopMm + grid.height <= sheet.paperHeightMm + 0.01
+  );
+}
+
+/** Centers the grid on the paper by setting both margins. */
+export function centerSheet(sheet: LabelSheet, widthMm: number, heightMm: number): void {
+  const grid = sheetGridSize(sheet, widthMm, heightMm);
+  sheet.marginLeftMm = roundMm(Math.max(0, (sheet.paperWidthMm - grid.width) / 2));
+  sheet.marginTopMm = roundMm(Math.max(0, (sheet.paperHeightMm - grid.height) / 2));
+}
+
+/** As many columns and rows as fit with the current gaps, centered on the paper. */
+export function fillSheet(sheet: LabelSheet, widthMm: number, heightMm: number): void {
+  const fit = (paper: number, size: number, gap: number) =>
+    Math.max(1, Math.floor((paper + gap + 0.01) / (size + gap)));
+  sheet.columns = Math.min(50, fit(sheet.paperWidthMm, widthMm, sheet.gapXMm));
+  sheet.rows = Math.min(100, fit(sheet.paperHeightMm, heightMm, sheet.gapYMm));
+  centerSheet(sheet, widthMm, heightMm);
+}
+
+/** Top left corner of the label at `position` (0 = top left, row by row). */
+export function sheetSlot(
+  sheet: LabelSheet,
+  widthMm: number,
+  heightMm: number,
+  position: number,
+): { x: number; y: number } {
+  const column = position % sheet.columns;
+  const row = Math.floor(position / sheet.columns) % sheet.rows;
+  return {
+    x: sheet.marginLeftMm + column * (widthMm + sheet.gapXMm),
+    y: sheet.marginTopMm + row * (heightMm + sheet.gapYMm),
+  };
+}
+
+function roundMm(value: number): number {
+  return Math.floor(value * 10) / 10;
+}
+
+export interface LabelSizePreset {
+  name: string;
+  widthMm: number;
+  heightMm: number;
+  /** Safe area for this size; null = the general default. */
+  safeAreaMm: number | null;
+}
+
+/** Editor defaults maintained by admins. */
+export interface LabelSettings {
+  /** Safe area new templates and sizes without their own value start with. */
+  safeAreaMm: number;
+  sizePresets: LabelSizePreset[];
 }
 
 /** Values the placeholders are replaced with, e.g. `{ name: 'Atemschutzgerät PA 1' }`. */
@@ -128,16 +228,31 @@ export const PLACEHOLDERS: Placeholder[] = [
   { key: 'date', label: t('labels.placeholders.date') },
 ];
 
-export const LABEL_SIZE_PRESETS: { label: string; width: number; height: number }[] = [
-  { label: '62 × 29 mm (Brother DK-11209)', width: 62, height: 29 },
-  { label: '62 × 100 mm (Brother DK-11202)', width: 62, height: 100 },
-  { label: '29 × 90 mm (Brother DK-11201)', width: 90, height: 29 },
-  { label: '50 × 25 mm', width: 50, height: 25 },
-  { label: '57 × 32 mm (Dymo 11354)', width: 57, height: 32 },
-  { label: '89 × 36 mm (Dymo 99012)', width: 89, height: 36 },
-  { label: '100 × 50 mm', width: 100, height: 50 },
-  { label: t('labels.sizePresets.tape24'), width: 60, height: 24 },
-];
+/** Largest safe area that still leaves 1 mm for elements. */
+export function maxSafeAreaMm(widthMm: number, heightMm: number): number {
+  return Math.max(0, Math.floor(((Math.min(widthMm, heightMm) - 1) / 2) * 10) / 10);
+}
+
+/** Shrinks and moves the element so it lies completely inside the safe area. */
+export function keepInSafeArea(
+  element: LabelElement,
+  widthMm: number,
+  heightMm: number,
+  safeAreaMm: number,
+): void {
+  const innerWidth = Math.max(1, widthMm - 2 * safeAreaMm);
+  const innerHeight = Math.max(1, heightMm - 2 * safeAreaMm);
+  element.width = Math.min(Math.max(1, Number(element.width) || 1), innerWidth);
+  element.height = Math.min(Math.max(1, Number(element.height) || 1), innerHeight);
+  element.x = Math.min(
+    Math.max(Number(element.x) || 0, safeAreaMm),
+    safeAreaMm + innerWidth - element.width,
+  );
+  element.y = Math.min(
+    Math.max(Number(element.y) || 0, safeAreaMm),
+    safeAreaMm + innerHeight - element.height,
+  );
+}
 
 /** Preview data for label designs; the keys are placeholder tokens, only the values are texts. */
 export const SAMPLE_CONTEXT: LabelContext = {

@@ -171,6 +171,49 @@
     "empty": "Noch keine Einträge.",
     "loadError": "Protokoll konnte nicht geladen werden."
   },
+  "adminStorage": {
+    "title": "Speicherplatz",
+    "total": "Gesamt ca. {size}",
+    "refresh": "Aktualisieren",
+    "intro": "Zeigt, wie viel Speicherplatz die Datenbank und die hochgeladenen Bilder belegen und wie viel davon auf die einzelnen Benutzer entfällt. Die Werte werden beim Öffnen der Seite ermittelt und sind Richtwerte.",
+    "database": "Datenbank",
+    "databaseHint": "Alle Daten inklusive Indizes, davon Profilbilder: {profileImages}",
+    "files": "Bilder und Fotos",
+    "fileCount": {
+      "one": "{count} Datei",
+      "other": "{count} Dateien"
+    },
+    "previews": "davon Vorschaubilder: {size}",
+    "originalSize": "Hochgeladen vor dem Verkleinern: {size}",
+    "volume": "Laufwerk der Dateiablage",
+    "volumeFree": "{size} frei",
+    "volumeUsed": "{used} von {total} belegt",
+    "unattached": {
+      "one": "{count} Datei ({size}) wird nirgends mehr verwendet und von der nächtlichen Bereinigung gelöscht.",
+      "other": "{count} Dateien ({size}) werden nirgends mehr verwendet und von der nächtlichen Bereinigung gelöscht."
+    },
+    "perUser": "Pro Benutzer",
+    "perUserHint": "Bilder und Fotos, die der Benutzer hochgeladen hat (z. B. Fotos von Prüfungen oder Bilder eines Fahrzeugs), samt Vorschaubildern, sowie sein Profilbild. Der Anteil bezieht sich auf alle Bilder und Profilbilder.",
+    "unknownUploader": "Ohne bekannten Benutzer",
+    "deletedUser": "Benutzer gelöscht",
+    "tables": "Datenbank-Tabellen",
+    "tablesHint": "Größte Tabellen zuerst, inklusive Indizes. Die Zeilenanzahl ist eine Schätzung der Datenbank.",
+    "showAllTables": "Alle {count} Tabellen anzeigen",
+    "showFewerTables": "Weniger Tabellen anzeigen",
+    "columns": {
+      "images": "Bilder",
+      "imageSize": "Bildgröße",
+      "profileImage": "Profilbild",
+      "total": "Gesamt",
+      "lastUpload": "Zuletzt hochgeladen",
+      "table": "Tabelle",
+      "rows": "Zeilen (ca.)",
+      "size": "Größe"
+    },
+    "errors": {
+      "load": "Der Speicherplatz konnte nicht ermittelt werden."
+    }
+  },
   "adminCustomization": {
     "eyebrow": "Administration",
     "title": "Erscheinungsbild",
@@ -285,6 +328,28 @@
       "syncInterval": "Das Sync-Intervall muss mindestens eine Einheit und maximal 365 Tage betragen.",
       "test": "Test konnte nicht ausgeführt werden.",
       "sync": "Synchronisation fehlgeschlagen."
+    }
+  },
+  "adminLabels": {
+    "eyebrow": "Administration · Labels",
+    "title": "Label-Standards",
+    "loading": "Label-Standards werden geladen …",
+    "saved": "Gespeichert",
+    "safeArea": "Sicherheitsabstand",
+    "safeAreaMm": "Standard-Sicherheitsabstand (mm)",
+    "safeAreaHint": "Gilt für neue Label-Vorlagen und für Größen ohne eigenen Abstand; lässt sich je Vorlage anpassen. Auf diesem Rand dürfen keine Elemente liegen.",
+    "sizes": "Label-Größen",
+    "sizesHint": "Diese Größen stehen im Label-Editor zur Auswahl, in dieser Reihenfolge. Wird eine Größe gewählt, übernimmt die Vorlage ihren Sicherheitsabstand; ein leeres Feld verwendet den Standard.",
+    "presetSafeAreaMm": "Sicherheitsabstand (mm)",
+    "presetSafeAreaDefault": "Standard ({value} mm)",
+    "addSize": "Größe hinzufügen",
+    "namePlaceholder": "z. B. 62 × 29 mm (Brother DK-11209)",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "noSizes": "Keine Label-Größen festgelegt. Breite und Höhe lassen sich im Editor trotzdem frei eingeben.",
+    "errors": {
+      "load": "Die Label-Standards konnten nicht geladen werden.",
+      "invalidPreset": "Bitte für jede Label-Größe einen Namen sowie Breite und Höhe größer als 0 angeben."
     }
   },
   "adminOidc": {
@@ -1101,7 +1166,6 @@
     "retry": "Erneut versuchen"
   },
   "inventoryDetail": {
-    "backToList": "Zurück zur Übersicht",
     "printLabel": "Label drucken",
     "fields": {
       "inspectionPolicy": "Prüferfassung",
@@ -1407,6 +1471,15 @@
   "labels": {
     "logo": "Logo",
     "size": "{width} × {height} mm",
+    "sheetSize": "{columns} × {rows} pro Bogen",
+    "sheetPosition": "Platz {position}",
+    "paper": {
+      "a4": "A4 hoch (210 × 297 mm)",
+      "a4Landscape": "A4 quer (297 × 210 mm)",
+      "a5": "A5 hoch (148 × 210 mm)",
+      "a3": "A3 hoch (297 × 420 mm)",
+      "letter": "US Letter (215,9 × 279,4 mm)"
+    },
     "barcode": {
       "noContent": "Kein Inhalt",
       "invalid": "Ungültiger Inhalt"
@@ -1444,9 +1517,6 @@
       "uuid": "UUID",
       "date": "Druckdatum"
     },
-    "sizePresets": {
-      "tape24": "24 mm Band, 60 mm lang"
-    },
     "sample": {
       "name": "Atemschutzgerät PA 1",
       "type": "Atemschutzgerät",
@@ -1480,6 +1550,12 @@
       "other": "{count} Labels insgesamt."
     },
     "printHint": "{width} × {height} mm. Im Druckdialog den Labeldrucker wählen und Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen.",
+    "sheetHint": {
+      "one": "{count} Bogen ({width} × {height} mm). Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen und Ränder auf „Keine“.",
+      "other": "{count} Bögen ({width} × {height} mm). Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen und Ränder auf „Keine“."
+    },
+    "skip": "Bereits benutzte Plätze",
+    "skipHint": "Klicken Sie auf den ersten freien Platz des Bogens; die Plätze davor bleiben leer.",
     "dialogLabel": "Label drucken"
   },
   "labelTemplates": {
@@ -1522,6 +1598,27 @@
     "sizePresetPlaceholder": "Etikettengröße wählen …",
     "widthMm": "Breite (mm)",
     "heightMm": "Höhe (mm)",
+    "safeAreaMm": "Sicherheitsabstand (mm)",
+    "safeAreaHint": "Rand, auf dem keine Elemente liegen dürfen, damit der Drucker nichts abschneidet.",
+    "sheet": {
+      "title": "Druckbogen",
+      "enable": "Auf Bogen drucken",
+      "hint": "Ohne Bogen wird jedes Label als eigene Seite in Label-Größe gedruckt, z. B. für Rollen-Labeldrucker.",
+      "paper": "Papierformat",
+      "paperPlaceholder": "Format wählen …",
+      "paperWidth": "Papierbreite (mm)",
+      "paperHeight": "Papierhöhe (mm)",
+      "columns": "Spalten",
+      "rows": "Zeilen",
+      "marginTop": "Rand oben (mm)",
+      "marginLeft": "Rand links (mm)",
+      "gapX": "Abstand waagrecht (mm)",
+      "gapY": "Abstand senkrecht (mm)",
+      "fill": "Bogen füllen",
+      "center": "Zentrieren",
+      "summary": "{count} Labels pro Bogen ({columns} × {rows}).",
+      "doesNotFit": "Die Labels passen mit diesen Rändern und Abständen nicht auf das Papier."
+    },
     "elements": "Elemente",
     "globalLogo": "Globales Logo",
     "add": {
@@ -1723,7 +1820,8 @@
       "disabledUser": "Dieses Konto ist deaktiviert.",
       "noUsername": "Der Identity Provider hat keinen Benutzernamen geliefert.",
       "failed": "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
-    }
+    },
+    "copyright": "© {year} JPromi"
   },
   "profile": {
     "title": "Mein Profil",
@@ -1750,6 +1848,7 @@
     "administration": "Administration",
     "areas": "Bereiche",
     "customization": "Erscheinungsbild",
+    "labelSettings": "Label-Standards",
     "users": "Benutzer",
     "groups": "Gruppen",
     "groupPermissions": "Berechtigungen",
@@ -1758,7 +1857,8 @@
     "logs": "Protokoll",
     "openMenu": "Menü öffnen",
     "closeMenu": "Menü schließen",
-    "statuses": "Status"
+    "statuses": "Status",
+    "storage": "Speicherplatz"
   },
   "pwa": {
     "install": "App installieren"
@@ -1947,6 +2047,9 @@
       "assetTypeUuids": "Typen",
       "widthMm": "Breite (mm)",
       "heightMm": "Höhe (mm)",
+      "safeAreaMm": "Sicherheitsabstand (mm)",
+      "sheet": "Druckbogen",
+      "sizePresets": "Label-Größen",
       "defaultForArea": "Standard im Bereich",
       "elementsJson": "Layout",
       "optionsJson": "Auswahlwerte",

@@ -39,8 +39,10 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/admin/groups/{groupUuid}/permissions`, `/admin/permissions/{uuid}` | Group permission mutations; `AdminController` |
 | `/admin/ldap`, `/admin/ldap/test`, `/admin/ldap/sync` | Directory configuration, connection test, sync; `AuthProviderController` |
 | `/admin/oidc`, `/admin/oidc/test` | OIDC configuration/discovery test; `AuthProviderController` |
+| `/admin/storage` | Storage used by the database (total, per table) and the uploaded files (content, previews, free space of the drive), and uploads plus profile image per user, including deleted uploaders; `StorageController` / `StorageUsageService`. File sizes are read from disk on every request |
 | `/inspection-types`, `/inspections`, `/inspection-schedules` | Types, runs, items, scans, photos, completion and due dates; `InspectionController` |
-| `/label-templates` | Printable label configuration; `LabelTemplateController` |
+| `/label-templates` | Printable label configuration; `LabelTemplateController`. `safeAreaMm` is the margin along every edge that no element may reach into; the request may omit it (null = admin default). Saving returns 400 when an element lies outside `safeAreaMm .. size - safeAreaMm` (0.01 mm tolerance), the layout is not a JSON array, or the safe area leaves less than 1 mm. Optional `sheet` (`paperWidthMm`, `paperHeightMm`, `columns`, `rows`, `marginTopMm`, `marginLeftMm`, `gapXMm`, `gapYMm`; null = single labels) prints the labels side by side on paper such as A4; saving returns 400 when the grid does not fit on the paper. The print dialog lets users skip already used positions of the first sheet; this is not stored |
+| `/label-settings`, `/admin/label-settings` | Label editor defaults (`safeAreaMm`, ordered `sizePresets` with `name`, `widthMm`, `heightMm` and optional `safeAreaMm`, null = the general `safeAreaMm`; choosing a size in the editor applies its safe area); every signed-in user reads, only admins `PUT`; `LabelSettingsController` |
 | `/dashboard` | Start-page numbers and short lists for the sidebar area selection; `DashboardController` |
 | `/scan` | Resolve a scanned value; `ScanController` |
 | `/files`, `/files/{uuid}`, `/files/{uuid}/info` | Multipart image upload, content, metadata; `FileController` |

@@ -753,16 +753,42 @@ export class InspectionPage implements OnInit, OnDestroy {
     } else {
       item.values.push({ fieldUuid, fieldName: field.name, fieldType: field.fieldType, value });
     }
-    const key = `${item.uuid}:${fieldUuid}`;
+    this.queueSave(
+      `${item.uuid}:${fieldUuid}`,
+      () =>
+        this.api.updateItem(this.uuid, item.uuid, { values: { [fieldUuid]: value } }).pipe(
+          catchError((error) => {
+            this.handleError(error, t('inspectionRun.errors.value', { field: field.name }));
+            return of(null);
+          }),
+        ),
+      debounce,
+    );
+  }
+
+  /** Saved while typing, after a short pause like text values. */
+  protected saveNote(item: InspectionItem, note: string): void {
+    if ((item.note ?? '') === note) {
+      return;
+    }
+    item.note = note;
+    this.queueSave(
+      `${item.uuid}:note`,
+      () =>
+        this.api.updateItem(this.uuid, item.uuid, { note }).pipe(
+          catchError((error) => {
+            this.handleError(error, t('inspectionRun.errors.note'));
+            return of(null);
+          }),
+        ),
+      true,
+    );
+  }
+
+  /** Replaces a save still waiting for the same key; completing and leaving send waiting saves first. */
+  private queueSave(key: string, run: () => Observable<unknown>, debounce: boolean): void {
     clearTimeout(this.pendingSaves.get(key)?.timer);
     this.pendingSaves.delete(key);
-    const run = () =>
-      this.api.updateItem(this.uuid, item.uuid, { values: { [fieldUuid]: value } }).pipe(
-        catchError((error) => {
-          this.handleError(error, t('inspectionRun.errors.value', { field: field.name }));
-          return of(null);
-        }),
-      );
     if (!debounce) {
       run().subscribe();
       return;
@@ -772,16 +798,6 @@ export class InspectionPage implements OnInit, OnDestroy {
       run().subscribe();
     }, 600);
     this.pendingSaves.set(key, { timer, run });
-  }
-
-  protected saveNote(item: InspectionItem, note: string): void {
-    if ((item.note ?? '') === note) {
-      return;
-    }
-    item.note = note;
-    this.api.updateItem(this.uuid, item.uuid, { note }).subscribe({
-      error: (error) => this.handleError(error, t('inspectionRun.errors.note')),
-    });
   }
 
   protected async removeUnexpected(item: InspectionItem): Promise<void> {

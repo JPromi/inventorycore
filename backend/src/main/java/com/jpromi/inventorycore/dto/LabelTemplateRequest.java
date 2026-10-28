@@ -2,6 +2,7 @@ package com.jpromi.inventorycore.dto;
 
 import java.util.UUID;
 
+/** {@code safeAreaMm} null = the admin default from the label settings; {@code sheet} null = single labels. */
 public record LabelTemplateRequest(
     String name,
     String description,
@@ -9,5 +10,7 @@ public record LabelTemplateRequest(
     boolean defaultForArea,
     double widthMm,
     double heightMm,
+    Double safeAreaMm,
+    LabelSheetDto sheet,
     String elementsJson
 ) {}

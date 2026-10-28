@@ -7,6 +7,9 @@
     [style.height.mm]="heightMm"
     (pointerdown)="onBackgroundPointerDown($event)"
 >
+    @if (editable && safeAreaMm > 0) {
+        <div class="safe-area" [style.inset.mm]="safeAreaMm"></div>
+    }
     @for (element of elements; track element.id) {
         <div
             class="element"

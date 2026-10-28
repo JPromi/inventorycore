@@ -26,19 +26,28 @@ import {
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LabelRenderer } from '../../label-renderer/label-renderer';
+import { LabelSheetPreview } from '../../label-sheet-preview/label-sheet-preview';
 import { LabelTemplateService } from '../../label-template.service';
 import {
-  LABEL_SIZE_PRESETS,
   LabelContext,
   LabelElement,
   LabelElementType,
+  LabelSettings,
+  LabelSheet,
+  LabelSizePreset,
+  PAPER_SIZES,
   PLACEHOLDERS,
   Placeholder,
   SAMPLE_CONTEXT,
   SYMBOLOGIES,
   assetLabelContext,
+  centerSheet,
+  fillSheet,
+  keepInSafeArea,
+  maxSafeAreaMm,
   newElementId,
   parseElements,
+  sheetFits,
 } from '../../label.model';
 import { AreaService } from '../../../../core/service/area.service';
 import {
@@ -49,6 +58,8 @@ import { PermissionService } from '../../../../core/service/permission.service';
 import { CustomizationService } from '../../../../core/service/customization.service';
 
 const MM_TO_PX = 96 / 25.4;
+/** Used when the label settings cannot be loaded. */
+const FALLBACK_SETTINGS: LabelSettings = { safeAreaMm: 5, sizePresets: [] };
 
 @Component({
   selector: 'app-label-editor-page',
@@ -57,6 +68,7 @@ const MM_TO_PX = 96 / 25.4;
     RouterLink,
     SearchSelect,
     LabelRenderer,
+    LabelSheetPreview,
     TranslatePipe,
     LucideArrowLeft,
     LucideChevronDown,
@@ -75,7 +87,9 @@ const MM_TO_PX = 96 / 25.4;
   styleUrl: './label-editor-page.scss',
 })
 export class LabelEditorPage implements OnInit {
-  protected readonly presets = LABEL_SIZE_PRESETS;
+  protected presets: LabelSizePreset[] = [];
+  protected readonly paperSizes = PAPER_SIZES;
+  private defaultSafeAreaMm = FALLBACK_SETTINGS.safeAreaMm;
   protected readonly symbologies = SYMBOLOGIES;
   protected readonly symbologyOptions: SelectOption[] = SYMBOLOGIES.map((entry) => ({
     value: entry.id,
@@ -89,6 +103,9 @@ export class LabelEditorPage implements OnInit {
   protected defaultForArea = false;
   protected widthMm = 62;
   protected heightMm = 29;
+  protected safeAreaMm = 0;
+  /** Printed side by side on a sheet of paper; null = single labels. */
+  protected sheet: LabelSheet | null = null;
   protected elements: LabelElement[] = [];
   protected selectedId: string | null = null;
   protected zoom = 2;
@@ -169,6 +186,10 @@ export class LabelEditorPage implements OnInit {
     return [...PLACEHOLDERS, ...fields];
   }
 
+  protected get maxSafeArea(): number {
+    return maxSafeAreaMm(this.widthMm, this.heightMm);
+  }
+
   protected get selectedSymbology() {
     return SYMBOLOGIES.find((entry) => entry.id === this.selected?.symbology);
   }
@@ -178,23 +199,89 @@ export class LabelEditorPage implements OnInit {
   protected applyPreset(index: string): void {
     const preset = this.presets[Number(index)];
     if (preset) {
-      this.widthMm = preset.width;
-      this.heightMm = preset.height;
+      this.widthMm = preset.widthMm;
+      this.heightMm = preset.heightMm;
+      this.safeAreaMm = preset.safeAreaMm ?? this.defaultSafeAreaMm;
       this.onSizeChange();
     }
   }
 
-  /** Keeps all elements on the label after the size changed. */
+  /** Keeps all elements inside the safe area after the size or the safe area changed. */
   protected onSizeChange(): void {
     this.widthMm = Math.max(5, Number(this.widthMm) || 5);
     this.heightMm = Math.max(5, Number(this.heightMm) || 5);
-    for (const element of this.elements) {
-      element.width = Math.min(element.width, this.widthMm);
-      element.height = Math.min(element.height, this.heightMm);
-      element.x = Math.min(element.x, this.widthMm - element.width);
-      element.y = Math.min(element.y, this.heightMm - element.height);
-    }
+    this.safeAreaMm = Math.min(Math.max(0, Number(this.safeAreaMm) || 0), this.maxSafeArea);
+    this.elements.forEach((element) => this.keepInside(element));
     this.fitZoom();
+  }
+
+  /** Moves an element back out of the safe area, e.g. after typing a position. */
+  protected keepInside(element: LabelElement): void {
+    keepInSafeArea(element, this.widthMm, this.heightMm, this.safeAreaMm);
+  }
+
+  // ---- sheet ----
+
+  protected get sheetFits(): boolean {
+    return !this.sheet || sheetFits(this.sheet, this.widthMm, this.heightMm);
+  }
+
+  /** Starts with A4 filled with as many labels as fit. */
+  protected toggleSheet(enabled: boolean): void {
+    if (!enabled) {
+      this.sheet = null;
+      return;
+    }
+    const [paper] = PAPER_SIZES;
+    this.sheet = {
+      paperWidthMm: paper.width,
+      paperHeightMm: paper.height,
+      columns: 1,
+      rows: 1,
+      marginTopMm: 0,
+      marginLeftMm: 0,
+      gapXMm: 0,
+      gapYMm: 0,
+    };
+    fillSheet(this.sheet, this.widthMm, this.heightMm);
+  }
+
+  protected applyPaper(index: string): void {
+    const paper = PAPER_SIZES[Number(index)];
+    if (this.sheet && paper) {
+      this.sheet.paperWidthMm = paper.width;
+      this.sheet.paperHeightMm = paper.height;
+      fillSheet(this.sheet, this.widthMm, this.heightMm);
+    }
+  }
+
+  /** Whole numbers for the grid, no negative margins or gaps. */
+  protected normalizeSheet(): void {
+    const sheet = this.sheet;
+    if (!sheet) {
+      return;
+    }
+    const length = (value: number, min = 0) => Math.max(min, Number(value) || 0);
+    sheet.paperWidthMm = length(sheet.paperWidthMm, 10);
+    sheet.paperHeightMm = length(sheet.paperHeightMm, 10);
+    sheet.columns = Math.min(50, Math.max(1, Math.round(Number(sheet.columns) || 1)));
+    sheet.rows = Math.min(100, Math.max(1, Math.round(Number(sheet.rows) || 1)));
+    sheet.marginTopMm = length(sheet.marginTopMm);
+    sheet.marginLeftMm = length(sheet.marginLeftMm);
+    sheet.gapXMm = length(sheet.gapXMm);
+    sheet.gapYMm = length(sheet.gapYMm);
+  }
+
+  protected centerSheet(): void {
+    if (this.sheet) {
+      centerSheet(this.sheet, this.widthMm, this.heightMm);
+    }
+  }
+
+  protected fillSheet(): void {
+    if (this.sheet) {
+      fillSheet(this.sheet, this.widthMm, this.heightMm);
+    }
   }
 
   protected setZoom(zoom: number): void {
@@ -208,13 +295,17 @@ export class LabelEditorPage implements OnInit {
   // ---- elements ----
 
   protected add(type: LabelElementType): void {
-    const base = { id: newElementId(), type, x: 2, y: 2 };
+    // the safe area already keeps elements off the edge, without one they start 2 mm inside
+    const inset = this.safeAreaMm > 0 ? this.safeAreaMm : 2;
+    const innerWidth = this.widthMm - 2 * inset;
+    const innerHeight = this.heightMm - 2 * inset;
+    const base = { id: newElementId(), type, x: inset, y: inset };
     let element: LabelElement;
     switch (type) {
       case 'text':
         element = {
           ...base,
-          width: Math.min(30, this.widthMm - 4),
+          width: Math.min(30, innerWidth),
           height: 6,
           content: '{name}',
           fontSize: 9,
@@ -223,7 +314,7 @@ export class LabelEditorPage implements OnInit {
         };
         break;
       case 'barcode': {
-        const size = Math.max(5, Math.min(20, this.heightMm - 4, this.widthMm - 4));
+        const size = Math.max(5, Math.min(20, innerHeight, innerWidth));
         element = {
           ...base,
           width: size,
@@ -237,21 +328,21 @@ export class LabelEditorPage implements OnInit {
       case 'box':
         element = {
           ...base,
-          x: 0.5,
-          y: 0.5,
-          width: this.widthMm - 1,
-          height: this.heightMm - 1,
+          x: this.safeAreaMm || 0.5,
+          y: this.safeAreaMm || 0.5,
+          width: this.widthMm - 2 * (this.safeAreaMm || 0.5),
+          height: this.heightMm - 2 * (this.safeAreaMm || 0.5),
           borderWidth: 0.3,
         };
         break;
       case 'logo':
         element = {
           ...base,
-          width: Math.max(1, Math.min(20, this.widthMm - 4)),
-          height: Math.max(1, Math.min(10, this.heightMm - 4)),
+          width: Math.max(1, Math.min(20, innerWidth)),
+          height: Math.max(1, Math.min(10, innerHeight)),
         };
-        placement: for (let y = 2; y <= this.heightMm - element.height; y++) {
-          for (let x = 2; x <= this.widthMm - element.width; x++) {
+        placement: for (let y = inset; y <= this.heightMm - inset - element.height; y++) {
+          for (let x = inset; x <= this.widthMm - inset - element.width; x++) {
             if (
               this.elements
                 .filter((existing) => existing.type !== 'box')
@@ -271,17 +362,14 @@ export class LabelEditorPage implements OnInit {
         }
         break;
     }
+    this.keepInside(element);
     this.elements = [...this.elements, element];
     this.selectedId = element.id;
   }
 
   protected duplicate(element: LabelElement): void {
-    const copy = {
-      ...element,
-      id: newElementId(),
-      x: Math.min(element.x + 2, this.widthMm - element.width),
-      y: Math.min(element.y + 2, this.heightMm - element.height),
-    };
+    const copy = { ...element, id: newElementId(), x: element.x + 2, y: element.y + 2 };
+    this.keepInside(copy);
     this.elements = [...this.elements, copy];
     this.selectedId = copy.id;
   }
@@ -316,7 +404,7 @@ export class LabelEditorPage implements OnInit {
         this.selected.height = size;
       } else if (this.selected.height >= this.selected.width) {
         this.selected.width = Math.min(
-          this.widthMm - this.selected.x,
+          this.widthMm - this.safeAreaMm - this.selected.x,
           Math.max(30, this.selected.width),
         );
         this.selected.height = Math.min(this.selected.height, 12);
@@ -354,16 +442,20 @@ export class LabelEditorPage implements OnInit {
     const element = this.selected;
     switch (event.key) {
       case 'ArrowLeft':
-        element.x = Math.max(0, element.x - step);
+        element.x -= step;
+        this.keepInside(element);
         break;
       case 'ArrowRight':
-        element.x = Math.min(this.widthMm - element.width, element.x + step);
+        element.x += step;
+        this.keepInside(element);
         break;
       case 'ArrowUp':
-        element.y = Math.max(0, element.y - step);
+        element.y -= step;
+        this.keepInside(element);
         break;
       case 'ArrowDown':
-        element.y = Math.min(this.heightMm - element.height, element.y + step);
+        element.y += step;
+        this.keepInside(element);
         break;
       case 'Delete':
       case 'Backspace':
@@ -394,6 +486,10 @@ export class LabelEditorPage implements OnInit {
       this.error = t('labelEditor.nameMissing');
       return;
     }
+    if (!this.sheetFits) {
+      this.error = t('labelEditor.sheet.doesNotFit');
+      return;
+    }
     this.saving = true;
     this.error = '';
     const request = {
@@ -403,6 +499,8 @@ export class LabelEditorPage implements OnInit {
       defaultForArea: this.defaultForArea,
       widthMm: this.widthMm,
       heightMm: this.heightMm,
+      safeAreaMm: this.safeAreaMm,
+      sheet: this.sheet,
       elementsJson: JSON.stringify(this.elements.map((element) => this.round(element))),
     };
     const save$ = this.uuid ? this.api.update(this.uuid, request) : this.api.create(request);
@@ -448,8 +546,11 @@ export class LabelEditorPage implements OnInit {
       assets: list('assets'),
       locations: list('locations'),
       assetTypes: list('asset-types'),
+      settings: this.api.settings().pipe(catchError(() => of(FALLBACK_SETTINGS))),
     }).subscribe({
-      next: ({ template, assets, locations, assetTypes }) => {
+      next: ({ template, assets, locations, assetTypes, settings }) => {
+        this.presets = settings.sizePresets;
+        this.defaultSafeAreaMm = settings.safeAreaMm;
         this.assets = assets.sort((a, b) => a.name.localeCompare(b.name));
         this.locations = locations;
         this.assetTypes = assetTypes;
@@ -460,8 +561,12 @@ export class LabelEditorPage implements OnInit {
           this.defaultForArea = template.defaultForArea;
           this.widthMm = template.widthMm;
           this.heightMm = template.heightMm;
+          this.safeAreaMm = template.safeAreaMm ?? 0;
+          this.sheet = template.sheet ? { ...template.sheet } : null;
           this.elements = parseElements(template.elementsJson);
+          this.onSizeChange();
         } else {
+          this.safeAreaMm = Math.min(settings.safeAreaMm, this.maxSafeArea);
           const selected = this.areaService.selected.find((uuid) =>
             this.areaOptions.some((option) => option.value === uuid),
           );
@@ -471,7 +576,8 @@ export class LabelEditorPage implements OnInit {
           this.add('text');
           const [code, text] = this.elements;
           text.x = code.x + code.width + 2;
-          text.width = Math.max(5, this.widthMm - text.x - 2);
+          text.width = Math.max(5, this.widthMm - text.x - Math.max(this.safeAreaMm, 2));
+          this.keepInside(text);
           this.selectedId = null;
         }
         this.fitZoom();

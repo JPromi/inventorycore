@@ -1,8 +1,8 @@
 <section class="page">
   <div class="page-shell">
-    <a class="back-link" [routerLink]="config.listRoute">
+    <a class="back-link" [attr.href]="backUrl" (click)="goBack($event)">
       <svg lucideArrowLeft size="16"></svg>
-      <span>{{ 'inventoryDetail.backToList' | t }}</span>
+      <span>{{ 'common.back' | t }}</span>
     </a>
 
     @if (error) {

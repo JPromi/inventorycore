@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -61,6 +62,18 @@ public class LabelTemplate {
 
     @Column(nullable = false)
     private double heightMm;
+
+    /**
+     * Margin along every edge that elements must keep free. Templates from before the safe area
+     * existed get 0, so their layout stays valid.
+     */
+    @Column(nullable = false, columnDefinition = "double precision default 0")
+    @Builder.Default
+    private double safeAreaMm = 0;
+
+    /** Printed side by side on a sheet (e.g. A4); null = single labels, one per page (roll). */
+    @Embedded
+    private LabelSheet sheet;
 
     @Column(nullable = false, columnDefinition = "text")
     @Builder.Default

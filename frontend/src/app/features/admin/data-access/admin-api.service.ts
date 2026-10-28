@@ -211,6 +211,45 @@ export function applyPreset(permission: AdminPermissionRequest, presetKey: strin
   PERMISSION_FLAGS.forEach((flag) => (permission[flag.key] = preset.flags.includes(flag.key)));
 }
 
+/** Storage used by the database and the uploads (`/admin/storage`); all sizes in bytes. */
+export interface StorageUsage {
+  database: {
+    size: number;
+    /** largest first, with indexes; `rows` is an estimate, -1 if unknown */
+    tables: { name: string; size: number; rows: number }[];
+  };
+  files: {
+    count: number;
+    contentSize: number;
+    previewSize: number;
+    /** uploaded size before images were scaled down */
+    originalSize: number;
+    /** files nothing references anymore; the nightly cleanup removes them */
+    unattachedCount: number;
+    unattachedSize: number;
+    /** drive of the storage directory, null if unknown */
+    volumeTotal: number | null;
+    volumeUsable: number | null;
+  };
+  /** most storage first */
+  users: StorageUserUsage[];
+}
+
+export interface StorageUserUsage {
+  /** null for uploads without known uploader */
+  uuid: string | null;
+  username: string | null;
+  displayName: string | null;
+  /** the user no longer exists, the uploads are still stored */
+  deleted: boolean;
+  fileCount: number;
+  /** content and previews */
+  fileSize: number;
+  originalSize: number;
+  profileImageSize: number;
+  lastUploadAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
   private readonly apiUrl = `${environment.apiUrl}/admin`;
@@ -342,5 +381,9 @@ export class AdminApiService {
 
   deletePermission(uuid: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/permissions/${uuid}`, this.options);
+  }
+
+  storageUsage(): Observable<StorageUsage> {
+    return this.http.get<StorageUsage>(`${this.apiUrl}/storage`, this.options);
   }
 }

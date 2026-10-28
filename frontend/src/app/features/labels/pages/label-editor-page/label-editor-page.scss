@@ -70,6 +70,12 @@
       }
     }
 
+    .sheet-error {
+      color: var(--accent-foreground);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
     .style-toggles {
       display: flex;
       flex-wrap: wrap;

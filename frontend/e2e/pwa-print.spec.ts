@@ -2,7 +2,10 @@ import { expect, Page, test } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import { pageOf } from './support/paging';
 
-async function setup(page: Page, options: { ipad?: boolean; share?: boolean } = {}) {
+async function setup(
+  page: Page,
+  options: { ipad?: boolean; share?: boolean; sheet?: boolean } = {},
+) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(({ ipad, share }) => {
     Object.defineProperty(navigator, 'userAgent', {
@@ -86,6 +89,20 @@ async function setup(page: Page, options: { ipad?: boolean; share?: boolean } = 
                             defaultForArea: true,
                             widthMm: 62,
                             heightMm: 29,
+                            safeAreaMm: 0,
+                            // 3 × 9 labels on A4
+                            sheet: options.sheet
+                              ? {
+                                  paperWidthMm: 210,
+                                  paperHeightMm: 297,
+                                  columns: 3,
+                                  rows: 9,
+                                  marginTopMm: 18,
+                                  marginLeftMm: 12,
+                                  gapXMm: 0,
+                                  gapYMm: 0,
+                                }
+                              : null,
                             elementsJson: JSON.stringify([
                               {
                                 id: 'name',
@@ -205,6 +222,28 @@ test('iOS standalone label printing creates a PDF with the requested copy count'
   await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();
   await checkPdf(page, 3);
   await expect(page.locator('iframe')).toHaveCount(0);
+});
+
+test('label sheets fill A4 pages and leave the used positions empty', async ({ page }) => {
+  await setup(page, { sheet: true });
+  await page.goto('/assets/one');
+  await page.getByRole('button', { name: 'Weitere Aktionen', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Label drucken', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Label drucken' });
+  await dialog.getByLabel('Anzahl').fill('26');
+  // the first two positions of the sheet are already used
+  await dialog.getByTitle('Platz 3', { exact: true }).click();
+  await expect(dialog.getByLabel('Bereits benutzte Plätze')).toHaveValue('2');
+  await expect(dialog.getByText(/2 Bögen \(210 × 297 mm\)/)).toBeVisible();
+  await dialog.getByRole('button', { name: 'Drucken', exact: true }).click();
+  const pdf = await checkPdf(page, 2);
+  const href = await pdf.getByRole('link', { name: 'PDF herunterladen' }).getAttribute('href');
+  const text = await page.evaluate(
+    async (url) => new TextDecoder('latin1').decode(await (await fetch(url!)).arrayBuffer()),
+    href,
+  );
+  // A4 in points
+  expect(text).toMatch(/\/MediaBox \[0 0 595\.\d+ 841\.\d+\]/);
 });
 
 test('iOS standalone completed protocol uses the same PDF output', async ({ page }) => {
