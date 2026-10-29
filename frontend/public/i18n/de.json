@@ -756,6 +756,12 @@
     "searchSelect": {
       "clearSelection": "Auswahl entfernen",
       "searchLabel": "Optionen durchsuchen"
+    },
+    "viewSwitch": {
+      "label": "Ansicht",
+      "list": "Listenansicht",
+      "grid": "Kachelansicht",
+      "tree": "Baumansicht"
     }
   },
   "inspectionRun": {
@@ -1346,10 +1352,6 @@
       "other": "{count} Einträge"
     },
     "areaFilter": "Bereich: {names}",
-    "view": "Ansicht",
-    "listView": "Listenansicht",
-    "gridView": "Kachelansicht",
-    "treeView": "Baumansicht",
     "refresh": "Aktualisieren",
     "new": "Neu",
     "clearSearch": "Suche leeren",

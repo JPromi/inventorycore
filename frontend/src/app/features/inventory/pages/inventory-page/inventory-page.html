@@ -16,37 +16,7 @@
     </div>
 
     <div class="header-actions">
-      <div class="view-switch" role="group" [attr.aria-label]="'inventoryList.view' | t">
-        <button
-          type="button"
-          [title]="'inventoryList.listView' | t"
-          [class.active]="viewMode === 'list'"
-          [attr.aria-pressed]="viewMode === 'list'"
-          (click)="setViewMode('list')"
-        >
-          <svg lucideList size="17"></svg>
-        </button>
-        <button
-          type="button"
-          [title]="'inventoryList.gridView' | t"
-          [class.active]="viewMode === 'grid'"
-          [attr.aria-pressed]="viewMode === 'grid'"
-          (click)="setViewMode('grid')"
-        >
-          <svg lucideGrid2X2 size="17"></svg>
-        </button>
-        @if (config.endpoint === 'assets' || config.endpoint === 'locations') {
-          <button
-            type="button"
-            [title]="'inventoryList.treeView' | t"
-            [class.active]="viewMode === 'tree'"
-            [attr.aria-pressed]="viewMode === 'tree'"
-            (click)="setViewMode('tree')"
-          >
-            <svg lucideListTree size="17"></svg>
-          </button>
-        }
-      </div>
+      <app-view-switch [page]="config.endpoint" [views]="views" [(view)]="viewMode" />
       <button
         type="button"
         class="icon-button"

@@ -15,6 +15,15 @@
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+
+    &.grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+
+      .inspection-open {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   }
 
   .inspection-row {

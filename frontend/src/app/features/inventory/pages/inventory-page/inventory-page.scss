@@ -15,43 +15,6 @@
     }
   }
 
-  .view-switch {
-    display: inline-flex;
-    padding: 0.15rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-
-    button {
-      width: 2rem;
-      height: 1.9rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 0;
-      border-radius: var(--radius-xs);
-      background: transparent;
-      color: var(--text-muted);
-      cursor: pointer;
-
-      &.active {
-        background: var(--surface-active);
-        color: var(--text);
-      }
-
-      @include bp.phone {
-        width: 2.5rem;
-        height: 2.3rem;
-      }
-    }
-  }
-
-  // the header actions stretch on phones; the switch keeps its size
-
-  .header-actions .view-switch {
-    flex: 0 0 auto;
-  }
-
   // ---- toolbar ----
 
   .toolbar {

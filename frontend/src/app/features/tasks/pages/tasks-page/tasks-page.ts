@@ -20,6 +20,8 @@ import { PermissionService } from '../../../../core/service/permission.service';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { InfiniteScroll } from '../../../../shared/components/infinite-scroll.directive';
+import { ViewSwitch } from '../../../../shared/components/view-switch/view-switch';
+import { ListView, storedListView } from '../../../../shared/util/list-view';
 import { Page, PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
 import { intervalText } from '../../../inspections/data-access/inspection.service';
 import {
@@ -41,6 +43,7 @@ type Tab = TaskRunTab | 'TASKS';
     InfiniteScroll,
     RouterLink,
     TranslatePipe,
+    ViewSwitch,
     LucideCalendarClock,
     LucideListChecks,
     LucidePause,
@@ -60,6 +63,7 @@ export class TasksPage implements OnInit, OnDestroy {
   /** the page always starts with all tasks */
   protected tab: Tab = 'TASKS';
   protected search = '';
+  protected view: ListView = storedListView('tasks');
   protected loading = false;
   protected error = '';
   protected counts: Record<TaskRunTab, number> = {

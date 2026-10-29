@@ -13,14 +13,15 @@
         <span>{{ 'tasks.title' | t }}</span>
       </h1>
     </div>
-    @if (canCreate) {
-      <div class="header-actions">
+    <div class="header-actions">
+      <app-view-switch page="tasks" [(view)]="view" />
+      @if (canCreate) {
         <a class="primary-action" routerLink="/tasks/definitions/new">
           <svg lucidePlus size="17"></svg>
           <span>{{ 'tasks.list.new' | t }}</span>
         </a>
-      </div>
-    }
+      }
+    </div>
   </header>
 
   <div class="toolbar">
@@ -88,7 +89,7 @@
         {{ search.trim() ? ('tasks.list.notFound' | t) : ('tasks.list.noTasks' | t) }}
       </div>
     } @else {
-      <div class="task-list">
+      <div class="task-list" [class.grid]="view === 'grid'">
         @for (task of tasks.items; track task.uuid) {
           <div class="card task-row">
             <button type="button" class="main" (click)="openTask(task)">
@@ -172,7 +173,7 @@
       }
     </div>
   } @else {
-    <div class="task-list">
+    <div class="task-list" [class.grid]="view === 'grid'">
       @for (run of runs.items; track run.uuid) {
         <button
           type="button"
