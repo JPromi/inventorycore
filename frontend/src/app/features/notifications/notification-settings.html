@@ -1,0 +1,150 @@
+<section class="notification-settings form-controls">
+  <h2>{{ 'notifications.title' | t }}</h2>
+  <p class="hint">{{ 'notifications.matrixHint' | t }}</p>
+  @if (error) {
+    <p class="error" role="alert">{{ error }}</p>
+  }
+  @if (status) {
+    <p role="status">{{ status }}</p>
+  }
+  @if (preferences; as p) {
+    <form class="stack" #settingsForm="ngForm" (ngSubmit)="save()">
+      <div class="matrix-scroll">
+        <table>
+          <caption class="visually-hidden">
+            {{
+              'notifications.preferences' | t
+            }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'notifications.event' | t }}</th>
+              <th scope="col">{{ 'notifications.inboxTitle' | t }}</th>
+              <th scope="col">{{ 'notifications.pushColumn' | t }}</th>
+              @if (p.emailAvailable) {
+                <th scope="col">{{ 'notifications.emailColumn' | t }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">{{ 'notifications.dueSoon' | t }}</th>
+              <td>
+                <input
+                  type="checkbox"
+                  name="inbox"
+                  [(ngModel)]="p.inbox"
+                  [attr.aria-label]="'notifications.upcomingInbox' | t"
+                />
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  name="push"
+                  [(ngModel)]="p.push"
+                  [attr.aria-label]="'notifications.upcomingPush' | t"
+                />
+              </td>
+              @if (p.emailAvailable) {
+                <td>
+                  <input
+                    type="checkbox"
+                    name="email"
+                    [(ngModel)]="p.email"
+                    [disabled]="!emailSelectable || busy"
+                    [attr.aria-label]="'notifications.upcomingEmail' | t"
+                  />
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">{{ 'notifications.overdue' | t }}</th>
+              <td>
+                <input
+                  type="checkbox"
+                  name="overdueInbox"
+                  [(ngModel)]="p.overdueInbox"
+                  [attr.aria-label]="'notifications.overdueInbox' | t"
+                />
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  name="overduePush"
+                  [(ngModel)]="p.overduePush"
+                  [attr.aria-label]="'notifications.overduePush' | t"
+                />
+              </td>
+              @if (p.emailAvailable) {
+                <td>
+                  <input
+                    type="checkbox"
+                    name="overdueEmail"
+                    [(ngModel)]="p.overdueEmail"
+                    [disabled]="!emailSelectable || busy"
+                    [attr.aria-label]="'notifications.overdueEmail' | t"
+                  />
+                </td>
+              }
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="field-grid">
+        <label class="field"
+          ><span>{{ 'notifications.days' | t }}</span
+          ><input type="number" name="days" [(ngModel)]="p.daysBefore" min="0" max="90" required
+        /></label>
+        @if (p.emailAvailable) {
+          <label class="field"
+            ><span>{{ 'notifications.address' | t }}</span
+            ><input
+              type="email"
+              email
+              name="address"
+              [(ngModel)]="p.emailAddress"
+              (ngModelChange)="addressChanged()"
+              maxlength="254"
+          /></label>
+        }
+      </div>
+      @if (p.emailAvailable && !emailSelectable) {
+        <p class="hint">{{ 'notifications.emailNeedsAddress' | t }}</p>
+      }
+      <div class="device">
+        <h3>{{ 'notifications.thisDevice' | t }}</h3>
+        <p class="hint">{{ 'notifications.pushHint' | t }}</p>
+        @if (service.swPush.isEnabled) {
+          @if (deviceEnabled) {
+            <button
+              class="secondary-action"
+              type="button"
+              (click)="disablePush()"
+              [disabled]="busy"
+            >
+              {{ 'notifications.disableDevice' | t }}
+            </button>
+          } @else {
+            <button
+              class="secondary-action"
+              type="button"
+              (click)="enablePush()"
+              [disabled]="busy || settingsForm.invalid"
+            >
+              {{ 'notifications.enableDevice' | t }}
+            </button>
+          }
+        } @else {
+          <p class="hint">{{ 'notifications.pushUnavailable' | t }}</p>
+        }
+      </div>
+      <div>
+        <button class="primary-action" type="submit" [disabled]="busy || settingsForm.invalid">
+          {{ 'common.save' | t }}
+        </button>
+      </div>
+    </form>
+  } @else if (!error) {
+    <p>{{ 'notifications.loading' | t }}</p>
+  }
+</section>

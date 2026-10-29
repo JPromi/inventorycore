@@ -1,22 +1,26 @@
 <button
   #trigger
   type="button"
-  class="icon-button"
-  [title]="'common.moreActions' | t"
-  [attr.aria-label]="'common.moreActions' | t"
+  [class]="split ? 'primary-action split-trigger' : 'icon-button'"
+  [title]="label ?? ('common.moreActions' | t)"
+  [attr.aria-label]="label ?? ('common.moreActions' | t)"
   [attr.aria-expanded]="open"
   aria-haspopup="menu"
   (click)="open = !open"
   (keydown.arrowdown)="$event.preventDefault(); open = true"
 >
-  <svg lucideEllipsis size="19"></svg>
+  @if (split) {
+    <svg lucideChevronDown size="17"></svg>
+  } @else {
+    <svg lucideEllipsis size="19"></svg>
+  }
 </button>
 @if (open) {
   <div
     #panel
     class="action-panel"
     role="menu"
-    [attr.aria-label]="'common.moreActions' | t"
+    [attr.aria-label]="label ?? ('common.moreActions' | t)"
     [appDropdownPosition]="trigger"
     dropdownPlacement="bottom-end"
     (dropdownReady)="focusFirst()"

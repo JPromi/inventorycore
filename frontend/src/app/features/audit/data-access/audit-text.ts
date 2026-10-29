@@ -31,6 +31,7 @@ const RESOURCES: Record<string, string> = {
   ASSET: t('terms.assets'),
   LOCATION: t('terms.locations'),
   ASSET_TYPE: t('terms.assetTypes'),
+  TASK: t('terms.tasks'),
 };
 const RIGHTS: Record<string, string> = {
   ADMIN: t('services.permissions.flags.admin'),
@@ -144,6 +145,33 @@ function eventLines(code: string, params: Record<string, unknown>): string[] {
     }
     case 'INSPECTION_DELETED':
       return params['completed'] ? [t('audit.events.completedProtocolDeleted')] : [];
+    case 'TASK_RUN_CREATED':
+      return [t('audit.events.taskRunCreated', { date: formatDate(p('dueDate')), entries: p('entries') })];
+    case 'TASK_RUN_COMPLETED': {
+      const counts = t('audit.events.taskRunCompleted', {
+        date: formatDate(p('dueDate')),
+        done: p('done'),
+        notDone: p('notDone'),
+        pending: p('pending'),
+      });
+      return p('comment')
+        ? [counts, t('audit.events.comment', { comment: p('comment') })]
+        : [counts];
+    }
+    case 'TASK_RUN_STARTED':
+      return [t('audit.events.taskRunStarted')];
+    case 'TASK_RUN_DELETED':
+      return params['completed'] ? [t('audit.events.completedTaskRunDeleted')] : [];
+    case 'TASK_DELETED':
+      return params['openRuns'] ? [t('audit.events.taskDeleted', { count: p('openRuns') })] : [];
+    case 'TASK_ENTRY_RESULT':
+      return [
+        t('audit.events.taskEntryResult', {
+          task: p('task'),
+          point: p('point'),
+          result: enumText('taskEntryStatus', p('status')),
+        }),
+      ];
     case 'OBJECTS_MOVED_TO_DEFAULT_AREA':
       return [t('audit.events.objectsMovedToDefaultArea', { defaultArea: p('defaultArea') })];
     case 'LDAP_SYNC':

@@ -183,7 +183,7 @@ public class AssetStatusController {
             .filter(other -> other.getArea() == null || other.getArea().getId().equals(status.getArea().getId()))
             .anyMatch(other -> other.getName().equalsIgnoreCase(name));
         if (taken) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Einen Status mit diesem Namen gibt es schon.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ein Status mit diesem Namen ist bereits vorhanden.");
         }
         status.setName(name);
         status.setColor(request.color());
@@ -213,6 +213,6 @@ public class AssetStatusController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Es ist kein Standardbereich festgelegt."));
         }
         return areaRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Area not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bereich nicht gefunden."));
     }
 }

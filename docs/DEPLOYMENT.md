@@ -1,5 +1,28 @@
 # Deployment
 
+## Inspection notifications
+
+Configure SMTP in Administration → E-Mail-Versand (`/admin/notifications`), including the sender address,
+port, optional authentication and TLS. External e-mail is disabled by default. Users can select it
+only after the administrator enables a complete configuration. SMTP needs outbound connectivity
+to the configured server; certificate and hostname checks remain enabled. Port 465 uses implicit
+TLS, while the STARTTLS option enforces an upgrade on ordinary SMTP ports. The sending domain and
+SMTP account must permit the configured sender address.
+
+Push uses the existing production Angular service worker and requires HTTPS (localhost is the
+browser's development exception), browser notification permission and activation on each device.
+On iOS/iPadOS, use the home-screen installation in a browser/OS version supporting Web Push.
+The backend generates and stores VAPID keys on first startup; no external push account or manually
+configured key is needed. Allow outbound HTTPS to the registered Google, Mozilla, Apple or Windows
+push service. Push payloads contain a generic reminder and open `/notifications`; inventory details
+are fetched only after authentication. Browser support and delivery remain subject to OS policies.
+
+Generation starts after one minute and repeats hourly. Delivery batches run every minute with at
+most five attempts, and expired push subscriptions (HTTP 404/410) are removed. Delivery failures are
+logged using the notification UUID and exception class without SMTP secrets or provider responses.
+After rollout, verify a real SMTP delivery and a real installed-device push; mocked regression
+tests do not prove those external services or device permissions work in the deployment.
+
 ## What Is Provided
 
 The application ships as one container image: the Angular app is built and bundled into the Spring Boot JAR, which serves it next to the API. PostgreSQL runs as a separate container. Kubernetes manifests, a production reverse-proxy configuration, and backup automation are not included.

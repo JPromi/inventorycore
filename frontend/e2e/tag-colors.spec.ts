@@ -31,10 +31,10 @@ test('a new tag starts with a color of the palette', async ({ page }) => {
   const create = page.locator('form.create-row');
   await expect(create.locator('app-color-picker .trigger')).not.toContainText('Keine Farbe');
   await create.locator('input.name-input').fill('Atemschutz');
-  await create.getByRole('button', { name: 'Anlegen' }).click();
+  await create.getByRole('button', { name: 'Erstellen' }).click();
   await expect(create.locator('input.name-input')).toHaveValue('');
   await create.locator('input.name-input').fill('Hydraulik');
-  await create.getByRole('button', { name: 'Anlegen' }).click();
+  await create.getByRole('button', { name: 'Erstellen' }).click();
   await expect.poll(() => created.length).toBe(2);
   for (const tag of created) {
     expect(PALETTE).toContain(tag['color']);

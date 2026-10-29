@@ -104,3 +104,23 @@ test('dashboard without the right to inspect shows only the inventory', async ({
   await expect(page.getByRole('heading', { name: 'Prüfergebnisse' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Bestand nach Typ' })).toBeVisible();
 });
+
+for (const width of [390, 768, 1440]) {
+  test('compact dashboard remains usable at ' + width + 'px', async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await mockApi(page);
+    await page.goto('/dashboard');
+    await expect(page.locator('.tile')).toHaveCount(4);
+    await page.keyboard.press('Tab');
+    const skip = page.locator('.skip-link');
+    await expect(skip).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('main')).toBeFocused();
+    await expect(skip).not.toBeFocused();
+    expect(await page.locator('.page').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    expect(await page.locator('.tile').first().evaluate(el => getComputedStyle(el).transitionDuration)).toBe('1e-05s');
+    await page.getByRole('heading', { level: 1 }).click();
+    await page.screenshot({ path: test.info().outputPath('dashboard-' + width + '.png'), fullPage: true });
+  });
+}

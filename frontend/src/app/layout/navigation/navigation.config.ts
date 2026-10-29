@@ -1,5 +1,7 @@
 import {
   LucideLayoutDashboard,
+  LucideMail,
+  LucideBell,
   LucideScanBarcode,
   LucideBoxes,
   LucideMapPin,
@@ -20,6 +22,7 @@ import {
   LucideHistory,
   LucideRuler,
   LucideHardDrive,
+  LucideListChecks,
   type LucideIcon,
 } from '@lucide/angular';
 import { t } from '../../core/i18n/i18n';
@@ -39,12 +42,19 @@ export type NavItem = NavChild & {
   children?: NavChild[];
 };
 
+export const NOTIFICATION_NAV_ITEM: NavChild = {
+  label: t('notifications.title'),
+  route: '/notifications',
+  icon: LucideBell,
+};
+
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: t('nav.dashboard'), route: '/dashboard', icon: LucideLayoutDashboard },
   { label: t('nav.scan'), route: '/scan', icon: LucideScanBarcode },
   { label: t('nav.assets'), route: '/assets', icon: LucideBoxes },
   { label: t('nav.locations'), route: '/locations', icon: LucideMapPin },
   { label: t('nav.inspections'), route: '/inspections', icon: LucideClipboardCheck },
+  { label: t('nav.tasks'), route: '/tasks', icon: LucideListChecks },
   {
     label: t('nav.config'),
     icon: LucideSettings,
@@ -68,6 +78,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     disabled: false,
     adminOnly: true,
     children: [
+      { label: t('notifications.adminTitle'), route: '/admin/notifications', icon: LucideMail },
       { label: t('nav.areas'), route: '/admin/areas', icon: LucideLayers },
       { label: t('nav.customization'), route: '/admin/customization', icon: LucidePalette },
       { label: t('nav.labelSettings'), route: '/admin/labels', icon: LucideRuler },

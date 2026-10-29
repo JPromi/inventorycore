@@ -1,5 +1,83 @@
 # API
 
+## Inventory table editing
+
+Column header borders can be dragged to resize columns; focused separators also support
+Left/Right arrows and Home to restore the default width. Widths last only until the table closes.
+
+Assets, locations and asset types offer **Neu → Mehrere erstellen** through the split-button menu and a selection action
+**In Tabelle bearbeiten**. The table contains up to 200 rows and uses the existing authorized
+POST/PATCH endpoints, one row at a time; no bulk endpoint or database schema change is involved.
+It exposes ordinary fields, type/location choices, area/tag selections and asset custom values.
+Inventory IDs are never editable: new assets receive server-generated IDs and existing assets
+retain their IDs. Type field columns are the union of the types currently selected across
+the table rows; changing, filling, pasting or undoing a type selection refreshes them immediately.
+Asset-specific custom fields remain available, and cells belonging only to another row's type are
+not editable. Switching types retains draft field values for switching back before saving.
+Type/location/policy choices and select/boolean custom fields use the shared searchable dropdown;
+areas and tags use the shared multi-select, with inherited tags and protected areas locked.
+Clipboard labels are resolved to UUIDs, while the multi-select stores UUIDs directly.
+Images, hierarchy links, coordinates, status and type field definitions
+that are not exposed in the table are retained. Before each update, current details are fetched
+again and only edited cells are applied to that DTO, retaining unrelated concurrent changes.
+Known inherited type tags are excluded from direct tag assignments.
+
+Changes remain local until **Änderungen speichern**. Blank untouched draft rows and unchanged
+existing rows are skipped. A successful row becomes read-only; retries affect only failed/pending
+rows. Each row shows validation or API errors independently, so a batch may partially succeed.
+Closing with pending changes requires an explicit discard choice and never rolls back successful
+rows. Unconfirmed creates after a network interruption are locked against resubmission and require
+checking the list before creating again, since the server may already have committed them.
+
+A cell's corner handle copies its value downward without generating number sequences. Shift-click
+or Shift-arrow selects a rectangular range; **Nach unten ausfüllen** / Ctrl-or-Cmd+D copies its top
+row downward. Clipboard input uses tab-separated rows with Excel-style quoted cells and retains
+leading zeros and multiline descriptions. New-entry tables grow on paste within the row limit;
+editing tables cannot grow beyond the selected entries. Dropdown values accept a UUID or a unique
+visible label. Copying a selected range writes labels for lookup cells. The undo action reverses
+local cell edits, fills and pastes; it does not undo server writes. Users still use the individual
+form for image uploads, type field definitions and other fields outside the table.
+
+## Notifications
+
+Authenticated users read `GET /api/notifications` (newest first, only their own messages and currently
+authorized assets/templates) and mark one message read with `PUT /api/notifications/{uuid}/read`.
+The response contains `uuid`, `title`, `body`, `assetUuid`, `createdAt`, and nullable `readAt`.
+The SPA's `/notifications` page contains only the inbox. Personal delivery preferences are a
+matrix in `/profile`, with event rows and channel columns (the e-mail column is absent without
+SMTP). Its bell sits beside the user menu in the navigation footer and in the mobile bar, with
+a count refreshed every minute.
+With SMTP configured, the recipient field is available before choosing the e-mail channel.
+E-mail checkboxes stay disabled until a valid recipient address is entered; clearing the address
+also clears the e-mail selections. Inbox and push remain independently selectable.
+
+`GET/PUT /api/notifications/preferences` use `inbox`, `email`, `push` for upcoming inspections and
+`overdueInbox`, `overdueEmail`, `overduePush` for overdue inspections, `daysBefore` (integer 0–90),
+and `emailAddress`. Read-only `emailAvailable` and `pushPublicKey` come from server configuration.
+Defaults are inbox enabled for both events, external channels disabled, and seven days' notice.
+E-mail options disappear when SMTP is not enabled/configured; the backend rejects enabling them.
+The inbox also archives reminders selected for external delivery, independently of channel selection.
+
+`POST /api/notifications/subscriptions` accepts the browser subscription `{endpoint, keys: {p256dh, auth}}`.
+`DELETE` on the same path accepts `{endpoint}` and removes only the current user's subscription.
+Only HTTPS endpoints of supported browser push providers are accepted; each account can register
+up to 20 devices. Browser subscriptions are reassigned to the current account on explicit activation.
+Signing out unregisters this browser before ending the session.
+
+Admin-only `GET/PUT /api/admin/notifications` configure `enabled`, `host`, `port`, `username`,
+`password`, `fromAddress`, and `startTls`. Password reads always return null and a separate
+`passwordConfigured` flag; a null write preserves the password and an empty string clears it.
+The SPA keeps the saved password when its password field is blank. Settings changes are audited
+without credential values. Port 465 uses implicit TLS; otherwise enabled STARTTLS is mandatory.
+
+The hourly scheduler starts one minute after startup. Each asset/template/check cycle gets one
+upcoming reminder and one overdue escalation, subject to the user's choices and current inspection
+permissions. Never-checked assets use a stable cycle key rather than generating a message every day.
+Pending external deliveries are processed in batches of 100 every minute, with at most five attempts.
+Account, channel, asset and template access are checked again before sending. Row locks and unique
+event keys prevent concurrent scheduled runs from creating duplicate reminders; external delivery
+is at-least-once (a process crash after sending and before committing may cause another delivery).
+
 `GET /api/app-info` is public and returns `name`, `version`, and `githubUrl`. The version comes from Gradle-generated Spring Boot build information (`-PappVersion` for releases); direct IDE runs without build information report `development`. The navigation footer loads this endpoint independently of branding settings.
 
 Inspection templates accept and return `defaultTagUuids` and `includeChildAssets` (default false). Starting an inspection locks the template tags; users may add selections but cannot remove template defaults. Preview and creation always merge template defaults into supplied filters, including empty lists. They accept a nullable `includeChildAssets` override; null uses the template default. With child inclusion enabled, all descendants of matching roots are added regardless of tag, location, type, area, or due-date filters, but each child still requires view/inspect permission and must not be excluded from inspections. Assets are deduplicated; the resulting run items and filter summary preserve the selection independently of later template edits.
@@ -41,6 +119,7 @@ Paths below are relative to `/api`. This is a map to the implementation, not a d
 | `/admin/oidc`, `/admin/oidc/test` | OIDC configuration/discovery test; `AuthProviderController` |
 | `/admin/storage` | Storage used by the database (total, per table) and the uploaded files (content, previews, free space of the drive), and uploads plus profile image per user, including deleted uploaders; `StorageController` / `StorageUsageService`. File sizes are read from disk on every request |
 | `/inspection-types`, `/inspections`, `/inspection-schedules` | Types, runs, items, scans, photos, completion and due dates; `InspectionController` |
+| `/tasks`, `/tasks/page`, `/tasks/{uuid}/runs`, `/tasks/assignees`, `/tasks/preview`, `/task-runs/page`, `/task-runs/{uuid}`, `/task-runs/{uuid}/entries/{entryUuid}`, `/task-runs/{uuid}/complete` | Tasks with checklist, assignees (users/groups), optional interval and affected assets (chosen individually and/or by location/tag/type filters within the task's area); their runs with one entry per general point and per point and asset, results `DONE`/`NOT_DONE`/`PENDING` with comment, completion; `TaskController` / `TaskService`. `/task-runs/page` takes `tab` (`MINE` default, `OPEN`, `OVERDUE`, `COMPLETED`, `ALL`) and returns `mineCount`, `openCount`, `overdueCount`, `completedCount`. `POST /tasks/{uuid}/runs` starts a run now (assignees, or TASK INSPECT/EDIT in the area) and returns the open run instead if there is one; tasks with `onDemand` have no schedule and are only started this way, any number of times. `TaskScheduler` creates a run on its due date (checked every 15 minutes and right after saving or completing); a task never has two open runs, and a run that stays open past later due dates is followed by one run for the latest of them |
 | `/label-templates` | Printable label configuration; `LabelTemplateController`. `safeAreaMm` is the margin along every edge that no element may reach into; the request may omit it (null = admin default). Saving returns 400 when an element lies outside `safeAreaMm .. size - safeAreaMm` (0.01 mm tolerance), the layout is not a JSON array, or the safe area leaves less than 1 mm. Optional `sheet` (`paperWidthMm`, `paperHeightMm`, `columns`, `rows`, `marginTopMm`, `marginLeftMm`, `gapXMm`, `gapYMm`; null = single labels) prints the labels side by side on paper such as A4; saving returns 400 when the grid does not fit on the paper. The print dialog lets users skip already used positions of the first sheet; this is not stored |
 | `/label-settings`, `/admin/label-settings` | Label editor defaults (`safeAreaMm`, ordered `sizePresets` with `name`, `widthMm`, `heightMm` and optional `safeAreaMm`, null = the general `safeAreaMm`; choosing a size in the editor applies its safe area); every signed-in user reads, only admins `PUT`; `LabelSettingsController` |
 | `/dashboard` | Start-page numbers and short lists for the sidebar area selection; `DashboardController` |

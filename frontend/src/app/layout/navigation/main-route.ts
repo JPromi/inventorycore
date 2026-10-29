@@ -1,10 +1,11 @@
-import { Component, DestroyRef, HostListener, OnInit } from '@angular/core';
+import { ApplicationRef, Component, DestroyRef, HostListener, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavChild, NavItem, PRIMARY_NAV_ITEMS } from './navigation.config';
 import { UserMenu } from './user-menu/user-menu';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
-import { filter } from 'rxjs';
+import { catchError, filter, first, of, switchMap, timer } from 'rxjs';
+import { NotificationService } from '../../core/service/notification.service';
 
 import { AreaSwitcher } from '../../shared/components/area-switcher/area-switcher';
 import { ConfirmDialog } from '../../shared/components/confirm-dialog/confirm-dialog';
@@ -16,7 +17,13 @@ import { CustomizationService } from '../../core/service/customization.service';
 import { CommonModule } from '@angular/common';
 import { t } from '../../core/i18n/i18n';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
-import { LucideChevronDown, LucideDownload, LucideMenu, LucideX } from '@lucide/angular';
+import {
+  LucideBell,
+  LucideChevronDown,
+  LucideDownload,
+  LucideMenu,
+  LucideX,
+} from '@lucide/angular';
 
 @Component({
   selector: 'app-main-route',
@@ -33,6 +40,7 @@ import { LucideChevronDown, LucideDownload, LucideMenu, LucideX } from '@lucide/
     LucideX,
     TranslatePipe,
     UserMenu,
+    LucideBell,
   ],
   templateUrl: './main-route.html',
   styleUrl: './main-route.scss',
@@ -49,8 +57,7 @@ export class MainRoute implements OnInit {
   protected get visibleNavItems(): NavItem[] {
     const isAdmin = this.user?.role?.toUpperCase() === 'ADMIN';
     return this.primaryNavItems.filter(
-      (item) =>
-        (!item.adminOnly || isAdmin) && (!item.configOnly || this.permissions.canConfigure),
+      (item) => (!item.adminOnly || isAdmin) && (!item.configOnly || this.permissions.canConfigure),
     );
   }
 
@@ -61,9 +68,20 @@ export class MainRoute implements OnInit {
     protected readonly pwa: PwaService,
     protected readonly customization: CustomizationService,
     private readonly permissions: PermissionService,
+    protected readonly notifications: NotificationService,
+    private readonly application: ApplicationRef,
   ) {}
 
   ngOnInit(): void {
+    // Start polling after stability so it cannot delay service-worker registration.
+    this.application.isStable
+      .pipe(
+        first((stable) => stable),
+        switchMap(() => timer(0, 60000)),
+        switchMap(() => this.notifications.inbox().pipe(catchError(() => of(null)))),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
     this.authStateService.currentUser$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((user) => {
@@ -88,6 +106,7 @@ export class MainRoute implements OnInit {
 
   /** Title of the current section for the mobile top bar. */
   protected get currentTitle(): string {
+    if (this.currentUrl.startsWith('/notifications')) return t('notifications.title');
     for (const item of this.visibleNavItems) {
       if (item.route && this.currentUrl.startsWith(item.route)) {
         return item.label;

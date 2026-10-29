@@ -2,6 +2,14 @@
   display: inline-flex;
   flex: 0 0 auto;
 
+  .split-trigger {
+    height: 100%;
+    padding-inline: 0.5rem;
+    border-left-color: var(--on-accent);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
   .action-panel {
     width: max-content;
     min-width: 12rem;

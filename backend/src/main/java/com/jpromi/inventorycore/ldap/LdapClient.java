@@ -180,7 +180,7 @@ public final class LdapClient {
         if (exception instanceof CommunicationException) {
             Throwable cause = exception.getRootCause();
             if (cause instanceof javax.net.ssl.SSLHandshakeException) {
-                return "TLS-Fehler: Zertifikat wird nicht vertraut. Option „Zertifikate ignorieren“ aktivieren oder Zertifikat importieren. ("
+                return "TLS-Verbindung fehlgeschlagen. Bitte Serverzertifikat und TLS-Einstellungen prüfen. ("
                     + cause.getMessage() + ")";
             }
             return "Server nicht erreichbar: " + (cause != null ? cause.getMessage() : exception.getMessage());

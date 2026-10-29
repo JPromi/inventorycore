@@ -1,6 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { inventoryTree, InventoryTreeRow } from '../../util/inventory-tree';
 import { AssetPrintBatch } from '../../components/asset-print-batch/asset-print-batch';
+import { InventoryTable } from '../../components/inventory-table/inventory-table';
+import { ActionMenu, MenuAction } from '../../../../shared/components/action-menu/action-menu';
+import { ViewSwitch } from '../../../../shared/components/view-switch/view-switch';
+import { ListView, storedListView } from '../../../../shared/util/list-view';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,8 +12,6 @@ import {
   LucideChevronRight,
   LucideLayers,
   LucideGrid2X2,
-  LucideList,
-  LucideListTree,
   LucideMapPin,
   LucidePencil,
   LucidePlus,
@@ -65,20 +67,7 @@ import { PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
 import { locationTypeInfo } from '../../../../shared/util/location-types';
 import { Observable, Subject, Subscription, debounceTime, skip } from 'rxjs';
 
-type ViewMode = 'grid' | 'list' | 'tree';
-
-/** Chosen view per list page (endpoint), kept in this browser. */
-const VIEW_STORAGE_KEY = 'inventorycore.listViews';
-
-function readViews(): Record<string, ViewMode> {
-  try {
-    const value = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) ?? '{}');
-    return value && typeof value === 'object' ? value : {};
-  } catch {
-    // no storage (private mode, blocked) or broken value: start with the list
-    return {};
-  }
-}
+type ViewMode = ListView;
 
 interface PageConfig {
   title: string;
@@ -119,6 +108,8 @@ interface FieldConfig {
     AssetStatusFilter,
     CommonModule,
     AssetPrintBatch,
+    InventoryTable,
+    ActionMenu,
     ListActions,
     SelectableRow,
     SelectionCheckbox,
@@ -127,11 +118,9 @@ interface FieldConfig {
     InfiniteScroll,
     LabelPrintDialog,
     SearchSelect,
+    ViewSwitch,
     LucideChevronRight,
     LucideLayers,
-    LucideGrid2X2,
-    LucideList,
-    LucideListTree,
     LucideMapPin,
     LucidePencil,
     LucidePlus,
@@ -158,6 +147,13 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.permissions.can(this.config.resourceType, 'delete', item.areaUuids ?? []);
   protected bulkDelete!: (item: InventoryItem) => Observable<unknown>;
   protected bulkActions: ListAction<InventoryItem>[] = [];
+  protected tableItems: InventoryItem[] | null | undefined = undefined;
+  protected readonly createActions: MenuAction[] = [{
+    id: 'create-table',
+    label: t('inventoryTable.create'),
+    icon: LucideGrid2X2,
+    run: () => { this.tableItems = null; },
+  }];
   /** Assets whose labels are being printed (dialog open while set). */
   protected printAssets: InventoryItem[] | null = null;
   protected datasheetAssets: InventoryItem[] | null = null;
@@ -217,7 +213,7 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.route.data.subscribe((data) => {
       this.config = data['inventoryConfig'];
       const endpoint = this.config.endpoint;
-      this.viewMode = this.storedView(endpoint);
+      this.viewMode = storedListView(endpoint, this.views);
       this.bulkDelete = (item) => this.api.delete(endpoint, item.uuid);
       this.bulkActions =
         endpoint === 'assets'
@@ -236,6 +232,23 @@ export class InventoryPage implements OnInit, OnDestroy {
               },
             ]
           : [];
+      if (this.permissions.can(this.config.resourceType, 'edit')) {
+        this.bulkActions.unshift({
+          label: t('inventoryTable.edit'),
+          icon: LucideGrid2X2,
+          run: (items) => {
+            if (
+              !items.every((item) =>
+                this.permissions.can(this.config.resourceType, 'edit', item.areaUuids ?? []),
+              )
+            ) {
+              this.error = t('inventoryTable.noPermission');
+              return;
+            }
+            this.tableItems = items;
+          },
+        });
+      }
       this.resetFilters();
       this.loadFilterOptions();
     });
@@ -266,26 +279,10 @@ export class InventoryPage implements OnInit, OnDestroy {
     };
   }
 
-  protected setViewMode(mode: ViewMode): void {
-    this.viewMode = mode;
-    try {
-      localStorage.setItem(
-        VIEW_STORAGE_KEY,
-        JSON.stringify({ ...readViews(), [this.config.endpoint]: mode }),
-      );
-    } catch {
-      // the view still changes, it is just not remembered
-    }
-  }
-
-  /** The view last used on this page; the tree only exists for assets and locations. */
-  private storedView(endpoint: string): ViewMode {
-    const stored = readViews()[endpoint];
-    const treeAllowed = endpoint === 'assets' || endpoint === 'locations';
-    if (stored === 'grid' || stored === 'list' || (stored === 'tree' && treeAllowed)) {
-      return stored;
-    }
-    return 'list';
+  /** The tree only exists for assets and locations, whose entries have parents. */
+  protected get views(): ListView[] {
+    const endpoint = this.config?.endpoint;
+    return endpoint === 'assets' || endpoint === 'locations' ? ['list', 'grid', 'tree'] : ['list', 'grid'];
   }
 
   /** "/" focuses the search like in many web apps. */
@@ -439,6 +436,11 @@ export class InventoryPage implements OnInit, OnDestroy {
     if (this.config.createRoute) {
       this.router.navigate([this.config.createRoute]);
     }
+  }
+
+  protected tableClosed(changed: boolean): void {
+    this.tableItems = undefined;
+    if (changed) this.load();
   }
 
   protected open(item: InventoryItem): void {

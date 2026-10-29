@@ -91,7 +91,9 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/pages/dashboard-page/dashboard-page').then((m) => m.DashboardPage),
+          import('./features/dashboard/pages/dashboard-page/dashboard-page').then(
+            (m) => m.DashboardPage,
+          ),
       },
       {
         path: 'profile',
@@ -296,6 +298,33 @@ export const routes: Routes = [
             (m) => m.InspectionPage,
           ),
       },
+      // Aufgaben
+      {
+        path: 'tasks',
+        loadComponent: () =>
+          import('./features/tasks/pages/tasks-page/tasks-page').then((m) => m.TasksPage),
+      },
+      {
+        path: 'tasks/definitions/new',
+        loadComponent: () =>
+          import('./features/tasks/pages/task-form-page/task-form-page').then(
+            (m) => m.TaskFormPage,
+          ),
+      },
+      {
+        path: 'tasks/definitions/:uuid',
+        loadComponent: () =>
+          import('./features/tasks/pages/task-form-page/task-form-page').then(
+            (m) => m.TaskFormPage,
+          ),
+      },
+      {
+        path: 'tasks/:uuid',
+        loadComponent: () =>
+          import('./features/tasks/pages/task-run-page/task-run-page').then(
+            (m) => m.TaskRunPage,
+          ),
+      },
       {
         path: 'config/inspection-templates',
         canActivate: [configGuard],
@@ -380,12 +409,25 @@ export const routes: Routes = [
           ),
       },
 
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
+      },
       // Administration
       {
         path: 'admin',
         canActivate: [adminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
+          {
+            path: 'notifications',
+            data: { notificationAdmin: true },
+            loadComponent: () =>
+              import('./features/notifications/notifications-page').then(
+                (m) => m.NotificationsPage,
+              ),
+          },
           {
             path: 'customization',
             loadComponent: () =>

@@ -32,6 +32,8 @@ import {
   SelectionCheckbox,
 } from '../../../../shared/components/list-actions/list-actions';
 import { InfiniteScroll } from '../../../../shared/components/infinite-scroll.directive';
+import { ViewSwitch } from '../../../../shared/components/view-switch/view-switch';
+import { ListView, storedListView } from '../../../../shared/util/list-view';
 import { PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -59,6 +61,7 @@ interface DueGroup {
     FormsModule,
     RouterLink,
     TranslatePipe,
+    ViewSwitch,
     LucideCalendarClock,
     LucideChevronDown,
     LucideClipboardCheck,
@@ -109,6 +112,7 @@ export class InspectionsPage implements OnInit, OnDestroy {
   protected expandedGroups = new Set<string>();
   protected readonly dueText = dueText;
   protected statusFilter: StatusFilter = 'OPEN';
+  protected view: ListView = storedListView('inspections');
   protected search = '';
   protected loading = false;
   protected error = '';

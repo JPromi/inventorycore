@@ -1,5 +1,23 @@
 # Database
 
+## Notification storage and upgrades
+
+Four additive Hibernate-managed tables store notifications: `notification_settings` (singleton id 1,
+SMTP configuration and a persistent VAPID key pair), `notification_preference` (user UUID primary key,
+per-event channels, lead time and recipient), `notification_message` (UUID, owner UUID, unique event
+key, asset/template UUIDs, message snapshot, read timestamp and delivery flags/attempt count), and
+`notification_subscription` (UUID, owner UUID and unique browser push endpoint/keys).
+No existing user, asset, inspection, or schedule columns are changed. `SchemaMigration` adds
+idempotent indexes for inbox ordering and subscription ownership. Startup initializes the settings
+and VAPID keys once; preferences are created only when saved, with defaults for existing users.
+
+SMTP credentials and private VAPID material are server-side database fields, excluded from public
+DTOs and audit diffs. Include these tables in protected database backups; retaining the VAPID keys
+keeps existing device subscriptions usable after a restore. There are no cascading deletions into
+the inventory. Historical messages remain stored and access-filtered; no automatic retention cleanup
+is currently applied. User UUIDs deliberately have no new foreign keys, so existing user deletion
+continues to work; a missing/disabled owner cancels queued delivery.
+
 ## Persistence Model
 
 `customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. The dark variant uses nullable `dark_brand_color`, `dark_logo` (PostgreSQL `bytea`), `dark_logo_content_type`, and `dark_logo_version` columns, with nullable `advanced_theme_enabled` interpreted as false for existing rows. Hibernate update adds these columns; no destructive data conversion is needed. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields; dark/light logo operations are independent and disabling advanced mode does not delete dark data. Label templates reference the light branding logically through their JSON elements/placeholders; logo bytes are not copied into label records. Personal screen appearance is browser-local per user, not a new user database column.
@@ -18,6 +36,7 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 | Users and groups | Many-to-many membership; group permissions apply to a resource type and optional area |
 | Inspections | Types/field definitions, runs/items, item values/photos, and per-asset schedule data |
 | Labels | One owning area and a layout stored as JSON text with millimeter dimensions and a safe area (`safe_area_mm`, `default 0` so templates from before keep their layout) and an optional print sheet in nullable `sheet_*` columns (paper size, columns, rows, margins, gaps; all null = single labels). `label_settings` is a singleton row (`id = 1`) with the default safe area (5 mm) and the ordered size presets in `label_size_presets` (nullable `safe_area_mm` per size, null = default); `DataInitializer` creates it with the former built-in sizes |
+| Tasks | `tasks` (title, description, area, optional interval from `start_date`, `next_due_date`, `active`, `on_demand` for tasks without schedule that are started by hand), checklist points in `task_checklist_points`, individually chosen assets in `task_assets`, filter UUID lists as comma-separated text like inspection runs, and assignees as plain UUIDs in `task_assigned_users` / `task_assigned_groups` (no foreign keys, so deleting users or groups is unchanged). Runs in `task_runs` (due date, status, assignee UUIDs and names, scope summary, completion) with `task_run_entries` (point and asset snapshots, result, comment, who/when). Open runs are kept in line with their task when it is saved; completed runs are not changed. Deleting a task deletes its open runs and detaches completed ones (`task_id` null). Area deletion moves tasks and runs to the default area. All tables are new and created by Hibernate; the new `TASK` permission type and audit object types need no step because their check constraints are already dropped on start |
 | Activity logs | Object/user snapshots and language-neutral event/diff details stored as JSON text |
 | Stored files | Metadata and relative disk paths; inventory file content is outside PostgreSQL. A file belongs to at most one image or protocol photo. When images are removed from an asset, location or type, a protocol photo or item is removed, or a protocol is deleted, `FileCleanupService` deletes the row and the content after the commit once nothing references it. A nightly job (`app.files.cleanup-cron`, default 03:30) deletes files unreferenced for more than a day (cancelled uploads, files of photos removed before this cleanup existed). Soft-deleted assets, locations and types keep their images |
 

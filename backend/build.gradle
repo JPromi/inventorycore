@@ -23,6 +23,15 @@ repositories {
 }
 
 dependencies {
+ implementation 'org.springframework.boot:spring-boot-starter-mail'
+ implementation('nl.martijndwars:web-push:5.1.2') {
+     exclude group: 'org.bouncycastle'
+     exclude group: 'org.asynchttpclient'
+     exclude group: 'com.beust'
+ }
+ implementation 'org.bouncycastle:bcprov-jdk18on:1.84'
+ implementation 'org.apache.httpcomponents:httpasyncclient:4.1.5'
+ implementation 'org.bitbucket.b_c:jose4j:0.9.6'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-ldap'
 	implementation 'org.springframework.boot:spring-boot-starter-restclient'

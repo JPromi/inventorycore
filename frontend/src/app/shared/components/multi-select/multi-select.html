@@ -29,7 +29,7 @@
         (focus)="onFocus()"
         (input)="onQueryChange(input.value)"
         (keydown)="onKeydown($event)"
-        [attr.aria-label]="'components.multiSelect.searchLabel' | t"
+        [attr.aria-label]="ariaLabel ?? ('components.multiSelect.searchLabel' | t)"
     />
 </div>
 

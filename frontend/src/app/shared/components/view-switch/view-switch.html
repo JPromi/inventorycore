@@ -1,0 +1,24 @@
+<div class="view-switch" role="group" [attr.aria-label]="'components.viewSwitch.label' | t">
+  @for (option of views; track option) {
+    <button
+      type="button"
+      [title]="'components.viewSwitch.' + option | t"
+      [attr.aria-label]="'components.viewSwitch.' + option | t"
+      [class.active]="view === option"
+      [attr.aria-pressed]="view === option"
+      (click)="select(option)"
+    >
+      @switch (option) {
+        @case ('grid') {
+          <svg lucideGrid2X2 size="17"></svg>
+        }
+        @case ('tree') {
+          <svg lucideListTree size="17"></svg>
+        }
+        @default {
+          <svg lucideList size="17"></svg>
+        }
+      }
+    </button>
+  }
+</div>

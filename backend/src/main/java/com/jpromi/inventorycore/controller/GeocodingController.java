@@ -45,7 +45,7 @@ public class GeocodingController {
         AccessContext access = permissionService.context(authentication);
         if (!access.canAnywhere(PermissionResourceType.LOCATION, PermissionAction.CREATE)
             && !access.canAnywhere(PermissionResourceType.LOCATION, PermissionAction.EDIT)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Für diese Aktion fehlt die Berechtigung.");
         }
     }
 }

@@ -15,14 +15,15 @@
         <span>{{ 'terms.inspections' | t }}</span>
       </h1>
     </div>
-    @if (canStart) {
-      <div class="header-actions">
+    <div class="header-actions">
+      <app-view-switch page="inspections" [(view)]="view" />
+      @if (canStart) {
         <a class="primary-action" routerLink="/inspections/new">
           <svg lucidePlus size="17"></svg>
           <span>{{ 'inspectionList.new' | t }}</span>
         </a>
-      </div>
-    }
+      }
+    </div>
   </header>
 
   <div class="toolbar">
@@ -190,7 +191,7 @@
       }
     </div>
   } @else {
-    <div class="inspection-list">
+    <div class="inspection-list" [class.grid]="view === 'grid'">
       @for (inspection of visible; track inspection.uuid) {
         <article
           class="card inspection-row"

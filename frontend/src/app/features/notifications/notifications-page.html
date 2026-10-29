@@ -1,0 +1,104 @@
+<section class="page">
+  <div class="page-shell">
+    <header class="page-header">
+      <h1>{{ (admin ? 'notifications.adminTitle' : 'notifications.title') | t }}</h1>
+    </header>
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+    @if (status) {
+      <p role="status">{{ status }}</p>
+    }
+    @if (loading) {
+      <p>{{ 'notifications.loading' | t }}</p>
+    }
+    @if (mail; as m) {
+      <form class="card stack" #mailForm="ngForm" (ngSubmit)="save()">
+        <p class="hint">{{ 'notifications.mailHint' | t }}</p>
+        <label class="toggle"
+          ><input type="checkbox" name="enabled" [(ngModel)]="m.enabled" />
+          {{ 'notifications.mailEnabled' | t }}</label
+        >
+        <div class="field-grid">
+          <label class="field"
+            ><span>{{ 'notifications.host' | t }}</span
+            ><input name="host" [(ngModel)]="m.host" [required]="m.enabled" maxlength="253"
+          /></label>
+          <label class="field"
+            ><span>{{ 'notifications.port' | t }}</span
+            ><input type="number" name="port" [(ngModel)]="m.port" min="1" max="65535" required
+          /></label>
+          <label class="field"
+            ><span>{{ 'notifications.username' | t }}</span
+            ><input name="username" [(ngModel)]="m.username" autocomplete="off" maxlength="255"
+          /></label>
+          <label class="field"
+            ><span>{{ 'notifications.password' | t }}</span
+            ><input
+              type="password"
+              name="password"
+              [(ngModel)]="m.password"
+              autocomplete="new-password"
+              maxlength="255"
+            /><small>{{
+              (m.passwordConfigured
+                ? 'notifications.passwordStored'
+                : 'notifications.passwordEmpty'
+              ) | t
+            }}</small></label
+          >
+          <label class="field"
+            ><span>{{ 'notifications.from' | t }}</span
+            ><input
+              type="email"
+              email
+              name="from"
+              [(ngModel)]="m.fromAddress"
+              [required]="m.enabled"
+              maxlength="254"
+          /></label>
+        </div>
+        <label
+          ><input type="checkbox" name="tls" [(ngModel)]="m.startTls" />
+          {{ 'notifications.tls' | t }}</label
+        >
+        <div class="form-actions">
+          <button class="primary-action" type="submit" [disabled]="busy || mailForm.invalid">
+            {{ 'common.save' | t }}
+          </button>
+        </div>
+      </form>
+    }
+    @if (!admin && !loading) {
+      <section class="stack">
+        <div class="inbox-header">
+          <h2>{{ 'notifications.inboxTitle' | t }}</h2>
+          <button class="secondary-action" type="button" (click)="reload()">
+            {{ 'notifications.refresh' | t }}
+          </button>
+        </div>
+        @for (message of messages; track message.uuid) {
+          <article [class.unread]="!message.readAt">
+            <h3>{{ message.title }}</h3>
+            <p>{{ message.body }}</p>
+            <small>{{ message.createdAt | date: 'dd.MM.yyyy HH:mm' }}</small>
+            <div class="message-actions">
+              <a class="secondary-action" [routerLink]="['/assets', message.assetUuid]">{{
+                'notifications.openAsset' | t
+              }}</a>
+              @if (!message.readAt) {
+                <button class="secondary-action" type="button" (click)="read(message)">
+                  {{ 'notifications.markRead' | t }}
+                </button>
+              } @else {
+                <span>{{ 'notifications.read' | t }}</span>
+              }
+            </div>
+          </article>
+        } @empty {
+          <p class="hint">{{ 'notifications.empty' | t }}</p>
+        }
+      </section>
+    }
+  </div>
+</section>

@@ -114,7 +114,7 @@ test('the type configuration uses the shared dropdown and asks for choices', asy
   const writes = await mockApi(page);
   await page.goto('/config/types/new');
   await page.getByRole('textbox', { name: 'Name', exact: true }).first().fill('Leitern');
-  await page.getByRole('button', { name: 'Feld', exact: true }).click();
+  await page.getByRole('button', { name: 'Feld hinzufügen', exact: true }).click();
   const field = fieldRow(page, 0);
   await field.locator('input[type="text"]').first().fill('Bauart');
   await field.locator('app-search-select .trigger').click();
@@ -122,7 +122,7 @@ test('the type configuration uses the shared dropdown and asks for choices', asy
 
   // a selection field without choices is not saved
   await page.getByRole('button', { name: 'Erstellen', exact: true }).click();
-  await expect(page.getByText('Das Auswahlfeld „Bauart“ braucht mindestens einen Auswahlwert.')).toBeVisible();
+  await expect(page.getByText('Bitte mindestens einen Auswahlwert für „Bauart“ angeben.')).toBeVisible();
   expect(writes).toHaveLength(0);
 
   await field.getByRole('textbox', { name: 'Auswahlwerte' }).fill('Steckleiter, Schiebleiter; Klappleiter');

@@ -1,14 +1,14 @@
 @mixin light {
   color-scheme: light;
-  --background: #f5f5f5;
+  --background: #fafafa;
   --surface: #ffffff;
   --surface-hover: #f3f4f6;
-  --surface-active: #f1f5f9;
+  --surface-active: #eceef1;
   --border: #e5e7eb;
   --border-strong: #cbd5e1;
   --text: #212121;
   --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  --text-subtle: #687589;
   --default-brand-color: #b62f2f;
   --accent-foreground: var(--accent);
   --success: #15803d;

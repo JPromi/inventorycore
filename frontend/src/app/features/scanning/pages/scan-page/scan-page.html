@@ -2,7 +2,6 @@
     <div class="page-shell">
         <header class="page-header">
             <div>
-                <p class="eyebrow">{{ 'scan.eyebrow' | t }}</p>
                 <h1>
                     <svg lucideScanBarcode size="20"></svg>
                     <span>{{ 'scan.title' | t }}</span>
@@ -78,7 +77,7 @@
                             </button>
                         </label>
                         <p class="hint">
-                            {{ 'scan.scannerHint.active' | t }} {{ 'scan.scannerHint.enterBefore' | t }} <kbd>Enter</kbd> {{ 'scan.scannerHint.enterAfter' | t }}
+                            {{ 'scan.scannerHint.enterBefore' | t }} <kbd>Enter</kbd> {{ 'scan.scannerHint.enterAfter' | t }}
                             {{ 'scan.scannerHint.fields' | t }}
                         </p>
                     </form>
@@ -195,7 +194,6 @@
                     <div class="card result-message placeholder">
                         <svg lucideScanBarcode size="34"></svg>
                         <strong>{{ 'scan.ready' | t }}</strong>
-                        <span>{{ 'scan.readyHint' | t }}</span>
                     </div>
                 } @else if (!matchCount) {
                     <div class="card result-message failure">

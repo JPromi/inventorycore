@@ -45,7 +45,7 @@ test('the group of all users has no members, admin rights or delete button', asy
   const writes = await mockApi(page);
   await page.goto('/admin/groups/alle/edit');
   await expect(page.locator('input[name="name"]')).toHaveAttribute('readonly', '');
-  await expect(page.getByText('Zu dieser Gruppe gehört automatisch jeder Benutzer.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Diese Berechtigungen gelten zusätzlich für alle Benutzer.', { exact: false })).toBeVisible();
   await expect(page.locator('input[name="adminGroup"]')).toHaveCount(0);
   await expect(page.locator('app-multi-select[name="members"]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Löschen' })).toHaveCount(0);

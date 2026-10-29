@@ -16,37 +16,7 @@
     </div>
 
     <div class="header-actions">
-      <div class="view-switch" role="group" [attr.aria-label]="'inventoryList.view' | t">
-        <button
-          type="button"
-          [title]="'inventoryList.listView' | t"
-          [class.active]="viewMode === 'list'"
-          [attr.aria-pressed]="viewMode === 'list'"
-          (click)="setViewMode('list')"
-        >
-          <svg lucideList size="17"></svg>
-        </button>
-        <button
-          type="button"
-          [title]="'inventoryList.gridView' | t"
-          [class.active]="viewMode === 'grid'"
-          [attr.aria-pressed]="viewMode === 'grid'"
-          (click)="setViewMode('grid')"
-        >
-          <svg lucideGrid2X2 size="17"></svg>
-        </button>
-        @if (config.endpoint === 'assets' || config.endpoint === 'locations') {
-          <button
-            type="button"
-            [title]="'inventoryList.treeView' | t"
-            [class.active]="viewMode === 'tree'"
-            [attr.aria-pressed]="viewMode === 'tree'"
-            (click)="setViewMode('tree')"
-          >
-            <svg lucideListTree size="17"></svg>
-          </button>
-        }
-      </div>
+      <app-view-switch [page]="config.endpoint" [views]="views" [(view)]="viewMode" />
       <button
         type="button"
         class="icon-button"
@@ -56,10 +26,14 @@
         <svg lucideRefreshCw size="17"></svg>
       </button>
       @if (config.createRoute && permissions.can(config.resourceType, 'create')) {
-        <button type="button" class="primary-action" (click)="startCreate()">
-          <svg lucidePlus size="18"></svg>
-          <span>{{ 'inventoryList.new' | t }}</span>
-        </button>
+        <div class="create-actions">
+          <button type="button" class="primary-action" (click)="startCreate()">
+            <svg lucidePlus size="18"></svg>
+            <span>{{ 'inventoryList.new' | t }}</span>
+          </button>
+          <app-action-menu [actions]="createActions" [split]="true"
+            [label]="'inventoryTable.createOptions' | t" />
+        </div>
       }
     </div>
   </header>
@@ -361,4 +335,12 @@
 }
 @if (datasheetAssets) {
   <app-asset-print-batch [assets]="datasheetAssets" (closed)="datasheetAssets = null" />
+}
+@if (tableItems !== undefined) {
+  <app-inventory-table
+    [endpoint]="config.endpoint"
+    [resourceType]="config.resourceType"
+    [items]="tableItems"
+    (closed)="tableClosed($event)"
+  />
 }

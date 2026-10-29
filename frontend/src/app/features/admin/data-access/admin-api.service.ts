@@ -170,6 +170,7 @@ export const RESOURCE_TYPE_LABELS: Record<PermissionResourceType, string> = {
   ASSET: t('services.permissions.resourceTypes.ASSET'),
   LOCATION: t('services.permissions.resourceTypes.LOCATION'),
   ASSET_TYPE: t('services.permissions.resourceTypes.ASSET_TYPE'),
+  TASK: t('services.permissions.resourceTypes.TASK'),
 };
 
 export type PermissionFlag =

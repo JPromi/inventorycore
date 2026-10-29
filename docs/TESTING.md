@@ -1,5 +1,42 @@
 # Testing
 
+## Inventory table
+
+The creation entry uses the **Neu** split button: its main action opens the single form,
+and its arrow opens **Mehrere erstellen**. Browser regressions cover keyboard opening,
+Escape focus restoration, and the main action route.
+
+`inventory-table.spec.ts` exercises actual pointer drag-fill across ten rows, keyboard range fill,
+Excel-style quoted/multiline clipboard input and leading zeros, independent create failures and
+safe retries, selected-row edits, undo, refreshed unrelated data, inherited tags, retained photos,
+custom values and relationships, type/location creation and editing, discard protection, failed
+detail loads, invalid names/lookups and read-only users. Run with `list-selection.spec.ts` because
+the table adds an action to existing inventory selection. APIs are mocked; existing backend
+authorization remains authoritative and a batch can partially succeed.
+The table regressions also cover active-type field expansion, mixed-type non-applicable cells,
+draft values retained through switching/undo, select custom fields and the shared multi-select.
+Run `dropdown-position.spec.ts` after changes to shared dropdown positioning or focus; dropdown
+panels must remain visible and interactive in the native modal and outside the scrolling table.
+
+## Notifications
+
+`NotificationServiceTest` covers unavailable e-mail, recipient/lead-time validation, independent
+upcoming/overdue channel choices, write-only SMTP passwords, persistent compatible VAPID keys,
+push URL restrictions, recurring reminder deduplication, stable never-checked cycles, disabled
+users, ownership and revoked access. `NotificationSecurityTest` checks anonymous denial and
+admin-only SMTP settings. `NotificationDeliveryServiceTest` mocks external transport to verify
+successful delivery, bounded retries, expired subscriptions and cancellation after revoked
+access, account disablement or a channel change. These tests need no PostgreSQL or external server.
+
+`notifications.spec.ts` uses delayed API mocks for read state and the unread badge, hides the e-mail
+column in the profile matrix without SMTP, saves independent event/channel selections from the profile,
+checks that the inbox contains no settings, checks sender/password behavior in the admin form,
+and verifies the mobile bell. It also checks e-mail gating on both server configuration and a valid
+recipient address, clearing the address, and shared profile input styles.
+Run alongside `user-menu.spec.ts` because logout
+now removes the device subscription. Production PWA permission prompts, real push delivery,
+SMTP interoperability and live PostgreSQL schema upgrades require deployment verification.
+
 ## Backend
 
 JUnit Jupiter and Mockito are available through Spring Boot test starters. Tests live under `backend/src/test/java` and cover image processing, LDAP synchronization/referrals, provider settings, profile uploads, inspection scheduling, and activity logging.

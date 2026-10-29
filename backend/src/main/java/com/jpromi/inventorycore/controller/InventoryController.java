@@ -365,7 +365,7 @@ public class InventoryController {
         Set<Area> areas = new HashSet<>();
         if (areaUuids != null) {
             areaUuids.forEach(areaUuid -> areas.add(areaRepository.findByUuid(areaUuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Area not found"))));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bereich nicht gefunden."))));
         }
         if (areas.isEmpty()) {
             areas.add(areaRepository.findFirstByDefaultAreaTrue()
@@ -638,20 +638,20 @@ public class InventoryController {
 
     private Asset assetOr404(UUID uuid) {
         return assetRepository.findByUuid(uuid).filter(asset -> !asset.isDeleted())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset nicht gefunden."));
     }
 
     private AssetType assetTypeOr404(UUID uuid) {
         return assetTypeRepository.findByUuid(uuid).filter(type -> !type.isDeleted())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset type not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Typ nicht gefunden."));
     }
 
     private Location locationOr404(UUID uuid) {
         return locationRepository.findByUuid(uuid).filter(location -> !location.isDeleted())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Location not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Standort nicht gefunden."));
     }
 
     private Tag tagOr404(UUID uuid) {
-        return tagRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tag not found"));
+        return tagRepository.findByUuid(uuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tag nicht gefunden."));
     }
 }

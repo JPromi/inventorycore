@@ -24,7 +24,7 @@
 </button>
 
 @if (open) {
-    <div class="panel" [appDropdownPosition]="dropdownTrigger">
+    <div class="panel" [appDropdownPosition]="dropdownTrigger" (dropdownReady)="focusSearch()">
         <div class="panel-search">
             <svg lucideSearch size="15"></svg>
             <input

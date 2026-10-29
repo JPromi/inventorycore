@@ -49,6 +49,8 @@ import com.jpromi.inventorycore.repository.GroupPermissionRepository;
 import com.jpromi.inventorycore.repository.GroupRepository;
 import com.jpromi.inventorycore.repository.InspectionRepository;
 import com.jpromi.inventorycore.repository.InspectionTypeRepository;
+import com.jpromi.inventorycore.repository.TaskRepository;
+import com.jpromi.inventorycore.repository.TaskRunRepository;
 import com.jpromi.inventorycore.service.ApiMapper;
 import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
@@ -72,6 +74,8 @@ public class AdminController {
     private final AuditService audit;
     private final InspectionRepository inspectionRepository;
     private final InspectionTypeRepository inspectionTypeRepository;
+    private final TaskRepository taskRepository;
+    private final TaskRunRepository taskRunRepository;
 
     public AdminController(
         AppUserRepository userRepository,
@@ -87,8 +91,12 @@ public class AdminController {
         AuditService audit,
         InspectionRepository inspectionRepository,
         InspectionTypeRepository inspectionTypeRepository,
-        com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository
+        com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository,
+        TaskRepository taskRepository,
+        TaskRunRepository taskRunRepository
     ) {
+        this.taskRepository = taskRepository;
+        this.taskRunRepository = taskRunRepository;
         this.assetStatusRepository = assetStatusRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -181,6 +189,8 @@ public class AdminController {
         permissionRepository.flush();
         inspectionRepository.moveArea(area, defaultArea);
         inspectionTypeRepository.moveProtocolArea(area, defaultArea);
+        taskRepository.moveArea(area, defaultArea);
+        taskRunRepository.moveArea(area, defaultArea);
         areaRepository.delete(area);
         audit.log(AuditAction.DELETE, AuditObjectType.AREA, area.getUuid(), area.getName(),
             AuditDetail.event("OBJECTS_MOVED_TO_DEFAULT_AREA", "defaultArea", defaultArea.getName()));
@@ -365,7 +375,7 @@ public class AdminController {
     @PatchMapping("/permissions/{uuid}")
     public GroupPermissionResponse updatePermission(@PathVariable UUID uuid, @RequestBody GroupPermissionRequest request) {
         GroupPermission permission = permissionRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Permission not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Berechtigung nicht gefunden."));
         GroupPermissionResponse before = mapper.toResponse(permission);
         applyPermission(permission, request);
         GroupPermissionResponse after = mapper.toResponse(permissionRepository.save(permission));
@@ -380,7 +390,7 @@ public class AdminController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePermission(@PathVariable UUID uuid) {
         GroupPermission permission = permissionRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Permission not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Berechtigung nicht gefunden."));
         AuditDetail.Permission removed = audit.permission(mapper.toResponse(permission));
         permissionRepository.delete(permission);
         audit.log(AuditAction.DELETE, AuditObjectType.PERMISSION, permission.getGroup().getUuid(), permission.getGroup().getName(),
@@ -422,17 +432,17 @@ public class AdminController {
 
     private Area area(UUID uuid) {
         return areaRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Area not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bereich nicht gefunden."));
     }
 
     private User user(UUID uuid) {
         return userRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benutzer nicht gefunden."));
     }
 
     private Group group(UUID uuid) {
         return groupRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Group not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gruppe nicht gefunden."));
     }
 
     private HashSet<Group> resolveGroups(UserRequest request) {

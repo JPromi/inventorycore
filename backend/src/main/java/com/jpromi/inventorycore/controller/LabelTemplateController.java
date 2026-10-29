@@ -285,7 +285,7 @@ public class LabelTemplateController {
 
     private LabelTemplate templateOr404(UUID uuid) {
         return templateRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Label template not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Label-Vorlage nicht gefunden."));
     }
 
     private Area areaOr400(UUID uuid) {
@@ -294,6 +294,6 @@ public class LabelTemplateController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Es ist kein Standardbereich festgelegt."));
         }
         return areaRepository.findByUuid(uuid)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Area not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bereich nicht gefunden."));
     }
 }
