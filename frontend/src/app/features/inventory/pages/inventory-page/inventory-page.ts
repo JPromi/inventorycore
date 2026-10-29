@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { inventoryTree, InventoryTreeRow } from '../../util/inventory-tree';
 import { AssetPrintBatch } from '../../components/asset-print-batch/asset-print-batch';
+import { InventoryTable } from '../../components/inventory-table/inventory-table';
+import { ActionMenu, MenuAction } from '../../../../shared/components/action-menu/action-menu';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -119,6 +121,8 @@ interface FieldConfig {
     AssetStatusFilter,
     CommonModule,
     AssetPrintBatch,
+    InventoryTable,
+    ActionMenu,
     ListActions,
     SelectableRow,
     SelectionCheckbox,
@@ -158,6 +162,13 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.permissions.can(this.config.resourceType, 'delete', item.areaUuids ?? []);
   protected bulkDelete!: (item: InventoryItem) => Observable<unknown>;
   protected bulkActions: ListAction<InventoryItem>[] = [];
+  protected tableItems: InventoryItem[] | null | undefined = undefined;
+  protected readonly createActions: MenuAction[] = [{
+    id: 'create-table',
+    label: t('inventoryTable.create'),
+    icon: LucideGrid2X2,
+    run: () => { this.tableItems = null; },
+  }];
   /** Assets whose labels are being printed (dialog open while set). */
   protected printAssets: InventoryItem[] | null = null;
   protected datasheetAssets: InventoryItem[] | null = null;
@@ -236,6 +247,23 @@ export class InventoryPage implements OnInit, OnDestroy {
               },
             ]
           : [];
+      if (this.permissions.can(this.config.resourceType, 'edit')) {
+        this.bulkActions.unshift({
+          label: t('inventoryTable.edit'),
+          icon: LucideGrid2X2,
+          run: (items) => {
+            if (
+              !items.every((item) =>
+                this.permissions.can(this.config.resourceType, 'edit', item.areaUuids ?? []),
+              )
+            ) {
+              this.error = t('inventoryTable.noPermission');
+              return;
+            }
+            this.tableItems = items;
+          },
+        });
+      }
       this.resetFilters();
       this.loadFilterOptions();
     });
@@ -439,6 +467,11 @@ export class InventoryPage implements OnInit, OnDestroy {
     if (this.config.createRoute) {
       this.router.navigate([this.config.createRoute]);
     }
+  }
+
+  protected tableClosed(changed: boolean): void {
+    this.tableItems = undefined;
+    if (changed) this.load();
   }
 
   protected open(item: InventoryItem): void {

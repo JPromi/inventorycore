@@ -1,5 +1,23 @@
 # Testing
 
+## Inventory table
+
+The creation entry uses the **Neu** split button: its main action opens the single form,
+and its arrow opens **Mehrere erstellen**. Browser regressions cover keyboard opening,
+Escape focus restoration, and the main action route.
+
+`inventory-table.spec.ts` exercises actual pointer drag-fill across ten rows, keyboard range fill,
+Excel-style quoted/multiline clipboard input and leading zeros, independent create failures and
+safe retries, selected-row edits, undo, refreshed unrelated data, inherited tags, retained photos,
+custom values and relationships, type/location creation and editing, discard protection, failed
+detail loads, invalid names/lookups and read-only users. Run with `list-selection.spec.ts` because
+the table adds an action to existing inventory selection. APIs are mocked; existing backend
+authorization remains authoritative and a batch can partially succeed.
+The table regressions also cover active-type field expansion, mixed-type non-applicable cells,
+draft values retained through switching/undo, select custom fields and the shared multi-select.
+Run `dropdown-position.spec.ts` after changes to shared dropdown positioning or focus; dropdown
+panels must remain visible and interactive in the native modal and outside the scrolling table.
+
 ## Notifications
 
 `NotificationServiceTest` covers unavailable e-mail, recipient/lead-time validation, independent

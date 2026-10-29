@@ -153,10 +153,11 @@ export class SearchSelect implements ControlValueAccessor {
     this.query = '';
     const index = this.options.findIndex((option) => option.value === this.value);
     this.activeIndex = Math.max(0, index);
-    setTimeout(() => {
-      this.searchInput?.nativeElement.focus();
-      this.scrollActiveIntoView();
-    });
+  }
+
+  protected focusSearch(): void {
+    this.searchInput?.nativeElement.focus();
+    this.scrollActiveIntoView();
   }
 
   private close(): void {

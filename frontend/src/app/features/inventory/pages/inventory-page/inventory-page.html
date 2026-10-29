@@ -56,10 +56,14 @@
         <svg lucideRefreshCw size="17"></svg>
       </button>
       @if (config.createRoute && permissions.can(config.resourceType, 'create')) {
-        <button type="button" class="primary-action" (click)="startCreate()">
-          <svg lucidePlus size="18"></svg>
-          <span>{{ 'inventoryList.new' | t }}</span>
-        </button>
+        <div class="create-actions">
+          <button type="button" class="primary-action" (click)="startCreate()">
+            <svg lucidePlus size="18"></svg>
+            <span>{{ 'inventoryList.new' | t }}</span>
+          </button>
+          <app-action-menu [actions]="createActions" [split]="true"
+            [label]="'inventoryTable.createOptions' | t" />
+        </div>
       }
     </div>
   </header>
@@ -361,4 +365,12 @@
 }
 @if (datasheetAssets) {
   <app-asset-print-batch [assets]="datasheetAssets" (closed)="datasheetAssets = null" />
+}
+@if (tableItems !== undefined) {
+  <app-inventory-table
+    [endpoint]="config.endpoint"
+    [resourceType]="config.resourceType"
+    [items]="tableItems"
+    (closed)="tableClosed($event)"
+  />
 }

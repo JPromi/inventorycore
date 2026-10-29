@@ -32,6 +32,7 @@ export class MultiSelect implements ControlValueAccessor {
   @Input() lockedHint = '';
   @Input() placeholder = t('components.multiSelect.placeholder');
   @Input() emptyText = t('components.multiSelect.emptyText');
+  @Input() ariaLabel: string | null = null;
   /** Shows a "create" entry for unknown input. The parent handles creation via (create). */
   @Input() allowCreate = false;
   @Output() readonly create = new EventEmitter<string>();

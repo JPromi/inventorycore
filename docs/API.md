@@ -1,5 +1,43 @@
 # API
 
+## Inventory table editing
+
+Column header borders can be dragged to resize columns; focused separators also support
+Left/Right arrows and Home to restore the default width. Widths last only until the table closes.
+
+Assets, locations and asset types offer **Neu → Mehrere erstellen** through the split-button menu and a selection action
+**In Tabelle bearbeiten**. The table contains up to 200 rows and uses the existing authorized
+POST/PATCH endpoints, one row at a time; no bulk endpoint or database schema change is involved.
+It exposes ordinary fields, type/location choices, area/tag selections and asset custom values.
+Inventory IDs are never editable: new assets receive server-generated IDs and existing assets
+retain their IDs. Type field columns are the union of the types currently selected across
+the table rows; changing, filling, pasting or undoing a type selection refreshes them immediately.
+Asset-specific custom fields remain available, and cells belonging only to another row's type are
+not editable. Switching types retains draft field values for switching back before saving.
+Type/location/policy choices and select/boolean custom fields use the shared searchable dropdown;
+areas and tags use the shared multi-select, with inherited tags and protected areas locked.
+Clipboard labels are resolved to UUIDs, while the multi-select stores UUIDs directly.
+Images, hierarchy links, coordinates, status and type field definitions
+that are not exposed in the table are retained. Before each update, current details are fetched
+again and only edited cells are applied to that DTO, retaining unrelated concurrent changes.
+Known inherited type tags are excluded from direct tag assignments.
+
+Changes remain local until **Änderungen speichern**. Blank untouched draft rows and unchanged
+existing rows are skipped. A successful row becomes read-only; retries affect only failed/pending
+rows. Each row shows validation or API errors independently, so a batch may partially succeed.
+Closing with pending changes requires an explicit discard choice and never rolls back successful
+rows. Unconfirmed creates after a network interruption are locked against resubmission and require
+checking the list before creating again, since the server may already have committed them.
+
+A cell's corner handle copies its value downward without generating number sequences. Shift-click
+or Shift-arrow selects a rectangular range; **Nach unten ausfüllen** / Ctrl-or-Cmd+D copies its top
+row downward. Clipboard input uses tab-separated rows with Excel-style quoted cells and retains
+leading zeros and multiline descriptions. New-entry tables grow on paste within the row limit;
+editing tables cannot grow beyond the selected entries. Dropdown values accept a UUID or a unique
+visible label. Copying a selected range writes labels for lookup cells. The undo action reverses
+local cell edits, fills and pastes; it does not undo server writes. Users still use the individual
+form for image uploads, type field definitions and other fields outside the table.
+
 ## Notifications
 
 Authenticated users read `GET /api/notifications` (newest first, only their own messages and currently

@@ -1,0 +1,239 @@
+<dialog
+  #dialog
+  class="table-dialog"
+  (cancel)="$event.preventDefault(); close()"
+  [attr.aria-label]="(items === null ? 'inventoryTable.create' : 'inventoryTable.edit') | t"
+>
+  <div class="editor form-controls" (keydown)="keydown($event)">
+    <header>
+      <div>
+        <h2>{{ (items === null ? 'inventoryTable.create' : 'inventoryTable.edit') | t }}</h2>
+        <p class="hint">{{ 'inventoryTable.hint' | t }}</p>
+      </div>
+      <button
+        class="icon-button"
+        type="button"
+        [disabled]="saving"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | t"
+      >
+        <svg lucideX size="18"></svg>
+      </button>
+    </header>
+    @if (discard) {
+      <div class="discard" role="alert">
+        <p>{{ 'inventoryTable.discardHint' | t }}</p>
+        <button class="secondary-action" type="button" (click)="discard = false">
+          {{ 'inventoryTable.continueEditing' | t }}
+        </button>
+        <button class="danger-action" type="button" (click)="close(true)">
+          {{ 'inventoryTable.discard' | t }}
+        </button>
+      </div>
+    }
+    @if (error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+    @if (loading) {
+      <p role="status">{{ 'inventoryTable.loading' | t }}</p>
+    } @else if (columns.length) {
+      <div class="toolbar">
+        @if (items === null) {
+          <label class="row-count"
+            ><span>{{ 'inventoryTable.rowCount' | t }}</span
+            ><input
+              type="number"
+              min="1"
+              [max]="maxRows"
+              [(ngModel)]="addCount"
+              [disabled]="saving"
+          /></label>
+          <button class="secondary-action" type="button" (click)="addRows()" [disabled]="saving">
+            <svg lucidePlus size="16"></svg>{{ 'inventoryTable.addRows' | t }}
+          </button>
+        }
+        <button
+          class="secondary-action"
+          type="button"
+          (click)="fillDown()"
+          [disabled]="!selection || saving"
+        >
+          <svg lucideArrowDown size="16"></svg>{{ 'inventoryTable.fillDown' | t }}
+        </button>
+        <button class="secondary-action" type="button" (click)="undo()" [disabled]="!canUndo">
+          <svg lucideUndo2 size="16"></svg>{{ 'inventoryTable.undo' | t }}
+        </button>
+      </div>
+      <div #sheet class="sheet" (copy)="copy($event)">
+        <table [style.width.px]="tableWidth">
+          <colgroup>
+            <col style="width: 3.5rem" />
+            @for (column of columns; track column.key) {
+              <col [style.width.px]="columnWidth(column.key)" />
+            }
+            <col style="width: 12rem" />
+          </colgroup>
+          <caption class="visually-hidden">
+            {{
+              'inventoryTable.caption' | t
+            }}
+          </caption>
+          <thead>
+            <tr>
+              <th class="row-number" scope="col">{{ 'inventoryTable.row' | t }}</th>
+              @for (column of columns; track column.key) {
+                <th scope="col">
+                  {{ column.label }}
+                  @if (column.kind === 'multi') {
+                    <small>{{ 'inventoryTable.multiple' | t }}</small>
+                  }
+                  <span class="column-resize" role="separator" tabindex="0"
+                    aria-orientation="vertical"
+                    [attr.aria-label]="'inventoryTable.resizeColumn' | t: { field: column.label }"
+                    [title]="'inventoryTable.resizeColumn' | t: { field: column.label }"
+                    [attr.aria-valuenow]="columnWidth(column.key)"
+                    aria-valuemin="112" aria-valuemax="1000"
+                    (pointerdown)="startResize($event, column.key)"
+                    (pointermove)="resizeColumn($event)"
+                    (pointerup)="endResize()" (pointercancel)="endResize()"
+                    (lostpointercapture)="endResize()"
+                    (keydown)="resizeKey($event, column.key)"
+                  ></span>
+                </th>
+              }
+              <th scope="col">{{ 'inventoryTable.result' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.key; let ri = $index) {
+              <tr [class.saved]="row.saved" [class.failed]="!!row.error">
+                <th class="row-number" scope="row">
+                  {{ ri + 1 }}
+                  @if (items === null && !row.saved && !row.uncertain) {
+                    <button
+                      class="remove-row"
+                      type="button"
+                      (click)="remove(row)"
+                      [disabled]="saving"
+                      [attr.aria-label]="'inventoryTable.removeRow' | t: { row: ri + 1 }"
+                    >
+                      <svg lucideTrash2 size="13"></svg>
+                    </button>
+                  }
+                </th>
+                @for (column of columns; track column.key; let ci = $index) {
+                  <td
+                    [attr.data-row]="ri"
+                    [attr.data-col]="ci"
+                    [class.selected]="selected(ri, ci)"
+                    (mousedown)="select(ri, ci, $event)"
+                    (paste)="paste($event, ri, ci)"
+                  >
+                    @if (!applies(row, column)) {
+                      <span class="not-applicable" [title]="'inventoryTable.notApplicable' | t"
+                        >—</span
+                      >
+                    } @else if (isSelect(row, column)) {
+                      <app-search-select
+                        [options]="optionsFor(row, column)"
+                        [placeholder]="'inventoryTable.empty' | t"
+                        [clearLabel]="'inventoryTable.empty' | t"
+                        [ngModel]="row.cells[column.key]"
+                        (ngModelChange)="set(row, column, $event)"
+                        (focusin)="focusCell(ri, ci)"
+                        [disabled]="saving || row.saved || !!row.uncertain"
+                        [ariaLabel]="
+                          'inventoryTable.cell' | t: { row: ri + 1, field: column.label }
+                        "
+                      />
+                    } @else if (column.kind === 'multi') {
+                      <app-multi-select
+                        [options]="optionsFor(row, column)"
+                        [lockedOptions]="lockedOptions(row, column)"
+                        [lockedHint]="'inventoryTable.locked' | t"
+                        [ngModel]="multiValues(row, column)"
+                        (ngModelChange)="setMulti(row, column, $event)"
+                        (focusin)="focusCell(ri, ci)"
+                        [disabled]="saving || row.saved || !!row.uncertain"
+                        [ariaLabel]="
+                          'inventoryTable.cell' | t: { row: ri + 1, field: column.label }
+                        "
+                      />
+                    } @else if (column.key === 'description') {
+                      <textarea
+                        rows="1"
+                        [ngModel]="row.cells[column.key]"
+                        (ngModelChange)="set(row, column, $event)"
+                        (focus)="focusCell(ri, ci)"
+                        [disabled]="saving || row.saved || !!row.uncertain"
+                        [attr.aria-label]="
+                          'inventoryTable.cell' | t: { row: ri + 1, field: column.label }
+                        "
+                      ></textarea>
+                    } @else {
+                      <input
+                        type="text"
+                        [ngModel]="row.cells[column.key]"
+                        (ngModelChange)="set(row, column, $event)"
+                        (focus)="focusCell(ri, ci)"
+                        [disabled]="saving || row.saved || !!row.uncertain"
+                        [attr.aria-label]="
+                          'inventoryTable.cell' | t: { row: ri + 1, field: column.label }
+                        "
+                        autocomplete="off"
+                      />
+                    }
+                    @if (
+                      selection?.start?.row === ri &&
+                      selection?.start?.col === ci &&
+                      !row.saved &&
+                      !row.uncertain &&
+                      applies(row, column) &&
+                      !saving
+                    ) {
+                      <button
+                        class="fill-handle"
+                        type="button"
+                        tabindex="-1"
+                        (pointerdown)="startFill($event, ri, ci)"
+                        [attr.aria-label]="'inventoryTable.fillHandle' | t"
+                        [title]="'inventoryTable.fillHandle' | t"
+                      ></button>
+                    }
+                  </td>
+                }
+                <td class="result">
+                  @if (row.saved) {
+                    <span>{{ 'inventoryTable.saved' | t }}</span>
+                  } @else if (row.error) {
+                    <span role="alert">{{ row.error }}</span>
+                  } @else if (isChanged(row)) {
+                    <span>{{ 'inventoryTable.unsaved' | t }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer>
+        <p role="status">
+          {{ 'inventoryTable.progress' | t: { saved: savedCount, pending: pending } }}
+        </p>
+        <div class="actions">
+          <button class="secondary-action" type="button" (click)="close()" [disabled]="saving">
+            {{ 'common.close' | t }}</button
+          ><button
+            class="primary-action"
+            type="button"
+            (click)="save()"
+            [disabled]="saving || !pending"
+          >
+            <svg lucideSave size="16"></svg
+            >{{ (saving ? 'common.saving' : 'inventoryTable.save') | t }}
+          </button>
+        </div>
+      </footer>
+    }
+  </div>
+</dialog>

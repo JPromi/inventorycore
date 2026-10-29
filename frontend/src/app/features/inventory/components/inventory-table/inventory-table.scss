@@ -1,0 +1,235 @@
+:host {
+  display: contents;
+}
+.table-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(96vw, 100rem);
+  max-width: 100%;
+  height: min(90dvh, 60rem);
+  max-height: 100dvh;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  &::backdrop {
+    background: var(--overlay);
+  }
+}
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 1rem;
+  gap: 0.75rem;
+}
+header,
+footer,
+.toolbar,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+header {
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.4rem;
+  }
+}
+.hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.toolbar {
+  justify-content: flex-start;
+}
+.row-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  input {
+    max-width: 5rem;
+  }
+}
+.sheet {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+table {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+}
+th,
+td {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  text-align: left;
+  padding: 0.6rem;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  padding-right: 0.9rem;
+  small {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 400;
+  }
+}
+td {
+  position: relative;
+  min-width: 0;
+  height: 2.8rem;
+  padding: 0;
+  background: var(--surface);
+}
+.sheet td > input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.sheet td :is(input, select, textarea) {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.55rem;
+  box-shadow: none;
+  &:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    box-shadow: none;
+  }
+}
+td.selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.row-number {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 3.5rem;
+  padding: 0.3rem 0.5rem;
+  text-align: center;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+thead .row-number {
+  z-index: 4;
+}
+.remove-row {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-subtle);
+  cursor: pointer;
+  &:hover {
+    color: var(--accent-foreground);
+  }
+}
+.fill-handle {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1px solid var(--surface);
+  background: var(--accent);
+  z-index: 2;
+  cursor: crosshair;
+  touch-action: none;
+}
+.saved td {
+  background: var(--surface-hover);
+}
+.result {
+  min-width: 12rem;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.failed .result,
+.error {
+  color: var(--accent-foreground);
+}
+.discard {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+footer {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.sheet td textarea {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  resize: vertical;
+}
+
+td app-search-select,
+td app-multi-select {
+  display: block;
+  min-width: 0;
+  padding: 0.2rem;
+}
+
+.column-resize {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  width: 9px;
+  z-index: 1;
+  cursor: col-resize;
+  touch-action: none;
+  &:hover, &:focus-visible {
+    background: var(--accent);
+    outline: none;
+  }
+}
+
+.not-applicable {
+  display: block;
+  padding: 0.55rem;
+  color: var(--text-subtle);
+}

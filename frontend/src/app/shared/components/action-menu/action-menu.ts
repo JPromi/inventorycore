@@ -1,6 +1,6 @@
 import { NgComponentOutlet } from '@angular/common';
 import { Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
-import { LucideEllipsis, type LucideIcon } from '@lucide/angular';
+import { LucideChevronDown, LucideEllipsis, type LucideIcon } from '@lucide/angular';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { DropdownPosition } from '../dropdown-position.directive';
 
@@ -14,12 +14,14 @@ export interface MenuAction {
 
 @Component({
   selector: 'app-action-menu',
-  imports: [NgComponentOutlet, LucideEllipsis, TranslatePipe, DropdownPosition],
+  imports: [NgComponentOutlet, LucideChevronDown, LucideEllipsis, TranslatePipe, DropdownPosition],
   templateUrl: './action-menu.html',
   styleUrl: './action-menu.scss',
 })
 export class ActionMenu {
   @Input({ required: true }) actions: MenuAction[] = [];
+  @Input() split = false;
+  @Input() label: string | null = null;
   @ViewChild('trigger') private trigger?: ElementRef<HTMLButtonElement>;
   @ViewChild('panel') private set panel(value: ElementRef<HTMLElement> | undefined) {
     this.menu = value;

@@ -6,6 +6,15 @@
 
   // ---- header ----
 
+  .create-actions {
+    display: inline-flex;
+
+    > button {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+
   .view-switch {
     display: inline-flex;
     padding: 0.15rem;
