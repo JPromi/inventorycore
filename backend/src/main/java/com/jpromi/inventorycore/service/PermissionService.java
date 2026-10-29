@@ -62,6 +62,6 @@ public class PermissionService {
         }
 
         return userRepository.findByUsername(authentication.getName())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Benutzer nicht gefunden."));
     }
 }

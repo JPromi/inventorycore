@@ -120,7 +120,7 @@ test('saves different channels for upcoming and overdue reminders', async ({ pag
   await page.locator('input[name=overduePush]').check();
   await page.locator('input[name=days]').fill('14');
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Einstellungen gespeichert.');
+  await expect(page.getByRole('status')).toHaveText('Gespeichert');
   expect(saved[0]).toMatchObject({
     email: true,
     overdueEmail: false,
@@ -160,7 +160,7 @@ test('email needs both a configured server and an address; profile controls use 
   await expect(email).toBeEnabled();
   await email.check();
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Einstellungen gespeichert.');
+  await expect(page.getByRole('status')).toHaveText('Gespeichert');
   expect(saved[0]).toMatchObject({ email: true, emailAddress: 'operator@example.org' });
   const styles = await address.evaluate((element) => {
     const style = getComputedStyle(element);
@@ -185,7 +185,7 @@ test('admin SMTP form preserves saved password and exposes sender configuration'
   await expect(page.locator('input[name=password]')).toHaveValue('');
   await page.locator('input[name=from]').fill('feuerwehr@example.org');
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Einstellungen gespeichert.');
+  await expect(page.getByRole('status')).toHaveText('Gespeichert');
   expect(saved[0]).toMatchObject({ password: null, fromAddress: 'feuerwehr@example.org' });
 });
 

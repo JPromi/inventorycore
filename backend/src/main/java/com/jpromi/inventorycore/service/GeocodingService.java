@@ -140,7 +140,7 @@ public class GeocodingService {
                 Thread.sleep(wait);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Interrupted");
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Adresssuche unterbrochen. Bitte erneut versuchen.");
             }
         }
         lastRequest = System.currentTimeMillis();

@@ -77,6 +77,12 @@ Write project documentation and technical identifiers in English. The user inter
 
 ### Tone and Wording
 
+- Keep visible copy task-focused: omit navigation-category eyebrows and redundant page introductions.
+  Keep counts, permission rules, destructive-action consequences, input constraints, printing
+  instructions, and recovery steps. Prefer a short action label when its surrounding context is clear.
+- The default sign-in screen contains the form and branding, without a greeting or feature pitch.
+  Administrator-configured sign-in headings and messages remain visible verbatim.
+
 - Formal, factual German in the impersonal style; where the user must be addressed, use "Sie" (never "du"). Prefer neutral instructions such as "Bitte einen Standort auswählen." over direct address.
 - Use precise terms instead of colloquial ones: "Vorhanden" / "Nicht vorhanden" instead of "Da" / "Fehlt", "Defekt" instead of "kaputt", "Funktionsfähig" instead of "geht". Keep one term per concept (see `terms.*`, `inspectionStatus.*`, `inspectionCondition.*`).
 - Example values in placeholders, hints and sample data are general and preferably from the fire-service domain, e.g. "z. B. Atemschutzgerät", "z. B. HLF 20", "z. B. Gerätehaus › Fahrzeughalle", "z. B. FW-2026-0042", "z. B. Atemschutz, Wasserführung". Do not use company-specific or IT-only examples (EDV, Laptop, firma.local) unless the field is technical (LDAP DNs, URLs), where neutral domains such as `example.org` are used.

@@ -54,12 +54,12 @@ for (const width of [1280, 390]) {
       }).catch(() => {});
     });
     await page.goto('/admin/customization');
-    await page.getByLabel('Markenname', { exact: true }).fill('Neue Firma');
+    await page.getByLabel('Name der Organisation', { exact: true }).fill('Neue Firma');
     await page.locator('input[type="file"]').setInputFiles('public/icons/icon-192x192.png');
     await expect(page.getByRole('status')).toHaveText('Logo gespeichert.');
-    await expect(page.getByLabel('Markenname', { exact: true })).toHaveValue('Neue Firma');
+    await expect(page.getByLabel('Name der Organisation', { exact: true })).toHaveValue('Neue Firma');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.getByRole('status')).toHaveText('Anpassungen gespeichert.');
+    await expect(page.getByRole('status')).toHaveText('Gespeichert');
     expect(state.settings().brandName).toBe('Neue Firma');
     await page.screenshot({ path: testInfo.outputPath('customization.png'), fullPage: true });
 
@@ -72,7 +72,7 @@ for (const width of [1280, 390]) {
     await page.getByLabel('Y', { exact: true }).fill('22');
     await page.getByLabel('Breite', { exact: true }).fill('58');
     await page.getByLabel('Schriftgröße (pt)', { exact: true }).fill('6');
-    await page.getByLabel('Markenfarbe verwenden').check();
+    await page.getByLabel('Hauptfarbe verwenden').check();
     await expect(page.locator('.label .element.selected')).toContainText('Neue Firma');
     await expect(page.locator('.label .element.selected')).toContainText('https://example.org');
     await expect(page.locator('.label .element.selected')).toHaveCSS('color', 'rgb(15, 118, 110)');

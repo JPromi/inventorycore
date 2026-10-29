@@ -27,7 +27,7 @@
     "previous": "Vorheriges Bild",
     "next": "Nächstes Bild",
     "loading": "Bild wird geladen …",
-    "failed": "Das Bild konnte nicht geladen werden.",
+    "failed": "Bild konnte nicht geladen werden.",
     "retry": "Erneut laden"
   },
   "common": {
@@ -37,7 +37,7 @@
     "cancel": "Abbrechen",
     "delete": "Löschen",
     "edit": "Bearbeiten",
-    "create": "Anlegen",
+    "create": "Erstellen",
     "add": "Hinzufügen",
     "remove": "Entfernen",
     "back": "Zurück",
@@ -49,14 +49,14 @@
     "searchPlaceholder": "Suchen …",
     "filter": "Filter",
     "select": "Auswählen",
-    "selectPlaceholder": "Bitte auswählen …",
+    "selectPlaceholder": "Auswählen …",
     "all": "Alle",
     "none": "Keine",
     "yes": "Ja",
     "no": "Nein",
     "name": "Name",
     "description": "Beschreibung",
-    "notes": "Bemerkung",
+    "notes": "Notiz",
     "loading": "Wird geladen …",
     "loadingMore": "Weitere Einträge werden geladen …",
     "listEnd": "Alle Einträge geladen",
@@ -71,10 +71,10 @@
     "unknown": "Unbekannt",
     "notSet": "Nicht angegeben",
     "errors": {
-      "load": "Die Daten konnten nicht geladen werden.",
-      "save": "Das Speichern ist fehlgeschlagen.",
-      "delete": "Das Löschen ist fehlgeschlagen.",
-      "network": "Keine Verbindung zum Server. Bitte die Netzwerkverbindung prüfen.",
+      "load": "Daten konnten nicht geladen werden. Bitte erneut versuchen.",
+      "save": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+      "delete": "Löschen fehlgeschlagen. Bitte erneut versuchen.",
+      "network": "Server nicht erreichbar. Bitte die Verbindung prüfen.",
       "forbidden": "Für diese Aktion fehlt die Berechtigung.",
       "notFound": "Der Eintrag wurde nicht gefunden."
     }
@@ -122,16 +122,16 @@
     },
     "newArea": "Neuer Bereich",
     "editArea": "Bereich bearbeiten",
-    "intro": "Inventar, Standorte und Typen werden Bereichen zugeordnet. Über die Gruppen-Berechtigungen wird festgelegt, welche Gruppe in welchem Bereich was darf. Alles ohne Zuordnung landet im Standardbereich.",
+    "intro": "Ohne Zuordnung gilt der Standardbereich. Gruppenberechtigungen steuern den Zugriff je Bereich.",
     "nameRequired": "Name *",
     "namePlaceholder": "z. B. Atemschutzwerkstatt",
     "color": "Farbe",
     "defaultArea": "Standardbereich",
-    "defaultAreaHint": "Um den Standard zu wechseln, einen anderen Bereich als Standardbereich markieren.",
+    "defaultAreaHint": "Zum Wechseln einen anderen Bereich als Standard markieren.",
     "defaultBadge": "Standard",
     "searchPlaceholder": "Bereich suchen …",
     "clearSearch": "Suche leeren",
-    "bulkDeleteWarning": "Einträge wandern bei Bedarf in den Standardbereich. Die Gruppen-Berechtigungen dieser Bereiche werden entfernt.",
+    "bulkDeleteWarning": "Einträge werden bei Bedarf dem Standardbereich zugeordnet. Die Gruppenberechtigungen dieser Bereiche werden gelöscht.",
     "loadError": "Bereiche konnten nicht geladen werden.",
     "loading": "Bereiche werden geladen …",
     "loadingMore": "Weitere Bereiche werden geladen …",
@@ -142,11 +142,11 @@
     },
     "deleteConfirm": {
       "title": "Bereich löschen?",
-      "message": "„{name}“ wird gelöscht. Einträge, die nur in diesem Bereich sind, wandern in den Standardbereich. Alle Gruppen-Berechtigungen für diesen Bereich werden entfernt."
+      "message": "„{name}“ wird gelöscht. Einträge ohne weiteren Bereich wechseln in den Standardbereich. Die Gruppenberechtigungen für diesen Bereich werden gelöscht."
     },
     "errors": {
       "nameRequired": "Name ist erforderlich.",
-      "save": "Speichern fehlgeschlagen. Ist der Name bereits vergeben?",
+      "save": "Speichern fehlgeschlagen. Bitte den Namen prüfen; er muss eindeutig sein.",
       "delete": "Bereich konnte nicht gelöscht werden."
     }
   },
@@ -175,7 +175,7 @@
     "title": "Speicherplatz",
     "total": "Gesamt ca. {size}",
     "refresh": "Aktualisieren",
-    "intro": "Zeigt, wie viel Speicherplatz die Datenbank und die hochgeladenen Bilder belegen und wie viel davon auf die einzelnen Benutzer entfällt. Die Werte werden beim Öffnen der Seite ermittelt und sind Richtwerte.",
+    "intro": "Richtwerte zum Zeitpunkt des Seitenaufrufs.",
     "database": "Datenbank",
     "databaseHint": "Alle Daten inklusive Indizes, davon Profilbilder: {profileImages}",
     "files": "Bilder und Fotos",
@@ -193,11 +193,11 @@
       "other": "{count} Dateien ({size}) werden nirgends mehr verwendet und von der nächtlichen Bereinigung gelöscht."
     },
     "perUser": "Pro Benutzer",
-    "perUserHint": "Bilder und Fotos, die der Benutzer hochgeladen hat (z. B. Fotos von Prüfungen oder Bilder eines Fahrzeugs), samt Vorschaubildern, sowie sein Profilbild. Der Anteil bezieht sich auf alle Bilder und Profilbilder.",
+    "perUserHint": "Hochgeladene Bilder einschließlich Vorschaubildern und Profilbild. Der Anteil bezieht sich auf alle Bilder.",
     "unknownUploader": "Ohne bekannten Benutzer",
     "deletedUser": "Benutzer gelöscht",
     "tables": "Datenbank-Tabellen",
-    "tablesHint": "Größte Tabellen zuerst, inklusive Indizes. Die Zeilenanzahl ist eine Schätzung der Datenbank.",
+    "tablesHint": "Nach Größe einschließlich Indizes sortiert. Zeilenanzahlen sind geschätzt.",
     "showAllTables": "Alle {count} Tabellen anzeigen",
     "showFewerTables": "Weniger Tabellen anzeigen",
     "columns": {
@@ -218,19 +218,19 @@
     "eyebrow": "Administration",
     "title": "Erscheinungsbild",
     "loading": "Anpassungen werden geladen …",
-    "brand": "Marke",
-    "brandName": "Markenname",
+    "brand": "Organisation",
+    "brandName": "Name der Organisation",
     "brandNamePlaceholder": "InventoryCore",
-    "brandColor": "Markenfarbe",
+    "brandColor": "Hauptfarbe",
     "logo": "Logo",
     "currentLogo": "Aktuelles Logo",
     "uploadLogo": "Logo hochladen",
     "removeLogo": "Logo entfernen",
     "login": "Anmeldung",
-    "loginTitle": "Login-Titel",
-    "loginTitlePlaceholder": "Willkommen zurück",
-    "loginMessage": "Login-Text",
-    "loginMessagePlaceholder": "Bitte mit dem eigenen Konto anmelden.",
+    "loginTitle": "Überschrift",
+    "loginTitlePlaceholder": "Anmelden",
+    "loginMessage": "Hinweis zur Anmeldung",
+    "loginMessagePlaceholder": "Optionaler Hinweis …",
     "legal": "Rechtliches & Kontakt",
     "urlPlaceholder": "https://…",
     "links": {
@@ -240,7 +240,7 @@
       "support": "Support"
     },
     "loadError": "Anpassungen konnten nicht geladen werden.",
-    "saved": "Anpassungen gespeichert.",
+    "saved": "Gespeichert",
     "logoTooLarge": "Das Logo darf maximal 5 MB groß sein.",
     "logoSaved": "Logo gespeichert.",
     "logoRemoved": "Logo entfernt.",
@@ -253,9 +253,9 @@
     "testing": "Verbindung wird getestet …",
     "sync": "Synchronisieren",
     "syncing": "Wird synchronisiert …",
-    "syncTitle": "Benutzer und Gruppen jetzt importieren",
-    "syncNeedsEnabled": "LDAP erst aktivieren und speichern",
-    "syncNeedsSave": "Erst speichern",
+    "syncTitle": "Benutzer und Gruppen importieren",
+    "syncNeedsEnabled": "LDAP aktivieren und speichern",
+    "syncNeedsSave": "Zuerst speichern",
     "saved": "Gespeichert",
     "usersFound": "Benutzer gefunden",
     "groupsFound": "Gruppen gefunden",
@@ -273,13 +273,13 @@
     "bindDnHint": "Bei Active Directory ist auch svc-inventar@example.org möglich.",
     "password": "Passwort",
     "passwordStored": "•••••••• (gespeichert)",
-    "passwordKeep": "Leer = gespeichertes Passwort beibehalten.",
+    "passwordKeep": "Leer lassen, um das gespeicherte Passwort beizubehalten.",
     "passwordMissing": "Noch kein Passwort gespeichert.",
     "baseDn": "Base-DN",
     "baseDnPlaceholder": "DC=example,DC=org",
     "ignoreCertificates": "Zertifikate ignorieren",
     "ignoreCertificatesHint": "Akzeptiert selbstsignierte Zertifikate und falsche Hostnamen bei ldaps://. Nur verwenden, wenn das Netz vertrauenswürdig ist.",
-    "ignoreCertificatesLdapsOnly": "Hinweis: Die Option wirkt nur bei ldaps://-Adressen.",
+    "ignoreCertificatesLdapsOnly": "Gilt nur für ldaps://-Adressen.",
     "preset": "Vorlage:",
     "presets": {
       "ad": "Active Directory",
@@ -303,9 +303,9 @@
     "groupNameAttribute": "Attribut Gruppenname",
     "groupMemberAttribute": "Attribut Mitglieder",
     "groupMemberAttributeHint": "„member“ (DNs) oder „memberUid“ (Benutzernamen)",
-    "groupsHint": "Gruppen werden beim Synchronisieren automatisch angelegt. Ob eine Gruppe Admin-Rechte bekommt, wird unter Administration → Gruppen festgelegt.",
+    "groupsHint": "Gruppen werden bei der Synchronisation erstellt. Administratorrechte werden unter Administration → Gruppen vergeben.",
     "loginAndSync": "Anmeldung & Synchronisation",
-    "syncInterval": "Sync-Intervall",
+    "syncInterval": "Synchronisationsintervall",
     "syncIntervalUnit": "Einheit",
     "units": {
       "MINUTES": "Minuten",
@@ -313,7 +313,7 @@
       "DAYS": "Tage"
     },
     "loginEnabled": "Anmeldung mit LDAP-Passwort",
-    "loginEnabledHint": "Importierte Benutzer melden sich mit ihrem Verzeichnis-Passwort an. Aus, wenn sie sich nur per OIDC anmelden sollen.",
+    "loginEnabledHint": "Mit dem Verzeichnispasswort anmelden. Für ausschließliche OIDC-Anmeldung deaktivieren.",
     "disableMissingUsers": "Nicht mehr gefundene Benutzer deaktivieren",
     "disableMissingUsersHint": "Betrifft nur Benutzer, die aus LDAP stammen.",
     "lastSync": "Letzte Synchronisation: {date}",
@@ -325,7 +325,7 @@
     "errors": {
       "load": "Einstellungen konnten nicht geladen werden.",
       "invalidGroupNameAttribute": "Ungültiges Attribut für Gruppennamen.",
-      "syncInterval": "Das Sync-Intervall muss mindestens eine Einheit und maximal 365 Tage betragen.",
+      "syncInterval": "Bitte ein Intervall zwischen 1 Einheit und 365 Tagen angeben.",
       "test": "Test konnte nicht ausgeführt werden.",
       "sync": "Synchronisation fehlgeschlagen."
     }
@@ -337,9 +337,9 @@
     "saved": "Gespeichert",
     "safeArea": "Sicherheitsabstand",
     "safeAreaMm": "Standard-Sicherheitsabstand (mm)",
-    "safeAreaHint": "Gilt für neue Label-Vorlagen und für Größen ohne eigenen Abstand; lässt sich je Vorlage anpassen. Auf diesem Rand dürfen keine Elemente liegen.",
+    "safeAreaHint": "Druckfreier Rand für neue Vorlagen und Größen ohne eigenen Abstand. Je Vorlage anpassbar.",
     "sizes": "Label-Größen",
-    "sizesHint": "Diese Größen stehen im Label-Editor zur Auswahl, in dieser Reihenfolge. Wird eine Größe gewählt, übernimmt die Vorlage ihren Sicherheitsabstand; ein leeres Feld verwendet den Standard.",
+    "sizesHint": "Reihenfolge im Editor. Die gewählte Größe setzt den Sicherheitsabstand; leer bedeutet Standard.",
     "presetSafeAreaMm": "Sicherheitsabstand (mm)",
     "presetSafeAreaDefault": "Standard ({value} mm)",
     "addSize": "Größe hinzufügen",
@@ -355,16 +355,16 @@
   "adminOidc": {
     "loginPage": "Anmeldeseite",
     "autoRedirect": "Automatisch zum Identity Provider weiterleiten",
-    "autoRedirectHint": "Die Anmeldeseite leitet sofort zur SSO-Anmeldung weiter, ohne das Anmeldeformular zu zeigen. Nach dem Abmelden und nach einer fehlgeschlagenen SSO-Anmeldung bleibt das Formular sichtbar.",
-    "directLogin": "Normale Anmeldeseite",
-    "directLoginHint": "Über diese Adresse ist das Anmeldeformular weiterhin erreichbar, z. B. für lokale Administratoren.",
+    "autoRedirectHint": "Direkte SSO-Anmeldung. Nach Abmeldung oder fehlgeschlagener SSO-Anmeldung bleibt das Formular sichtbar.",
+    "directLogin": "Anmeldeformular",
+    "directLoginHint": "Direkter Zugriff auf das Anmeldeformular, auch für lokale Administratoren.",
     "eyebrow": "Administration · Authentifizierung",
     "title": "OpenID Connect (SSO)",
     "test": "Verbindung testen",
     "testing": "Verbindung wird getestet …",
     "saved": "Gespeichert",
     "issuer": "Issuer",
-    "authorizationEndpoint": "Login-Endpunkt",
+    "authorizationEndpoint": "Anmelde-Endpunkt",
     "loading": "Einstellungen werden geladen …",
     "identityProvider": "Identity Provider",
     "enabled": "Aktiv",
@@ -375,10 +375,10 @@
     "clientId": "Client-ID",
     "clientSecret": "Client-Secret",
     "secretStored": "•••••••• (gespeichert)",
-    "secretKeep": "Leer = gespeichertes Secret beibehalten.",
+    "secretKeep": "Leer lassen, um das gespeicherte Secret beizubehalten.",
     "secretMissing": "Noch kein Secret gespeichert.",
     "scopes": "Scopes",
-    "buttonLabel": "Text des Login-Buttons",
+    "buttonLabel": "Beschriftung der SSO-Anmeldung",
     "buttonLabelPlaceholder": "z. B. Zentrale Anmeldung",
     "publicUrl": "Öffentliche URL der Anwendung",
     "publicUrlPlaceholder": "Leer = automatisch, z. B. https://inventar.example.org",
@@ -388,14 +388,14 @@
     "copied": "Kopiert",
     "claims": "Claims",
     "usernameClaim": "Benutzername",
-    "usernameClaimHint": "Muss zum Benutzernamen aus LDAP passen, wenn Provider-übergreifend angemeldet wird.",
+    "usernameClaimHint": "Muss für die Anmeldung über mehrere Anbieter zum LDAP-Benutzernamen passen.",
     "displayNameClaim": "Anzeigename",
     "emailClaim": "E-Mail",
     "usersAndGroups": "Benutzer & Gruppen",
-    "autoCreateUsers": "Benutzer automatisch anlegen",
-    "autoCreateUsersHint": "Unbekannte Benutzer werden beim ersten Login angelegt. Aus: Nur bereits vorhandene Benutzer (z. B. aus LDAP) dürfen sich anmelden.",
-    "syncGroups": "Gruppen automatisch anlegen und zuweisen",
-    "syncGroupsHint": "Gruppen aus dem Gruppen-Claim werden angelegt. Gilt nur für Benutzer, die über OIDC angelegt wurden.",
+    "autoCreateUsers": "Benutzer automatisch erstellen",
+    "autoCreateUsersHint": "Unbekannte Benutzer bei der ersten Anmeldung erstellen. Sonst können sich nur vorhandene Benutzer anmelden.",
+    "syncGroups": "Gruppen automatisch erstellen und zuweisen",
+    "syncGroupsHint": "Gruppen aus dem Gruppen-Claim erstellen. Gilt nur für über OIDC erstellte Benutzer.",
     "crossProviderLogin": "Provider-übergreifende Anmeldung",
     "crossProviderLoginHint": "Benutzer, die über LDAP importiert wurden, dürfen sich per OIDC anmelden (Zuordnung über den Benutzernamen).",
     "note": "Lokale Benutzer können sich nie über OIDC anmelden. Admin-Rechte werden unter Administration → Gruppen mit „Admin-Gruppe“ vergeben.",
@@ -451,9 +451,9 @@
     "displayName": "Anzeigename",
     "email": "E-Mail",
     "password": "Passwort",
-    "passwordKeep": "Leer lassen, um es nicht zu ändern",
+    "passwordKeep": "Leer lassen, um das Passwort beizubehalten.",
     "signIn": "Anmeldung",
-    "providerHint": "Konto aus {provider}. Das Passwort wird dort verwaltet; Name und E-Mail werden bei der nächsten Synchronisation bzw. Anmeldung überschrieben.",
+    "providerHint": "Konto aus {provider}. Passwort dort ändern. Name und E-Mail werden bei Synchronisation oder Anmeldung überschrieben.",
     "access": "Zugriff",
     "role": "Rolle",
     "roleUser": "Benutzer",
@@ -461,7 +461,7 @@
     "ownRoleHint": "Die eigene Rolle kann nicht geändert werden.",
     "adminHint": "Administratoren haben vollen Zugriff, unabhängig von Gruppen.",
     "status": "Status",
-    "enabled": "Aktiv – kann sich anmelden",
+    "enabled": "Aktiv",
     "disabled": "Deaktiviert",
     "groupsPlaceholder": "Gruppen suchen …",
     "noMoreGroups": "Keine weiteren Gruppen",
@@ -473,7 +473,7 @@
     "errors": {
       "usernameRequired": "Benutzername ist erforderlich.",
       "passwordRequired": "Für neue Benutzer ist ein Passwort erforderlich.",
-      "save": "Das Speichern ist fehlgeschlagen. Möglicherweise ist der Benutzername bereits vergeben.",
+      "save": "Speichern fehlgeschlagen. Bitte den Benutzernamen prüfen; er muss eindeutig sein.",
       "delete": "Benutzer konnte nicht gelöscht werden.",
       "notFound": "Benutzer wurde nicht gefunden."
     },
@@ -520,13 +520,13 @@
     "general": "Allgemein",
     "nameExternal": "Name wird vom externen Anbieter verwaltet.",
     "adminGroup": "Admin-Gruppe",
-    "adminGroupHint": "Mitglieder haben vollen Zugriff auf alles, auch auf die Administration, unabhängig von den Berechtigungen unten.",
+    "adminGroupHint": "Mitglieder erhalten Vollzugriff einschließlich Administration, unabhängig von den folgenden Berechtigungen.",
     "members": "Mitglieder",
     "membersPlaceholder": "Benutzer suchen …",
     "noMoreUsers": "Keine weiteren Benutzer",
     "permissions": "Berechtigungen",
-    "permissionsHint": "Rechte gelten für Objekte im gewählten Bereich. Wer einen Standort sehen darf, sieht auch alle Unter-Standorte und Assets darin.",
-    "addPermission": "Berechtigung",
+    "permissionsHint": "Gilt für den gewählten Bereich. Sichtbare Standorte geben auch Zugriff auf ihre Unterstandorte und Assets.",
+    "addPermission": "Berechtigung hinzufügen",
     "grantArea": "Bereich freigeben",
     "chooseArea": "Bereich wählen",
     "searchArea": "Bereich suchen …",
@@ -547,8 +547,8 @@
       "delete": "Gruppe konnte nicht gelöscht werden.",
       "notFound": "Gruppe wurde nicht gefunden."
     },
-    "everyoneName": "Eingebaute Gruppe; der Name ist fest.",
-    "everyoneHint": "Zu dieser Gruppe gehört automatisch jeder Benutzer. Ihre Berechtigungen gelten also für alle, zusätzlich zu den Berechtigungen der eigenen Gruppen. Mitglieder und Administratorrechte lassen sich hier nicht festlegen."
+    "everyoneName": "Der Name dieser Systemgruppe ist nicht änderbar.",
+    "everyoneHint": "Diese Berechtigungen gelten zusätzlich für alle Benutzer. Mitglieder und Administratorrechte sind hier nicht änderbar."
   },
   "adminPermissions": {
     "eyebrow": {
@@ -621,9 +621,9 @@
       "takePhoto": "Foto aufnehmen",
       "errors": {
         "photo": "Foto konnte nicht aufgenommen werden.",
-        "notAllowed": "Kein Zugriff auf die Kamera. Bitte den Zugriff im Browser erlauben (Schloss-Symbol neben der Adresse).",
+        "notAllowed": "Kamerazugriff blockiert. Bitte in den Website-Einstellungen des Browsers erlauben.",
         "notFound": "Keine passende Kamera gefunden.",
-        "notReadable": "Die Kamera wird gerade von einem anderen Programm verwendet.",
+        "notReadable": "Kamera belegt. Bitte in anderen Anwendungen schließen.",
         "start": "Die Kamera konnte nicht gestartet werden."
       },
       "zoom": "Zoom: {zoom}-fach (antippen für die nächste Stufe)"
@@ -638,7 +638,7 @@
       "done": "Fertig"
     },
     "confirmDialog": {
-      "deleteTitle": "Wirklich löschen?",
+      "deleteTitle": "Eintrag löschen?",
       "deleteMessage": "„{name}“ wird gelöscht. Das kann nicht rückgängig gemacht werden."
     },
     "filterBar": {
@@ -744,7 +744,7 @@
       "pageOf": "Seite {page} von {pages}"
     },
     "pwaStatus": {
-      "offline": "Keine Verbindung. Änderungen können erst wieder gespeichert werden, sobald die Verbindung wiederhergestellt ist.",
+      "offline": "Keine Verbindung. Speichern ist erst wieder mit Verbindung möglich.",
       "reloadRequired": "Die App muss neu geladen werden.",
       "reload": "Neu laden",
       "updateAvailable": "Eine neue Version ist verfügbar.",
@@ -771,7 +771,7 @@
     "complete": "Abschließen",
     "stats": {
       "expected": "Erwartet",
-      "devices": "Geräte",
+      "devices": "Assets",
       "missing": "Nicht vorhanden",
       "defects": "Mängel",
       "pending": "Noch offen",
@@ -791,19 +791,19 @@
       "presentButDefect": "Vorhanden, aber defekt"
     },
     "scan": {
-      "placeholderCheck": "Gerät scannen, um es zu prüfen …",
-      "placeholderInventory": "Asset scannen oder Code eintippen …",
+      "placeholderCheck": "Asset scannen oder Code eingeben …",
+      "placeholderInventory": "Asset scannen oder Code eingeben …",
       "codeLabel": "Gescannter Code",
       "submit": "Prüfen (Enter)",
       "cameraOff": "Kamera aus",
       "camera": "Kamera",
-      "orSearch": "oder Gerät suchen:",
-      "addPlaceholder": "Gerät hinzufügen …",
+      "orSearch": "Asset suchen:",
+      "addPlaceholder": "Asset hinzufügen …",
       "addSearchPlaceholder": "Name oder Inventar-ID …",
-      "addEmpty": "Keine weiteren Geräte",
-      "cameraTitleCheck": "Gerät prüfen",
+      "addEmpty": "Keine weiteren Assets",
+      "cameraTitleCheck": "Asset prüfen",
       "cameraTitleInventory": "Inventur",
-      "cameraHintCheck": "Code des Geräts in den Rahmen halten",
+      "cameraHintCheck": "Code des Assets in den Rahmen halten",
       "cameraHintInventory": "Code des Assets in den Rahmen halten",
       "photoHintAsset": "Foto für die Bilder des Assets",
       "photoHintInspection": "Foto für das Prüfprotokoll",
@@ -831,12 +831,12 @@
       "noLocation": "ohne Standort",
       "unknownCode": "unbekannter Code",
       "code": "Code:",
-      "remove": "Entfernen (versehentlich gescannt)"
+      "remove": "Entfernen"
     },
     "list": {
       "searchPlaceholder": "In dieser Prüfung suchen …",
       "clearSearch": "Suche leeren",
-      "emptyCheck": "Noch keine Geräte. Bitte ein Gerät scannen oder über die Suche hinzufügen.",
+      "emptyCheck": "Noch keine Assets. Per Scan oder Suche hinzufügen.",
       "emptyInventory": "Die Filter haben keine Assets ausgewählt. Gefundene Gegenstände erscheinen oben als fremd.",
       "emptyView": "Keine Einträge in dieser Ansicht.",
       "childAssets": "Untergeordnete Assets von {name}",
@@ -853,20 +853,20 @@
     },
     "completeDialog": {
       "title": "Prüfung abschließen",
-      "goodOfTotalCheck": "von {total} Geräten in Ordnung",
+      "goodOfTotalCheck": "von {total} Assets in Ordnung",
       "goodOfTotalInventory": "von {total} Assets vorhanden",
       "badCheck": "mangelhaft",
       "badInventory": "nicht vorhanden",
-      "pending": "wurden nicht geprüft und erscheinen im Bericht als „Nicht geprüft“",
+      "pending": "nicht geprüft; erscheinen so im Bericht",
       "unexpected": "fremde Gegenstände / unbekannte Codes",
       "defect": "sind defekt",
       "functionOpen": "sind vorhanden, aber die Funktion wurde nicht geprüft",
       "missingRequired": "Pflichtfelder sind leer",
       "comment": "Kommentar zur Prüfung",
       "commentPlaceholder": "z. B. Auffälligkeiten, offene Punkte",
-      "lockHint": "Nach dem Abschließen kann die Prüfung nicht mehr bearbeitet werden.",
+      "lockHint": "Abgeschlossene Prüfungen können nicht mehr bearbeitet werden.",
       "submitting": "Wird abgeschlossen …",
-      "submit": "Endgültig abschließen"
+      "submit": "Abschließen"
     },
     "protocol": {
       "structure": "Asset-Struktur",
@@ -883,10 +883,10 @@
       "unexpected": "Fremde Gegenstände ({count})",
       "checkedAssets": "Geprüfte Assets ({count})",
       "noDefects": "Keine Mängel.",
-      "allChecked": "Alle Geräte wurden geprüft.",
+      "allChecked": "Alle Assets geprüft.",
       "none": "Keine.",
       "noDefectAssets": "Keine defekten Assets.",
-      "noMissing": "Keine – alle erwarteten Assets wurden gefunden.",
+      "noMissing": "Alle erwarteten Assets gefunden.",
       "columns": {
         "object": "Gegenstand",
         "invIdOrCode": "Inventar-ID / Code",
@@ -911,7 +911,7 @@
       "checkedBy": "Geprüft von",
       "responsible": "Verantwortlich",
       "printPhotos": "Fotos drucken",
-      "listPassed": "Geräte in Ordnung auflisten",
+      "listPassed": "Assets ohne Mängel auflisten",
       "listFound": "Gefundene Assets auflisten",
       "defects": "Mängel",
       "notChecked": "Nicht geprüft",
@@ -923,7 +923,7 @@
     },
     "photo": {
       "uploading": "Foto wird hochgeladen …",
-      "savedToAsset": "Foto in die Bilder des Assets übernommen.",
+      "savedToAsset": "Foto beim Asset gespeichert.",
       "savedToInspection": "Foto zur Prüfung gespeichert.",
       "saveFailed": "Foto konnte nicht gespeichert werden.",
       "removeTitle": "Foto entfernen?",
@@ -933,7 +933,7 @@
     "removeItem": {
       "title": "Eintrag entfernen?",
       "messageCheck": "„{name}“ wird aus dieser Prüfung entfernt.",
-      "messageInventory": "„{name}“ wird aus dieser Prüfung entfernt (z. B. weil versehentlich gescannt).",
+      "messageInventory": "„{name}“ wird aus dieser Prüfung entfernt.",
       "failed": "Eintrag konnte nicht entfernt werden."
     },
     "deleteDialog": {
@@ -942,7 +942,7 @@
       "messageCompleted": "Das abgeschlossene Protokoll wird endgültig gelöscht."
     },
     "errors": {
-      "addAsset": "Gerät konnte nicht hinzugefügt werden.",
+      "addAsset": "Asset konnte nicht hinzugefügt werden.",
       "scan": "Scan konnte nicht verarbeitet werden.",
       "status": "Status konnte nicht gespeichert werden.",
       "condition": "Zustand konnte nicht gespeichert werden.",
@@ -967,7 +967,7 @@
   "inspectionNew": {
     "title": "Neue Prüfung",
     "noTemplates": "Keine Prüfungsvorlage vorhanden.",
-    "createTemplate": "Jetzt unter Konfiguration anlegen",
+    "createTemplate": "Prüfungsvorlage erstellen",
     "templateLabel": "Prüfungsvorlage *",
     "templatePlaceholder": "Prüfungsvorlage wählen",
     "templateSearch": "Prüfungsvorlage suchen …",
@@ -983,7 +983,7 @@
     "titleLabel": "Titel",
     "protocolArea": "Bereich des Prüfprotokolls *",
     "protocolAreaPlaceholder": "Bereich wählen",
-    "checkFunction": "Funktion prüfen („Funktionsfähig“ / „Defekt“ bei vorhandenen Assets)",
+    "checkFunction": "Funktion vorhandener Assets prüfen",
     "checkFunctionDefault": {
       "with": "Vorlage: mit Funktionsprüfung",
       "without": "Vorlage: ohne Funktionsprüfung"
@@ -1002,7 +1002,7 @@
     "addTag": "Tag hinzufügen …",
     "addType": "Typ hinzufügen …",
     "allAreas": "Alle Bereiche",
-    "areasHint": "Vorgabe: Bereich aus der Navigation. Typen, Tags und Standorte sind auf die gewählten Bereiche begrenzt.",
+    "areasHint": "Vorausgewählt ist der Bereich aus der Navigation. Die Auswahl begrenzt Typen, Tags und Standorte.",
     "counting": "Assets werden gezählt …",
     "expected": {
       "one": "Asset wird erwartet",
@@ -1034,11 +1034,11 @@
       "heading": "Prüfungsart",
       "INVENTORY": "Inventur",
       "CHECK": "Einzelprüfung",
-      "inventoryHint": "Asset-Auswahl per Filter beim Start. Ergebnis: „Vorhanden“ oder „Nicht vorhanden“. Andere Gegenstände gelten als fremd.",
-      "checkHint": "Einzelbewertung: „In Ordnung“ oder „Mangelhaft“. Assets können jederzeit per Scan oder Suche ergänzt werden. Die Prüfung kann offen bleiben."
+      "inventoryHint": "Assets beim Start per Filter auswählen und als „Vorhanden“ oder „Nicht vorhanden“ erfassen. Andere Gegenstände gelten als fremd.",
+      "checkHint": "Assets als „In Ordnung“ oder „Mangelhaft“ bewerten. Per Scan oder Suche ergänzbar; die Prüfung kann offen bleiben."
     },
     "checkFunction": "Funktion prüfen",
-    "checkFunctionHint": "Vorhandene Assets: zusätzlich „Funktionsfähig“ oder „Defekt“. Defekte Assets sind bei wiederkehrenden Prüfungen sofort wieder fällig. Beim Prüfungsstart änderbar.",
+    "checkFunctionHint": "Zusätzlich „Funktionsfähig“ oder „Defekt“ erfassen. Bei wiederkehrenden Prüfungen sind defekte Assets sofort wieder fällig. Beim Prüfungsstart änderbar.",
     "defaultTags": "Standard-Tags",
     "defaultTypes": "Standard-Typen",
     "defaultLocations": "Standard-Standorte",
@@ -1048,10 +1048,10 @@
     "includeChildAssets": "Untergeordnete Assets mitprüfen",
     "scope": {
       "heading": "Anwendungsbereich",
-      "typesPlaceholder": "Alle Assets – Typ hinzufügen, um einzuschränken …",
-      "typesHint": "Leer = alle Assets. Typauswahl begrenzt Ausgangsauswahl und wiederkehrende Prüftermine.",
-      "areasPlaceholder": "Alle Bereiche – Bereich hinzufügen, um einzuschränken …",
-      "areasHint": "Leer = alle Bereiche. Mit Bereichen, z. B. „Atemschutz“, sehen und starten nur Benutzer mit dem Recht „Prüfen“ in diesen Bereichen die Prüfung. Die Bereiche begrenzen die Ausgangsauswahl."
+      "typesPlaceholder": "Alle Typen",
+      "typesHint": "Begrenzt die Ausgangsauswahl und wiederkehrende Prüftermine. Leer: alle Assets.",
+      "areasPlaceholder": "Alle Bereiche",
+      "areasHint": "Begrenzt die Ausgangsauswahl. Nur mit „Prüfen“-Berechtigung in diesen Bereichen sichtbar und startbar. Leer: alle Bereiche."
     },
     "recurrence": {
       "heading": "Wiederholung",
@@ -1061,7 +1061,7 @@
       "every": "Alle",
       "interval": "Intervall",
       "unit": "Einheit",
-      "hint": "Eigener Termin je Asset. Bestanden: Intervall beginnt neu. Mangelhaft: sofort wieder fällig. Ein festes Datum ist auf der Asset-Detailseite möglich."
+      "hint": "Termin je Asset: bestanden setzt das Intervall zurück, mangelhaft wird sofort wieder fällig. Feste Termine sind beim Asset einstellbar."
     },
     "fields": {
       "onlyForType": "Nur für Typ „{type}“",
@@ -1105,7 +1105,7 @@
     "loadError": "Die Prüfungsvorlagen konnten nicht geladen werden.",
     "loading": "Prüfungsvorlagen werden geladen …",
     "notFound": "Keine Prüfungsvorlage gefunden.",
-    "empty": "Keine Prüfungsvorlage vorhanden. Bitte die Bereichsauswahl prüfen oder eine Vorlage anlegen.",
+    "empty": "Keine Prüfungsvorlage vorhanden. Bitte die Bereichsauswahl prüfen oder eine Vorlage erstellen.",
     "mode": {
       "INVENTORY": "Inventur",
       "CHECK": "Einzelprüfung"
@@ -1168,7 +1168,7 @@
   "inventoryDetail": {
     "printLabel": "Label drucken",
     "fields": {
-      "inspectionPolicy": "Prüferfassung",
+      "inspectionPolicy": "Prüfverfahren",
       "address": "Adresse",
       "kind": "Art",
       "createdAt": "Erstellt am",
@@ -1188,7 +1188,7 @@
     "fieldTypes": {
       "TEXT": "Text",
       "NUMBER": "Zahl",
-      "BOOLEAN": "Ja/Nein",
+      "BOOLEAN": "Ja / Nein",
       "DATE": "Datum",
       "DATETIME": "Datum und Uhrzeit",
       "URL": "URL",
@@ -1196,8 +1196,8 @@
       "SELECT": "Auswahl"
     },
     "childLocations": {
-      "title": "Unter-Standorte",
-      "none": "Keine Unter-Standorte."
+      "title": "Unterstandorte",
+      "none": "Keine Unterstandorte."
     },
     "linkedAssets": {
       "atLocation": "Assets an diesem Standort",
@@ -1214,7 +1214,7 @@
     },
     "inspections": {
       "showAll": "Alle Prüfungen anzeigen ({count})",
-      "none": "Dieses Asset war noch in keiner Prüfung."
+      "none": "Noch keine Prüfungen."
     },
     "schedules": {
       "title": "Prüftermine",
@@ -1225,7 +1225,7 @@
       "set": "Setzen",
       "changeDate": "Datum ändern",
       "setFixedDate": "Festes Datum setzen",
-      "useInterval": "Wieder Intervall verwenden"
+      "useInterval": "Intervall verwenden"
     },
     "gallery": {
       "openOriginal": "In Originalgröße öffnen",
@@ -1243,18 +1243,18 @@
     "title": "PDF drucken oder speichern",
     "share": "PDF teilen",
     "download": "PDF herunterladen",
-    "shareFailed": "Das Teilen ist nicht verfügbar. Sie können die PDF stattdessen herunterladen.",
-    "prepareFailed": "Die Druckdatei konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+    "shareFailed": "Teilen nicht verfügbar. Bitte die PDF herunterladen.",
+    "prepareFailed": "Druckdatei konnte nicht erstellt werden. Bitte erneut versuchen."
   },
   "assetPrint": {
     "batchLoading": "Datenblätter für {count} Assets werden geladen …",
     "batchCount": "{count} Datenblätter",
-    "batchError": "Die Datenblätter konnten nicht vollständig geladen werden. Bitte versuchen Sie es erneut.",
+    "batchError": "Datenblätter konnten nicht vollständig geladen werden. Bitte erneut versuchen.",
     "kind": "Asset-Datenblatt",
     "images": "Bilder",
     "imageModes": {
       "all": "Alle Bilder",
-      "main": "Nur Hauptbild",
+      "main": "Nur Titelbild",
       "none": "Keine Bilder"
     },
     "options": {
@@ -1300,7 +1300,7 @@
   "objectLog": {
     "backTo": "Zurück zu {name}",
     "loadingInspections": "Prüfungen werden geladen …",
-    "noInspections": "Dieses Asset war noch in keiner Prüfung.",
+    "noInspections": "Noch keine Prüfungen.",
     "errors": {
       "loadInspections": "Die Prüfungen konnten nicht geladen werden."
     }
@@ -1359,10 +1359,10 @@
     "searchLocation": "Standort suchen …",
     "allAssetTypes": "Alle Typen",
     "searchAssetType": "Typ suchen …",
-    "noFilterMatches": "Keine Einträge passen zum Filter.",
+    "noFilterMatches": "Keine Treffer für diese Filter.",
     "resetFilters": "Filter zurücksetzen",
     "empty": "Noch keine Einträge.",
-    "createFirst": "Ersten Eintrag erstellen",
+    "createFirst": "Eintrag erstellen",
     "inspectionOverdue": "Prüfung überfällig",
     "inspectionDue": "Prüfung fällig",
     "dueTitle": "{type}: {due}",
@@ -1380,7 +1380,7 @@
   "inventoryForm": {
     "assignment": "Zuordnung",
     "identification": "Kennzeichnung",
-    "created": "„{name}“ erstellt. Vorgaben wie Bereich, Standort und Typ für den nächsten Eintrag übernommen.",
+    "created": "„{name}“ erstellt. Vorgaben für den nächsten Eintrag übernommen.",
     "view": "Ansehen",
     "general": "Allgemein",
     "autoInvId": "Inventar-ID wird beim Speichern vergeben.",
@@ -1390,7 +1390,7 @@
     "selectAssetType": "Typ auswählen",
     "noAssetType": "Kein Typ",
     "searchAssetType": "Typ suchen …",
-    "inspectionPolicyLabel": "Prüferfassung",
+    "inspectionPolicyLabel": "Prüfverfahren",
     "inspectionPolicy": {
       "STANDARD": "Mit Label prüfen",
       "MANUAL": "Ohne Label manuell prüfen",
@@ -1411,9 +1411,9 @@
     "noLocation": "Kein Standort",
     "searchLocation": "Standort suchen …",
     "tagLocked": "Vom Typ übernommen",
-    "tagsPlaceholder": "Tags suchen oder neu anlegen …",
+    "tagsPlaceholder": "Tags suchen oder neu erstellen …",
     "noMoreTags": "Keine weiteren Tags",
-    "tagsHint": "Tag mit Enter oder Komma übernehmen. Neue Tags werden angelegt.",
+    "tagsHint": "Tag mit Enter oder Komma übernehmen. Neue Tags werden erstellt.",
     "lockedTagsHint": "Gestrichelt: vom Typ übernommen.",
     "position": "Position",
     "positionHint": "Adresse und Koordinaten für die Standortkarte.",
@@ -1425,14 +1425,14 @@
     "latitudePlaceholder": "z. B. 48.208493",
     "longitude": "Längengrad",
     "longitudePlaceholder": "z. B. 16.373149",
-    "legacyAddress": "Bisherige Adresse „{address}“ in „Straße und Hausnummer“. Bitte auf die Felder aufteilen oder nacheinander „Koordinaten ermitteln“ und „Adresse ermitteln“ verwenden.",
+    "legacyAddress": "Bisherige Adresse: „{address}“. Bitte auf die Adressfelder aufteilen oder über „Koordinaten ermitteln“ und danach „Adresse ermitteln“ übernehmen.",
     "customFields": "Eigene Felder",
-    "addField": "Feld",
+    "addField": "Feld hinzufügen",
     "fieldType": "Typ",
     "fieldTypes": {
       "TEXT": "Text",
-      "NUMBER": "Nummer",
-      "BOOLEAN": "Ja/Nein",
+      "NUMBER": "Zahl",
+      "BOOLEAN": "Ja / Nein",
       "DATE": "Datum",
       "URL": "URL",
       "EMAIL": "E-Mail",
@@ -1445,7 +1445,7 @@
     "images": "Bilder",
     "imagesHint": "Automatische Verkleinerung. Titelbild für Listen.",
     "createAnother": "Erstellen & neu",
-    "createAnotherTitle": "Speichern und weiteren Eintrag mit gleichen Vorgaben anlegen",
+    "createAnotherTitle": "Speichern und weiteren Eintrag mit gleichen Vorgaben erstellen",
     "create": "Erstellen",
     "uploadingImages": "Bilder werden hochgeladen …",
     "errors": {
@@ -1459,10 +1459,10 @@
       "coordinatesIncomplete": "Bitte Breiten- und Längengrad angeben.",
       "latitudeRange": "Der Breitengrad muss zwischen -90 und 90 liegen.",
       "longitudeRange": "Der Längengrad muss zwischen -180 und 180 liegen.",
-      "selectWithoutOptions": "Das Auswahlfeld „{name}“ braucht mindestens einen Auswahlwert."
+      "selectWithoutOptions": "Bitte mindestens einen Auswahlwert für „{name}“ angeben."
     },
     "shared": "Gemeinsamer Standort",
-    "sharedHint": "Für Standorte, die mehrere Bereiche nutzen, z. B. ein Lager von EDV und Zeugmeister: Jeder Bereich sieht hier nur seine eigenen Assets und Unterstandorte. Ohne diese Einstellung sieht jeder, der den Standort sehen darf, alles darin.",
+    "sharedHint": "Jeder Bereich sieht nur seine eigenen Assets und Unterstandorte. Sonst sehen Benutzer mit Standortzugriff den gesamten Inhalt.",
     "selectOptions": "Auswahlwerte",
     "selectOptionsPlaceholder": "z. B. Atemschutz, Technische Hilfe, Brandschutz",
     "chooseValue": "Wert wählen",
@@ -1504,15 +1504,15 @@
       "interleaved2of5": "Gerade Anzahl Ziffern"
     },
     "placeholders": {
-      "brandName": "Markenname",
-      "brandColor": "Markenfarbe",
+      "brandName": "Name der Organisation",
+      "brandColor": "Hauptfarbe",
       "website": "Website",
       "imprint": "Impressum",
       "privacy": "Datenschutz",
       "support": "Support",
-      "loginTitle": "Login-Titel",
-      "loginMessage": "Login-Text",
-      "locationPath": "Standort-Pfad",
+      "loginTitle": "Überschrift der Anmeldung",
+      "loginMessage": "Hinweis zur Anmeldung",
+      "locationPath": "Standortpfad",
       "url": "Link zum Asset",
       "uuid": "UUID",
       "date": "Druckdatum"
@@ -1537,7 +1537,7 @@
     "loading": "Vorlagen werden geladen …",
     "loadFailed": "Vorlagen konnten nicht geladen werden.",
     "noTemplates": "Es gibt noch keine Label-Vorlagen.",
-    "createTemplate": "Vorlage anlegen",
+    "createTemplate": "Vorlage erstellen",
     "template": "Vorlage",
     "templatePlaceholder": "Vorlage wählen",
     "templateSearch": "Vorlage suchen …",
@@ -1555,7 +1555,7 @@
       "other": "{count} Bögen ({width} × {height} mm). Im Druckdialog Skalierung auf 100 % bzw. „Tatsächliche Größe“ stellen und Ränder auf „Keine“."
     },
     "skip": "Bereits benutzte Plätze",
-    "skipHint": "Klicken Sie auf den ersten freien Platz des Bogens; die Plätze davor bleiben leer.",
+    "skipHint": "Ersten freien Platz wählen. Vorherige Plätze bleiben leer.",
     "dialogLabel": "Label drucken"
   },
   "labelTemplates": {
@@ -1564,7 +1564,7 @@
       "other": "{count} Vorlagen"
     },
     "newTemplate": "Neue Vorlage",
-    "intro": "Vorlagen gehören zu einem Bereich. Beim Drucken eines Assets wird die Standard-Vorlage seines Bereichs vorgeschlagen, ohne eigene Vorlage die Standard-Vorlage des Standardbereichs.",
+    "intro": "Beim Drucken gilt die Standardvorlage des Asset-Bereichs, ersatzweise die des Standardbereichs.",
     "searchPlaceholder": "Vorlage oder Bereich suchen …",
     "clearSearch": "Suche leeren",
     "loadFailed": "Vorlagen konnten nicht geladen werden.",
@@ -1595,15 +1595,15 @@
     "defaultForArea": "Standard-Vorlage für diesen Bereich",
     "size": "Größe",
     "sizePreset": "Vorlage",
-    "sizePresetPlaceholder": "Etikettengröße wählen …",
+    "sizePresetPlaceholder": "Label-Größe wählen …",
     "widthMm": "Breite (mm)",
     "heightMm": "Höhe (mm)",
     "safeAreaMm": "Sicherheitsabstand (mm)",
-    "safeAreaHint": "Rand, auf dem keine Elemente liegen dürfen, damit der Drucker nichts abschneidet.",
+    "safeAreaHint": "Druckfreier Rand. Elemente dürfen nicht hineinragen.",
     "sheet": {
       "title": "Druckbogen",
       "enable": "Auf Bogen drucken",
-      "hint": "Ohne Bogen wird jedes Label als eigene Seite in Label-Größe gedruckt, z. B. für Rollen-Labeldrucker.",
+      "hint": "Ohne Bogen: eine Seite je Label, z. B. für Rollendrucker.",
       "paper": "Papierformat",
       "paperPlaceholder": "Format wählen …",
       "paperWidth": "Papierbreite (mm)",
@@ -1644,7 +1644,7 @@
     "content": "Inhalt",
     "text": "Text",
     "showText": "Klartext unter dem Code",
-    "useBrandColor": "Markenfarbe verwenden",
+    "useBrandColor": "Hauptfarbe verwenden",
     "fontSize": "Schriftgröße (pt)",
     "align": "Ausrichtung",
     "alignLeft": "Links",
@@ -1669,7 +1669,7 @@
     "zoomOut": "Verkleinern",
     "zoomFit": "Einpassen",
     "zoomIn": "Vergrößern",
-    "canvasHint": "Elemente mit der Maus verschieben, am roten Griff die Größe ändern.",
+    "canvasHint": "Elemente ziehen, Größe am roten Griff ändern.",
     "placeholderHintPrefix": "Platzhalter wie",
     "placeholderHintSuffix": "werden beim Drucken durch die Werte des Assets ersetzt."
   },
@@ -1686,24 +1686,24 @@
     "modeCamera": "Kamera",
     "modeCameraHint": "Code mit der Kamera des Geräts lesen",
     "cameraHttpsOnly": "Nur über HTTPS verfügbar",
-    "cameraUnavailable": "Kamera nur über HTTPS oder localhost verfügbar",
+    "cameraUnavailable": "Kamerazugriff erfordert HTTPS oder localhost",
     "cameraDevice": "Kamera {number}",
     "cameraHint": "Barcode oder QR-Code in den Rahmen halten",
     "cameraOff": "Kamera ist aus",
     "startCamera": "Kamera starten",
     "placeholder": "Code scannen oder eintippen …",
     "inputLabel": "Gescannter Code",
-    "submit": "Suchen (Enter)",
+    "submit": "Suchen",
     "scannerHint": {
-      "active": "Das Feld bleibt aktiv: Einfach scannen.",
+      "active": "Bereit zum Scannen.",
       "enterBefore": "Der Scanner muss nach dem Code",
       "enterAfter": "senden.",
-      "fields": "Gesucht wird nach Link, ID, Inventar-ID, Inventarnummer und Seriennummer."
+      "fields": "Suche nach Link, ID, Inventar-ID, Inventarnummer oder Seriennummer."
     },
     "searching": "Suche …",
-    "lookupFailed": "Abfrage fehlgeschlagen. Keine Verbindung zum Server. Bitte die Netzwerkverbindung prüfen.",
+    "lookupFailed": "Suche fehlgeschlagen. Bitte die Verbindung prüfen und erneut scannen.",
     "nothingFoundFor": "Nichts gefunden für",
-    "noMatchReason": "Entweder gibt es kein passendes Objekt oder es fehlt die Berechtigung dafür.",
+    "noMatchReason": "Kein passender Eintrag oder keine Zugriffsberechtigung.",
     "selectHit": "{count} Treffer – bitte auswählen",
     "hitsFor": "{count} Treffer für",
     "pleaseSelect": "– bitte auswählen.",
@@ -1750,7 +1750,7 @@
     "newPlaceholder": "Neuer Tag, z. B. Atemschutz",
     "newNameLabel": "Name des neuen Tags",
     "preview": "Vorschau",
-    "creating": "Wird angelegt …",
+    "creating": "Wird erstellt …",
     "searchPlaceholder": "Tag suchen …",
     "searchLabel": "Tag suchen",
     "clearSearch": "Suche leeren",
@@ -1759,14 +1759,14 @@
     "loadingMore": "Weitere Tags werden geladen …",
     "retry": "Erneut versuchen",
     "noneFound": "Keine Tags gefunden.",
-    "empty": "Noch keine Tags angelegt.",
+    "empty": "Noch keine Tags erstellt.",
     "colorOf": "Farbe von {name}",
     "nameOf": "Name von {name}",
     "notUsed": "Nicht verwendet",
     "saved": "Gespeichert",
-    "saveError": "Fehler beim Speichern",
-    "exists": "Den Tag „{name}“ gibt es schon.",
-    "createError": "Tag konnte nicht angelegt werden.",
+    "saveError": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+    "exists": "Der Tag „{name}“ ist bereits vorhanden.",
+    "createError": "Tag konnte nicht erstellt werden.",
     "deleteTitle": "Tag löschen?",
     "deleteUsed": "„{name}“ wird von {usage} entfernt. Das kann nicht rückgängig gemacht werden.",
     "deleteUnused": "„{name}“ wird gelöscht. Das kann nicht rückgängig gemacht werden.",
@@ -1791,11 +1791,11 @@
       "access": "Zugriff pro Bereich und Gruppe steuern",
       "labels": "Labels mit QR- und Barcodes drucken"
     },
-    "welcome": "Willkommen zurück",
+    "welcome": "Anmelden",
     "subtitle": "Bitte mit dem eigenen Konto anmelden.",
     "redirecting": "Weiterleitung zu {provider} …",
-    "useLocalLogin": "Stattdessen mit Benutzername und Passwort anmelden",
-    "loggedOut": "Erfolgreich abgemeldet.",
+    "useLocalLogin": "Mit Benutzername und Passwort anmelden",
+    "loggedOut": "Abgemeldet",
     "username": "Benutzername",
     "password": "Passwort",
     "showPassword": "Passwort anzeigen",
@@ -1816,15 +1816,15 @@
     "ssoErrors": {
       "localUser": "Lokale Konten können sich nicht per SSO anmelden. Bitte mit Benutzername und Passwort anmelden.",
       "unknownUser": "Für dieses SSO-Konto gibt es keinen Benutzer. Bitte an einen Administrator wenden.",
-      "providerMismatch": "Dieses Konto stammt aus einem anderen Verzeichnis und darf sich nicht per SSO anmelden.",
-      "disabledUser": "Dieses Konto ist deaktiviert.",
-      "noUsername": "Der Identity Provider hat keinen Benutzernamen geliefert.",
+      "providerMismatch": "SSO ist für dieses Konto nicht erlaubt. Bitte die Administration kontaktieren.",
+      "disabledUser": "Konto deaktiviert. Bitte die Administration kontaktieren.",
+      "noUsername": "Der Anmeldedienst liefert keinen Benutzernamen. Bitte die Administration kontaktieren.",
       "failed": "SSO-Anmeldung fehlgeschlagen. Bitte erneut versuchen."
     },
     "copyright": "© {year} JPromi"
   },
   "profile": {
-    "title": "Mein Profil",
+    "title": "Profil",
     "image": "Profilbild",
     "upload": "Bild hochladen",
     "managedBy": "Das Profilbild wird von {provider} verwaltet.",
@@ -1967,7 +1967,7 @@
       "NUMBER": "Zahl",
       "SELECT": "Auswahl",
       "DATE": "Datum",
-      "DATETIME": "Datum & Zeit",
+      "DATETIME": "Datum und Uhrzeit",
       "URL": "Link",
       "EMAIL": "E-Mail"
     },
@@ -2008,7 +2008,7 @@
       "parentLocationUuid": "Übergeordneter Standort",
       "parentAssetUuid": "Übergeordnetes Asset",
       "parentAssetNote": "Verknüpfungsbeschreibung",
-      "inspectionPolicy": "Prüferfassung",
+      "inspectionPolicy": "Prüfverfahren",
       "tags": "Tags",
       "images": "Bilder",
       "areaUuids": "Bereiche",
@@ -2024,10 +2024,10 @@
       "fieldDefinitions": "Felder",
       "fields": "Prüffelder",
       "color": "Farbe",
-      "brandName": "Markenname",
-      "brandColor": "Markenfarbe",
-      "loginTitle": "Login-Titel",
-      "loginMessage": "Login-Text",
+      "brandName": "Name der Organisation",
+      "brandColor": "Hauptfarbe",
+      "loginTitle": "Überschrift der Anmeldung",
+      "loginMessage": "Hinweis zur Anmeldung",
       "imprintUrl": "Impressum",
       "privacyUrl": "Datenschutz",
       "websiteUrl": "Website",
@@ -2077,7 +2077,7 @@
       "displayNameClaim": "Claim Anzeigename",
       "emailClaim": "Claim E-Mail",
       "groupsClaim": "Claim Gruppen",
-      "autoCreateUsers": "Benutzer automatisch anlegen",
+      "autoCreateUsers": "Benutzer automatisch erstellen",
       "syncGroups": "Gruppen übernehmen",
       "crossProviderLogin": "Anmeldung über andere Anbieter",
       "publicUrl": "Öffentliche URL",
@@ -2150,8 +2150,8 @@
       "comment": "Kommentar: {comment}",
       "completedProtocolDeleted": "Abgeschlossenes Protokoll gelöscht",
       "objectsMovedToDefaultArea": "Objekte nur in diesem Bereich wurden nach „{defaultArea}“ verschoben",
-      "ldapUsers": "Benutzer: {created} angelegt, {updated} aktualisiert, {disabled} deaktiviert, {skipped} übersprungen",
-      "ldapGroups": "Gruppen: {created} angelegt, {updated} aktualisiert, {deleted} gelöscht",
+      "ldapUsers": "Benutzer: {created} erstellt, {updated} aktualisiert, {disabled} deaktiviert, {skipped} übersprungen",
+      "ldapGroups": "Gruppen: {created} erstellt, {updated} aktualisiert, {deleted} gelöscht",
       "error": "Fehler: {error}",
       "PASSWORD_CHANGED": "Passwort geändert",
       "BIND_PASSWORD_CHANGED": "Bind-Passwort geändert",
@@ -2205,7 +2205,7 @@
     },
     "next": {
       "title": "Nächste Prüfungen",
-      "empty": "Keine wiederkehrenden Prüfungen für die ausgewählten Bereiche vorhanden."
+      "empty": "Keine wiederkehrenden Prüfungen in diesen Bereichen."
     },
     "recent": {
       "title": "Letzte Prüfungen",
@@ -2216,7 +2216,7 @@
         "other": "{count} Auffälligkeiten"
       },
       "noProblems": "Ohne Auffälligkeiten",
-      "empty": "Noch keine abgeschlossenen Prüfungen vorhanden.",
+      "empty": "Noch keine abgeschlossenen Prüfungen.",
       "open": {
         "one": "1 offene Prüfung",
         "other": "{count} offene Prüfungen"
@@ -2236,7 +2236,7 @@
         "one": "1 Asset weiterer Typen",
         "other": "{count} Assets weiterer Typen"
       },
-      "noAssets": "Keine Assets in den ausgewählten Bereichen vorhanden.",
+      "noAssets": "Keine Assets in diesen Bereichen.",
       "title": "Bestand nach Typ",
       "tags": "Häufigste Tags",
       "types": {
@@ -2258,7 +2258,7 @@
         "one": "1 geprüftes Asset in den letzten 90 Tagen",
         "other": "{count} geprüfte Assets in den letzten 90 Tagen"
       },
-      "empty": "In den letzten 90 Tagen wurde keine Prüfung abgeschlossen.",
+      "empty": "Keine abgeschlossenen Prüfungen in den letzten 90 Tagen.",
       "okShare": "in Ordnung"
     }
   },
@@ -2269,7 +2269,7 @@
     "newStatus": "Neuer Status",
     "comment": "Kommentar",
     "commentPlaceholder": "z. B. Ventil undicht, an den Hersteller geschickt",
-    "retiredHint": "Ausgeschieden: Das Asset wird nicht mehr geprüft und in Listen grau angezeigt.",
+    "retiredHint": "Ausgeschiedene Assets werden nicht mehr geprüft und in Listen grau angezeigt.",
     "history": "Verlauf",
     "fromInspection": "Aus Prüfung „{title}“",
     "loadError": "Die Status konnten nicht geladen werden.",
@@ -2289,10 +2289,10 @@
       "RETIRED": "Ausgeschieden"
     },
     "categoryHints": {
-      "ACTIVE": "Das Asset ist im Bestand und kann verwendet werden, z. B. „Verliehen“ oder „In Lieferung“.",
-      "DEFECT": "Das Asset kann nicht verwendet werden. Eine bestandene Prüfung setzt es wieder auf „Vorhanden“.",
-      "MISSING": "Das Asset wurde nicht gefunden. Wird es bei einer Prüfung gefunden, ist es wieder „Vorhanden“.",
-      "RETIRED": "Das Asset ist außer Dienst: Es wird grau angezeigt, nicht mehr geprüft und von Prüfungen nicht mehr verändert."
+      "ACTIVE": "Im Bestand und verwendbar, z. B. „Verliehen“ oder „In Lieferung“.",
+      "DEFECT": "Nicht verwendbar. Eine bestandene Prüfung setzt den Status auf „Vorhanden“.",
+      "MISSING": "Nicht gefunden. Bei einer Prüfung wiedergefunden: Status „Vorhanden“.",
+      "RETIRED": "Außer Dienst und grau dargestellt. Wird nicht mehr geprüft oder durch Prüfungen verändert."
     },
     "filter": {
       "label": "Status filtern",
@@ -2306,7 +2306,7 @@
     "config": {
       "eyebrow": "Konfiguration",
       "title": "Status",
-      "intro": "Status beschreiben den Zustand eines Assets. Die festen Status gibt es in jedem Bereich; eigene Status gelten nur für Assets ihres Bereichs.",
+      "intro": "Feste Status gelten in allen Bereichen. Eigene Status gelten nur im jeweiligen Bereich.",
       "builtIn": "Feste Status",
       "fixed": "Fest, nicht änderbar",
       "custom": "Eigene Status",
@@ -2316,7 +2316,7 @@
       "color": "Farbe des Status",
       "category": "Verhalten",
       "behaviorTitle": "Verhalten",
-      "automation": "Beim Abschluss einer Prüfung wird der Status automatisch gesetzt: Mängel oder nicht bestandene Prüfungen ergeben „Defekt“, nicht gefundene Assets „Nicht auffindbar“, bestandene Prüfungen wieder „Vorhanden“. Jede Änderung steht im Verlauf des Assets.",
+      "automation": "Prüfabschluss setzt den Status: Mängel → „Defekt“, nicht gefunden → „Nicht auffindbar“, bestanden → „Vorhanden“. Änderungen stehen im Asset-Verlauf.",
       "saveError": "Der Status konnte nicht gespeichert werden.",
       "deleteError": "Der Status konnte nicht gelöscht werden.",
       "searchArea": "Bereich suchen …"
@@ -2333,17 +2333,17 @@
   "inventoryTable": {
     "notApplicable": "Dieses Feld gehört nicht zum Typ dieser Zeile.",
     "locked": "Durch den Typ oder bestehende Bereichsberechtigungen vorgegeben.",
-    "uncertain": "Die Verbindung wurde unterbrochen. Der Eintrag könnte bereits erstellt sein. Bitte die Tabelle schließen und die Liste prüfen; diese Zeile wird nicht automatisch erneut erstellt.",
-    "conflict": "Der Eintrag konnte wegen eines Konflikts nicht gespeichert werden. Bitte die Angaben und Beziehungen prüfen.",
+    "uncertain": "Verbindung unterbrochen. Der Eintrag könnte bereits erstellt sein. Bitte die Tabelle schließen und die Liste prüfen. Diese Zeile wird nicht erneut erstellt.",
+    "conflict": "Speicherkonflikt. Bitte Angaben und Zuordnungen prüfen.",
     "create": "Mehrere erstellen",
     "createOptions": "Weitere Optionen zum Erstellen",
     "resizeColumn": "Spaltenbreite anpassen: {field}",
     "edit": "In Tabelle bearbeiten",
-    "hint": "Zelle bearbeiten und das kleine Quadrat rechts unten nach unten ziehen, um den Wert zu kopieren. Mit Umschalt + Klick oder Umschalt + Pfeiltasten markieren, dann nach unten ausfüllen (Strg/⌘ + D). Tabellen aus Excel können direkt eingefügt werden. Erst Speichern übernimmt Änderungen.",
+    "hint": "Werte am Quadrat nach unten ziehen oder mit Umschalt markieren und „Nach unten ausfüllen“ wählen (Strg/⌘ + D). Einfügen aus Excel möglich. Änderungen erst mit „Speichern“ übernehmen.",
     "caption": "Mehrere Inventareinträge bearbeiten",
     "loading": "Einträge und Auswahlmöglichkeiten werden geladen …",
     "loadError": "Die Tabelle konnte nicht vollständig geladen werden. Bitte schließen und erneut öffnen.",
-    "rowCount": "Anzahl Zeilen",
+    "rowCount": "Zeilen",
     "addRows": "Zeilen hinzufügen",
     "fillDown": "Nach unten ausfüllen",
     "undo": "Rückgängig",
@@ -2356,19 +2356,19 @@
     "empty": "Keine Auswahl",
     "saved": "Gespeichert",
     "unsaved": "Geändert",
-    "progress": "{saved} gespeichert · {pending} noch nicht gespeichert. Leere, unveränderte Zeilen werden übersprungen. Gespeicherte Zeilen werden beim erneuten Speichern nicht wiederholt.",
-    "save": "Änderungen speichern",
+    "progress": "{saved} gespeichert · {pending} ungespeichert",
+    "save": "Speichern",
     "saveError": "Speichern fehlgeschlagen. Bitte Eingaben und Berechtigungen prüfen und erneut speichern.",
     "noPermission": "Für mindestens einen Eintrag oder Bereich fehlt die Bearbeitungsberechtigung.",
-    "nameRequired": "Ein Name mit höchstens 255 Zeichen ist erforderlich.",
+    "nameRequired": "Bitte einen Namen mit höchstens 255 Zeichen eingeben.",
     "areaRequired": "Mindestens ein Bereich ist erforderlich.",
     "requiredField": "Das Feld „{field}“ ist erforderlich.",
     "invalidField": "Der Wert im Feld „{field}“ ist ungültig.",
     "limit": "Es sind höchstens {count} Zeilen pro Tabelle möglich. Bitte eine gültige Anzahl eingeben.",
-    "unknownOption": "„{value}“ ist für „{field}“ nicht vorhanden oder nicht eindeutig. Bitte einen vorhandenen Namen oder die UUID verwenden.",
+    "unknownOption": "„{value}“ ist für „{field}“ unbekannt oder mehrdeutig. Bitte einen eindeutigen Namen oder die UUID eingeben.",
     "pasteSize": "Die eingefügten Daten passen nicht in die Tabelle. Beim Bearbeiten können nur die ausgewählten Einträge geändert werden.",
     "pasteError": "Die Tabellendaten konnten nicht eingefügt werden.",
-    "discardHint": "Es sind noch ungespeicherte Änderungen vorhanden. Sollen diese verworfen werden? Bereits gespeicherte Einträge bleiben erhalten.",
+    "discardHint": "Ungespeicherte Änderungen verwerfen? Bereits gespeicherte Einträge bleiben erhalten.",
     "continueEditing": "Weiter bearbeiten",
     "discard": "Änderungen verwerfen",
     "policy": "Prüfverfahren",
@@ -2382,8 +2382,8 @@
     "areas": "Bereiche"
   },
   "notifications": {
-    "emailNeedsAddress": "Für E-Mail-Benachrichtigungen muss eine gültige Empfängeradresse hinterlegt sein.",
-    "matrixHint": "Wählen Sie für jede Erinnerung die gewünschten Kanäle. Die Fälligkeiten werden stündlich geprüft.",
+    "emailNeedsAddress": "Bitte eine gültige Empfängeradresse hinterlegen.",
+    "matrixHint": "Prüftermine werden stündlich geprüft.",
     "event": "Erinnerung",
     "pushColumn": "Push",
     "emailColumn": "E-Mail",
@@ -2406,11 +2406,11 @@
     "email": "Per E-Mail erinnern",
     "address": "Empfängeradresse",
     "push": "Per Push erinnern (alle aktivierten Geräte)",
-    "pushHint": "Aktivieren Sie jedes Gerät einzeln. Auf iPhone und iPad muss die Anwendung zum Home-Bildschirm hinzugefügt sein. Die Browserfreigabe ist zusätzlich erforderlich.",
-    "enableDevice": "Push auf diesem Gerät aktivieren",
-    "disableDevice": "Push auf diesem Gerät deaktivieren",
+    "pushHint": "Je Gerät aktivieren und im Browser erlauben. Auf iPhone und iPad ist die Installation auf dem Home-Bildschirm erforderlich.",
+    "enableDevice": "Auf diesem Gerät aktivieren",
+    "disableDevice": "Auf diesem Gerät deaktivieren",
     "deviceEnabled": "Push auf diesem Gerät aktiviert.",
-    "pushUnavailable": "Push ist hier nicht verfügbar. Öffnen Sie die installierte Anwendung über HTTPS in einem unterstützten Browser.",
+    "pushUnavailable": "Push nicht verfügbar. Bitte einen unterstützten Browser über HTTPS oder die installierte App verwenden.",
     "pushError": "Push konnte nicht eingerichtet werden. Bitte prüfen Sie die Browserfreigabe und versuchen Sie es erneut.",
     "inboxTitle": "Posteingang",
     "empty": "Keine Benachrichtigungen vorhanden.",
@@ -2418,16 +2418,16 @@
     "markRead": "Als gelesen markieren",
     "read": "Gelesen",
     "openAsset": "Asset öffnen",
-    "saved": "Einstellungen gespeichert.",
+    "saved": "Gespeichert",
     "loadError": "Benachrichtigungen konnten nicht geladen werden.",
-    "saveError": "Änderungen konnten nicht gespeichert werden. Bitte prüfen Sie die Eingaben und laden Sie die Seite gegebenenfalls neu.",
-    "mailHint": "Konfigurieren Sie den SMTP-Server und die Absenderadresse. Erst bei aktiviertem Versand können Benutzer E-Mail-Erinnerungen auswählen.",
+    "saveError": "Speichern fehlgeschlagen. Bitte Eingaben und Verbindung prüfen.",
+    "mailHint": "E-Mail-Erinnerungen sind für Benutzer erst bei aktiviertem Versand verfügbar.",
     "mailEnabled": "E-Mail-Versand aktivieren",
     "host": "SMTP-Server",
     "port": "SMTP-Port",
     "username": "SMTP-Benutzername",
     "password": "SMTP-Passwort",
-    "passwordStored": "Passwort gespeichert. Ein leeres Feld behält das bisherige Passwort bei.",
+    "passwordStored": "Leer lassen, um das gespeicherte Passwort beizubehalten.",
     "passwordEmpty": "Kein Passwort gespeichert.",
     "from": "Absenderadresse",
     "tls": "STARTTLS erzwingen (Port 465 verwendet direktes TLS)"

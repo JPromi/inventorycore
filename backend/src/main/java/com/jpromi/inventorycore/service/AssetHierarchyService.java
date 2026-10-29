@@ -30,7 +30,7 @@ public class AssetHierarchyService {
         var visited = new HashSet<UUID>();
         for (Asset ancestor = parent; ancestor != null; ancestor = ancestor.getParentAsset()) {
             if (Objects.equals(ancestor.getUuid(), child.getUuid()) || !visited.add(ancestor.getUuid())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Zuordnung würde einen Kreis in der Asset-Hierarchie erzeugen.");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Zuordnung würde einen Kreis erzeugen. Bitte ein anderes übergeordnetes Asset wählen.");
             }
         }
         String text = note == null || note.isBlank() || parent == null ? null : note.trim();

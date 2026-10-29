@@ -107,7 +107,7 @@ for (const width of [1280, 390]) {
     expect(await image.getAttribute('style')).not.toBe(before);
     await page.keyboard.press('0');
     await page.keyboard.press('ArrowRight');
-    await expect(dialog.getByRole('alert')).toContainText('Das Bild konnte nicht geladen werden.');
+    await expect(dialog.getByRole('alert')).toContainText('Bild konnte nicht geladen werden.');
     await page.keyboard.press('ArrowLeft');
     await expect(dialog.locator('.stage img')).toBeVisible();
     await page.keyboard.press('Escape');

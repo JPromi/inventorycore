@@ -127,7 +127,7 @@ for (const width of [1280, 390]) {
     await expect(advanced).toHaveCSS('background-color', 'rgb(15, 118, 110)');
     await page.locator('.style-modes').getByRole('button', { name: 'Dunkel', exact: true }).click();
     await expect(page.locator('app-color-picker .trigger')).toContainText('#E4D455');
-    await page.getByLabel('Markenname', { exact: true }).fill('Feuerwehr Musterstadt');
+    await page.getByLabel('Name der Organisation', { exact: true }).fill('Feuerwehr Musterstadt');
     await page.locator('app-color-picker .trigger').click();
     await page.locator('.hex-field input').fill('#101010');
     await page.locator('.hex-field input').press('Enter');
@@ -135,12 +135,12 @@ for (const width of [1280, 390]) {
     await page.getByRole('button', { name: 'Logo hochladen', exact: true }).click();
     await (await fileChooser).setFiles('public/icons/icon-512x512.png');
     await expect(page.getByRole('status')).toHaveText('Logo gespeichert.');
-    await expect(page.getByLabel('Markenname', { exact: true })).toHaveValue(
+    await expect(page.getByLabel('Name der Organisation', { exact: true })).toHaveValue(
       'Feuerwehr Musterstadt',
     );
     await expect(page.locator('.logo-preview')).toHaveAttribute('src', /mode=dark&v=new/);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.getByRole('status')).toHaveText('Anpassungen gespeichert.');
+    await expect(page.getByRole('status')).toHaveText('Gespeichert');
     expect(state.settings().brandColor).toBe('#0f766e');
     expect(state.settings().darkBrandColor).toBe('#101010');
     expect(state.settings().advancedThemeEnabled).toBe(true);
@@ -164,7 +164,7 @@ for (const width of [1280, 390]) {
     await expect(page.locator('.style-modes')).toHaveCount(0);
     await expect(page.locator('.logo-preview')).toHaveAttribute('src', state.settings().logoUrl);
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.getByRole('status')).toHaveText('Anpassungen gespeichert.');
+    await expect(page.getByRole('status')).toHaveText('Gespeichert');
     expect(state.settings().darkBrandColor).toBe('#101010');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

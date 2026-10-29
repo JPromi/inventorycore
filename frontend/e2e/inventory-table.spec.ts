@@ -198,7 +198,7 @@ test('creates ten assets with real drag-fill and keyboard fill for lookup column
   await select(page, 1, 'Typ').press('Control+d');
   await expect(select(page, 10, 'Typ')).toContainText('Pressluftatmer');
   await page.getByRole('dialog').screenshot({ path: 'test-results/inventory-table.png' });
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('10 gespeichert');
   expect(state.writes).toHaveLength(10);
   for (const write of state.writes) expect(write.body).not.toHaveProperty('invId');
@@ -225,12 +225,12 @@ test('pastes quoted Excel cells, retains leading zeros, retries failed creates w
     'Erstes Gerät\t"Text mit\nZeilenumbruch"\t00123\r\nZweites Gerät\t"Text mit ""Zitat"""\t00456\r\n',
   );
   await expect(cell(page, 1, 'Seriennummer')).toHaveValue('00123');
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('1 gespeichert');
-  await expect(page.getByRole('alert')).toContainText('Konflikt');
+  await expect(page.getByRole('alert')).toContainText('Speicherkonflikt');
   expect(state.writes[0].body['description']).toBe('Text mit\nZeilenumbruch');
   expect(state.writes[1].body['description']).toBe('Text mit "Zitat"');
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('2 gespeichert');
   expect(state.writes).toHaveLength(3);
   expect(state.writes.filter((write) => write.body['name'] === 'Erstes Gerät')).toHaveLength(1);
@@ -254,7 +254,7 @@ test('editing preserves fresh unrelated data, inherited tags, photos and relatio
   await expect(cell(page, 2, 'Name')).toHaveValue('Neuer Name');
   await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
   await expect(cell(page, 2, 'Name')).toHaveValue('Gerät 2');
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('1 gespeichert');
   expect(state.writes).toHaveLength(1);
   expect(state.writes[0].body).toMatchObject({
@@ -297,7 +297,7 @@ test('locations and types retain fields not displayed in the table', async ({ pa
     const state = await setup(page, endpoint);
     await editSelection(page, path);
     await cell(page, 1, 'Name').fill('Umbenannt');
-    await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('1 gespeichert');
     expect(state.writes[0].body['images']).toEqual(
       expect.arrayContaining([expect.objectContaining({ fileUuid: 'photo' })]),
@@ -331,7 +331,7 @@ test('load failure prevents editing and submitting incomplete replacement data',
   await page.getByRole('button', { name: 'Aktionen', exact: true }).click();
   await page.getByRole('menuitem', { name: 'In Tabelle bearbeiten', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Änderungen speichern', exact: true })).toHaveCount(
+  await expect(page.getByRole('button', { name: 'Speichern', exact: true })).toHaveCount(
     0,
   );
   expect(state.writes).toHaveLength(0);
@@ -364,9 +364,9 @@ test('rejects unknown pasted lookup values and prevents invalid names from reach
       new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData }),
     );
   });
-  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('nicht vorhanden');
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('unbekannt oder mehrdeutig');
   await cell(page, 1, 'Seriennummer').fill('00100');
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('alert').last()).toContainText('Name');
   expect(state.writes).toHaveLength(0);
 });
@@ -382,7 +382,7 @@ test('creates multiple locations and types using the same table', async ({ page 
     await createTable(page);
     await expect(cell(page, 1, 'Name')).toBeVisible();
     await paste(page, 1, 'Name', 'Erster Eintrag\tBeschreibung\r\nZweiter Eintrag\tBeschreibung');
-    await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+    await page.getByRole('button', { name: 'Speichern', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('2 gespeichert');
     expect(state.writes).toHaveLength(2);
     expect(state.writes[0].body).toMatchObject({ name: 'Erster Eintrag', areaUuids: ['area'] });
@@ -407,13 +407,13 @@ test('an unconfirmed create after a network failure is not resubmitted', async (
   await page.goto('/assets');
   await createTable(page);
   await cell(page, 1, 'Name').fill('Verbindungstest');
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText(
     'könnte bereits erstellt sein',
   );
   await expect(cell(page, 1, 'Name')).toBeDisabled();
   await expect(
-    page.getByRole('button', { name: 'Änderungen speichern', exact: true }),
+    page.getByRole('button', { name: 'Speichern', exact: true }),
   ).toBeDisabled();
   expect(attempts).toBe(1);
 });
@@ -488,7 +488,7 @@ test('active types add their fields dynamically; switching and undo retain value
   await expect(cell(page, 2, 'Hersteller')).toBeVisible();
   await expect(cell(page, 1, 'Hersteller')).toHaveCount(0);
   await cell(page, 2, 'Name').fill('PA 1');
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('2 gespeichert');
   expect(state.writes[0].body['fieldValues']).toEqual(
     expect.arrayContaining([
@@ -521,7 +521,7 @@ test('shared dropdown panels stay above the table and multi-selection saves UUID
   await expect(page.getByRole('option', { name: 'Direkt', exact: true })).toBeVisible();
   await page.getByRole('option', { name: 'Direkt', exact: true }).click();
   await cell(page, 1, 'Name').click();
-  await page.getByRole('button', { name: 'Änderungen speichern', exact: true }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('1 gespeichert');
   expect(state.writes[0].body).toMatchObject({
     assetTypeUuid: 'type',

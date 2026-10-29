@@ -375,7 +375,6 @@
               <svg lucideTriangleAlert size="18"></svg>
               {{ 'inspectionRun.unexpected.title' | t: { count: unexpectedItems.length } }}
             </h2>
-            <p class="hint">{{ 'inspectionRun.unexpected.hint' | t }}</p>
             <ul>
               @for (item of unexpectedItems; track item.uuid) {
                 <li>

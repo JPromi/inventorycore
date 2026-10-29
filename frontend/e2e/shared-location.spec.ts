@@ -25,7 +25,7 @@ test('a location used by several areas is marked as shared', async ({ page }) =>
   await page.goto('/locations/lager/edit');
   const toggle = page.getByRole('checkbox', { name: /Gemeinsamer Standort/ });
   await expect(toggle).not.toBeChecked();
-  await expect(page.getByText('Jeder Bereich sieht hier nur seine eigenen Assets und Unterstandorte.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Jeder Bereich sieht nur seine eigenen Assets und Unterstandorte.', { exact: false })).toBeVisible();
   await toggle.check();
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
   await expect(page).toHaveURL(/\/locations\/lager$/);

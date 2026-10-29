@@ -142,7 +142,7 @@ test('custom statuses are configured per area', async ({ page }) => {
   await page.getByRole('option', { name: 'Defekt', exact: true }).click();
   await create.locator('app-search-select').nth(1).locator('.trigger').click();
   await page.getByRole('option', { name: 'Fahrzeuge', exact: true }).click();
-  await create.getByRole('button', { name: 'Anlegen' }).click();
+  await create.getByRole('button', { name: 'Erstellen' }).click();
   await expect.poll(() => calls.created.length).toBe(1);
   expect(calls.created[0]).toMatchObject({ name: 'Beim Hersteller', category: 'DEFECT', areaUuid: 'fahrzeuge' });
 

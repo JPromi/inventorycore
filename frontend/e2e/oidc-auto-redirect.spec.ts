@@ -50,6 +50,21 @@ test('?direct=1 shows the normal login page', async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?direct=1$/);
 });
 
+test('default login is concise and configured login messages remain visible', async ({ page }) => {
+  await mockApi(page, { autoRedirect: false });
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { name: 'Anmelden', exact: true })).toBeVisible();
+  await expect(page.locator('.brand-text, aside.brand, .subtitle')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Anmelden', exact: true })).toBeVisible();
+  await page.route('**/api/customization', route => route.fulfill({ json: {
+    loginTitle: 'Anmeldung Gerätehaus',
+    loginMessage: 'Zugang nur für Mitglieder.',
+  } }));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Anmeldung Gerätehaus' })).toBeVisible();
+  await expect(page.locator('.subtitle')).toHaveText('Zugang nur für Mitglieder.');
+});
+
 test('a failed SSO login does not redirect again', async ({ page }) => {
   await mockApi(page);
   await page.goto('/login?error=oidc_failed');
@@ -73,7 +88,7 @@ test('after the logout the login page stays instead of signing in again', async 
   await page.getByRole('button', { name: 'Benutzermenü', exact: true }).click();
   await page.getByRole('button', { name: 'Abmelden', exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('status')).toHaveText('Erfolgreich abgemeldet.');
+  await expect(page.getByRole('status')).toHaveText('Abgemeldet');
   await page.waitForTimeout(300);
   await expect(page).toHaveURL(/\/login$/);
 });

@@ -145,12 +145,12 @@ public class AuthProviderController {
             ClientRegistration registration = clientRegistrations.build(settings);
             return new OidcTestResult(
                 true,
-                "Discovery erfolgreich. Ob Client-ID und Secret stimmen, zeigt erst ein Login.",
+                "Verbindung hergestellt. Client-ID und Secret werden erst bei der Anmeldung geprüft.",
                 registration.getProviderDetails().getIssuerUri(),
                 registration.getProviderDetails().getAuthorizationUri()
             );
         } catch (RuntimeException exception) {
-            return new OidcTestResult(false, "Issuer nicht erreichbar oder ungültig: " + exception.getMessage(), null, null);
+            return new OidcTestResult(false, "Anmeldedienst nicht erreichbar. Bitte Issuer-URL und Verbindung prüfen. Details: " + exception.getMessage(), null, null);
         }
     }
 

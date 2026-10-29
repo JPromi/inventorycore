@@ -1,35 +1,4 @@
 <section class="login-page">
-  <aside class="brand">
-    <div class="brand-logo">
-      @if (customization.logoUrl) {
-        <img class="custom-logo" [src]="customization.logoUrl" alt="" />
-      } @else {
-        <span class="logo-icon"><svg lucideBoxes size="22"></svg></span>
-      }
-      <span>{{ customization.brandName }}</span>
-    </div>
-
-    <div class="brand-text">
-      <h2>{{ 'login.tagline' | t }}</h2>
-      <ul>
-        <li>
-          <svg lucideBoxes size="18"></svg><span>{{ 'login.features.assets' | t }}</span>
-        </li>
-        <li>
-          <svg lucideMapPin size="18"></svg><span>{{ 'login.features.locations' | t }}</span>
-        </li>
-        <li>
-          <svg lucideLayers size="18"></svg><span>{{ 'login.features.access' | t }}</span>
-        </li>
-        <li>
-          <svg lucideQrCode size="18"></svg><span>{{ 'login.features.labels' | t }}</span>
-        </li>
-      </ul>
-    </div>
-
-    <p class="brand-footer">{{ 'login.copyright' | t: { year: year } }}</p>
-  </aside>
-
   <main class="form-side">
     <div class="login-card">
       <div class="mobile-logo">
@@ -42,7 +11,9 @@
       </div>
 
       <h1>{{ customization.settings.loginTitle || ('login.welcome' | t) }}</h1>
-      <p class="subtitle">{{ customization.settings.loginMessage || ('login.subtitle' | t) }}</p>
+      @if (customization.settings.loginMessage) {
+        <p class="subtitle">{{ customization.settings.loginMessage }}</p>
+      }
 
       @if (redirecting) {
         <div class="redirecting" role="status">
@@ -146,6 +117,7 @@
           }}</a>
         }
       </footer>
+      <p class="copyright">{{ 'login.copyright' | t: { year: year } }}</p>
     </div>
   </main>
 </section>
