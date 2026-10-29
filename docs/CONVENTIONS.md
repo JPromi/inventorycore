@@ -35,6 +35,15 @@ The PDF libraries introduce lazy chunks and jsPDF optional dependencies currentl
 
 ## Appearance
 
+The application uses a compact operational layout: white surfaces (`#ffffff`) on a near-white
+canvas (`#fafafa`), dark text (`#212121`), slate secondary text (`#64748b`), hairline separators
+(`#e5e7eb`), and the configurable fire-service red default (`#b62f2f`). Keep the system font,
+modest radii, and shared spacing scale. Reserve shadows for floating menus/dialogs; search
+fields and inventory rows do not need elevation. Dashboard metrics share a divided strip,
+while dashboard task sections use heading alignment and top rules instead of nested cards.
+Retain meaningful detail cards and mobile touch targets. Motion respects reduced-motion
+preferences, pinch zoom remains available, and the navigation includes a skip-to-content link.
+
 Light/dark semantic palettes live in `frontend/src/styles/_themes.scss`, applied from `styles.scss`; components still consume the same shared variables. The app is light by default. `ThemeService` follows the system preference only when System is chosen, then updating on live media-query changes. Reuse `ThemeSelector` in the user menu/profile rather than storing another theme state. Overrides are stored per user UUID (username fallback) in this browser; anonymous pages use a separate guest key. Every choice, System included, is stored; no stored value means light. Storage failures keep appearance usable; cross-tab storage changes are observed. This is not cross-device account synchronization. Before Angular starts, the CSS is light; the start screen in `index.html` uses the mode last shown (`inventorycore.theme.last`), so a dark choice does not flash light. Browser tests of the dark look choose System with `e2e/support/theme.ts` before emulating the color scheme.
 
 `CustomizationService.logoUrl` selects screen branding; do not read the raw light `settings.logoUrl` for navigation/login. Admin branding edits light by default, exposing separate light/dark editors only through the persisted advanced checkbox. Print documents and labels intentionally use the raw light logo/color and light palette regardless of screen theme. Keep native controls' `color-scheme` aligned with the effective theme and recompute brand-button text contrast when either the palette or brand color changes.

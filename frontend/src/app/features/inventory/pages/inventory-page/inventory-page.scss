@@ -213,14 +213,14 @@
     border-radius: var(--radius-md);
     transition:
       border-color 0.15s,
-      box-shadow 0.15s;
+      background-color 0.15s;
 
     &.clickable {
       cursor: pointer;
 
       &:hover {
         border-color: var(--border-strong);
-        box-shadow: var(--shadow-sm);
+        background: var(--surface-hover);
       }
     }
 

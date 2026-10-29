@@ -1,7 +1,7 @@
 :host {
   display: block;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: var(--section-space);
+  padding-top: var(--section-space);
   border-top: 1px solid var(--border);
 }
 h2 {
@@ -28,7 +28,7 @@ table {
 }
 th,
 td {
-  padding: 0.85rem 0.5rem;
+  padding: 0.65rem 0.5rem;
   border-bottom: 1px solid var(--border);
 }
 thead th {
@@ -49,9 +49,8 @@ tbody th {
   font-size: 0.9rem;
 }
 .device {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  padding-block: 0.75rem;
+  border-top: 1px solid var(--border);
 }
 .device button {
   margin-top: 0.75rem;

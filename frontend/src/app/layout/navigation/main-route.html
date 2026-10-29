@@ -1,3 +1,4 @@
+<a class="skip-link" href="#main-content" (click)="$event.preventDefault(); mainContent.focus()">{{ 'nav.skipToContent' | t }}</a>
 <!-- phones and tablets: top bar with menu button, the navigation slides in -->
 <header class="mobile-bar">
   <button
@@ -122,7 +123,7 @@
     <app-user-menu />
   </footer>
 </nav>
-<main>
+<main #mainContent id="main-content" tabindex="-1">
   <router-outlet />
 </main>
 <app-confirm-dialog />

@@ -5,6 +5,8 @@
       <div class="avatar">
         @if (user.profileImageUrl && !imageFailed) {
           <img
+            width="64"
+            height="64"
             [src]="user.profileImageUrl"
             [alt]="'profile.image' | t"
             referrerpolicy="no-referrer"

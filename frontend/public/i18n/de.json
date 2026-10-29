@@ -1856,6 +1856,7 @@
     "oidc": "OIDC",
     "logs": "Protokoll",
     "openMenu": "Menü öffnen",
+    "skipToContent": "Zum Inhalt springen",
     "closeMenu": "Menü schließen",
     "statuses": "Status",
     "storage": "Speicherplatz"

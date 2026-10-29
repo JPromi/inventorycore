@@ -48,7 +48,7 @@
 
                 @if (data.canInspect) {
                     <div class="columns">
-                        <section class="card panel">
+                        <section class="panel">
                             <div class="panel-head">
                                 <h2>{{ 'dashboard.next.title' | t }}</h2>
                                 <a class="more" routerLink="/inspections">{{ 'dashboard.showAll' | t }}</a>
@@ -72,7 +72,7 @@
                             }
                         </section>
 
-                        <section class="card panel">
+                        <section class="panel">
                             <div class="panel-head">
                                 <h2>{{ 'dashboard.recent.title' | t }}</h2>
                                 <a class="more" routerLink="/inspections">{{ 'dashboard.showAll' | t }}</a>
@@ -106,7 +106,7 @@
 
                 <div class="columns">
                     <!-- inventory: assets per type, most used tags -->
-                    <section class="card panel">
+                    <section class="panel">
                         <div class="panel-head">
                             <h2>{{ 'dashboard.stats.title' | t }}</h2>
                         </div>
@@ -143,7 +143,7 @@
                     </section>
 
                     @if (data.canInspect) {
-                        <section class="card panel">
+                        <section class="panel">
                             <div class="panel-head">
                                 <h2>{{ 'dashboard.results.title' | t }}</h2>
                             </div>
