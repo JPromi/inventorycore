@@ -1,5 +1,41 @@
 @use 'breakpoints' as bp;
 
+.notification-link {
+  display: inline-flex;
+  justify-content: center;
+  position: relative;
+  align-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  color: var(--text-subtle);
+  text-decoration: none;
+
+  &:hover,
+  &.active {
+    color: var(--text);
+  }
+
+  &:hover {
+    background: var(--surface-hover);
+  }
+
+  .notification-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.notification-count {
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  padding: 0.05rem 0.25rem;
+  font-size: 0.65rem;
+}
+
 :host {
   height: 100%;
   width: 100%;

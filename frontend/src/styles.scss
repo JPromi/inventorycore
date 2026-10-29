@@ -167,7 +167,10 @@ body.camera-open .page {
   padding: var(--page-padding);
   overflow: auto;
   color: var(--text);
+}
 
+// Profile sections share the same controls without acquiring full-page scrolling/layout.
+:is(.page, .form-controls) {
   :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
     width: 100%;
     min-height: 2.35rem;

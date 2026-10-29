@@ -1,5 +1,7 @@
 import {
   LucideLayoutDashboard,
+  LucideMail,
+  LucideBell,
   LucideScanBarcode,
   LucideBoxes,
   LucideMapPin,
@@ -39,6 +41,12 @@ export type NavItem = NavChild & {
   children?: NavChild[];
 };
 
+export const NOTIFICATION_NAV_ITEM: NavChild = {
+  label: t('notifications.title'),
+  route: '/notifications',
+  icon: LucideBell,
+};
+
 export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: t('nav.dashboard'), route: '/dashboard', icon: LucideLayoutDashboard },
   { label: t('nav.scan'), route: '/scan', icon: LucideScanBarcode },
@@ -68,6 +76,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     disabled: false,
     adminOnly: true,
     children: [
+      { label: t('notifications.adminTitle'), route: '/admin/notifications', icon: LucideMail },
       { label: t('nav.areas'), route: '/admin/areas', icon: LucideLayers },
       { label: t('nav.customization'), route: '/admin/customization', icon: LucidePalette },
       { label: t('nav.labelSettings'), route: '/admin/labels', icon: LucideRuler },

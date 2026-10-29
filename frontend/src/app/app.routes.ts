@@ -91,7 +91,9 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/pages/dashboard-page/dashboard-page').then((m) => m.DashboardPage),
+          import('./features/dashboard/pages/dashboard-page/dashboard-page').then(
+            (m) => m.DashboardPage,
+          ),
       },
       {
         path: 'profile',
@@ -380,12 +382,25 @@ export const routes: Routes = [
           ),
       },
 
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
+      },
       // Administration
       {
         path: 'admin',
         canActivate: [adminGuard],
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'users' },
+          {
+            path: 'notifications',
+            data: { notificationAdmin: true },
+            loadComponent: () =>
+              import('./features/notifications/notifications-page').then(
+                (m) => m.NotificationsPage,
+              ),
+          },
           {
             path: 'customization',
             loadComponent: () =>

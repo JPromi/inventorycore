@@ -10,6 +10,16 @@
     <svg lucideMenu size="22"></svg>
   </button>
   <span class="mobile-title">{{ currentTitle }}</span>
+  <a
+    class="notification-link"
+    routerLink="/notifications"
+    [attr.aria-label]="'notifications.title' | t"
+  >
+    <svg lucideBell size="20"></svg>
+    @if (notifications.unread | async; as count) {
+      <span class="notification-count">{{ count }}</span>
+    }
+  </a>
 </header>
 @if (menuOpen) {
   <div class="nav-backdrop" (click)="menuOpen = false" aria-hidden="true"></div>

@@ -1,9 +1,14 @@
-import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
+import { AsyncPipe, NgComponentOutlet, NgTemplateOutlet } from '@angular/common';
 import { ThemeSelector } from '../../../shared/components/theme-selector/theme-selector';
 import { Component, DestroyRef, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { LucideChevronsUpDown, LucideExternalLink, LucideLogOut, LucideUser } from '@lucide/angular';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  LucideChevronsUpDown,
+  LucideExternalLink,
+  LucideLogOut,
+  LucideUser,
+} from '@lucide/angular';
 import { filter } from 'rxjs';
 
 import { DropdownPosition } from '../../../shared/components/dropdown-position.directive';
@@ -12,6 +17,8 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AppInfoService } from '../../../core/service/app-info.service';
 import { AuthService } from '../../../core/service/auth.service';
 import { AuthStateService } from '../../../core/service/auth-state.service';
+import { NotificationService } from '../../../core/service/notification.service';
+import { NOTIFICATION_NAV_ITEM } from '../navigation.config';
 
 @Component({
   selector: 'app-user-menu',
@@ -19,7 +26,9 @@ import { AuthStateService } from '../../../core/service/auth-state.service';
     ThemeSelector,
     AsyncPipe,
     NgTemplateOutlet,
+    NgComponentOutlet,
     RouterLink,
+    RouterLinkActive,
     TranslatePipe,
     DropdownPosition,
     LucideChevronsUpDown,
@@ -31,6 +40,8 @@ import { AuthStateService } from '../../../core/service/auth-state.service';
   styleUrl: './user-menu.scss',
 })
 export class UserMenu implements OnInit {
+  protected readonly notificationNav = NOTIFICATION_NAV_ITEM;
+  protected readonly notificationIconInputs = { size: 16 };
   @ViewChild('userMenu') private userMenu?: ElementRef<HTMLElement>;
   @ViewChild('userMenuTrigger') private userMenuTrigger?: ElementRef<HTMLElement>;
   protected userMenuOpen = false;
@@ -61,6 +72,7 @@ export class UserMenu implements OnInit {
     private readonly auth: AuthService,
     private readonly authStateService: AuthStateService,
     private readonly router: Router,
+    protected readonly notifications: NotificationService,
   ) {}
 
   ngOnInit(): void {

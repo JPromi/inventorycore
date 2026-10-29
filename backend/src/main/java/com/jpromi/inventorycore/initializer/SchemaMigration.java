@@ -25,6 +25,14 @@ public class SchemaMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // New notification tables are created additively by Hibernate. Indexes are idempotent
+        // on existing installations; no user or inspection rows are rewritten.
+        if (tableExists("notification_message")) {
+            jdbc.execute("create index if not exists idx_notification_owner on notification_message (user_uuid, created_at desc)");
+        }
+        if (tableExists("notification_subscription")) {
+            jdbc.execute("create index if not exists idx_push_owner on notification_subscription (user_uuid)");
+        }
         // images may reference an uploaded file instead of an external url
         for (String table : new String[] { "asset_images", "location_images", "asset_type_images" }) {
             if (columnExists(table, "url")) {

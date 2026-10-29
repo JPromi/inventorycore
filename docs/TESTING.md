@@ -1,5 +1,24 @@
 # Testing
 
+## Notifications
+
+`NotificationServiceTest` covers unavailable e-mail, recipient/lead-time validation, independent
+upcoming/overdue channel choices, write-only SMTP passwords, persistent compatible VAPID keys,
+push URL restrictions, recurring reminder deduplication, stable never-checked cycles, disabled
+users, ownership and revoked access. `NotificationSecurityTest` checks anonymous denial and
+admin-only SMTP settings. `NotificationDeliveryServiceTest` mocks external transport to verify
+successful delivery, bounded retries, expired subscriptions and cancellation after revoked
+access, account disablement or a channel change. These tests need no PostgreSQL or external server.
+
+`notifications.spec.ts` uses delayed API mocks for read state and the unread badge, hides the e-mail
+column in the profile matrix without SMTP, saves independent event/channel selections from the profile,
+checks that the inbox contains no settings, checks sender/password behavior in the admin form,
+and verifies the mobile bell. It also checks e-mail gating on both server configuration and a valid
+recipient address, clearing the address, and shared profile input styles.
+Run alongside `user-menu.spec.ts` because logout
+now removes the device subscription. Production PWA permission prompts, real push delivery,
+SMTP interoperability and live PostgreSQL schema upgrades require deployment verification.
+
 ## Backend
 
 JUnit Jupiter and Mockito are available through Spring Boot test starters. Tests live under `backend/src/test/java` and cover image processing, LDAP synchronization/referrals, provider settings, profile uploads, inspection scheduling, and activity logging.

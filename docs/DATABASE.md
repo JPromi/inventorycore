@@ -1,5 +1,23 @@
 # Database
 
+## Notification storage and upgrades
+
+Four additive Hibernate-managed tables store notifications: `notification_settings` (singleton id 1,
+SMTP configuration and a persistent VAPID key pair), `notification_preference` (user UUID primary key,
+per-event channels, lead time and recipient), `notification_message` (UUID, owner UUID, unique event
+key, asset/template UUIDs, message snapshot, read timestamp and delivery flags/attempt count), and
+`notification_subscription` (UUID, owner UUID and unique browser push endpoint/keys).
+No existing user, asset, inspection, or schedule columns are changed. `SchemaMigration` adds
+idempotent indexes for inbox ordering and subscription ownership. Startup initializes the settings
+and VAPID keys once; preferences are created only when saved, with defaults for existing users.
+
+SMTP credentials and private VAPID material are server-side database fields, excluded from public
+DTOs and audit diffs. Include these tables in protected database backups; retaining the VAPID keys
+keeps existing device subscriptions usable after a restore. There are no cascading deletions into
+the inventory. Historical messages remain stored and access-filtered; no automatic retention cleanup
+is currently applied. User UUIDs deliberately have no new foreign keys, so existing user deletion
+continues to work; a missing/disabled owner cancels queued delivery.
+
 ## Persistence Model
 
 `customization` is a singleton row (`id = 1`) storing global brand name/color, login text, legal/contact links, and the sanitized logo bytes/content type/version. The dark variant uses nullable `dark_brand_color`, `dark_logo` (PostgreSQL `bytea`), `dark_logo_content_type`, and `dark_logo_version` columns, with nullable `advanced_theme_enabled` interpreted as false for existing rows. Hibernate update adds these columns; no destructive data conversion is needed. Public reads return defaults without creating a row. Logo uploads and settings updates preserve each other's fields; dark/light logo operations are independent and disabling advanced mode does not delete dark data. Label templates reference the light branding logically through their JSON elements/placeholders; logo bytes are not copied into label records. Personal screen appearance is browser-local per user, not a new user database column.

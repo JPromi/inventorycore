@@ -13,25 +13,42 @@
   </span>
 </ng-template>
 
-<button
-  #userMenuTrigger
-  type="button"
-  class="user"
-  [class.open]="userMenuOpen"
-  [attr.aria-label]="'userMenu.title' | t"
-  [title]="'userMenu.title' | t"
-  [attr.aria-expanded]="userMenuOpen"
-  aria-haspopup="menu"
-  aria-controls="user-menu"
-  (click)="userMenuOpen = !userMenuOpen"
->
-  <ng-container *ngTemplateOutlet="avatar; context: { large: false }" />
-  <span class="text">
-    <span class="user-name">{{ name }}</span>
-    <small>{{ roleLabel | t }}</small>
-  </span>
-  <svg class="chevron" lucideChevronsUpDown size="15"></svg>
-</button>
+<div class="account-controls">
+  <button
+    #userMenuTrigger
+    type="button"
+    class="user"
+    [class.open]="userMenuOpen"
+    [attr.aria-label]="'userMenu.title' | t"
+    [title]="'userMenu.title' | t"
+    [attr.aria-expanded]="userMenuOpen"
+    aria-haspopup="menu"
+    aria-controls="user-menu"
+    (click)="userMenuOpen = !userMenuOpen"
+  >
+    <ng-container *ngTemplateOutlet="avatar; context: { large: false }" />
+    <span class="text">
+      <span class="user-name">{{ name }}</span>
+      <small>{{ roleLabel | t }}</small>
+    </span>
+    <svg class="chevron" lucideChevronsUpDown size="15"></svg>
+  </button>
+  <a
+    class="account-notifications"
+    [routerLink]="notificationNav.route"
+    routerLinkActive="active"
+    ariaCurrentWhenActive="page"
+    [attr.aria-label]="notificationNav.label"
+    [title]="notificationNav.label"
+  >
+    @if (notificationNav.icon) {
+      <ng-container *ngComponentOutlet="notificationNav.icon; inputs: notificationIconInputs" />
+    }
+    @if (notifications.unread | async; as count) {
+      <span class="notification-count">{{ count }}</span>
+    }
+  </a>
+</div>
 
 @if (userMenuOpen) {
   <div

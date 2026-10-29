@@ -1,5 +1,45 @@
 # API
 
+## Notifications
+
+Authenticated users read `GET /api/notifications` (newest first, only their own messages and currently
+authorized assets/templates) and mark one message read with `PUT /api/notifications/{uuid}/read`.
+The response contains `uuid`, `title`, `body`, `assetUuid`, `createdAt`, and nullable `readAt`.
+The SPA's `/notifications` page contains only the inbox. Personal delivery preferences are a
+matrix in `/profile`, with event rows and channel columns (the e-mail column is absent without
+SMTP). Its bell sits beside the user menu in the navigation footer and in the mobile bar, with
+a count refreshed every minute.
+With SMTP configured, the recipient field is available before choosing the e-mail channel.
+E-mail checkboxes stay disabled until a valid recipient address is entered; clearing the address
+also clears the e-mail selections. Inbox and push remain independently selectable.
+
+`GET/PUT /api/notifications/preferences` use `inbox`, `email`, `push` for upcoming inspections and
+`overdueInbox`, `overdueEmail`, `overduePush` for overdue inspections, `daysBefore` (integer 0–90),
+and `emailAddress`. Read-only `emailAvailable` and `pushPublicKey` come from server configuration.
+Defaults are inbox enabled for both events, external channels disabled, and seven days' notice.
+E-mail options disappear when SMTP is not enabled/configured; the backend rejects enabling them.
+The inbox also archives reminders selected for external delivery, independently of channel selection.
+
+`POST /api/notifications/subscriptions` accepts the browser subscription `{endpoint, keys: {p256dh, auth}}`.
+`DELETE` on the same path accepts `{endpoint}` and removes only the current user's subscription.
+Only HTTPS endpoints of supported browser push providers are accepted; each account can register
+up to 20 devices. Browser subscriptions are reassigned to the current account on explicit activation.
+Signing out unregisters this browser before ending the session.
+
+Admin-only `GET/PUT /api/admin/notifications` configure `enabled`, `host`, `port`, `username`,
+`password`, `fromAddress`, and `startTls`. Password reads always return null and a separate
+`passwordConfigured` flag; a null write preserves the password and an empty string clears it.
+The SPA keeps the saved password when its password field is blank. Settings changes are audited
+without credential values. Port 465 uses implicit TLS; otherwise enabled STARTTLS is mandatory.
+
+The hourly scheduler starts one minute after startup. Each asset/template/check cycle gets one
+upcoming reminder and one overdue escalation, subject to the user's choices and current inspection
+permissions. Never-checked assets use a stable cycle key rather than generating a message every day.
+Pending external deliveries are processed in batches of 100 every minute, with at most five attempts.
+Account, channel, asset and template access are checked again before sending. Row locks and unique
+event keys prevent concurrent scheduled runs from creating duplicate reminders; external delivery
+is at-least-once (a process crash after sending and before committing may cause another delivery).
+
 `GET /api/app-info` is public and returns `name`, `version`, and `githubUrl`. The version comes from Gradle-generated Spring Boot build information (`-PappVersion` for releases); direct IDE runs without build information report `development`. The navigation footer loads this endpoint independently of branding settings.
 
 Inspection templates accept and return `defaultTagUuids` and `includeChildAssets` (default false). Starting an inspection locks the template tags; users may add selections but cannot remove template defaults. Preview and creation always merge template defaults into supplied filters, including empty lists. They accept a nullable `includeChildAssets` override; null uses the template default. With child inclusion enabled, all descendants of matching roots are added regardless of tag, location, type, area, or due-date filters, but each child still requires view/inspect permission and must not be excluded from inspections. Assets are deduplicated; the resulting run items and filter summary preserve the selection independently of later template edits.

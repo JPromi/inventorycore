@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, catchError, finalize, map, of, throwError } from 'rxjs';
+import { Observable, catchError, finalize, from, map, of, switchMap, throwError } from 'rxjs';
+import { NotificationService } from './notification.service';
 
 import { environment } from '../../../environments/environment';
 import { AuthLoginRequestDto } from '../dtos/auth-login-request.dto';
@@ -24,6 +25,7 @@ export class AuthService {
   constructor(
     private readonly http: HttpClient,
     private readonly authState: AuthStateService,
+    private readonly notifications: NotificationService,
   ) {}
 
   initializeSession(): Observable<UserEntity | null> {
@@ -84,9 +86,16 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    return this.http
-      .post<void>(`${this.backendUrl}/auth/logout`, null, { withCredentials: true })
-      .pipe(finalize(() => this.authState.clearCurrentUser()));
+    return from(this.notifications.disableDevice()).pipe(
+      catchError(() => of(undefined)),
+      switchMap(() =>
+        this.http.post<void>(`${this.backendUrl}/auth/logout`, null, { withCredentials: true }),
+      ),
+      finalize(() => {
+        this.notifications.unread.next(0);
+        this.authState.clearCurrentUser();
+      }),
+    );
   }
 
   getCurrentUser(): UserEntity | null {

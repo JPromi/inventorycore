@@ -1,4 +1,5 @@
 import { AsyncPipe } from '@angular/common';
+import { NotificationSettings } from '../../../notifications/notification-settings';
 import { ThemeSelector } from '../../../../shared/components/theme-selector/theme-selector';
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
@@ -12,7 +13,14 @@ import { AuthStateService } from '../../../../core/service/auth-state.service';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [AsyncPipe, LucideUpload, LucideTrash2, TranslatePipe, ThemeSelector],
+  imports: [
+    AsyncPipe,
+    LucideUpload,
+    LucideTrash2,
+    TranslatePipe,
+    ThemeSelector,
+    NotificationSettings,
+  ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
 })
