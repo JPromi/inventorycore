@@ -102,7 +102,9 @@
     "user": "Benutzer",
     "users": "Benutzer",
     "group": "Gruppe",
-    "groups": "Gruppen"
+    "groups": "Gruppen",
+    "task": "Aufgabe",
+    "tasks": "Aufgaben"
   },
   "inspectionStatus": {
     "PENDING": "Nicht geprüft",
@@ -1859,7 +1861,8 @@
     "skipToContent": "Zum Inhalt springen",
     "closeMenu": "Menü schließen",
     "statuses": "Status",
-    "storage": "Speicherplatz"
+    "storage": "Speicherplatz",
+    "tasks": "Aufgaben"
   },
   "pwa": {
     "install": "App installieren"
@@ -1899,7 +1902,8 @@
       "resourceTypes": {
         "ASSET": "Inventar",
         "LOCATION": "Standorte",
-        "ASSET_TYPE": "Typen & Tags"
+        "ASSET_TYPE": "Typen & Tags",
+        "TASK": "Aufgaben"
       },
       "flags": {
         "canView": "Ansehen",
@@ -1995,7 +1999,8 @@
       "LABEL_TEMPLATE": "Label-Vorlage",
       "PERMISSION": "Berechtigung",
       "SETTINGS": "Einstellungen",
-      "ASSET_STATUS": "Status"
+      "ASSET_STATUS": "Status",
+      "TASK_RUN": "Aufgabendurchführung"
     },
     "fields": {
       "name": "Name",
@@ -2155,7 +2160,13 @@
       "error": "Fehler: {error}",
       "PASSWORD_CHANGED": "Passwort geändert",
       "BIND_PASSWORD_CHANGED": "Bind-Passwort geändert",
-      "CLIENT_SECRET_CHANGED": "Client-Secret geändert"
+      "CLIENT_SECRET_CHANGED": "Client-Secret geändert",
+      "taskRunCreated": "Fällig am {date}, {entries} Checklistenpunkte",
+      "taskRunCompleted": "Fällig am {date}: {done} erledigt, {notDone} nicht erledigt, {pending} nicht bearbeitet",
+      "completedTaskRunDeleted": "Abgeschlossenes Aufgabenprotokoll gelöscht",
+      "taskDeleted": "Offene Durchführungen gelöscht: {count}",
+      "taskEntryResult": "Aufgabe „{task}“, {point}: {result}",
+      "taskRunStarted": "Von Hand gestartet"
     },
     "started": {
       "summary": {
@@ -2431,5 +2442,191 @@
     "passwordEmpty": "Kein Passwort gespeichert.",
     "from": "Absenderadresse",
     "tls": "STARTTLS erzwingen (Port 465 verwendet direktes TLS)"
+  },
+  "taskEntryStatus": {
+    "PENDING": "Nicht bearbeitet",
+    "DONE": "Erledigt",
+    "NOT_DONE": "Nicht erledigt"
+  },
+  "tasks": {
+    "title": "Aufgaben",
+    "assigneeGroup": "Gruppe {name}",
+    "paused": "Pausiert",
+    "once": "Einmalig",
+    "nextDue": "Nächste Fälligkeit: {date}",
+    "overdue": "Überfällig",
+    "runStatus": {
+      "OPEN": "Offen",
+      "COMPLETED": "Abgeschlossen"
+    },
+    "assignedToMe": "Mir zugewiesen",
+    "dueOn": "Fällig am {date}",
+    "completedBy": "Abgeschlossen am {date} von {name}",
+    "progress": "{percent} % bearbeitet",
+    "list": {
+      "summary": "{mine} mir zugewiesen · {open} offen",
+      "overdue": "{count} überfällig",
+      "new": "Neue Aufgabe",
+      "tabs": {
+        "MINE": "Mir zugewiesen",
+        "OPEN": "Offen",
+        "COMPLETED": "Abgeschlossen",
+        "TASKS": "Alle Aufgaben"
+      },
+      "searchPlaceholder": "Aufgabe, Person oder Bereich suchen …",
+      "clearSearch": "Suche leeren",
+      "loadError": "Aufgaben konnten nicht geladen werden.",
+      "notFound": "Keine passenden Aufgaben gefunden.",
+      "noTasks": "Noch keine Aufgaben geplant.",
+      "pointCount": {
+        "one": "{count} Checklistenpunkt",
+        "other": "{count} Checklistenpunkte"
+      },
+      "retry": "Erneut versuchen",
+      "empty": {
+        "MINE": "Keine offenen Aufgaben zugewiesen.",
+        "OPEN": "Keine offenen Aufgaben.",
+        "COMPLETED": "Noch keine Aufgabe abgeschlossen."
+      }
+    },
+    "form": {
+      "createTitle": "Neue Aufgabe",
+      "editTitle": "Aufgabe",
+      "openRun": "Offene Durchführung, fällig am {date}",
+      "noFurtherRuns": "Keine weitere Durchführung geplant",
+      "openRunLink": "Durchführung öffnen",
+      "general": "Allgemein",
+      "titleLabel": "Titel",
+      "titlePlaceholder": "z. B. Atemschutzgeräte Sichtprüfung",
+      "descriptionPlaceholder": "Hinweise zur Durchführung",
+      "areaPlaceholder": "Bereich auswählen …",
+      "state": "Status",
+      "active": "Aktiv – neue Durchführungen werden angelegt",
+      "assignees": "Zuständig",
+      "addUser": "Person hinzufügen …",
+      "addGroup": "Gruppe hinzufügen …",
+      "schedule": "Termin",
+      "repeat": "Wiederholung",
+      "firstDue": "Erstmals fällig am",
+      "dueDate": "Fällig am",
+      "every": "Alle",
+      "intervalValue": "Anzahl",
+      "intervalUnit": "Einheit",
+      "checklist": "Checkliste",
+      "pointPlaceholder": "z. B. Flaschendruck geprüft",
+      "pointName": "Checklistenpunkt",
+      "pointDescriptionPlaceholder": "Hinweis (optional)",
+      "pointDescription": "Hinweis zum Checklistenpunkt",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "removePoint": "Punkt entfernen",
+      "addPoint": "Punkt hinzufügen",
+      "assets": "Betroffene Assets",
+      "addAsset": "Asset hinzufügen …",
+      "allLocations": "Alle Standorte",
+      "includeSubLocations": "Unterstandorte einschließen",
+      "anyTag": "Beliebige Tags",
+      "anyType": "Beliebige Typen",
+      "counting": "Assets werden gezählt …",
+      "previewCount": {
+        "one": "Derzeit {count} Asset betroffen",
+        "other": "Derzeit {count} Assets betroffen"
+      },
+      "history": "Durchführungen",
+      "historyCounts": "{done} erledigt · {notDone} nicht erledigt · {pending} nicht bearbeitet",
+      "errors": {
+        "titleRequired": "Bitte einen Titel angeben.",
+        "areaRequired": "Bitte einen Bereich auswählen.",
+        "pointRequired": "Die Checkliste braucht mindestens einen Punkt.",
+        "intervalRequired": "Bitte ein Intervall größer als 0 angeben.",
+        "save": "Die Aufgabe konnte nicht gespeichert werden.",
+        "assetRequired": "Bitte mindestens ein Asset auswählen.",
+        "assetPointRequired": "Bitte mindestens einen Punkt „Für jedes Asset“ angeben."
+      },
+      "assignedUsers": "Zuständige Personen",
+      "assignedGroups": "Zuständige Gruppen",
+      "startingOn": "ab",
+      "assetMode": {
+        "NONE": "Keine Assets",
+        "PICK": "Assets auswählen",
+        "FILTER": "Nach Filter"
+      },
+      "assetModeHint": {
+        "NONE": "Die Checkliste gilt für die Aufgabe als Ganzes.",
+        "PICK": "Die Punkte unter „Für jedes Asset“ werden bei jedem dieser Assets abgefragt.",
+        "FILTER": "Alle passenden Assets im Bereich {area}; bei jeder Durchführung neu ermittelt."
+      },
+      "showAssets": "Anzeigen",
+      "hideAssets": "Ausblenden",
+      "generalPoints": "Allgemein",
+      "generalPointsHint": "Einmal pro Durchführung (optional).",
+      "assetPoints": "Für jedes Asset",
+      "assetPointsHint": "Wird bei jedem betroffenen Asset abgehakt.",
+      "assetPointPlaceholder": "z. B. Updates installiert",
+      "scheduleMode": {
+        "ON_DEMAND": "Bei Bedarf",
+        "ONCE": "Einmalig",
+        "RECURRING": "Wiederkehrend"
+      },
+      "onDemandHint": "Wird über „Jetzt durchführen“ beliebig oft gestartet."
+    },
+    "run": {
+      "backToList": "Zu den Aufgaben",
+      "dismiss": "Hinweis schließen",
+      "assignedTo": "Zuständig: {names}",
+      "openTask": "Aufgabe",
+      "complete": "Abschließen",
+      "readOnlyHint": "Nur zugewiesene Personen und Gruppen sowie Berechtigte des Bereichs bearbeiten diese Aufgabe.",
+      "general": "Allgemein",
+      "noEntries": "Diese Durchführung enthält keine Checklistenpunkte.",
+      "dueDate": "Fällig am",
+      "completed": "Abgeschlossen",
+      "scope": "Umfang",
+      "protocolComment": "Abschlussbemerkung",
+      "comment": "Kommentar",
+      "commentPlaceholder": "Kommentar (optional)",
+      "commentSaving": "Wird gespeichert …",
+      "commentSaved": "Gespeichert",
+      "commentError": "Kommentar konnte nicht gespeichert werden.",
+      "checkedBy": "{name}, {date}",
+      "stats": {
+        "points": "Checklistenpunkte"
+      },
+      "columns": {
+        "point": "Checklistenpunkt",
+        "result": "Ergebnis",
+        "checked": "Bearbeitet"
+      },
+      "completeDialog": {
+        "title": "Aufgabe abschließen",
+        "doneOfTotal": "von {total} Punkten erledigt",
+        "notDone": "nicht erledigt",
+        "pending": "nicht bearbeitet",
+        "comment": "Abschlussbemerkung",
+        "commentPlaceholder": "z. B. Ersatzteile bestellt, Nachkontrolle erforderlich",
+        "lockHint": "Nach dem Abschluss kann die Aufgabe nicht mehr bearbeitet werden.",
+        "submitting": "Wird abgeschlossen …",
+        "submit": "Abschließen"
+      },
+      "print": {
+        "kind": "Aufgabenprotokoll",
+        "doneBy": "Durchgeführt von",
+        "responsible": "Verantwortlich"
+      },
+      "errors": {
+        "save": "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+        "complete": "Die Aufgabe konnte nicht abgeschlossen werden.",
+        "completed": "Die Aufgabe wurde bereits abgeschlossen und kann nicht mehr geändert werden."
+      },
+      "addComment": "Kommentar hinzufügen"
+    },
+    "onDemand": "Bei Bedarf",
+    "start": "Jetzt durchführen",
+    "startAgain": "Erneut durchführen",
+    "continue": "Fortsetzen",
+    "lastDone": "Zuletzt erledigt am {date}",
+    "errors": {
+      "start": "Die Aufgabe konnte nicht gestartet werden."
+    }
   }
 }

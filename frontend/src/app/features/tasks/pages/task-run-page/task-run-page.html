@@ -1,0 +1,509 @@
+<section class="page">
+  <div class="page-shell">
+    <a class="back-link no-print" routerLink="/tasks">
+      <svg lucideArrowLeft size="16"></svg>
+      <span>{{ 'tasks.run.backToList' | t }}</span>
+    </a>
+
+    @if (error) {
+      <p class="error no-print">
+        {{ error }}
+        <button
+          type="button"
+          class="icon-button"
+          [title]="'tasks.run.dismiss' | t"
+          (click)="error = ''"
+        >
+          <svg lucideX size="14"></svg>
+        </button>
+      </p>
+    }
+
+    @if (loading && !detail) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else if (detail) {
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">
+            {{ 'tasks.dueOn' | t: { date: (detail.summary.dueDate | date: 'dd.MM.yyyy') } }}
+            ·
+            @if (!open) {
+              <span class="badge success"
+                ><svg lucideLock size="11"></svg> {{ 'tasks.runStatus.COMPLETED' | t }}</span
+              >
+            } @else if (detail.summary.overdue) {
+              <span class="badge accent">{{ 'tasks.overdue' | t }}</span>
+            } @else {
+              <span class="badge warn">{{ 'tasks.runStatus.OPEN' | t }}</span>
+            }
+          </p>
+          <h1>
+            <svg lucideListChecks size="20"></svg>
+            <span>{{ detail.summary.title }}</span>
+          </h1>
+          <p class="sub">
+            {{ detail.summary.areaName }}
+            @if (detail.summary.assigneeNames) {
+              · {{ 'tasks.run.assignedTo' | t: { names: detail.summary.assigneeNames } }}
+            }
+          </p>
+          @if (detail.summary.scopeSummary) {
+            <p class="sub">{{ detail.summary.scopeSummary }}</p>
+          }
+        </div>
+        <div class="header-actions no-print">
+          @if (detail.summary.canDelete) {
+            <button type="button" class="danger-action" (click)="remove()">
+              <svg lucideTrash2 size="16"></svg>
+              <span>{{ 'common.delete' | t }}</span>
+            </button>
+          }
+          @if (detail.summary.taskUuid) {
+            <a class="secondary-action" [routerLink]="['/tasks/definitions', detail.summary.taskUuid]">
+              <svg lucidePencil size="16"></svg>
+              <span>{{ 'tasks.run.openTask' | t }}</span>
+            </a>
+          }
+          @if (canWork) {
+            <button type="button" class="primary-action" (click)="startCompleting()">
+              <svg lucideCircleCheck size="16"></svg>
+              <span>{{ 'tasks.run.complete' | t }}</span>
+            </button>
+          } @else if (!open) {
+            <button type="button" class="secondary-action" (click)="print()">
+              <svg lucidePrinter size="16"></svg>
+              <span>{{ 'common.print' | t }}</span>
+            </button>
+            @if (detail.canRestart) {
+              <button type="button" class="primary-action" (click)="restart()">
+                <svg lucideRotateCcw size="16"></svg>
+                <span>{{ 'tasks.startAgain' | t }}</span>
+              </button>
+            }
+          }
+        </div>
+      </header>
+
+      @if (detail.description) {
+        <p class="description">{{ detail.description }}</p>
+      }
+
+      @if (open) {
+        <div class="progress-wrap">
+          <span class="hint">
+            {{ 'tasks.progress' | t: { percent: progress } }} ·
+            {{ 'taskEntryStatus.PENDING' | t }}: {{ detail.summary.counts.pending }}
+          </span>
+          <div
+            class="progress"
+            role="progressbar"
+            [attr.aria-label]="'tasks.progress' | t: { percent: progress }"
+            [attr.aria-valuenow]="progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <span
+              class="done"
+              [style.width.%]="
+                detail.summary.counts.total
+                  ? (detail.summary.counts.done / detail.summary.counts.total) * 100
+                  : 0
+              "
+            ></span>
+            <span
+              class="not-done"
+              [style.width.%]="
+                detail.summary.counts.total
+                  ? (detail.summary.counts.notDone / detail.summary.counts.total) * 100
+                  : 0
+              "
+            ></span>
+          </div>
+          @if (!detail.canWork) {
+            <p class="hint">{{ 'tasks.run.readOnlyHint' | t }}</p>
+          }
+        </div>
+
+        <div class="checklist">
+          @if (general.length) {
+            <section class="group">
+              <h2 class="group-title">
+                <span>{{ 'tasks.run.general' | t }}</span>
+                <small class="count">{{ doneText(general) }}</small>
+              </h2>
+              @for (entry of general; track entry.uuid) {
+                <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+              }
+            </section>
+          }
+          @for (group of assetGroups; track group.assetUuid) {
+            <section class="group">
+              <h2 class="group-title">
+                <svg lucideBoxes size="15"></svg>
+                @if (group.assetVisible) {
+                  <a [routerLink]="['/assets', group.assetUuid]">{{ group.assetName }}</a>
+                } @else {
+                  <span>{{ group.assetName }}</span>
+                }
+                <small class="meta">{{
+                  [group.invId, group.locationName].filter(isSet).join(' · ')
+                }}</small>
+                <small class="count">{{ doneText(group.entries) }}</small>
+              </h2>
+              @for (entry of group.entries; track entry.uuid) {
+                <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+              }
+            </section>
+          }
+        </div>
+
+        @if (!detail.entries.length) {
+          <div class="empty-state">{{ 'tasks.run.noEntries' | t }}</div>
+        }
+
+        @if (completing) {
+          <div class="dialog-backdrop" (click)="completing = false">
+            <div
+              class="card dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="complete-title"
+              (click)="$event.stopPropagation()"
+            >
+              <h2 id="complete-title">{{ 'tasks.run.completeDialog.title' | t }}</h2>
+              <ul class="complete-summary">
+                <li>
+                  <strong>{{ detail.summary.counts.done }}</strong>
+                  {{
+                    'tasks.run.completeDialog.doneOfTotal'
+                      | t: { total: detail.summary.counts.total }
+                  }}
+                </li>
+                @if (detail.summary.counts.notDone) {
+                  <li class="bad">
+                    <strong>{{ detail.summary.counts.notDone }}</strong>
+                    {{ 'tasks.run.completeDialog.notDone' | t }}
+                  </li>
+                }
+                @if (detail.summary.counts.pending) {
+                  <li class="warn">
+                    <strong>{{ detail.summary.counts.pending }}</strong>
+                    {{ 'tasks.run.completeDialog.pending' | t }}
+                  </li>
+                }
+              </ul>
+              <label class="field">
+                <span>{{ 'tasks.run.completeDialog.comment' | t }}</span>
+                <textarea
+                  [(ngModel)]="comment"
+                  name="completeComment"
+                  rows="4"
+                  [placeholder]="'tasks.run.completeDialog.commentPlaceholder' | t"
+                ></textarea>
+              </label>
+              <p class="hint lock-hint">
+                <svg lucideLock size="14"></svg>
+                {{ 'tasks.run.completeDialog.lockHint' | t }}
+              </p>
+              <div class="dialog-actions">
+                <button type="button" class="secondary-action" (click)="completing = false">
+                  {{ 'common.cancel' | t }}
+                </button>
+                <button
+                  type="button"
+                  class="primary-action"
+                  [disabled]="submitting"
+                  (click)="complete()"
+                >
+                  <svg lucideLock size="15"></svg>
+                  <span>{{
+                    submitting
+                      ? ('tasks.run.completeDialog.submitting' | t)
+                      : ('tasks.run.completeDialog.submit' | t)
+                  }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      } @else {
+        <!-- ================= PROTOCOL ================= -->
+        <section class="card protocol-meta">
+          <dl>
+            <div>
+              <dt>{{ 'tasks.run.dueDate' | t }}</dt>
+              <dd>{{ detail.summary.dueDate | date: 'dd.MM.yyyy' }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'tasks.run.completed' | t }}</dt>
+              <dd>
+                {{
+                  'inspectionRun.protocol.byLine'
+                    | t
+                      : {
+                          date: (detail.summary.completedAt | date: 'dd.MM.yyyy HH:mm'),
+                          name: detail.summary.completedByName,
+                        }
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ 'tasks.form.assignees' | t }}</dt>
+              <dd>{{ detail.summary.assigneeNames || '—' }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'tasks.run.scope' | t }}</dt>
+              <dd>{{ detail.summary.scopeSummary || '—' }}</dd>
+            </div>
+          </dl>
+          @if (detail.comment) {
+            <div class="comment">
+              <dt>{{ 'tasks.run.protocolComment' | t }}</dt>
+              <dd>{{ detail.comment }}</dd>
+            </div>
+          }
+        </section>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="value">{{ detail.summary.counts.total }}</span>
+            <span class="label">{{ 'tasks.run.stats.points' | t }}</span>
+          </div>
+          <div class="stat done">
+            <span class="value">{{ detail.summary.counts.done }}</span>
+            <span class="label">{{ 'taskEntryStatus.DONE' | t }}</span>
+          </div>
+          <div class="stat not-done">
+            <span class="value">{{ detail.summary.counts.notDone }}</span>
+            <span class="label">{{ 'taskEntryStatus.NOT_DONE' | t }}</span>
+          </div>
+          <div class="stat" [class.warning]="detail.summary.counts.pending">
+            <span class="value">{{ detail.summary.counts.pending }}</span>
+            <span class="label">{{ 'taskEntryStatus.PENDING' | t }}</span>
+          </div>
+        </div>
+
+        <section class="card report-section">
+          <ng-container *ngTemplateOutlet="protocolTables" />
+        </section>
+
+        <app-print-document
+          [kind]="'tasks.run.print.kind' | t"
+          [title]="detail.summary.title"
+          [meta]="printMeta"
+          [signatures]="printSignatures"
+        >
+          <div class="print-stats">
+            <div>
+              <strong>{{ detail.summary.counts.total }}</strong
+              ><span>{{ 'tasks.run.stats.points' | t }}</span>
+            </div>
+            <div>
+              <strong>{{ detail.summary.counts.done }}</strong
+              ><span>{{ 'taskEntryStatus.DONE' | t }}</span>
+            </div>
+            <div>
+              <strong>{{ detail.summary.counts.notDone }}</strong
+              ><span>{{ 'taskEntryStatus.NOT_DONE' | t }}</span>
+            </div>
+            <div>
+              <strong>{{ detail.summary.counts.pending }}</strong
+              ><span>{{ 'taskEntryStatus.PENDING' | t }}</span>
+            </div>
+          </div>
+          @if (detail.description) {
+            <section class="print-section">
+              <h2>{{ 'common.description' | t }}</h2>
+              <p class="print-text">{{ detail.description }}</p>
+            </section>
+          }
+          @if (detail.comment) {
+            <section class="print-section">
+              <h2>{{ 'tasks.run.protocolComment' | t }}</h2>
+              <p class="print-text">{{ detail.comment }}</p>
+            </section>
+          }
+          <section class="print-section">
+            <h2>{{ 'tasks.form.checklist' | t }}</h2>
+            <ng-container *ngTemplateOutlet="protocolTables; context: { print: true }" />
+          </section>
+        </app-print-document>
+      }
+    }
+  </div>
+</section>
+
+<!-- one checklist point while the run is open -->
+<ng-template #entryRow let-entry>
+  <div
+    class="entry"
+    [class.done]="entry.status === 'DONE'"
+    [class.not-done]="entry.status === 'NOT_DONE'"
+  >
+    <button
+      type="button"
+      class="check"
+      role="checkbox"
+      [attr.aria-checked]="entry.status === 'DONE'"
+      [attr.aria-label]="entry.pointName"
+      [title]="'taskEntryStatus.DONE' | t"
+      [disabled]="!canWork"
+      (click)="toggleDone(entry)"
+    >
+      @if (entry.status === 'DONE') {
+        <svg lucideCheck size="15"></svg>
+      } @else if (entry.status === 'NOT_DONE') {
+        <svg lucideX size="15"></svg>
+      }
+    </button>
+    <div class="entry-body">
+      <span class="entry-name">{{ entry.pointName }}</span>
+      @if (entry.pointDescription) {
+        <small class="entry-note">{{ entry.pointDescription }}</small>
+      }
+      @if (showsComment(entry)) {
+        <textarea
+          [id]="'comment-' + entry.uuid"
+          rows="1"
+          [ngModel]="commentValue(entry)"
+          (ngModelChange)="commentChanged(entry, $event)"
+          (blur)="flushComment(entry.uuid)"
+          [disabled]="!canWork"
+          [placeholder]="'tasks.run.commentPlaceholder' | t"
+          [attr.aria-label]="'tasks.run.comment' | t"
+        ></textarea>
+      }
+      @if (entry.checkedByName || saveStates.get(entry.uuid)) {
+        <small class="entry-meta">
+          @if (entry.status === 'NOT_DONE') {
+            <span class="bad">{{ 'taskEntryStatus.NOT_DONE' | t }}</span> ·
+          }
+          @if (entry.checkedByName) {
+            {{
+              'tasks.run.checkedBy'
+                | t: { name: entry.checkedByName, date: (entry.checkedAt | date: 'dd.MM. HH:mm') }
+            }}
+          }
+          @switch (saveStates.get(entry.uuid)) {
+            @case ('saving') {
+              · {{ 'tasks.run.commentSaving' | t }}
+            }
+            @case ('saved') {
+              · {{ 'tasks.run.commentSaved' | t }}
+            }
+            @case ('error') {
+              · <span class="bad">{{ 'tasks.run.commentError' | t }}</span>
+            }
+          }
+        </small>
+      }
+    </div>
+    @if (canWork) {
+      <div class="entry-actions">
+        @if (!showsComment(entry)) {
+          <button
+            type="button"
+            class="icon-button"
+            [title]="'tasks.run.addComment' | t"
+            [attr.aria-label]="'tasks.run.addComment' | t"
+            (click)="openComment(entry)"
+          >
+            <svg lucideMessageSquare size="15"></svg>
+          </button>
+        }
+        <button
+          type="button"
+          class="icon-button not-done-button"
+          [class.active]="entry.status === 'NOT_DONE'"
+          [attr.aria-pressed]="entry.status === 'NOT_DONE'"
+          [title]="'taskEntryStatus.NOT_DONE' | t"
+          [attr.aria-label]="'taskEntryStatus.NOT_DONE' | t"
+          (click)="setStatus(entry, 'NOT_DONE')"
+        >
+          <svg lucideX size="15"></svg>
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- the completed checklist: points of the run, then per asset -->
+<ng-template #protocolTables let-print="print">
+  @if (general.length) {
+    @if (!print) {
+      <h2>{{ 'tasks.run.general' | t }}</h2>
+    }
+    <div [class.table-wrap]="!print">
+      <table [class.report-table]="!print" [class.print-table]="print">
+        <thead>
+          <tr>
+            <th>{{ 'tasks.run.columns.point' | t }}</th>
+            <th>{{ 'tasks.run.columns.result' | t }}</th>
+            <th>{{ 'tasks.run.comment' | t }}</th>
+            <th>{{ 'tasks.run.columns.checked' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of general; track entry.uuid) {
+            <tr>
+              <td>{{ entry.pointName }}</td>
+              <td [class.print-alert]="print && entry.status !== 'DONE'" [class]="'status ' + entry.status">
+                {{ statusLabel(entry.status) }}
+              </td>
+              <td>{{ entry.comment || '' }}</td>
+              <td>
+                @if (entry.checkedByName) {
+                  {{ entry.checkedByName }}, {{ entry.checkedAt | date: 'dd.MM.yyyy HH:mm' }}
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+  @if (assetGroups.length) {
+    @if (!print) {
+      <h2>{{ 'terms.assets' | t }}</h2>
+    }
+    <div [class.table-wrap]="!print">
+      <table [class.report-table]="!print" [class.print-table]="print">
+        <thead>
+          <tr>
+            <th>{{ 'terms.asset' | t }}</th>
+            <th>{{ 'tasks.run.columns.point' | t }}</th>
+            <th>{{ 'tasks.run.columns.result' | t }}</th>
+            <th>{{ 'tasks.run.comment' | t }}</th>
+            <th>{{ 'tasks.run.columns.checked' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (group of assetGroups; track group.assetUuid) {
+            @for (entry of group.entries; track entry.uuid; let first = $first) {
+              <tr [class.group-start]="first">
+                <td>
+                  @if (first) {
+                    <strong>{{ group.assetName }}</strong>
+                    @if (group.invId) {
+                      <br /><span class="mono">{{ group.invId }}</span>
+                    }
+                  }
+                </td>
+                <td>{{ entry.pointName }}</td>
+                <td [class.print-alert]="print && entry.status !== 'DONE'" [class]="'status ' + entry.status">
+                  {{ statusLabel(entry.status) }}
+                </td>
+                <td>{{ entry.comment || '' }}</td>
+                <td>
+                  @if (entry.checkedByName) {
+                    {{ entry.checkedByName }}, {{ entry.checkedAt | date: 'dd.MM.yyyy HH:mm' }}
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</ng-template>

@@ -1,0 +1,272 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">
+        {{ 'tasks.list.summary' | t: { mine: counts.MINE, open: counts.OPEN } }}
+        @if (counts.OVERDUE) {
+          ·
+          <span class="overdue-text">{{ 'tasks.list.overdue' | t: { count: counts.OVERDUE } }}</span>
+        }
+      </p>
+      <h1>
+        <svg lucideListChecks size="20"></svg>
+        <span>{{ 'tasks.title' | t }}</span>
+      </h1>
+    </div>
+    @if (canCreate) {
+      <div class="header-actions">
+        <a class="primary-action" routerLink="/tasks/definitions/new">
+          <svg lucidePlus size="17"></svg>
+          <span>{{ 'tasks.list.new' | t }}</span>
+        </a>
+      </div>
+    }
+  </header>
+
+  <div class="toolbar">
+    <div class="segmented-tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="tab === 'TASKS'"
+        [attr.aria-selected]="tab === 'TASKS'"
+        (click)="setTab('TASKS')"
+      >
+        {{ 'tasks.list.tabs.TASKS' | t }} <span class="count">{{ taskCount }}</span>
+      </button>
+      @for (entry of runTabs; track entry) {
+        <button
+          type="button"
+          role="tab"
+          [class.active]="tab === entry"
+          [attr.aria-selected]="tab === entry"
+          (click)="setTab(entry)"
+        >
+          {{ tabLabel(entry) }}
+          <span class="count" [class.alert]="entry === 'OPEN' && counts.OVERDUE">{{
+            counts[entry]
+          }}</span>
+        </button>
+      }
+    </div>
+    <div class="search-box">
+      <svg class="search-icon" lucideSearch size="18"></svg>
+      <input
+        type="text"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+        (keydown.escape)="clearSearch()"
+        [placeholder]="'tasks.list.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+      @if (search) {
+        <button
+          type="button"
+          class="clear"
+          [title]="'tasks.list.clearSearch' | t"
+          (click)="clearSearch()"
+        >
+          <svg lucideX size="15"></svg>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (error) {
+    <p class="error">{{ error }}</p>
+  }
+
+  @if (loading) {
+    <p class="empty">{{ 'common.loading' | t }}</p>
+  } @else if (showTasks) {
+    @if (tasks.error && !tasks.items.length) {
+      <p class="error">{{ 'tasks.list.loadError' | t }}</p>
+    } @else if (!tasks.loaded) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else if (!tasks.items.length) {
+      <div class="empty-state">
+        {{ search.trim() ? ('tasks.list.notFound' | t) : ('tasks.list.noTasks' | t) }}
+      </div>
+    } @else {
+      <div class="task-list">
+        @for (task of tasks.items; track task.uuid) {
+          <div class="card task-row">
+            <button type="button" class="main" (click)="openTask(task)">
+              <div class="title-line">
+                @if (!task.active) {
+                  <span class="badge"
+                    ><svg lucidePause size="11"></svg> {{ 'tasks.paused' | t }}</span
+                  >
+                }
+                <strong>{{ task.title }}</strong>
+                <span class="badge">{{ task.areaName }}</span>
+              </div>
+              <span class="scope">{{ task.scopeSummary }}</span>
+              <span class="meta">
+                <span class="meta-item">
+                  <svg lucideRepeat size="13"></svg>
+                  {{
+                    task.onDemand
+                      ? ('tasks.onDemand' | t)
+                      : task.intervalValue
+                        ? intervalText(task.intervalValue, task.intervalUnit)
+                        : ('tasks.once' | t)
+                  }}
+                </span>
+                @if (task.nextDueDate && task.active) {
+                  <span class="meta-item">
+                    <svg lucideCalendarClock size="13"></svg>
+                    {{ 'tasks.nextDue' | t: { date: (task.nextDueDate | date: 'dd.MM.yyyy') } }}
+                  </span>
+                }
+                @if (task.assignees.length) {
+                  <span class="meta-item">
+                    <svg lucideUsers size="13"></svg>
+                    {{ assigneeText(task) }}
+                  </span>
+                }
+                @if (task.lastCompletedAt) {
+                  <span class="meta-item">{{
+                    'tasks.lastDone' | t: { date: (task.lastCompletedAt | date: 'dd.MM.yyyy') }
+                  }}</span>
+                }
+              </span>
+            </button>
+            @if (task.openRunUuid) {
+              <button type="button" class="secondary-action compact" (click)="start(task)">
+                {{ 'tasks.continue' | t }}
+              </button>
+            } @else if (task.canStart) {
+              <button type="button" class="primary-action compact" (click)="start(task)">
+                <svg lucidePlay size="14"></svg>
+                <span>{{ 'tasks.start' | t }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+      <div
+        class="list-end"
+        (appInfiniteScroll)="tasks.loadMore()"
+        [scrollDisabled]="tasks.loading || !tasks.hasMore"
+      >
+        @if (tasks.loading) {
+          <span>{{ 'common.loadingMore' | t }}</span>
+        } @else if (tasks.error) {
+          <button type="button" class="secondary-action compact" (click)="tasks.loadMore()">
+            {{ 'tasks.list.retry' | t }}
+          </button>
+        }
+      </div>
+    }
+  } @else if (runs.error && !runs.items.length) {
+    <p class="error">{{ 'tasks.list.loadError' | t }}</p>
+  } @else if (!runs.loaded) {
+    <p class="empty">{{ 'common.loading' | t }}</p>
+  } @else if (!runs.items.length) {
+    <div class="empty-state">
+      @if (search.trim()) {
+        {{ 'tasks.list.notFound' | t }}
+      } @else {
+        {{ 'tasks.list.empty.' + tab | t }}
+      }
+    </div>
+  } @else {
+    <div class="task-list">
+      @for (run of runs.items; track run.uuid) {
+        <button
+          type="button"
+          class="card task-row"
+          [class.overdue]="run.overdue"
+          (click)="open(run)"
+        >
+          <div class="main">
+            <div class="title-line">
+              @if (run.status === 'COMPLETED') {
+                <span class="badge success">{{ 'tasks.runStatus.COMPLETED' | t }}</span>
+              } @else if (run.overdue) {
+                <span class="badge accent">{{ 'tasks.overdue' | t }}</span>
+              } @else {
+                <span class="badge warn">{{ 'tasks.runStatus.OPEN' | t }}</span>
+              }
+              <strong>{{ run.title }}</strong>
+              <span class="badge">{{ run.areaName }}</span>
+              @if (run.assignedToMe && run.status === 'OPEN') {
+                <span class="badge accent">{{ 'tasks.assignedToMe' | t }}</span>
+              }
+            </div>
+            @if (run.scopeSummary) {
+              <span class="scope">{{ run.scopeSummary }}</span>
+            }
+            <span class="meta">
+              <span class="meta-item">
+                <svg lucideCalendarClock size="13"></svg>
+                {{ 'tasks.dueOn' | t: { date: (run.dueDate | date: 'dd.MM.yyyy') } }}
+              </span>
+              @if (run.assigneeNames) {
+                <span class="meta-item">
+                  <svg lucideUsers size="13"></svg>
+                  {{ run.assigneeNames }}
+                </span>
+              }
+              @if (run.completedAt) {
+                <span class="meta-item">
+                  {{
+                    'tasks.completedBy'
+                      | t
+                        : {
+                            date: (run.completedAt | date: 'dd.MM.yyyy HH:mm'),
+                            name: run.completedByName,
+                          }
+                  }}
+                </span>
+              }
+            </span>
+          </div>
+          <div class="stats">
+            <div class="progress" [title]="'tasks.progress' | t: { percent: progress(run) }">
+              <span
+                class="done"
+                [style.width.%]="run.counts.total ? (run.counts.done / run.counts.total) * 100 : 0"
+              ></span>
+              <span
+                class="not-done"
+                [style.width.%]="
+                  run.counts.total ? (run.counts.notDone / run.counts.total) * 100 : 0
+                "
+              ></span>
+            </div>
+            <div class="numbers">
+              <span
+                ><strong>{{ run.counts.done }}</strong> {{ 'taskEntryStatus.DONE' | t }}</span
+              >
+              <span
+                ><strong>{{ run.counts.notDone }}</strong>
+                {{ 'taskEntryStatus.NOT_DONE' | t }}</span
+              >
+              @if (run.counts.pending) {
+                <span
+                  ><strong>{{ run.counts.pending }}</strong>
+                  {{ 'taskEntryStatus.PENDING' | t }}</span
+                >
+              }
+            </div>
+          </div>
+        </button>
+      }
+    </div>
+    <div
+      class="list-end"
+      (appInfiniteScroll)="runs.loadMore()"
+      [scrollDisabled]="runs.loading || !runs.hasMore"
+    >
+      @if (runs.loading) {
+        <span>{{ 'common.loadingMore' | t }}</span>
+      } @else if (runs.error) {
+        <button type="button" class="secondary-action compact" (click)="runs.loadMore()">
+          {{ 'tasks.list.retry' | t }}
+        </button>
+      }
+    </div>
+  }
+</section>

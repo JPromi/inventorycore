@@ -10,7 +10,7 @@ export interface AuthResponseDto {
   message?: string | null;
 }
 
-export type PermissionResourceType = 'ASSET' | 'LOCATION' | 'ASSET_TYPE';
+export type PermissionResourceType = 'ASSET' | 'LOCATION' | 'ASSET_TYPE' | 'TASK';
 
 export interface PermissionDto {
   uuid: string;

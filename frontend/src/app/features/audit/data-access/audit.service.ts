@@ -25,6 +25,8 @@ export type AuditObjectType =
   | 'ASSET_STATUS'
   | 'INSPECTION'
   | 'INSPECTION_TYPE'
+  | 'TASK'
+  | 'TASK_RUN'
   | 'LABEL_TEMPLATE'
   | 'USER'
   | 'GROUP'
@@ -105,6 +107,8 @@ export const AUDIT_OBJECT_TYPES: { value: AuditObjectType; label: string }[] = [
   { value: 'ASSET_STATUS', label: t('audit.objectTypes.ASSET_STATUS') },
   { value: 'INSPECTION', label: t('terms.inspection') },
   { value: 'INSPECTION_TYPE', label: t('terms.inspectionTemplate') },
+  { value: 'TASK', label: t('terms.task') },
+  { value: 'TASK_RUN', label: t('audit.objectTypes.TASK_RUN') },
   { value: 'LABEL_TEMPLATE', label: t('audit.objectTypes.LABEL_TEMPLATE') },
   { value: 'USER', label: t('terms.user') },
   { value: 'GROUP', label: t('terms.group') },
@@ -137,6 +141,10 @@ export function auditObjectRoute(log: AuditLog): string[] | null {
       return ['/inspections', log.objectUuid];
     case 'INSPECTION_TYPE':
       return ['/config/inspection-templates', log.objectUuid];
+    case 'TASK':
+      return ['/tasks/definitions', log.objectUuid];
+    case 'TASK_RUN':
+      return ['/tasks', log.objectUuid];
     case 'LABEL_TEMPLATE':
       return ['/config/labels', log.objectUuid, 'edit'];
     case 'USER':

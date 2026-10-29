@@ -10,7 +10,7 @@ export interface UserEntity {
   isLoggedIn: boolean;
 }
 
-export type PermissionResourceType = 'ASSET' | 'LOCATION' | 'ASSET_TYPE';
+export type PermissionResourceType = 'ASSET' | 'LOCATION' | 'ASSET_TYPE' | 'TASK';
 
 export interface UserPermissionEntity {
   uuid: string;

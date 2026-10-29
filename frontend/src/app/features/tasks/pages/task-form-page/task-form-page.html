@@ -1,0 +1,465 @@
+<section class="page">
+  <div class="page-shell narrow">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ 'tasks.title' | t }}</p>
+        <h1>
+          <svg lucideListChecks size="20"></svg>
+          <span>{{
+            isNew ? ('tasks.form.createTitle' | t) : task?.title || ('tasks.form.editTitle' | t)
+          }}</span>
+        </h1>
+      </div>
+      <div class="header-actions">
+        @if (task?.canDelete) {
+          <button type="button" class="danger-action" (click)="remove()">
+            <svg lucideTrash2 size="16"></svg>
+            <span>{{ 'common.delete' | t }}</span>
+          </button>
+        }
+        <a class="secondary-action" routerLink="/tasks">
+          <svg lucideArrowLeft size="16"></svg>
+          <span>{{ 'common.back' | t }}</span>
+        </a>
+      </div>
+    </header>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    @if (loading) {
+      <p class="empty">{{ 'common.loading' | t }}</p>
+    } @else {
+      @if (task) {
+        <section class="card status-card">
+          <div>
+            @if (openRun; as run) {
+              <strong>{{
+                'tasks.form.openRun' | t: { date: (run.dueDate | date: 'dd.MM.yyyy') }
+              }}</strong>
+            } @else if (task.onDemand) {
+              <strong>{{ 'tasks.onDemand' | t }}</strong>
+            } @else if (task.nextDueDate && task.active) {
+              <strong>{{
+                'tasks.nextDue' | t: { date: (task.nextDueDate | date: 'dd.MM.yyyy') }
+              }}</strong>
+            } @else if (!task.active) {
+              <strong>{{ 'tasks.paused' | t }}</strong>
+            } @else {
+              <strong>{{ 'tasks.form.noFurtherRuns' | t }}</strong>
+            }
+            <small class="hint">{{ task.scopeSummary }}</small>
+          </div>
+          @if (openRun; as run) {
+            <a class="primary-action" [routerLink]="['/tasks', run.uuid]">
+              <svg lucideExternalLink size="16"></svg>
+              <span>{{ 'tasks.form.openRunLink' | t }}</span>
+            </a>
+          } @else if (task.canStart) {
+            <button type="button" class="primary-action" [disabled]="starting" (click)="startRun()">
+              <svg lucidePlay size="16"></svg>
+              <span>{{ (runs.length ? 'tasks.startAgain' : 'tasks.start') | t }}</span>
+            </button>
+          }
+        </section>
+      }
+
+      <form class="stack" (ngSubmit)="save()">
+        <fieldset class="plain" [disabled]="!editable">
+          <!-- what and who -->
+          <section class="content-section">
+            <h2>{{ 'tasks.form.general' | t }}</h2>
+            <div class="fields">
+              <label class="field wide">
+                <span>{{ 'tasks.form.titleLabel' | t }}</span>
+                <input
+                  type="text"
+                  [(ngModel)]="title"
+                  name="title"
+                  required
+                  [placeholder]="'tasks.form.titlePlaceholder' | t"
+                />
+              </label>
+              <label class="field wide">
+                <span>{{ 'common.description' | t }} <small>({{ 'common.optional' | t }})</small></span>
+                <textarea
+                  [(ngModel)]="description"
+                  name="description"
+                  rows="2"
+                  [placeholder]="'tasks.form.descriptionPlaceholder' | t"
+                ></textarea>
+              </label>
+              <div class="field">
+                <span>{{ 'terms.area' | t }}</span>
+                <app-search-select
+                  [options]="areaOptions"
+                  [(ngModel)]="areaUuid"
+                  (ngModelChange)="selectionChanged()"
+                  name="area"
+                  [disabled]="!editable"
+                  [placeholder]="'tasks.form.areaPlaceholder' | t"
+                />
+              </div>
+              @if (!isNew) {
+                <div class="field">
+                  <span>{{ 'tasks.form.state' | t }}</span>
+                  <label class="toggle">
+                    <input type="checkbox" [(ngModel)]="active" name="active" />
+                    <span>{{ 'tasks.form.active' | t }}</span>
+                  </label>
+                </div>
+              }
+              <div class="field">
+                <span>{{ 'tasks.form.assignedUsers' | t }}</span>
+                <app-multi-select
+                  [options]="userOptions"
+                  [(ngModel)]="assignedUserUuids"
+                  name="users"
+                  [disabled]="!editable"
+                  [placeholder]="'tasks.form.addUser' | t"
+                />
+              </div>
+              <div class="field">
+                <span>{{ 'tasks.form.assignedGroups' | t }}</span>
+                <app-multi-select
+                  [options]="groupOptions"
+                  [(ngModel)]="assignedGroupUuids"
+                  name="groups"
+                  [disabled]="!editable"
+                  [placeholder]="'tasks.form.addGroup' | t"
+                />
+              </div>
+            </div>
+          </section>
+
+          <!-- when -->
+          <section class="content-section">
+            <h2>{{ 'tasks.form.schedule' | t }}</h2>
+            <div class="schedule">
+              <div class="segmented-tabs" role="radiogroup" [attr.aria-label]="'tasks.form.repeat' | t">
+                @for (mode of scheduleModes; track mode) {
+                  <button
+                    type="button"
+                    role="radio"
+                    [attr.aria-checked]="schedule === mode"
+                    [class.active]="schedule === mode"
+                    (click)="schedule = mode"
+                  >
+                    {{ scheduleLabel(mode) }}
+                  </button>
+                }
+              </div>
+              @if (schedule === 'ON_DEMAND') {
+                <span class="hint">{{ 'tasks.form.onDemandHint' | t }}</span>
+              } @else if (schedule === 'RECURRING') {
+                <div class="inline">
+                  <span>{{ 'tasks.form.every' | t }}</span>
+                  <input
+                    type="number"
+                    class="number"
+                    min="1"
+                    step="1"
+                    [(ngModel)]="intervalValue"
+                    name="intervalValue"
+                    [attr.aria-label]="'tasks.form.intervalValue' | t"
+                  />
+                  <select
+                    [(ngModel)]="intervalUnit"
+                    name="intervalUnit"
+                    [attr.aria-label]="'tasks.form.intervalUnit' | t"
+                  >
+                    @for (unit of intervalUnits; track unit.value) {
+                      <option [value]="unit.value">{{ unit.label }}</option>
+                    }
+                  </select>
+                  <span>{{ 'tasks.form.startingOn' | t }}</span>
+                  <input
+                    type="date"
+                    [(ngModel)]="startDate"
+                    name="startDate"
+                    required
+                    [attr.aria-label]="'tasks.form.firstDue' | t"
+                  />
+                </div>
+              } @else {
+                <div class="inline">
+                  <span>{{ 'tasks.form.dueDate' | t }}</span>
+                  <input
+                    type="date"
+                    [(ngModel)]="startDate"
+                    name="startDate"
+                    required
+                    [attr.aria-label]="'tasks.form.dueDate' | t"
+                  />
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- which assets -->
+          <section class="content-section">
+            <h2>{{ 'tasks.form.assets' | t }}</h2>
+            <div class="segmented-tabs" role="radiogroup" [attr.aria-label]="'tasks.form.assets' | t">
+              @for (mode of assetModes; track mode) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="assetMode === mode"
+                  [class.active]="assetMode === mode"
+                  (click)="setAssetMode(mode)"
+                >
+                  {{ modeLabel(mode) }}
+                </button>
+              }
+            </div>
+
+            @switch (assetMode) {
+              @case ('NONE') {
+                <p class="hint">{{ 'tasks.form.assetModeHint.NONE' | t }}</p>
+              }
+              @case ('PICK') {
+                <p class="hint">{{ 'tasks.form.assetModeHint.PICK' | t }}</p>
+                <app-multi-select
+                  [options]="assetOptions"
+                  [(ngModel)]="assetUuids"
+                  (ngModelChange)="selectionChanged()"
+                  name="assets"
+                  [disabled]="!editable"
+                  [placeholder]="'tasks.form.addAsset' | t"
+                  [ariaLabel]="'tasks.form.addAsset' | t"
+                />
+              }
+              @case ('FILTER') {
+                <p class="hint">{{ 'tasks.form.assetModeHint.FILTER' | t: { area: areaName } }}</p>
+                <div class="fields three">
+                  <div class="field">
+                    <span>{{ 'terms.locations' | t }}</span>
+                    <app-multi-select
+                      [options]="locationOptions"
+                      [(ngModel)]="filter.locationUuids"
+                      (ngModelChange)="selectionChanged()"
+                      name="filterLocations"
+                      [disabled]="!editable"
+                      [placeholder]="'tasks.form.allLocations' | t"
+                    />
+                    @if (filter.locationUuids.length) {
+                      <label class="toggle">
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="filter.includeSubLocations"
+                          (ngModelChange)="selectionChanged()"
+                          name="includeSub"
+                        />
+                        <span>{{ 'tasks.form.includeSubLocations' | t }}</span>
+                      </label>
+                    }
+                  </div>
+                  <div class="field">
+                    <span>{{ 'terms.assetTypes' | t }}</span>
+                    <app-multi-select
+                      [options]="assetTypeOptions"
+                      [(ngModel)]="filter.assetTypeUuids"
+                      (ngModelChange)="selectionChanged()"
+                      name="filterTypes"
+                      [disabled]="!editable"
+                      [placeholder]="'tasks.form.anyType' | t"
+                    />
+                  </div>
+                  <div class="field">
+                    <span>{{ 'terms.tags' | t }}</span>
+                    <app-multi-select
+                      [options]="tagOptions"
+                      [(ngModel)]="filter.tagUuids"
+                      (ngModelChange)="selectionChanged()"
+                      name="filterTags"
+                      [disabled]="!editable"
+                      [placeholder]="'tasks.form.anyTag' | t"
+                    />
+                  </div>
+                </div>
+              }
+            }
+
+            @if (assetMode !== 'NONE') {
+              @if (editable) {
+                <div class="preview">
+                  @if (previewLoading) {
+                    <span class="hint">{{ 'tasks.form.counting' | t }}</span>
+                  } @else if (preview) {
+                    <strong>{{ 'tasks.form.previewCount' | tn: preview.count }}</strong>
+                    @if (preview.assets.length) {
+                      <button
+                        type="button"
+                        class="link-button"
+                        [attr.aria-expanded]="showPreviewList"
+                        (click)="showPreviewList = !showPreviewList"
+                      >
+                        {{
+                          showPreviewList
+                            ? ('tasks.form.hideAssets' | t)
+                            : ('tasks.form.showAssets' | t)
+                        }}
+                      </button>
+                    }
+                    @if (showPreviewList) {
+                      <ul>
+                        @for (asset of preview.assets; track asset.uuid) {
+                          <li>
+                            {{ asset.name }}
+                            <span class="meta">{{
+                              [asset.invId, asset.locationName].filter(isSet).join(' · ')
+                            }}</span>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  }
+                </div>
+              } @else if (task?.scopeSummary; as scope) {
+                <p class="hint">{{ scope }}</p>
+              }
+            }
+          </section>
+
+          <!-- checklist -->
+          <section class="content-section">
+            <h2>{{ 'tasks.form.checklist' | t }}</h2>
+            @if (assetMode !== 'NONE') {
+              <h3>{{ 'tasks.form.generalPoints' | t }}</h3>
+              <p class="hint">{{ 'tasks.form.generalPointsHint' | t }}</p>
+            }
+            <ng-container *ngTemplateOutlet="pointList; context: { list: 'general' }" />
+
+            @if (assetMode !== 'NONE') {
+              <h3>{{ 'tasks.form.assetPoints' | t }}</h3>
+              <p class="hint">{{ 'tasks.form.assetPointsHint' | t }}</p>
+              <ng-container *ngTemplateOutlet="pointList; context: { list: 'asset' }" />
+            }
+          </section>
+        </fieldset>
+
+        @if (editable) {
+          <div class="save-bar card">
+            <a class="secondary-action" routerLink="/tasks">{{ 'common.cancel' | t }}</a>
+            <button type="submit" class="primary-action" [disabled]="saving">
+              <svg lucideSave size="16"></svg>
+              <span>{{ saving ? ('common.saving' | t) : ('common.save' | t) }}</span>
+            </button>
+          </div>
+        }
+
+        <ng-template #pointList let-list="list">
+          <ol class="points">
+            @for (point of points(list); track point; let index = $index) {
+              <li class="point">
+                <span class="number">{{ index + 1 }}.</span>
+                <div class="point-fields">
+                  <input
+                    type="text"
+                    [(ngModel)]="point.name"
+                    [name]="list + 'Name' + index"
+                    [disabled]="!editable"
+                    [placeholder]="
+                      list === 'asset'
+                        ? ('tasks.form.assetPointPlaceholder' | t)
+                        : ('tasks.form.pointPlaceholder' | t)
+                    "
+                    [attr.aria-label]="'tasks.form.pointName' | t"
+                  />
+                  @if (openNotes.has(point) || point.description) {
+                    <input
+                      type="text"
+                      class="note"
+                      [(ngModel)]="point.description"
+                      [name]="list + 'Note' + index"
+                      [disabled]="!editable"
+                      [placeholder]="'tasks.form.pointDescriptionPlaceholder' | t"
+                      [attr.aria-label]="'tasks.form.pointDescription' | t"
+                    />
+                  }
+                </div>
+                @if (editable) {
+                  <div class="point-actions">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [class.active]="openNotes.has(point) || point.description"
+                      [title]="'tasks.form.pointDescription' | t"
+                      (click)="toggleNote(point)"
+                    >
+                      <svg lucideMessageSquare size="14"></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [title]="'tasks.form.moveUp' | t"
+                      [disabled]="index === 0"
+                      (click)="movePoint(list, index, -1)"
+                    >
+                      <svg lucideArrowUp size="14"></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [title]="'tasks.form.moveDown' | t"
+                      [disabled]="index === points(list).length - 1"
+                      (click)="movePoint(list, index, 1)"
+                    >
+                      <svg lucideArrowDown size="14"></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [title]="'tasks.form.removePoint' | t"
+                      (click)="removePoint(list, index)"
+                    >
+                      <svg lucideTrash2 size="14"></svg>
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ol>
+          @if (editable) {
+            <button type="button" class="add-point" (click)="addPoint(list)">
+              <svg lucidePlus size="15"></svg>
+              <span>{{ 'tasks.form.addPoint' | t }}</span>
+            </button>
+          }
+        </ng-template>
+      </form>
+
+      @if (runs.length) {
+        <section class="content-section history">
+          <h2>{{ 'tasks.form.history' | t }}</h2>
+          <ul class="run-list">
+            @for (run of runs; track run.uuid) {
+              <li>
+                <a [routerLink]="['/tasks', run.uuid]">
+                  {{ 'tasks.dueOn' | t: { date: (run.dueDate | date: 'dd.MM.yyyy') } }}
+                </a>
+                @if (run.status === 'COMPLETED') {
+                  <span class="badge success">{{ 'tasks.runStatus.COMPLETED' | t }}</span>
+                } @else if (run.overdue) {
+                  <span class="badge accent">{{ 'tasks.overdue' | t }}</span>
+                } @else {
+                  <span class="badge warn">{{ 'tasks.runStatus.OPEN' | t }}</span>
+                }
+                <span class="meta">{{
+                  'tasks.form.historyCounts'
+                    | t
+                      : {
+                          done: run.counts.done,
+                          notDone: run.counts.notDone,
+                          pending: run.counts.pending,
+                        }
+                }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </div>
+</section>

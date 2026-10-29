@@ -22,6 +22,7 @@ import {
   LucideHistory,
   LucideRuler,
   LucideHardDrive,
+  LucideListChecks,
   type LucideIcon,
 } from '@lucide/angular';
 import { t } from '../../core/i18n/i18n';
@@ -53,6 +54,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: t('nav.assets'), route: '/assets', icon: LucideBoxes },
   { label: t('nav.locations'), route: '/locations', icon: LucideMapPin },
   { label: t('nav.inspections'), route: '/inspections', icon: LucideClipboardCheck },
+  { label: t('nav.tasks'), route: '/tasks', icon: LucideListChecks },
   {
     label: t('nav.config'),
     icon: LucideSettings,

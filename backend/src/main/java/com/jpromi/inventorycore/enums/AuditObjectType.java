@@ -9,6 +9,8 @@ public enum AuditObjectType {
     ASSET_STATUS,
     INSPECTION,
     INSPECTION_TYPE,
+    TASK,
+    TASK_RUN,
     LABEL_TEMPLATE,
     USER,
     GROUP,

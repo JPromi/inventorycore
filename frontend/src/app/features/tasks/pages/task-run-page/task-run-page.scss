@@ -1,0 +1,276 @@
+@use 'breakpoints' as bp;
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  .sub {
+    margin-top: 0.3rem;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+
+  .description {
+    margin-bottom: 1rem;
+    white-space: pre-line;
+  }
+
+  .hint {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+
+  .bad {
+    color: var(--accent-foreground);
+  }
+
+  .warn {
+    color: var(--warning);
+  }
+
+  .progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: var(--section-space);
+
+    .progress {
+      height: 0.4rem;
+      display: flex;
+      overflow: hidden;
+      border-radius: var(--radius-pill);
+      background: var(--surface-active);
+
+      .done {
+        background: var(--success);
+      }
+
+      .not-done {
+        background: var(--accent);
+      }
+    }
+  }
+
+  // ---- checklist ----
+
+  .group {
+    margin-bottom: 1.5rem;
+  }
+
+  .group-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-strong);
+    font-size: 0.95rem;
+
+    a {
+      color: inherit;
+    }
+
+    .meta {
+      color: var(--text-subtle);
+      font-size: 0.78rem;
+      font-weight: 400;
+    }
+
+    .count {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+  }
+
+  .entry {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+
+    .check {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: grid;
+      place-items: center;
+      margin-top: 0.05rem;
+      padding: 0;
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--on-accent);
+      cursor: pointer;
+
+      &:disabled {
+        cursor: default;
+      }
+    }
+
+    &.done .check {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    &.done .entry-name {
+      color: var(--text-muted);
+    }
+
+    &.not-done .check {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .entry-body {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-note,
+    .entry-meta {
+      color: var(--text-subtle);
+      font-size: 0.78rem;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 2.2rem;
+      margin-top: 0.2rem;
+      resize: vertical;
+      font-size: 0.88rem;
+    }
+
+    .entry-actions {
+      display: flex;
+
+      .not-done-button.active {
+        color: var(--accent-foreground);
+      }
+    }
+  }
+
+  // ---- complete dialog ----
+
+  .complete-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding-left: 1.1rem;
+    font-size: 0.9rem;
+  }
+
+  .lock-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  // ---- protocol ----
+
+  .protocol-meta {
+    margin-bottom: 1rem;
+    overflow-wrap: anywhere;
+
+    dl {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+      gap: 0.75rem 1.5rem;
+      margin: 0;
+    }
+
+    dt {
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    dd {
+      margin: 0;
+    }
+
+    .comment {
+      margin-top: 0.9rem;
+      white-space: pre-line;
+    }
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.75rem;
+    margin-bottom: 1rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+
+    .value {
+      font-size: 1.45rem;
+      font-weight: 800;
+    }
+
+    .label {
+      color: var(--text-muted);
+      font-size: 0.76rem;
+    }
+
+    &.done .value {
+      color: var(--success);
+    }
+
+    &.not-done .value {
+      color: var(--accent-foreground);
+    }
+
+    &.warning .value {
+      color: var(--warning);
+    }
+  }
+
+  .report-section {
+    margin-bottom: 1rem;
+
+    h2 {
+      margin: 0.5rem 0 0.6rem;
+    }
+
+    .group-start td {
+      border-top: 2px solid var(--border-strong);
+    }
+
+    .status {
+      font-weight: 600;
+
+      &.DONE {
+        color: var(--success);
+      }
+
+      &.NOT_DONE {
+        color: var(--accent-foreground);
+      }
+
+      &.PENDING {
+        color: var(--warning);
+      }
+    }
+  }
+
+  // report tables scroll sideways instead of getting squashed on phones
+  .table-wrap {
+    overflow-x: auto;
+
+    table {
+      min-width: 34rem;
+    }
+  }
+}
