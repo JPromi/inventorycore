@@ -605,3 +605,35 @@ test('new split button supports keyboard dismissal and single creation', async (
   await page.locator('.create-actions').getByRole('button', { name: 'Neu', exact: true }).click();
   await expect(page).toHaveURL(/\/assets\/new$/);
 });
+
+test('a renamed type field shares the column of fields with the same name', async ({ page }) => {
+  const state = await setup(page, 'assets', {
+    extraTypes: [
+      {
+        uuid: 'laptop',
+        name: 'Laptop',
+        tags: [],
+        // created as "Marke", renamed later: the key stays "marke"
+        fieldDefinitions: [
+          { fieldKey: 'marke', name: 'Hersteller', fieldType: 'TEXT', required: false, sortOrder: 0 },
+        ],
+      },
+    ],
+  });
+  Object.assign(state.entries[2], {
+    assetTypeUuid: 'laptop',
+    fieldValues: [{ fieldKey: 'marke', name: 'Marke', value: 'Lenovo', customAssetField: false }],
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await editSelection(page, '/assets');
+  await expect(page.getByRole('columnheader').filter({ hasText: 'Hersteller' })).toHaveCount(1);
+  await expect(page.getByRole('columnheader').filter({ hasText: 'Marke' })).toHaveCount(0);
+  await expect(cell(page, 1, 'Hersteller')).toHaveValue('Beispiel');
+  await expect(cell(page, 3, 'Hersteller')).toHaveValue('Lenovo');
+  await cell(page, 3, 'Hersteller').fill('Dell');
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('1 gespeichert');
+  expect(state.writes[0].body['fieldValues']).toEqual([
+    expect.objectContaining({ fieldKey: 'marke', value: 'Dell', customAssetField: false }),
+  ]);
+});

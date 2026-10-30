@@ -3,7 +3,9 @@ import { Component, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  LucideArrowDown,
   LucideArrowLeft,
+  LucideArrowUp,
   LucidePlus,
   LucideSave,
   LucideTrash2,
@@ -88,7 +90,9 @@ interface FieldConfig {
     LocationLookup,
     MultiSelect,
     SearchSelect,
+    LucideArrowDown,
     LucideArrowLeft,
+    LucideArrowUp,
     LucidePlus,
     LucideSave,
     LucideTrash2,
@@ -478,10 +482,11 @@ export class InventoryFormPage implements OnInit {
       parentLocationUuid: request.parentLocationUuid || null,
       parentAssetUuid: request.parentAssetUuid || null,
       parentAssetNote: request.parentAssetUuid ? request.parentAssetNote?.trim() || null : null,
-      // choices only belong to selection fields
-      fieldDefinitions: (request.fieldDefinitions ?? []).map((field) => ({
+      // choices only belong to selection fields; the list order is the field order
+      fieldDefinitions: (request.fieldDefinitions ?? []).map((field, index) => ({
         ...field,
         optionsJson: field.fieldType === 'SELECT' ? (field.optionsJson ?? '[]') : null,
+        sortOrder: index,
       })),
       fieldValues: request.fieldValues ?? [],
       images: request.images?.filter((image) => image.fileUuid || image.url?.trim()) ?? [],
@@ -627,6 +632,28 @@ export class InventoryFormPage implements OnInit {
     );
   }
 
+  /** Type fields follow the order of the type; an asset only orders its own fields. */
+  protected canMoveField(index: number, direction: -1 | 1): boolean {
+    if (this.config.resourceType === 'ASSET_TYPE') {
+      const target = index + direction;
+      return target >= 0 && target < (this.form.fieldDefinitions?.length ?? 0);
+    }
+    const values = this.form.fieldValues ?? [];
+    return !!values[index]?.customAssetField && !!values[index + direction]?.customAssetField;
+  }
+
+  protected moveField(index: number, direction: -1 | 1): void {
+    if (!this.canMoveField(index, direction)) return;
+    const fields =
+      this.config.resourceType === 'ASSET_TYPE'
+        ? [...(this.form.fieldDefinitions ?? [])]
+        : [...(this.form.fieldValues ?? [])];
+    [fields[index], fields[index + direction]] = [fields[index + direction], fields[index]];
+    if (this.config.resourceType === 'ASSET_TYPE')
+      this.form.fieldDefinitions = fields as CustomFieldDefinition[];
+    else this.form.fieldValues = fields as CustomFieldValue[];
+  }
+
   protected get locationOptions(): SelectOption[] {
     const excluded =
       this.config.selectParentLocation && this.uuid
@@ -725,7 +752,9 @@ export class InventoryFormPage implements OnInit {
     );
 
     this.form.fieldValues = [
-      ...(assetType.fieldDefinitions ?? []).map((definition) => ({
+      ...[...(assetType.fieldDefinitions ?? [])]
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((definition) => ({
         fieldKey: definition.fieldKey,
         name: definition.name,
         value: resetFields ? '' : (currentValues.get(definition.fieldKey ?? definition.name) ?? ''),

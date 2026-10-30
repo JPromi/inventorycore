@@ -1445,6 +1445,8 @@
     "value": "Wert",
     "typeField": "Typ-Feld",
     "removeField": "Feld entfernen",
+    "moveFieldUp": "Feld nach oben",
+    "moveFieldDown": "Feld nach unten",
     "inspection": "Prüfung",
     "images": "Bilder",
     "imagesHint": "Automatische Verkleinerung. Titelbild für Listen.",

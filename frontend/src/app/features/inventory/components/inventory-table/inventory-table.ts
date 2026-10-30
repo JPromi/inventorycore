@@ -38,9 +38,18 @@ import {
   InventoryItem,
   InventoryRequest,
   CustomFieldDefinition,
+  CustomFieldValue,
   ASSET_INSPECTION_POLICIES,
 } from '../../data-access/inventory-api.service';
 import { inventoryRequest, parseTableText, tableText } from './table-data';
+
+/**
+ * Field columns are joined by the shown name, not the stored key: a renamed type field keeps its
+ * old key, so "Marke" renamed to "Hersteller" must share the column of other "Hersteller" fields.
+ */
+function fieldId(name: string): string {
+  return name.trim().toLocaleLowerCase();
+}
 
 interface Option {
   value: string;
@@ -203,10 +212,14 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
       .forEach((type) =>
         [...(type.fieldDefinitions ?? [])]
           .sort((a, b) => a.sortOrder - b.sortOrder)
-          .forEach((field) => definitions.set(field.fieldKey ?? field.name, field.name)),
+          .forEach((field) => {
+            if (!definitions.has(fieldId(field.name))) definitions.set(fieldId(field.name), field.name);
+          }),
       );
     for (const row of this.rows) {
-      for (const [key, name] of Object.entries(row.customFields)) definitions.set(key, name);
+      for (const [key, name] of Object.entries(row.customFields)) {
+        if (!definitions.has(key)) definitions.set(key, name);
+      }
       if (row.cells['assetTypeUuid'] === row.originalTypeUuid) {
         for (const [key, name] of Object.entries(row.storedFields)) {
           if (!definitions.has(key)) definitions.set(key, name);
@@ -249,7 +262,20 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
   ): CustomFieldDefinition | undefined {
     return this.types
       .find((type) => type.uuid === typeUuid)
-      ?.fieldDefinitions?.find((field) => column.key === 'field:' + (field.fieldKey ?? field.name));
+      ?.fieldDefinitions?.find((field) => column.key === 'field:' + fieldId(field.name));
+  }
+
+  /** Column id of a stored value: the type may have renamed the field since it was saved. */
+  private valueId(field: CustomFieldValue, typeUuid?: string | null): string {
+    const definition = field.customAssetField
+      ? undefined
+      : this.types
+          .find((type) => type.uuid === typeUuid)
+          ?.fieldDefinitions?.find(
+            (definition) =>
+              (definition.fieldKey ?? definition.name) === (field.fieldKey ?? field.name),
+          );
+    return fieldId(definition?.name ?? field.name);
   }
 
   applies(row: Row, column: Column, typeUuid = row.cells['assetTypeUuid']): boolean {
@@ -450,11 +476,12 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
   private rowFromItem(item: InventoryItem): Row {
     const request = this.requestOf(item);
     const cells: Record<string, string> = {};
+    const names = (fields: CustomFieldValue[]) =>
+      Object.fromEntries(
+        fields.map((field) => [this.valueId(field, item.assetTypeUuid), field.name] as const),
+      );
     for (const column of this.columns) {
-      if (column.key.startsWith('field:'))
-        cells[column.key] =
-          item.fieldValues?.find((field) => (field.fieldKey ?? field.name) === column.key.slice(6))
-            ?.value ?? '';
+      if (column.key.startsWith('field:')) cells[column.key] = '';
       else if (column.kind === 'multi')
         cells[column.key] = (
           (request[column.key as keyof InventoryRequest] as string[]) ?? []
@@ -462,7 +489,7 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
       else cells[column.key] = String(request[column.key as keyof InventoryRequest] ?? '');
     }
     for (const field of item.fieldValues ?? [])
-      cells['field:' + (field.fieldKey ?? field.name)] = field.value ?? '';
+      cells['field:' + this.valueId(field, item.assetTypeUuid)] = field.value ?? '';
     return {
       key: this.nextKey++,
       uuid: item.uuid,
@@ -470,14 +497,8 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
       initial: { ...cells },
       saved: false,
       error: '',
-      customFields: Object.fromEntries(
-        (item.fieldValues ?? [])
-          .filter((field) => field.customAssetField)
-          .map((field) => [field.fieldKey ?? field.name, field.name]),
-      ),
-      storedFields: Object.fromEntries(
-        (item.fieldValues ?? []).map((field) => [field.fieldKey ?? field.name, field.name]),
-      ),
+      customFields: names((item.fieldValues ?? []).filter((field) => field.customAssetField)),
+      storedFields: names(item.fieldValues ?? []),
       originalTypeUuid: item.assetTypeUuid,
     };
   }
@@ -830,17 +851,19 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
       const value = row.cells[column.key];
       if (column.key.startsWith('field:')) {
         const key = column.key.slice(6);
-        const field = request.fieldValues?.find((field) => (field.fieldKey ?? field.name) === key);
+        const field = request.fieldValues?.find(
+          (field) => this.valueId(field, current?.assetTypeUuid) === key,
+        );
         if (field) field.value = value;
-        else if (value)
+        else if (value) {
+          const definition = this.definition(row, column);
           request.fieldValues!.push({
-            fieldKey: key,
-            name: column.label,
+            fieldKey: definition?.fieldKey ?? null,
+            name: definition?.name ?? column.label,
             value,
-            customAssetField: !this.types
-              .find((type) => type.uuid === (row.cells['assetTypeUuid'] || current?.assetTypeUuid))
-              ?.fieldDefinitions?.some((field) => (field.fieldKey ?? field.name) === key),
+            customAssetField: !definition,
           });
+        }
       } else if (column.kind === 'multi') {
         const values = value
           .split(';')
@@ -876,15 +899,18 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
       const inherited = new Set(type?.tags?.map((tag) => tag.uuid) ?? []);
       request.tagUuids = request.tagUuids?.filter((uuid) => !inherited.has(uuid));
       if (current && current.assetTypeUuid !== request.assetTypeUuid) {
+        // values move to the new type's field of the same name, whatever key either side has
         request.fieldValues =
-          request.fieldValues?.filter(
-            (field) =>
-              field.customAssetField ||
-              type?.fieldDefinitions?.some(
-                (definition) =>
-                  (definition.fieldKey ?? definition.name) === (field.fieldKey ?? field.name),
-              ),
-          ) ?? [];
+          request.fieldValues?.flatMap((field) => {
+            if (field.customAssetField) return [field];
+            const id = this.valueId(field, current.assetTypeUuid);
+            const definition = type?.fieldDefinitions?.find(
+              (definition) => fieldId(definition.name) === id,
+            );
+            return definition
+              ? [{ ...field, fieldKey: definition.fieldKey, name: definition.name }]
+              : [];
+          }) ?? [];
       }
       for (const definition of type?.fieldDefinitions ?? []) {
         const field = request.fieldValues?.find(

@@ -311,6 +311,26 @@
               <div class="repeat-list">
                 @for (field of form.fieldDefinitions ?? []; track $index) {
                   <div class="repeat-row">
+                    <div class="order">
+                      <button
+                        type="button"
+                        class="icon-button"
+                        [title]="'inventoryForm.moveFieldUp' | t"
+                        [disabled]="!canMoveField($index, -1)"
+                        (click)="moveField($index, -1)"
+                      >
+                        <svg lucideArrowUp size="14"></svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-button"
+                        [title]="'inventoryForm.moveFieldDown' | t"
+                        [disabled]="!canMoveField($index, 1)"
+                        (click)="moveField($index, 1)"
+                      >
+                        <svg lucideArrowDown size="14"></svg>
+                      </button>
+                    </div>
                     <label>
                       <span>{{ 'common.name' | t }}</span>
                       <input type="text" [(ngModel)]="field.name" name="fieldName{{ $index }}" />
@@ -359,6 +379,26 @@
               <div class="repeat-list">
                 @for (field of form.fieldValues ?? []; track $index) {
                   <div class="repeat-row" [class.locked]="!field.customAssetField">
+                    <div class="order" [class.hidden]="!field.customAssetField">
+                      <button
+                        type="button"
+                        class="icon-button"
+                        [title]="'inventoryForm.moveFieldUp' | t"
+                        [disabled]="!canMoveField($index, -1)"
+                        (click)="moveField($index, -1)"
+                      >
+                        <svg lucideArrowUp size="14"></svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-button"
+                        [title]="'inventoryForm.moveFieldDown' | t"
+                        [disabled]="!canMoveField($index, 1)"
+                        (click)="moveField($index, 1)"
+                      >
+                        <svg lucideArrowDown size="14"></svg>
+                      </button>
+                    </div>
                     <label>
                       <span>{{ 'common.name' | t }}</span>
                       <input
