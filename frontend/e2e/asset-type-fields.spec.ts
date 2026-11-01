@@ -132,3 +132,35 @@ test('the type configuration uses the shared dropdown and asks for choices', asy
     expect.objectContaining({ name: 'Bauart', fieldType: 'SELECT', optionsJson: '["Steckleiter","Schiebleiter","Klappleiter"]' }),
   ]);
 });
+
+test('type fields and own asset fields can be reordered', async ({ page }) => {
+  const writes = await mockApi(page);
+  await page.goto('/config/types/pa/edit');
+  await expect(page.locator('.repeat-row')).toHaveCount(4);
+  await expect(fieldRow(page, 0).getByRole('button', { name: 'Feld nach oben' })).toBeDisabled();
+  await fieldRow(page, 3).getByRole('button', { name: 'Feld nach oben' }).click();
+  await fieldRow(page, 0).getByRole('button', { name: 'Feld nach unten' }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(
+    (writes[0].body['fieldDefinitions'] as { name: string; sortOrder: number }[]).map((field) => [field.name, field.sortOrder]),
+  ).toEqual([['Hersteller', 0], ['Flaschendruck', 1], ['Einsatzbereit', 2], ['Nächste Flaschenprüfung', 3]]);
+});
+
+test('an asset orders its own fields below the type fields', async ({ page }) => {
+  const writes = await mockApi(page);
+  await page.goto('/assets/pa1/edit');
+  await expect(page.locator('.repeat-row')).toHaveCount(5);
+  // type fields keep the order of their type
+  await expect(fieldRow(page, 0).getByRole('button', { name: 'Feld nach unten' })).toBeHidden();
+  await page.getByRole('button', { name: 'Feld hinzufügen', exact: true }).click();
+  await fieldRow(page, 5).locator('input[type="text"]').first().fill('Standort im Fahrzeug');
+  await expect(fieldRow(page, 4).getByRole('button', { name: 'Feld nach oben' })).toBeDisabled();
+  await fieldRow(page, 5).getByRole('button', { name: 'Feld nach oben' }).click();
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect((writes[0].body['fieldValues'] as { name: string }[]).map((field) => field.name).slice(4)).toEqual([
+    'Standort im Fahrzeug',
+    'Funkkanal',
+  ]);
+});

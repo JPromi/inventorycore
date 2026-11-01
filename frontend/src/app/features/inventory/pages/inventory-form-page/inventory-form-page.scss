@@ -212,7 +212,7 @@
 
     .repeat-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(8rem, 1fr)) auto;
+      grid-template-columns: auto repeat(3, minmax(8rem, 1fr)) auto;
       gap: 0.6rem;
       align-items: end;
       padding: 0.75rem 0;
@@ -222,9 +222,22 @@
         background: var(--surface-active);
       }
 
+      > .order {
+        display: flex;
+        gap: 0.2rem;
+
+        &.hidden {
+          visibility: hidden;
+        }
+      }
+
       // fields stack, the delete button sits at the end
       @include bp.phone {
         grid-template-columns: minmax(0, 1fr);
+
+        > .order.hidden {
+          display: none;
+        }
 
         > .icon-button,
         > .locked-note {

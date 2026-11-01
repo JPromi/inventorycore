@@ -153,6 +153,15 @@ Inventory `/page` endpoints accept zero-based `page`, `size`, server search, and
 
 Image upload uses `multipart/form-data` with a `file` part. File content supports `?variant=thumb`. Profile uploads use a distinct endpoint and return a user DTO. Do not serialize raw inventory image bytes into inventory JSON responses.
 
+The shared `/files` client prepares JPEG and HEIC/HEIF photos before upload. Large JPEGs
+and HEIC photos are encoded as JPEG with a maximum edge of 1920 pixels; small JPEGs
+and other accepted formats remain unchanged. HEIC conversion uses the browser's native
+decoder (Safari 17 or newer supports HEIC); an unavailable decoder shows a JPEG fallback
+instruction. The server's supported formats and validation remain unchanged. Preparation
+is serialized to limit memory use when selecting multiple phone photos. The original
+25 MB input limit still applies in the shared image picker. Profile and logo uploads
+use their existing separate endpoints and limits.
+
 Handlers use `ResponseStatusException` and explicit statuses such as 201, 204, 400, 401, 403, and 404. There is no uniform project-wide error envelope; file upload has a local handler exposing a `message`. Preserve the actual response shape rather than assuming every error includes readable text.
 
 No generated OpenAPI specification or API collection is currently checked in. Controllers and DTOs remain the authoritative route and payload definitions.

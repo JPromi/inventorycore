@@ -56,6 +56,12 @@ LDAP tests mock directory access; they do not prove connectivity to an actual LD
 
 ## Frontend Unit Tests
 
+`photo-upload.spec.ts` checks the asset picker, large photo resizing, HEIC conversion
+routing, missing MIME types, multipart JPEG output and retry after an unreadable photo.
+The HEIC routing fixture contains JPEG pixels with HEIC metadata because Edge cannot
+decode native HEIC. Actual iPhone HEIC decoding and orientation require Safari device
+verification; these browser mocks do not prove support for every HEIC variant.
+
 The Angular unit-test builder uses Vitest and jsdom. Component specs live beside their components.
 
 From `frontend/`:

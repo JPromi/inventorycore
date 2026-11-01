@@ -19,6 +19,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -116,7 +117,9 @@ public class Asset {
     @Builder.Default
     private Set<Area> areas = new HashSet<>();
 
+    // values are rewritten in form order on every save, so insertion order is the chosen order
     @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     @Builder.Default
     private List<AssetFieldValue> fieldValues = new ArrayList<>();
 
