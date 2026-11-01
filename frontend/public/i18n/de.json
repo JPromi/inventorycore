@@ -658,7 +658,8 @@
       "upload": "Bilder hochladen",
       "dropHint": "Klicken oder hierher ziehen",
       "errors": {
-        "unsupportedType": "Kein unterstütztes Bildformat (JPEG, PNG, GIF, WebP, BMP, TIFF).",
+        "unsupportedType": "Kein unterstütztes Bildformat (JPEG, PNG, HEIC, GIF, WebP, BMP, TIFF).",
+        "heicConversion": "Dieses HEIC-Foto konnte nicht umgewandelt werden. Verwenden Sie Safari ab Version 17 oder laden Sie das Foto als JPEG hoch.",
         "maxSize": "Datei ist größer als {size} MB.",
         "tooLarge": "Datei ist zu groß.",
         "failed": "Hochladen fehlgeschlagen."

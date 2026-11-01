@@ -1,6 +1,8 @@
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { defer, from, Observable, switchMap } from 'rxjs';
+import { prepareImage } from './prepare-image';
+export { ACCEPTED_IMAGE_TYPES, isAcceptedImage } from './prepare-image';
 
 import { environment } from '../../../environments/environment';
 
@@ -22,29 +24,29 @@ export interface StoredFileInfo {
 
 /** Same limits as the backend (spring.servlet.multipart.max-file-size). */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-export const ACCEPTED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/bmp',
-  'image/tiff',
-];
 
 @Injectable({ providedIn: 'root' })
 export class FileApiService {
   private readonly apiUrl = `${environment.apiUrl}/files`;
+  // Decode one full-resolution phone photo at a time to limit mobile memory use.
+  private preparation: Promise<unknown> = Promise.resolve();
 
   constructor(private readonly http: HttpClient) {}
 
   /** Uploads one image; the events report the upload progress. */
   uploadImage(file: File): Observable<HttpEvent<StoredFileInfo>> {
-    const body = new FormData();
-    body.append('file', file, file.name);
-    return this.http.post<StoredFileInfo>(this.apiUrl, body, {
-      withCredentials: true,
-      reportProgress: true,
-      observe: 'events',
+    return defer(() => {
+      const prepared = this.preparation.then(() => prepareImage(file));
+      this.preparation = prepared.catch(() => undefined);
+      return from(prepared).pipe(switchMap(image => {
+        const body = new FormData();
+        body.append('file', image, image.name);
+        return this.http.post<StoredFileInfo>(this.apiUrl, body, {
+          withCredentials: true,
+          reportProgress: true,
+          observe: 'events',
+        });
+      }));
     });
   }
 

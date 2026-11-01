@@ -17,6 +17,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import {
   ACCEPTED_IMAGE_TYPES,
   FileApiService,
+  isAcceptedImage,
   MAX_UPLOAD_BYTES,
 } from '../../../core/service/file-api.service';
 import { InventoryImage } from '../../../features/inventory/data-access/inventory-api.service';
@@ -146,7 +147,7 @@ export class ImageUpload implements OnDestroy {
       const upload: PendingUpload = { id: this.nextId++, name: file.name, progress: 0 };
       this.pending = [...this.pending, upload];
 
-      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      if (!isAcceptedImage(file)) {
         upload.error = t('components.imageUpload.errors.unsupportedType');
         continue;
       }
