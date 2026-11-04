@@ -12,7 +12,8 @@ safe retries, selected-row edits, undo, refreshed unrelated data, inherited tags
 custom values and relationships, type/location creation and editing, discard protection, failed
 detail loads, invalid names/lookups and read-only users. Run with `list-selection.spec.ts` because
 the table adds an action to existing inventory selection. APIs are mocked; existing backend
-authorization remains authoritative and a batch can partially succeed.
+authorization remains authoritative and a batch can partially succeed. The dialog closes automatically
+after all changes are saved successfully; failed or unconfirmed rows keep it open for review or retry.
 The table regressions also cover active-type field expansion, mixed-type non-applicable cells,
 draft values retained through switching/undo, select custom fields and the shared multi-select.
 Run `dropdown-position.spec.ts` after changes to shared dropdown positioning or focus; dropdown

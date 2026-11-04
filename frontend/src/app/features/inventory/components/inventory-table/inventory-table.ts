@@ -1002,6 +1002,9 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
     this.saving = false;
     this.history = [];
     this.refreshColumns();
+    if (!this.destroyed && !this.dirty && !this.rows.some((row) => row.error || row.uncertain)) {
+      this.close();
+    }
   }
 
   close(force = false): void {

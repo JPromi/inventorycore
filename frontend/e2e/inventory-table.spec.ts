@@ -199,7 +199,7 @@ test('creates ten assets with real drag-fill and keyboard fill for lookup column
   await expect(select(page, 10, 'Typ')).toContainText('Pressluftatmer');
   await page.getByRole('dialog').screenshot({ path: 'test-results/inventory-table.png' });
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('10 gespeichert');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(state.writes).toHaveLength(10);
   for (const write of state.writes) expect(write.body).not.toHaveProperty('invId');
   for (const write of state.writes)
@@ -231,7 +231,7 @@ test('pastes quoted Excel cells, retains leading zeros, retries failed creates w
   expect(state.writes[0].body['description']).toBe('Text mit\nZeilenumbruch');
   expect(state.writes[1].body['description']).toBe('Text mit "Zitat"');
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('2 gespeichert');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(state.writes).toHaveLength(3);
   expect(state.writes.filter((write) => write.body['name'] === 'Erstes Gerät')).toHaveLength(1);
 });
@@ -255,7 +255,7 @@ test('editing preserves fresh unrelated data, inherited tags, photos and relatio
   await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
   await expect(cell(page, 2, 'Name')).toHaveValue('Gerät 2');
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('1 gespeichert');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(state.writes).toHaveLength(1);
   expect(state.writes[0].body).toMatchObject({
     invId: 'FW-0',
@@ -298,7 +298,7 @@ test('locations and types retain fields not displayed in the table', async ({ pa
     await editSelection(page, path);
     await cell(page, 1, 'Name').fill('Umbenannt');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('1 gespeichert');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     expect(state.writes[0].body['images']).toEqual(
       expect.arrayContaining([expect.objectContaining({ fileUuid: 'photo' })]),
     );
@@ -313,11 +313,6 @@ test('locations and types retain fields not displayed in the table', async ({ pa
       expect(state.writes[0].body).toMatchObject({
         fieldDefinitions: [expect.objectContaining({ fieldKey: 'manufacturer' })],
       });
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Schließen', exact: true })
-      .last()
-      .click();
   }
 });
 
@@ -383,15 +378,10 @@ test('creates multiple locations and types using the same table', async ({ page 
     await expect(cell(page, 1, 'Name')).toBeVisible();
     await paste(page, 1, 'Name', 'Erster Eintrag\tBeschreibung\r\nZweiter Eintrag\tBeschreibung');
     await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-    await expect(page.getByRole('status')).toContainText('2 gespeichert');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     expect(state.writes).toHaveLength(2);
     expect(state.writes[0].body).toMatchObject({ name: 'Erster Eintrag', areaUuids: ['area'] });
     if (endpoint === 'locations') expect(state.writes[0].body['locationType']).toBe('OTHER');
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Schließen', exact: true })
-      .last()
-      .click();
   }
 });
 
@@ -489,7 +479,7 @@ test('active types add their fields dynamically; switching and undo retain value
   await expect(cell(page, 1, 'Hersteller')).toHaveCount(0);
   await cell(page, 2, 'Name').fill('PA 1');
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('2 gespeichert');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(state.writes[0].body['fieldValues']).toEqual(
     expect.arrayContaining([
       expect.objectContaining({ fieldKey: 'memory', value: '16 GB', customAssetField: false }),
@@ -522,7 +512,7 @@ test('shared dropdown panels stay above the table and multi-selection saves UUID
   await page.getByRole('option', { name: 'Direkt', exact: true }).click();
   await cell(page, 1, 'Name').click();
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('1 gespeichert');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(state.writes[0].body).toMatchObject({
     assetTypeUuid: 'type',
     tagUuids: ['direct'],
@@ -632,7 +622,7 @@ test('a renamed type field shares the column of fields with the same name', asyn
   await expect(cell(page, 3, 'Hersteller')).toHaveValue('Lenovo');
   await cell(page, 3, 'Hersteller').fill('Dell');
   await page.getByRole('button', { name: 'Speichern', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('1 gespeichert');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(state.writes[0].body['fieldValues']).toEqual([
     expect.objectContaining({ fieldKey: 'marke', value: 'Dell', customAssetField: false }),
   ]);
