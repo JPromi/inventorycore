@@ -37,7 +37,7 @@ export class PermissionService {
     );
   }
 
-  /** Allowed for all areas at once (a permission without area), e.g. for global tags. */
+  /** Allowed for all areas at once (a permission without area), e.g. for global configuration. */
   canEverywhere(resourceType: PermissionResourceType, action: PermissionAction): boolean {
     return (
       this.isAdmin || this.matching(resourceType, action).some((permission) => !permission.areaUuid)

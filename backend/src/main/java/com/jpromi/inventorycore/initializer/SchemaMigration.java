@@ -25,6 +25,19 @@ public class SchemaMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Global tag-name uniqueness must be removed before tags are split per area.
+        // Find the old generated constraint by its columns rather than its Hibernate name.
+        if (tableExists("tags")) {
+            jdbc.execute("""
+                do $$ declare c record; begin
+                    for c in select conname from pg_constraint
+                        where conrelid = 'tags'::regclass and contype = 'u'
+                        and conkey = array[(select attnum from pg_attribute
+                            where attrelid = 'tags'::regclass and attname = 'name')]::smallint[]
+                    loop execute format('alter table tags drop constraint %I', c.conname); end loop;
+                end $$
+                """);
+        }
         // New notification tables are created additively by Hibernate. Indexes are idempotent
         // on existing installations; no user or inspection rows are rewritten.
         if (tableExists("notification_message")) {

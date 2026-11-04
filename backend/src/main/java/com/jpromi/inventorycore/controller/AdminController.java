@@ -76,6 +76,7 @@ public class AdminController {
     private final InspectionTypeRepository inspectionTypeRepository;
     private final TaskRepository taskRepository;
     private final TaskRunRepository taskRunRepository;
+    private final com.jpromi.inventorycore.repository.TagRepository tagRepository;
 
     public AdminController(
         AppUserRepository userRepository,
@@ -93,8 +94,10 @@ public class AdminController {
         InspectionTypeRepository inspectionTypeRepository,
         com.jpromi.inventorycore.repository.AssetStatusRepository assetStatusRepository,
         TaskRepository taskRepository,
-        TaskRunRepository taskRunRepository
+        TaskRunRepository taskRunRepository,
+        com.jpromi.inventorycore.repository.TagRepository tagRepository
     ) {
+        this.tagRepository = tagRepository;
         this.taskRepository = taskRepository;
         this.taskRunRepository = taskRunRepository;
         this.assetStatusRepository = assetStatusRepository;
@@ -177,10 +180,35 @@ public class AdminController {
         Area defaultArea = areaRepository.findFirstByDefaultAreaTrue()
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Es ist kein Standardbereich festgelegt."));
 
-        assetRepository.findByArea(area).forEach(asset -> moveOut(asset.getAreas(), area, defaultArea));
+        assetRepository.findByArea(area).forEach(asset -> {
+            boolean retainsMovedTag = asset.effectiveTags().anyMatch(tag -> tag.getArea().getUuid().equals(area.getUuid()));
+            moveOut(asset.getAreas(), area, defaultArea);
+            if (retainsMovedTag) {
+                asset.getAreas().add(defaultArea);
+            }
+        });
         locationRepository.findByArea(area).forEach(location -> moveOut(location.getAreas(), area, defaultArea));
-        assetTypeRepository.findByArea(area).forEach(type -> moveOut(type.getAreas(), area, defaultArea));
+        assetTypeRepository.findByArea(area).forEach(type -> {
+            boolean retainsMovedTag = type.getTags().stream().anyMatch(tag -> tag.getArea().getUuid().equals(area.getUuid()));
+            moveOut(type.getAreas(), area, defaultArea);
+            if (retainsMovedTag) {
+                type.getAreas().add(defaultArea);
+            }
+        });
         assetStatusRepository.findByArea(area).forEach(status -> status.setArea(defaultArea));
+        tagRepository.findByArea(area).forEach(tag -> {
+            String base = tag.getName();
+            String name = base;
+            int suffix = 1;
+            while (tagRepository.existsByAreaAndNameIgnoreCase(defaultArea, name)) {
+                String ending = " (" + area.getName() + ", " + suffix++ + ")";
+                if (ending.length() > 60) ending = " (" + area.getId() + ", " + suffix + ")";
+                name = base.substring(0, Math.min(base.length(), 80 - ending.length())) + ending;
+            }
+            tag.setName(name);
+            tag.setArea(defaultArea);
+            tagRepository.saveAndFlush(tag);
+        });
         labelTemplateRepository.findByArea(area).forEach(template -> {
             template.setArea(defaultArea);
             template.setDefaultForArea(false);

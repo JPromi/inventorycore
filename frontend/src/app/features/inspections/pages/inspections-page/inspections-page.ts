@@ -1,5 +1,6 @@
+import { ListHistoryService } from '../../../../core/service/list-history.service';
 import { DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -75,6 +76,8 @@ interface DueGroup {
   styleUrl: './inspections-page.scss',
 })
 export class InspectionsPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   /** Like the backend: completed protocols only admins; open ones whoever started them or may delete assets there. */
   protected readonly canBulkDelete = (item: InspectionSummary) =>
     this.permissions.isAdmin ||
@@ -127,6 +130,16 @@ export class InspectionsPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    const restored = this.listHistory.bind(
+      'inspections',
+      () => ({ search: this.search, statusFilter: this.statusFilter }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => {
+        this.statusFilter = this.initialStatus();
+        this.list.reload();
+      },
+    );
     this.loading = true;
     this.subscriptions.add(
       this.areaService.selected$.pipe(skip(1)).subscribe(() => this.list.reload()),
@@ -145,10 +158,8 @@ export class InspectionsPage implements OnInit, OnDestroy {
         this.setCounts(counts);
         this.due = schedules.filter((entry) => entry.state !== 'OK');
         // overdue first, then open inspections, then everything
-        if (this.overdueCount) {
-          this.statusFilter = 'DUE';
-        } else if (!counts.openCount) {
-          this.statusFilter = this.due.length ? 'DUE' : 'ALL';
+        if (!restored) {
+          this.statusFilter = this.initialStatus();
         }
         this.loading = false;
         this.list.reload();
@@ -158,6 +169,13 @@ export class InspectionsPage implements OnInit, OnDestroy {
         this.loading = false;
       },
     });
+  }
+
+  private initialStatus(): StatusFilter {
+    if (this.overdueCount) {
+      return 'DUE';
+    }
+    return this.openCount ? 'OPEN' : this.due.length ? 'DUE' : 'ALL';
   }
 
   ngOnDestroy(): void {

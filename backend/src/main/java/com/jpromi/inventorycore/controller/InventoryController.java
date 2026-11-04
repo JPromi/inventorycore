@@ -55,6 +55,7 @@ import com.jpromi.inventorycore.repository.LocationRepository;
 import com.jpromi.inventorycore.repository.StoredFileRepository;
 import com.jpromi.inventorycore.repository.TagRepository;
 import com.jpromi.inventorycore.service.AccessContext;
+import com.jpromi.inventorycore.service.TagScope;
 import com.jpromi.inventorycore.service.ApiMapper;
 import com.jpromi.inventorycore.enums.AuditAction;
 import com.jpromi.inventorycore.enums.AuditObjectType;
@@ -194,7 +195,7 @@ public class InventoryController {
         Set<Area> areas = resolveAreas(request.areaUuids());
         require(access.canInAll(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE, areas));
         AssetType type = AssetType.builder().build();
-        applyAssetType(type, request);
+        applyAssetType(access, type, request);
         type.setAreas(areas);
         AssetTypeResponse created = mapper.toResponse(assetTypeRepository.save(type));
         audit.log(AuditAction.CREATE, AuditObjectType.ASSET_TYPE, created.uuid(), created.name());
@@ -209,7 +210,7 @@ public class InventoryController {
         AssetTypeResponse before = mapper.toResponse(type);
         Set<Area> areas = resolveAreas(request.areaUuids());
         requireAreaChange(access, PermissionResourceType.ASSET_TYPE, type.getAreas(), areas);
-        List<StoredFile> previousFiles = applyAssetType(type, request);
+        List<StoredFile> previousFiles = applyAssetType(access, type, request);
         type.setAreas(areas);
         AssetTypeResponse after = mapper.toResponse(assetTypeRepository.save(type));
         fileCleanup.deleteWhenUnused(previousFiles);
@@ -229,24 +230,24 @@ public class InventoryController {
         audit.log(AuditAction.DELETE, AuditObjectType.ASSET_TYPE, type.getUuid(), type.getName());
     }
 
-    // ---- tags (global, not bound to areas) ----
+    // ---- tags (one owning area) ----
 
     @GetMapping("/tags")
     public List<TagResponse> tags(Authentication authentication) {
-        permissionService.context(authentication);
-        return tagRepository.findAll().stream().map(mapper::toResponse).toList();
+        AccessContext access = permissionService.context(authentication);
+        return tagRepository.findAll().stream().filter(tag -> TagScope.visible(access, tag))
+            .map(mapper::toResponse).toList();
     }
 
     @PostMapping("/tags")
     @ResponseStatus(HttpStatus.CREATED)
     public TagResponse createTag(@RequestBody TagRequest request, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
-        // anyone who maintains assets or types may create new tags while tagging
-        require(access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.CREATE)
-            || access.canAnywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT)
-            || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.CREATE)
-            || access.canAnywhere(PermissionResourceType.ASSET, PermissionAction.EDIT));
-        Tag tag = Tag.builder().name(request.name()).color(request.color()).build();
+        Area area = tagArea(request.areaUuid());
+        require(TagScope.canCreate(access, area));
+        String name = tagName(request.name());
+        requireUniqueTag(area, name, null);
+        Tag tag = Tag.builder().name(name).color(request.color()).area(area).build();
         TagResponse created = mapper.toResponse(tagRepository.save(tag));
         audit.log(AuditAction.CREATE, AuditObjectType.TAG, created.uuid(), created.name());
         return created;
@@ -255,11 +256,16 @@ public class InventoryController {
     @PatchMapping("/tags/{uuid}")
     public TagResponse updateTag(@PathVariable UUID uuid, @RequestBody TagRequest request, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
-        // tags are global: renaming one changes it in every area
-        require(access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT));
         Tag tag = tagOr404(uuid);
+        requireVisible(TagScope.visible(access, tag));
+        require(access.can(PermissionResourceType.ASSET_TYPE, PermissionAction.EDIT, Set.of(tag.getArea())));
+        if (request.areaUuid() != null && !request.areaUuid().equals(tag.getArea().getUuid())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Der Bereich eines Tags kann nicht geändert werden.");
+        }
         TagResponse before = mapper.toResponse(tag);
-        tag.setName(request.name());
+        String name = tagName(request.name());
+        requireUniqueTag(tag.getArea(), name, tag);
+        tag.setName(name);
         tag.setColor(request.color());
         TagResponse after = mapper.toResponse(tagRepository.save(tag));
         audit.logChanges(AuditObjectType.TAG, after.uuid(), after.name(), before, after);
@@ -271,9 +277,9 @@ public class InventoryController {
     @Transactional
     public void deleteTag(@PathVariable UUID uuid, Authentication authentication) {
         AccessContext access = permissionService.context(authentication);
-        // tags are global: deleting one removes it in every area
-        require(access.canEverywhere(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE));
         Tag tag = tagOr404(uuid);
+        requireVisible(TagScope.visible(access, tag));
+        require(access.can(PermissionResourceType.ASSET_TYPE, PermissionAction.DELETE, Set.of(tag.getArea())));
         // a recurring inspection limited to this one tag would otherwise suddenly apply to all assets
         List<String> limited = tagRepository.recurringInspectionsOnlyWith(tag.getId());
         if (!limited.isEmpty()) {
@@ -438,7 +444,7 @@ public class InventoryController {
     }
 
     /** Returns the files of the images before the change, so removed ones can be deleted. */
-    private List<StoredFile> applyAssetType(AssetType type, AssetTypeRequest request) {
+    private List<StoredFile> applyAssetType(AccessContext access, AssetType type, AssetTypeRequest request) {
         type.setName(request.name());
         type.setDescription(request.description());
         type.setInspectionIntervalDays(request.inspectionIntervalDays());
@@ -453,9 +459,11 @@ public class InventoryController {
             request.images().stream().filter(InventoryController::hasSource)
                 .forEach(imageRequest -> type.getImages().add(assetTypeImage(type, imageRequest, attached)));
         }
+        Set<Area> tagAreas = resolveAreas(request.areaUuids());
+        Set<UUID> existingTags = type.getTags().stream().map(Tag::getUuid).collect(Collectors.toSet());
         type.setTags(new HashSet<>());
         if (request.tagUuids() != null) {
-            request.tagUuids().forEach(tagUuid -> type.getTags().add(tagOr404(tagUuid)));
+            request.tagUuids().forEach(tagUuid -> type.getTags().add(TagScope.assign(access, tagOr404(tagUuid), tagAreas, existingTags)));
         }
         return previousFiles;
     }
@@ -495,9 +503,11 @@ public class InventoryController {
         }
         asset.setLocation(location);
 
+        Set<Area> tagAreas = resolveAreas(request.areaUuids());
+        Set<UUID> existingTags = asset.getTags().stream().map(Tag::getUuid).collect(Collectors.toSet());
         asset.setTags(new HashSet<>());
         if (request.tagUuids() != null) {
-            request.tagUuids().forEach(tagUuid -> asset.getTags().add(tagOr404(tagUuid)));
+            request.tagUuids().forEach(tagUuid -> asset.getTags().add(TagScope.assign(access, tagOr404(tagUuid), tagAreas, existingTags)));
         }
         asset.getFieldValues().clear();
         if (request.fieldValues() != null) {
@@ -649,6 +659,28 @@ public class InventoryController {
     private Location locationOr404(UUID uuid) {
         return locationRepository.findByUuid(uuid).filter(location -> !location.isDeleted())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Standort nicht gefunden."));
+    }
+
+    private Area tagArea(UUID uuid) {
+        if (uuid == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Bereich für den Tag wählen.");
+        }
+        return areaRepository.findByUuid(uuid)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Bereich."));
+    }
+
+    private String tagName(String value) {
+        if (value == null || value.isBlank() || value.trim().length() > 80) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bitte einen Namen mit höchstens 80 Zeichen angeben.");
+        }
+        return value.trim();
+    }
+
+    private void requireUniqueTag(Area area, String name, Tag current) {
+        if ((current == null || !current.getName().equalsIgnoreCase(name))
+            && tagRepository.existsByAreaAndNameIgnoreCase(area, name)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Der Tag ist in diesem Bereich bereits vorhanden.");
+        }
     }
 
     private Tag tagOr404(UUID uuid) {

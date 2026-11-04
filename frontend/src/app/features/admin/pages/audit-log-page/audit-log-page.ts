@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideHistory, LucideSearch, LucideX } from '@lucide/angular';
 import { Subject, Subscription, debounceTime } from 'rxjs';
@@ -42,6 +43,8 @@ const PAGE_SIZE = 50;
   styleUrl: './audit-log-page.scss',
 })
 export class AuditLogPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   protected entries: AuditLog[] = [];
   protected total = 0;
   protected loading = false;
@@ -71,6 +74,19 @@ export class AuditLogPage implements OnInit, OnDestroy {
   constructor(private readonly audit: AuditService) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'audit',
+      () => ({
+        search: this.search,
+        objectType: this.objectType,
+        action: this.action,
+        from: this.from,
+        to: this.to,
+      }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.reload(),
+    );
     this.searchSubscription = this.searchChanges
       .pipe(debounceTime(300))
       .subscribe(() => this.reload());

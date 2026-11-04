@@ -340,7 +340,7 @@
         </fieldset>
 
         @if (editable) {
-          <div class="save-bar card">
+          <div class="editor-actions sticky-editor-actions">
             <a class="secondary-action" routerLink="/tasks">{{ 'common.cancel' | t }}</a>
             <button type="submit" class="primary-action" [disabled]="saving">
               <svg lucideSave size="16"></svg>

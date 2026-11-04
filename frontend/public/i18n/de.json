@@ -1749,6 +1749,8 @@
     }
   },
   "tags": {
+    "areaHint": "Tags gelten nur in ihrem Bereich. Namen und Farben können Sie mit den Bearbeitungsrechten dieses Bereichs ändern.",
+    "createArea": "Bereich für neue Tags",
     "count": {
       "one": "{count} Tag",
       "other": "{count} Tags"
@@ -2285,7 +2287,7 @@
     "newStatus": "Neuer Status",
     "comment": "Kommentar",
     "commentPlaceholder": "z. B. Ventil undicht, an den Hersteller geschickt",
-    "retiredHint": "Ausgeschiedene Assets werden nicht mehr geprüft und in Listen grau angezeigt.",
+    "retiredHint": "Ausgeschiedene Assets werden nicht mehr geprüft und in der Asset-Liste standardmäßig ausgeblendet. Über den Statusfilter können Sie sie weiterhin anzeigen.",
     "history": "Verlauf",
     "fromInspection": "Aus Prüfung „{title}“",
     "loadError": "Die Status konnten nicht geladen werden.",
@@ -2312,7 +2314,7 @@
     },
     "filter": {
       "label": "Status filtern",
-      "all": "Alle Status",
+      "default": "Ohne Ausgeschiedene",
       "clear": "Statusfilter entfernen",
       "selected": {
         "one": "{count} Status",

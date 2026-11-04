@@ -151,10 +151,10 @@ class AssetInspectionPolicyTest {
 
     @Test
     void templateTagsAndChildFlagAreDefaultsWithIndependentOverrides() {
-        var tag = Tag.builder().name("Computer").build();
+        var tag = Tag.builder().area(protocolArea).name("Computer").build();
         var assetType = AssetType.builder().id(1L).name("PC").build();
         assetType.getTags().add(tag);
-        var parent = Asset.builder().id(1L).name("PC").assetType(assetType).build();
+        var parent = Asset.builder().id(1L).name("PC").areas(java.util.Set.of(protocolArea)).assetType(assetType).build();
         var child = Asset.builder().id(2L).name("RAM").parentAsset(parent).build();
         var nested = Asset.builder().id(3L).name("Chip").parentAsset(child).build();
         var excluded = Asset.builder().id(4L).name("Cover").parentAsset(parent)

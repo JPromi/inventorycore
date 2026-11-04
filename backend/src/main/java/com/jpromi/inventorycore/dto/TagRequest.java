@@ -1,6 +1,9 @@
 package com.jpromi.inventorycore.dto;
 
+import java.util.UUID;
+
 public record TagRequest(
     String name,
-    String color
+    String color,
+    UUID areaUuid
 ) {}

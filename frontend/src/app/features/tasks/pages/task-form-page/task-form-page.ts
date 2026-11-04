@@ -276,6 +276,7 @@ export class TaskFormPage implements OnInit {
 
   protected get tagOptions(): SelectOption[] {
     return this.tags
+      .filter((tag) => !tag.areaUuid || tag.areaUuid === this.areaUuid)
       .map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }

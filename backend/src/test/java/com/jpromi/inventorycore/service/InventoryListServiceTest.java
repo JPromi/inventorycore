@@ -40,6 +40,37 @@ class InventoryListServiceTest {
     }
 
     @Test
+    void retiredAssetsAreHiddenByDefaultBeforePagingButExplicitStatusesIncludeThem() {
+        allowView(PermissionResourceType.ASSET);
+        var retired = com.jpromi.inventorycore.entity.AssetStatus.builder().name("Ausgeschieden")
+            .category(com.jpromi.inventorycore.enums.AssetStatusCategory.RETIRED).build();
+        var customRetired = com.jpromi.inventorycore.entity.AssetStatus.builder().name("Ausgemustert")
+            .area(visible).category(com.jpromi.inventorycore.enums.AssetStatusCategory.RETIRED).build();
+        var defect = com.jpromi.inventorycore.entity.AssetStatus.builder().name("Defekt")
+            .category(com.jpromi.inventorycore.enums.AssetStatusCategory.DEFECT).build();
+        Asset old = Asset.builder().name("A alt").areas(Set.of(visible)).status(retired).build();
+        Asset customOld = Asset.builder().name("B alt").areas(Set.of(visible)).status(customRetired).build();
+        Asset broken = Asset.builder().name("C defekt").areas(Set.of(visible)).status(defect).build();
+        Asset legacy = Asset.builder().name("D ohne Status").areas(Set.of(visible)).build();
+        Asset denied = Asset.builder().name("E verborgen").areas(Set.of(hidden)).status(retired).build();
+        when(assets.findByDeletedFalse()).thenReturn(List.of(old, customOld, broken, legacy, denied));
+
+        var first = service.assets(null, null, null, null, null, List.of(), List.of(), 0, 1, authentication);
+        assertEquals(2, first.total());
+        assertTrue(first.hasMore());
+        assertEquals(broken.getUuid(), first.items().getFirst().uuid());
+        var second = service.assets(null, null, null, null, null, List.of(), null, 1, 1, authentication);
+        assertEquals(legacy.getUuid(), second.items().getFirst().uuid());
+        assertFalse(second.hasMore());
+
+        var selected = service.assets(null, null, null, null, null, List.of(),
+            List.of(retired.getUuid(), customRetired.getUuid(), defect.getUuid()), 0, 50, authentication);
+        assertEquals(3, selected.total());
+        assertEquals(List.of(old.getUuid(), customOld.getUuid(), broken.getUuid()),
+            selected.items().stream().map(item -> item.uuid()).toList());
+    }
+
+    @Test
     void assetsFilterPermissionsBeforeSortingTotalsAndPagingAndMapOnlyThePage() {
         allowView(PermissionResourceType.ASSET);
         Asset denied = Asset.builder().name("A").areas(Set.of(hidden)).build();
@@ -64,7 +95,7 @@ class InventoryListServiceTest {
         allowView(PermissionResourceType.LOCATION);
         Location parent = Location.builder().id(1L).areas(Set.of(visible)).build();
         Location child = Location.builder().id(2L).parentLocation(parent).build();
-        Tag inherited = Tag.builder().name("Atemschutz").build();
+        Tag inherited = Tag.builder().area(hidden).name("Atemschutz").build();
         AssetType type = AssetType.builder().tags(Set.of(inherited)).build();
         Asset match = Asset.builder().name("Geraet").location(child).assetType(type).areas(Set.of(hidden)).build();
         Asset wrongTag = Asset.builder().name("Geraet").location(child).build();
@@ -101,7 +132,7 @@ class InventoryListServiceTest {
     void assetTypesRequireTheirOwnAreasEvenWhenGlobalViewIsAllowed() {
         when(permissions.context(authentication)).thenReturn(new AccessContext(false, List.of(
             GroupPermission.builder().resourceType(PermissionResourceType.ASSET_TYPE).canView(true).build())));
-        Tag tag = Tag.builder().name("Atemschutz").build();
+        Tag tag = Tag.builder().area(visible).name("Atemschutz").build();
         AssetType match = AssetType.builder().name("Maske").tags(Set.of(tag)).areas(Set.of(visible)).build();
         AssetType unassigned = AssetType.builder().name("Maske").tags(Set.of(tag)).build();
         AssetType otherArea = AssetType.builder().name("Maske").tags(Set.of(tag)).areas(Set.of(hidden)).build();
@@ -115,11 +146,11 @@ class InventoryListServiceTest {
     }
 
     @Test
-    void tagUsageCountsOnlyVisibleDirectAssignmentsAndKeepsGlobalTags() {
+    void tagUsageCountsOnlyVisibleDirectAssignmentsAndAreaTags() {
         when(permissions.context(authentication)).thenReturn(new AccessContext(false, List.of(
             GroupPermission.builder().area(visible).canView(true).build())));
-        Tag tag = Tag.builder().name("Atemschutz").build();
-        Tag unused = Tag.builder().name("Reserve").build();
+        Tag tag = Tag.builder().area(visible).name("Atemschutz").build();
+        Tag unused = Tag.builder().area(visible).name("Reserve").build();
         AssetType type = AssetType.builder().areas(Set.of(visible)).tags(Set.of(tag)).build();
         Asset direct = Asset.builder().areas(Set.of(visible)).tags(Set.of(tag)).build();
         Asset inheritedOnly = Asset.builder().areas(Set.of(visible)).assetType(type).build();
@@ -142,9 +173,21 @@ class InventoryListServiceTest {
     }
 
     @Test
+    void tagScopeIsAppliedBeforeTotalsAndUsageQueries() {
+        allowView(PermissionResourceType.ASSET);
+        Tag own = Tag.builder().area(visible).name("Computer").build();
+        Tag foreign = Tag.builder().area(hidden).name("Maske").build();
+        when(tags.findAll()).thenReturn(List.of(own, foreign));
+        var page = service.tags(null, List.of(hidden.getUuid()), 0, 50, authentication);
+        assertEquals(0, page.total());
+        assertTrue(page.items().isEmpty());
+        verifyNoInteractions(assets, types, mapper);
+    }
+
+    @Test
     void outOfRangeTagPageSkipsUsageQueriesButRetainsTotal() {
         allowView(PermissionResourceType.ASSET);
-        when(tags.findAll()).thenReturn(List.of(Tag.builder().name("Reserve").build()));
+        when(tags.findAll()).thenReturn(List.of(Tag.builder().area(visible).name("Reserve").build()));
 
         var page = service.tags(null, 10, 50, authentication);
 
@@ -158,7 +201,7 @@ class InventoryListServiceTest {
     @Test
     void noMatchingTagsSkipsUsageQueriesAndNormalizesPaging() {
         allowView(PermissionResourceType.ASSET);
-        when(tags.findAll()).thenReturn(List.of(Tag.builder().name("Reserve").build()));
+        when(tags.findAll()).thenReturn(List.of(Tag.builder().area(visible).name("Reserve").build()));
 
         var page = service.tags("atem", -1, 500, authentication);
 

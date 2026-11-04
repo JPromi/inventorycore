@@ -156,7 +156,7 @@
   .item {
     --inventory-item-padding: 0.75rem;
 
-    // retired assets stay in the list, but grey
+    // Retired assets explicitly selected through the status filter appear grey.
     &.retired {
       background: var(--surface-active);
       color: var(--text-muted);

@@ -49,3 +49,22 @@ test('an asset opened directly falls back to the list', async ({ page }) => {
   await page.getByRole('link', { name: 'Zurück', exact: true }).click();
   await expect(page).toHaveURL(/\/assets$/);
 });
+
+test('editing from asset details returns to those details', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/assets');
+  await page.getByText('Laptop', { exact: true }).first().click();
+  await page.getByRole('button', { name: 'Bearbeiten', exact: true }).click();
+  await expect(page).toHaveURL(/\/assets\/laptop\/edit$/);
+  const back = page.getByRole('link', { name: 'Zurück', exact: true });
+  await expect(back).toHaveAttribute('href', '/assets/laptop');
+  await back.click();
+  await expect(page).toHaveURL(/\/assets\/laptop$/);
+});
+
+test('an edit form opened directly retains its detail fallback', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/assets/laptop/edit');
+  await page.getByRole('link', { name: 'Zurück', exact: true }).click();
+  await expect(page).toHaveURL(/\/assets\/laptop$/);
+});

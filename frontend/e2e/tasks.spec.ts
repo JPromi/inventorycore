@@ -170,6 +170,23 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
   });
 }
 
+test('back restores the task tab and search while a navigation link starts fresh', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/tasks');
+  await page.getByRole('tab', { name: /Mir zugewiesen/ }).click();
+  await page.locator('.search-box input').fill('Atemschutz');
+  await page.getByRole('button', { name: /Atemschutz-Kontrolle/ }).click();
+  await expect(page).toHaveURL(/\/tasks\/run-1$/);
+  await page.goBack();
+  await expect(page.locator('.search-box input')).toHaveValue('Atemschutz');
+  await expect(page.getByRole('tab', { name: /Mir zugewiesen/ })).toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: /Atemschutz-Kontrolle/ })).toBeVisible();
+  await page.getByRole('button', { name: /Atemschutz-Kontrolle/ }).click();
+  await page.locator('nav').getByRole('link', { name: 'Aufgaben', exact: true }).click();
+  await expect(page.locator('.search-box input')).toHaveValue('');
+  await expect(page.getByRole('tab').first()).toHaveClass(/active/);
+});
+
 test('a new task is saved with assignees, schedule and checklist', async ({ page }, testInfo) => {
   const { created } = await mockApi(page);
   await page.goto('/tasks/definitions/new');

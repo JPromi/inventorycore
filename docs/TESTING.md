@@ -1,5 +1,29 @@
 # Testing
 
+`list-history.spec.ts` covers search/status restoration before the first API request on browser
+Back/Forward and app back links, independent visits to the same list URL, fresh navigation
+from details, and resetting through the current list's navigation link. It exercises assets,
+locations and types. `tasks.spec.ts` additionally verifies restoring a run tab and search.
+Editing directly from an inventory list returns to that history entry through both Back and
+Cancel, preserving its filters instead of inserting a detail page.
+Combined tag, location, asset-type and status filters are checked on repeated returns from
+editing, including the actual parameters of every restored asset-list API request.
+Run with `asset-back-link.spec.ts` for scanner/list fallback navigation. API data is mocked.
+
+`InventoryListServiceTest` checks default exclusion of built-in and custom retired statuses
+before paging/totals, explicit status selection, permission filtering and legacy assets without
+a status. `asset-status.spec.ts` covers the initial list, explicit inclusion of retired assets
+and restoring the default when the status filter is cleared.
+
+## Area-specific tags
+
+`TagPermissionsTest` verifies area-admin recoloring, foreign-area denial, creation scope,
+immutable tag ownership, filtered reads and cross-area assignment/inheritance. Tag list tests
+check authorization and area filtering before totals and paging. `tag-areas.spec.ts` covers
+per-row controls, delayed color saves, sidebar scope changes and explicit creation areas;
+`inventory-table.spec.ts` also checks row-specific tag options. Run them with list-selection
+and inspection-template-default regressions.
+
 ## Inventory table
 
 The creation entry uses the **Neu** split button: its main action opens the single form,
@@ -12,7 +36,8 @@ safe retries, selected-row edits, undo, refreshed unrelated data, inherited tags
 custom values and relationships, type/location creation and editing, discard protection, failed
 detail loads, invalid names/lookups and read-only users. Run with `list-selection.spec.ts` because
 the table adds an action to existing inventory selection. APIs are mocked; existing backend
-authorization remains authoritative and a batch can partially succeed.
+authorization remains authoritative and a batch can partially succeed. The dialog closes automatically
+after all changes are saved successfully; failed or unconfirmed rows keep it open for review or retry.
 The table regressions also cover active-type field expansion, mixed-type non-applicable cells,
 draft values retained through switching/undo, select custom fields and the shared multi-select.
 Run `dropdown-position.spec.ts` after changes to shared dropdown positioning or focus; dropdown

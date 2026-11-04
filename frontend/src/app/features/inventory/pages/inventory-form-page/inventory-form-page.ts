@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { NavigationHistoryService } from '../../../../core/service/navigation-history.service';
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -143,6 +144,7 @@ export class InventoryFormPage implements OnInit {
     private readonly areaService: AreaService,
     private readonly host: ElementRef<HTMLElement>,
     private readonly assetStatuses: AssetStatusService,
+    private readonly navigationHistory: NavigationHistoryService,
   ) {}
 
   ngOnInit(): void {
@@ -239,11 +241,27 @@ export class InventoryFormPage implements OnInit {
     return this.areaOptions.slice(0, 1).map((option) => option.value);
   }
 
-  /** Where "back" and "cancel" lead: the detail page when editing, otherwise the list. */
+  /** Fallback for a form opened without a known previous in-app history entry. */
   protected get backRoute(): string[] {
     return this.uuid && this.config.detailRoutePrefix
       ? [this.config.detailRoutePrefix, this.uuid]
       : [this.config.listRoute];
+  }
+
+  private readonly isFormPage = (url: string): boolean =>
+    url.split(/[?#]/)[0] === this.router.url.split(/[?#]/)[0];
+
+  protected get backUrl(): string {
+    return this.navigationHistory.previous(this.isFormPage) ??
+      this.router.createUrlTree(this.backRoute).toString();
+  }
+
+  protected goBack(event: MouseEvent): void {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    this.navigationHistory.back(this.isFormPage, this.router.createUrlTree(this.backRoute).toString());
   }
 
   /** `createAnother` keeps the context (areas, location, type, ...) and opens an empty form again. */
@@ -695,16 +713,40 @@ export class InventoryFormPage implements OnInit {
   }
 
   protected get tagOptions(): SelectOption[] {
-    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+    return this.tags
+      .filter((tag) => !tag.areaUuid || [...this.selectedAreaUuids, ...this.lockedAreaUuids].includes(tag.areaUuid))
+      .map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
   }
 
   protected get lockedTagOptions(): SelectOption[] {
-    return this.lockedTags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+    return this.lockedTags.filter((tag) => !tag.areaUuid || [...this.selectedAreaUuids, ...this.lockedAreaUuids].includes(tag.areaUuid)).map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+  }
+
+  protected newTagArea: string | null = null;
+
+  protected get tagCreateAreas(): SelectOption[] {
+    return this.selectedAreaUuids
+      .filter((uuid) =>
+        this.permissions.can('ASSET', 'create', [uuid]) ||
+        this.permissions.can('ASSET', 'edit', [uuid]) ||
+        this.permissions.can('ASSET_TYPE', 'create', [uuid]) ||
+        this.permissions.can('ASSET_TYPE', 'edit', [uuid]),
+      )
+      .map((uuid) => ({ value: uuid, label: this.areaService.name(uuid) }));
+  }
+
+  protected get tagCreateArea(): string | null {
+    return this.tagCreateAreas.find((area) => area.value === this.newTagArea)?.value ??
+      this.tagCreateAreas[0]?.value ?? null;
   }
 
   protected createTag(name: string): void {
     // a tag created while typing gets a color of its own instead of none
-    this.api.create<TagItem>('tags', { name, color: randomPresetColor() }).subscribe({
+    const areaUuid = this.tagCreateArea;
+    if (!areaUuid) {
+      return;
+    }
+    this.api.create<TagItem>('tags', { name, color: randomPresetColor(), areaUuid }).subscribe({
       next: (tag) => {
         this.tags = [...this.tags, tag].sort((a, b) => a.name.localeCompare(b.name));
         this.selectedTagUuids = [...this.selectedTagUuids, tag.uuid];
@@ -741,7 +783,7 @@ export class InventoryFormPage implements OnInit {
 
     this.form.inspectionIntervalDays =
       assetType.inspectionIntervalDays ?? this.form.inspectionIntervalDays;
-    this.lockedTags = assetType.tags ?? [];
+    this.lockedTags = (assetType.tags ?? []).filter((tag) => !tag.areaUuid || [...this.selectedAreaUuids, ...this.lockedAreaUuids].includes(tag.areaUuid));
     const lockedUuids = new Set(this.lockedTags.map((tag) => tag.uuid));
     this.selectedTagUuids = this.selectedTagUuids.filter((uuid) => !lockedUuids.has(uuid));
 

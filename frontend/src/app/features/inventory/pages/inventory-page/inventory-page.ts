@@ -1,3 +1,4 @@
+import { ListHistoryService } from '../../../../core/service/list-history.service';
 import { CommonModule } from '@angular/common';
 import { inventoryTree, InventoryTreeRow } from '../../util/inventory-tree';
 import { AssetPrintBatch } from '../../components/asset-print-batch/asset-print-batch';
@@ -5,7 +6,7 @@ import { InventoryTable } from '../../components/inventory-table/inventory-table
 import { ActionMenu, MenuAction } from '../../../../shared/components/action-menu/action-menu';
 import { ViewSwitch } from '../../../../shared/components/view-switch/view-switch';
 import { ListView, storedListView } from '../../../../shared/util/list-view';
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -136,6 +137,8 @@ interface FieldConfig {
   styleUrl: './inventory-page.scss',
 })
 export class InventoryPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   protected readonly iconInputs = { size: 18 };
   protected readonly placeholderIconInputs = { size: 22 };
   protected config!: PageConfig;
@@ -164,7 +167,7 @@ export class InventoryPage implements OnInit, OnDestroy {
   protected locationFilter: string | null = null;
   protected assetTypeFilter: string | null = null;
   protected areaFilter: string | null = null;
-  /** selected statuses; empty = all */
+  /** Selected statuses; empty excludes retired assets. */
   protected statusFilter: string[] = [];
   protected statuses: AssetStatus[] = [];
   protected tags: TagItem[] = [];
@@ -249,12 +252,32 @@ export class InventoryPage implements OnInit, OnDestroy {
           },
         });
       }
-      this.resetFilters();
+      this.clearFilterState();
+      this.listHistory.bind(
+        'inventory:' + this.config.endpoint,
+        () => ({
+          search: this.search,
+          tagFilter: this.tagFilter,
+          locationFilter: this.locationFilter,
+          assetTypeFilter: this.assetTypeFilter,
+          areaFilter: this.areaFilter,
+          statusFilter: this.statusFilter,
+        }),
+        (state) => Object.assign(this, state),
+        this.historyDestroyRef,
+        () => this.load(),
+      );
+      this.load();
       this.loadFilterOptions();
     });
     // the sidebar area selection is a server filter too
     this.subscriptions.add(
-      this.areaService.selected$.pipe(skip(1)).subscribe(() => this.list.reload()),
+      this.areaService.selected$.pipe(skip(1)).subscribe(() => {
+        if (this.tagFilter && !this.tagOptions.some((option) => option.value === this.tagFilter)) {
+          this.tagFilter = null;
+        }
+        this.list.reload();
+      }),
     );
     this.subscriptions.add(
       this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload()),
@@ -266,7 +289,7 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.list.destroy();
   }
 
-  /** Filters for the server; `areas` is the sidebar selection (tags are global). */
+  /** Filters for the server; `areas` is the sidebar selection. */
   private get query(): Record<string, string | string[] | null> {
     return {
       q: this.search,
@@ -275,7 +298,7 @@ export class InventoryPage implements OnInit, OnDestroy {
       assetType: this.assetTypeFilter,
       area: this.areaFilter,
       status: this.statusFilter,
-      areas: this.config.endpoint === 'tags' ? [] : this.areaService.selected,
+      areas: this.areaService.selected,
     };
   }
 
@@ -342,7 +365,9 @@ export class InventoryPage implements OnInit, OnDestroy {
   }
 
   protected get tagOptions(): SelectOption[] {
-    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+    return this.tags
+      .filter((tag) => !tag.areaUuid || this.areaService.overlapsSelection([tag.areaUuid]))
+      .map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
   }
 
   protected get locationOptions(): SelectOption[] {
@@ -383,13 +408,17 @@ export class InventoryPage implements OnInit, OnDestroy {
   }
 
   protected resetFilters(): void {
+    this.clearFilterState();
+    this.load();
+  }
+
+  private clearFilterState(): void {
     this.search = '';
     this.tagFilter = null;
     this.locationFilter = null;
     this.assetTypeFilter = null;
     this.areaFilter = null;
     this.statusFilter = [];
-    this.load();
   }
 
   protected load(): void {
@@ -532,7 +561,8 @@ export class InventoryPage implements OnInit, OnDestroy {
   }
 
   protected itemTags(item: InventoryItem): TagItem[] {
-    const typeTags = this.assetTypes.find((type) => type.uuid === item.assetTypeUuid)?.tags ?? [];
+    const typeTags = (this.assetTypes.find((type) => type.uuid === item.assetTypeUuid)?.tags ?? [])
+      .filter((tag) => !tag.areaUuid || item.areaUuids?.includes(tag.areaUuid));
     const own = item.tags ?? [];
     const ownUuids = new Set(own.map((tag) => tag.uuid));
     return [...own, ...typeTags.filter((tag) => !ownUuids.has(tag.uuid))];

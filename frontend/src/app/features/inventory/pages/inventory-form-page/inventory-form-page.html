@@ -8,7 +8,7 @@
         </h1>
       </div>
 
-      <a class="secondary-action" [routerLink]="backRoute">
+      <a class="secondary-action" [attr.href]="backUrl" (click)="goBack($event)">
         <svg lucideArrowLeft size="18"></svg>
         <span>{{ 'common.back' | t }}</span>
       </a>
@@ -204,11 +204,21 @@
                 [lockedHint]="'inventoryForm.tagLocked' | t"
                 [(ngModel)]="selectedTagUuids"
                 name="tags"
-                [allowCreate]="true"
+                  [allowCreate]="!!tagCreateArea"
                 (create)="createTag($event)"
                 [placeholder]="'inventoryForm.tagsPlaceholder' | t"
                 [emptyText]="'inventoryForm.noMoreTags' | t"
               />
+                @if (tagCreateAreas.length > 1) {
+                  <label>{{ 'tags.createArea' | t }}</label>
+                  <app-search-select
+                    [ngModel]="tagCreateArea"
+                    (ngModelChange)="newTagArea = $event"
+                    name="tagCreateArea"
+                    [options]="tagCreateAreas"
+                    [ariaLabel]="'tags.createArea' | t"
+                  />
+                }
               @if (lockedTags.length) {
                 <p class="hint">{{ 'inventoryForm.lockedTagsHint' | t }}</p>
               }
@@ -511,7 +521,7 @@
         }
 
         <div class="editor-actions sticky-editor-actions">
-          <a class="secondary-action" [routerLink]="backRoute">{{ 'common.cancel' | t }}</a>
+          <a class="secondary-action" [attr.href]="backUrl" (click)="goBack($event)">{{ 'common.cancel' | t }}</a>
           @if (!uuid) {
             <button
               type="button"

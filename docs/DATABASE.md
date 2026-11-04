@@ -42,6 +42,21 @@ PostgreSQL is accessed through Spring Data JPA / Hibernate. Domain entities gene
 
 Type tags are merged into asset responses at read time. Asset-specific field values and type field definitions are distinct. Avoid copying inherited tags into the direct asset association just to make the frontend display them.
 
+Tags have a single owning `tags.area_id`; names are unique per area, rather than globally.
+Hibernate adds the nullable foreign-key column. `SchemaMigration` removes the former generated
+global name constraint. After default areas and legacy inventory areas are initialized,
+`TagAreaMigration` assigns each old tag to its areas of use and creates independent copies where
+necessary, preserving name/color and remapping asset/type joins, inspection-template default and
+recurring joins, and task UUID filters. Unused tags go to the default area. Global inspection
+templates refer to all applicable copies; they do not create unused copies in unrelated areas.
+Historical protocol UUID filters remain unchanged. The migration runs transactionally, marks
+the column NOT NULL afterwards, creates the area/name unique index, and leaves migrated rows
+unchanged on subsequent starts. Inherited tags are filtered against the asset's own areas.
+Deleting an area moves its tags to the default area; conflicting names receive a suffix so
+independent tag identities, colors and references are retained.
+Objects retaining such moved tags also retain the default area, including objects shared with
+another area, so their tags remain valid after deletion.
+
 Assets can also reference one parent asset through `parent_asset_id`. The optional `parentAssetNote` belongs to this relationship (for example, a component's RAM slot), not the asset description. Hierarchy assignment rejects self-links/cycles and requires visibility of a newly selected parent. Type, location, areas, and permissions remain independent; children are not cascade-deleted. A live parent cannot be deleted until its active children are detached or moved.
 
 `inspectionPolicy` defaults to `STANDARD` for new and existing assets. `MANUAL` assets remain individually expected without scan confirmation; `EXCLUDED` assets are omitted from new runs and recurring due dates. Inspection items snapshot the policy, parent UUID, and link note. Existing protocols keep their original snapshots; older items without hierarchy metadata remain flat. Hierarchy display groups only items within the run. Templates optionally widen the initial selection with `includeChildAssets` (non-null, default false); descendants bypass selection filters but never authorization or inspection exclusions. Default tag filters are stored in the owning `inspection_type_default_tags` join table and detached when tags are deleted. Existing templates start with no default tags and child inclusion disabled.

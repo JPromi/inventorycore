@@ -59,7 +59,8 @@ async function mockApi(page: Page): Promise<Calls> {
     if (path === '/api/assets/page') {
       calls.pages.push(url.searchParams);
       const wanted = url.searchParams.getAll('status');
-      const items = [pa, broken, old].filter((asset) => !wanted.length || wanted.includes(asset.status.uuid));
+      const items = [pa, broken, old].filter((asset) => wanted.length
+        ? wanted.includes(asset.status.uuid) : asset.status.category !== 'RETIRED');
       return route.fulfill({ json: { items, total: items.length, page: 0, size: 50, hasMore: false } });
     }
     const body = path === '/api/auth/me' ? { authenticated: true, username: 'admin', displayName: 'Admin', role: 'ADMIN', permissions: [] }
@@ -103,28 +104,32 @@ test('the status is changed on the asset page with a comment and kept in the his
   await expect(entries.nth(2)).toContainText('Ventil undicht');
 });
 
-test('the list shows special statuses, retired assets in grey and filters by status', async ({ page }) => {
+test('the list hides retired assets by default and allows explicitly selecting them', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   const calls = await mockApi(page);
   await page.goto('/assets');
   const rows = page.locator('article.item');
-  await expect(rows).toHaveCount(3);
+  await expect(rows).toHaveCount(2);
   // "Vorhanden" is the normal case and not shown
   await expect(rows.nth(0).locator('app-asset-status-badge')).toHaveCount(0);
   await expect(rows.nth(1).locator('app-asset-status-badge')).toHaveText('Defekt');
-  await expect(rows.nth(2)).toHaveClass(/retired/);
+  await expect(page.getByText('Alte Wärmebildkamera', { exact: true })).toHaveCount(0);
 
   const filter = page.locator('app-asset-status-filter');
+  await expect(filter.locator('.trigger')).toContainText('Ohne Ausgeschiedene');
   await filter.getByRole('button', { name: 'Status filtern' }).click();
   await filter.getByRole('menuitemcheckbox', { name: 'Defekt' }).click();
   await filter.getByRole('menuitemcheckbox', { name: 'Ausgeschieden' }).click();
   await expect(filter.locator('.trigger')).toContainText('2 Status');
   await expect.poll(() => calls.pages.at(-1)?.getAll('status')).toEqual(['defect', 'retired']);
   await expect(rows).toHaveCount(2);
+  await expect(rows.filter({ hasText: 'Alte Wärmebildkamera' })).toHaveClass(/retired/);
 
   await filter.getByTitle('Statusfilter entfernen').click();
   await expect.poll(() => calls.pages.at(-1)?.getAll('status')).toEqual([]);
-  await expect(rows).toHaveCount(3);
+  await expect(rows).toHaveCount(2);
+  await expect(filter.locator('.trigger')).toContainText('Ohne Ausgeschiedene');
+  await expect(page.getByText('Alte Wärmebildkamera', { exact: true })).toHaveCount(0);
 });
 
 test('custom statuses are configured per area', async ({ page }) => {

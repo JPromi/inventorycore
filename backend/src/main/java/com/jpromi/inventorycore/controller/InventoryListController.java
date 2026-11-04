@@ -71,11 +71,12 @@ public class InventoryListController {
     @GetMapping("/tags/page")
     public PageResponse<TagUsageResponse> tags(
         @RequestParam(required = false) String q,
+        @RequestParam(required = false) List<UUID> areas,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "" + Paging.DEFAULT_SIZE) int size,
         Authentication authentication
     ) {
-        return lists.tags(q, page, size, authentication);
+        return lists.tags(q, areas, page, size, authentication);
     }
 
 }

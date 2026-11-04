@@ -215,12 +215,13 @@ export class InspectionNewPage implements OnInit {
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  /** Tags are global; offer those used by assets of the chosen areas. */
+  /** Offer tags of the chosen areas that are used by matching assets. */
   protected get tagOptions(): SelectOption[] {
     const used = new Set(
       this.scopedAssets.flatMap((asset) => asset.tags ?? []).map((tag) => tag.uuid),
     );
     return this.tags
+      .filter((tag) => !tag.areaUuid || !this.filter.areaUuids.length || this.filter.areaUuids.includes(tag.areaUuid))
       .filter(
         (tag) =>
           !this.filter.areaUuids.length ||

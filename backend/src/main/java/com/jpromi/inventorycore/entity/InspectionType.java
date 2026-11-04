@@ -113,9 +113,8 @@ public class InspectionType {
 
     public boolean appliesToSchedule(Asset asset) {
         return appliesTo(asset) && (recurringTags.isEmpty()
-            || asset.getTags().stream().anyMatch(tag -> recurringTags.stream().anyMatch(own -> own.getUuid().equals(tag.getUuid())))
-            || (asset.getAssetType() != null && asset.getAssetType().getTags().stream()
-                .anyMatch(tag -> recurringTags.stream().anyMatch(own -> own.getUuid().equals(tag.getUuid())))));
+            || asset.effectiveTags()
+                .anyMatch(tag -> recurringTags.stream().anyMatch(own -> own.getUuid().equals(tag.getUuid()))));
     }
 
     /** Asset types this inspection is for; empty = all assets. */

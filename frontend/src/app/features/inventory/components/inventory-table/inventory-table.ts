@@ -52,6 +52,7 @@ function fieldId(name: string): string {
 }
 
 interface Option {
+  areaUuid?: string | null;
   value: string;
   label: string;
 }
@@ -304,7 +305,11 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
         { value: 'true', label: t('common.yes') },
         { value: 'false', label: t('common.no') },
       ];
-    const options = column.options ?? [];
+    let options = column.options ?? [];
+    if (column.key === 'tagUuids') {
+      const areas = this.multiValues(row, { key: 'areaUuids', label: '' });
+      options = options.filter((option) => !option.areaUuid || areas.includes(option.areaUuid));
+    }
     const values =
       column.kind === 'multi' ? this.multiValues(row, column) : [row.cells[column.key]];
     const missing = values.filter(
@@ -397,8 +402,8 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
         throw new Error(t('inventoryTable.noPermission'));
       }
       this.types = data.types;
-      const options = (items: { uuid: string; name: string }[]) =>
-        items.map((item) => ({ value: item.uuid, label: item.name }));
+      const options = (items: { uuid: string; name: string; areaUuid?: string | null }[]) =>
+        items.map((item) => ({ value: item.uuid, label: item.name, areaUuid: item.areaUuid }));
       this.columns = [
         { key: 'name', label: t('common.name') },
         { key: 'description', label: t('common.description') },
@@ -1002,6 +1007,9 @@ export class InventoryTable implements AfterViewInit, OnDestroy {
     this.saving = false;
     this.history = [];
     this.refreshColumns();
+    if (!this.destroyed && !this.dirty && !this.rows.some((row) => row.error || row.uncertain)) {
+      this.close();
+    }
   }
 
   close(force = false): void {

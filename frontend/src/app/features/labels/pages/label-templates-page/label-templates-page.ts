@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -51,6 +52,8 @@ import { PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
   styleUrl: './label-templates-page.scss',
 })
 export class LabelTemplatesPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   protected readonly sample = SAMPLE_CONTEXT;
   /** Searched on the server, loaded page by page while scrolling. */
   protected readonly list = new PagedList<LabelTemplate>((page, size) =>
@@ -78,6 +81,13 @@ export class LabelTemplatesPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'labels',
+      () => ({ search: this.search }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.list.reload(),
+    );
     this.areaService.load().subscribe();
     this.load();
   }
