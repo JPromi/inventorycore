@@ -10,6 +10,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -36,14 +38,22 @@ public class Tag {
     @Builder.Default
     private UUID uuid = UUID.randomUUID();
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     private String color;
 
+    @ManyToOne
+    @JoinColumn(name = "area_id")
+    private Area area;
+
     @ManyToMany(mappedBy = "tags")
     @Builder.Default
     private Set<Asset> assets = new HashSet<>();
+
+    public boolean belongsTo(java.util.Collection<Area> areas) {
+        return area != null && areas.stream().anyMatch(candidate -> candidate.getUuid().equals(area.getUuid()));
+    }
 
     @PrePersist
     void ensureUuid() {

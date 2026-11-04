@@ -9,9 +9,22 @@
         </div>
     </header>
 
+    <p class="hint">{{ 'tags.areaHint' | t }}</p>
+
     @if (canCreate) {
         <form class="card create-row" (ngSubmit)="create()">
-            <app-color-picker [(ngModel)]="newColor" name="newColor" [label]="'tags.newColorLabel' | t" />
+            <app-search-select
+                [(ngModel)]="newArea"
+                name="newArea"
+                [options]="areaOptions"
+                [ariaLabel]="'terms.area' | t"
+            />
+            <app-color-picker
+                [(ngModel)]="newColor"
+                name="newColor"
+                [compact]="true"
+                [label]="'tags.newColorLabel' | t"
+            />
             <input
                 type="text"
                 class="name-input"
@@ -28,7 +41,7 @@
             >
                 {{ newName.trim() || ('tags.preview' | t) }}
             </span>
-            <button type="submit" class="primary-action" [disabled]="!newName.trim() || creating">
+            <button type="submit" class="primary-action" [disabled]="!newName.trim() || !newArea || creating">
                 <svg lucidePlus size="17"></svg>
                 <span>{{ (creating ? 'tags.creating' : 'common.create') | t }}</span>
             </button>
@@ -65,9 +78,10 @@
                 <div class="tag-row" [appSelectableRow]="selection" [selectionItem]="row" [class.is-selected]="selection.isSelected(row)">
                     <app-selection-checkbox [selection]="selection" [item]="row" />
                     <app-color-picker
+                        [compact]="true"
                         [ngModel]="row.color"
                         (ngModelChange)="colorChanged(row, $event)"
-                        [disabled]="!canEdit || selection.active"
+                        [disabled]="!canEdit(row) || selection.active"
                         [label]="'tags.colorOf' | t: { name: row.name }"
                     />
                     <input
@@ -75,7 +89,7 @@
                         class="name-input"
                         [(ngModel)]="row.name"
                         [readOnly]="selection.active"
-                        [disabled]="!canEdit"
+                        [disabled]="!canEdit(row)"
                         (blur)="saveName(row)"
                         (keydown.enter)="$any($event.target).blur()"
                         (keydown.escape)="row.name = row.savedName; $any($event.target).blur()"
@@ -89,7 +103,10 @@
                     >
                         {{ row.name || row.savedName }}
                     </span>
-                    <span class="usage">{{ usageText(row) || ('tags.notUsed' | t) }}</span>
+                    <span class="usage">
+                        {{ row.areaUuid ? areaService.name(row.areaUuid) : '' }} ·
+                        {{ usageText(row) || ('tags.notUsed' | t) }}
+                    </span>
                     <span class="state" [class.failed]="row.state === 'error'">
                         @switch (row.state) {
                             @case ('saving') {
@@ -104,7 +121,7 @@
                             }
                         }
                     </span>
-                    @if (canDelete) {
+                    @if (canDelete(row)) {
                         <button type="button" class="icon-button danger" [title]="'common.delete' | t" (click)="remove(row)">
                             <svg lucideTrash2 size="15"></svg>
                         </button>

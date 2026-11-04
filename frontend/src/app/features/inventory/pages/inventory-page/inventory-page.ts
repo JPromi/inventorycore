@@ -254,7 +254,12 @@ export class InventoryPage implements OnInit, OnDestroy {
     });
     // the sidebar area selection is a server filter too
     this.subscriptions.add(
-      this.areaService.selected$.pipe(skip(1)).subscribe(() => this.list.reload()),
+      this.areaService.selected$.pipe(skip(1)).subscribe(() => {
+        if (this.tagFilter && !this.tagOptions.some((option) => option.value === this.tagFilter)) {
+          this.tagFilter = null;
+        }
+        this.list.reload();
+      }),
     );
     this.subscriptions.add(
       this.searchChanges.pipe(debounceTime(SEARCH_DELAY_MS)).subscribe(() => this.list.reload()),
@@ -266,7 +271,7 @@ export class InventoryPage implements OnInit, OnDestroy {
     this.list.destroy();
   }
 
-  /** Filters for the server; `areas` is the sidebar selection (tags are global). */
+  /** Filters for the server; `areas` is the sidebar selection. */
   private get query(): Record<string, string | string[] | null> {
     return {
       q: this.search,
@@ -275,7 +280,7 @@ export class InventoryPage implements OnInit, OnDestroy {
       assetType: this.assetTypeFilter,
       area: this.areaFilter,
       status: this.statusFilter,
-      areas: this.config.endpoint === 'tags' ? [] : this.areaService.selected,
+      areas: this.areaService.selected,
     };
   }
 
@@ -342,7 +347,9 @@ export class InventoryPage implements OnInit, OnDestroy {
   }
 
   protected get tagOptions(): SelectOption[] {
-    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+    return this.tags
+      .filter((tag) => !tag.areaUuid || this.areaService.overlapsSelection([tag.areaUuid]))
+      .map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
   }
 
   protected get locationOptions(): SelectOption[] {
@@ -532,7 +539,8 @@ export class InventoryPage implements OnInit, OnDestroy {
   }
 
   protected itemTags(item: InventoryItem): TagItem[] {
-    const typeTags = this.assetTypes.find((type) => type.uuid === item.assetTypeUuid)?.tags ?? [];
+    const typeTags = (this.assetTypes.find((type) => type.uuid === item.assetTypeUuid)?.tags ?? [])
+      .filter((tag) => !tag.areaUuid || item.areaUuids?.includes(tag.areaUuid));
     const own = item.tags ?? [];
     const ownUuids = new Set(own.map((tag) => tag.uuid));
     return [...own, ...typeTags.filter((tag) => !ownUuids.has(tag.uuid))];

@@ -44,7 +44,8 @@ class InspectionScheduleServiceTest {
     private final AssetType vehicle = AssetType.builder().id(10L).name("Fahrzeug").build();
     private final AssetType laptop = AssetType.builder().id(11L).name("Laptop").build();
     private final InspectionType brakes = InspectionType.builder().id(20L).name("Bremsen").intervalValue(6).intervalUnit(IntervalUnit.WEEKS).build();
-    private final Asset car = Asset.builder().id(1L).name("Auto").assetType(vehicle).build();
+    private final Area area = Area.builder().id(1L).name("Fahrzeuge").build();
+    private final Asset car = Asset.builder().id(1L).name("Auto").areas(new java.util.HashSet<>(java.util.Set.of(area))).assetType(vehicle).build();
 
     private final List<Object[]> checks = new ArrayList<>();
     private final List<AssetInspectionSchedule> overrides = new ArrayList<>();
@@ -61,7 +62,7 @@ class InspectionScheduleServiceTest {
 
     @Test
     void recurringTagsMatchDirectAndInheritedTagsButNotDefaultTags() {
-        var tag = com.jpromi.inventorycore.entity.Tag.builder().name("Safety").build();
+        var tag = com.jpromi.inventorycore.entity.Tag.builder().area(area).name("Safety").build();
         brakes.getRecurringTags().add(tag);
         brakes.getDefaultTags().add(tag);
         assertTrue(service.all(admin).isEmpty());

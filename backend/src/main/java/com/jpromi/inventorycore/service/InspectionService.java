@@ -257,6 +257,11 @@ public class InspectionService {
             }
         }
 
+        java.util.stream.Stream.concat(type.getDefaultTags().stream(), type.getRecurringTags().stream()).forEach(tag -> {
+            require(TagScope.visible(access, tag));
+            if (!type.getAreas().isEmpty()) TagScope.inAreas(tag, type.getAreas());
+        });
+
         // keep existing definitions (and their uuids, which values refer to) where possible
         Map<UUID, InspectionFieldDefinition> existing = type.getFields().stream()
             .collect(Collectors.toMap(InspectionFieldDefinition::getUuid, field -> field));
@@ -885,8 +890,7 @@ public class InspectionService {
             .filter(access::canViewAsset)
             .filter(asset -> access.can(PermissionResourceType.ASSET, PermissionAction.INSPECT, asset.getAreas()))
             .filter(asset -> finalLocationIds == null || (asset.getLocation() != null && finalLocationIds.contains(asset.getLocation().getId())))
-            .filter(asset -> tags.isEmpty() || asset.getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid()))
-                || (asset.getAssetType() != null && asset.getAssetType().getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid()))))
+            .filter(asset -> tags.isEmpty() || TagScope.tagsOf(asset).anyMatch(tag -> tags.contains(tag.getUuid())))
             .filter(asset -> types.isEmpty() || (asset.getAssetType() != null && types.contains(asset.getAssetType().getUuid())))
             .filter(asset -> areas.isEmpty() || asset.getAreas().stream().anyMatch(area -> areas.contains(area.getUuid())))
             .toList();

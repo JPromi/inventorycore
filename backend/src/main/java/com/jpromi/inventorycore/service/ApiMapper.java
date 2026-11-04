@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.HashSet;
 
 import org.springframework.stereotype.Service;
 
@@ -92,7 +91,8 @@ public class ApiMapper {
     }
 
     public TagResponse toResponse(Tag tag) {
-        return new TagResponse(tag.getUuid(), tag.getName(), tag.getColor());
+        return new TagResponse(tag.getUuid(), tag.getName(), tag.getColor(),
+            tag.getArea() == null ? null : tag.getArea().getUuid());
     }
 
     public AssetTypeResponse toResponse(AssetType type) {
@@ -166,10 +166,7 @@ public class ApiMapper {
     }
 
     public AssetResponse toResponse(Asset asset) {
-        Set<TagResponse> tags = new HashSet<>(asset.getTags().stream().map(this::toResponse).collect(Collectors.toSet()));
-        if (asset.getAssetType() != null) {
-            tags.addAll(asset.getAssetType().getTags().stream().map(this::toResponse).collect(Collectors.toSet()));
-        }
+        Set<TagResponse> tags = TagScope.tagsOf(asset).map(this::toResponse).collect(Collectors.toSet());
 
         return new AssetResponse(
             asset.getUuid(),

@@ -11,7 +11,7 @@ async function setup(
     extraTypes?: Record<string, unknown>[];
   } = {},
 ) {
-  const tag = { uuid: 'tag', name: 'Atemschutz' };
+  const tag = { uuid: 'tag', name: 'Atemschutz', areaUuid: 'area' };
   const definition = {
     fieldKey: 'manufacturer',
     name: 'Hersteller',
@@ -123,7 +123,7 @@ async function setup(
               : path === 'locations'
                 ? [location]
                 : path === 'tags'
-                  ? [tag, { uuid: 'direct', name: 'Direkt' }]
+                  ? [tag, { uuid: 'direct', name: 'Direkt', areaUuid: 'area' }, { uuid: 'foreign', name: 'Computer', areaUuid: 'edv' }]
                   : path === 'areas'
                     ? [{ uuid: 'area', name: 'Feuerwehr', defaultArea: true }]
                     : path === 'customization'
@@ -518,6 +518,15 @@ test('shared dropdown panels stay above the table and multi-selection saves UUID
     tagUuids: ['direct'],
     areaUuids: ['area'],
   });
+});
+
+test('tag options only contain tags of the row areas', async ({ page }) => {
+  await setup(page);
+  await page.goto('/assets');
+  await createTable(page);
+  await cell(page, 1, 'Tags').click();
+  await expect(page.getByRole('option', { name: 'Direkt', exact: true })).toBeVisible();
+  await expect(page.getByRole('option', { name: 'Computer', exact: true })).toHaveCount(0);
 });
 
 test('text inputs fill cells when a description increases the row height', async ({ page }) => {

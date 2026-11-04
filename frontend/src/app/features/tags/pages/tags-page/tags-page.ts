@@ -1,4 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AreaService } from '../../../../core/service/area.service';
+import { SearchSelect } from '../../../../shared/components/search-select/search-select';
 import { FormsModule } from '@angular/forms';
 import {
   LucideCheck,
@@ -8,7 +11,7 @@ import {
   LucideTrash2,
   LucideX,
 } from '@lucide/angular';
-import { Subject, Subscription, debounceTime, map } from 'rxjs';
+import { Subject, Subscription, debounceTime, map, skip } from 'rxjs';
 
 import {
   ColorPicker,
@@ -45,7 +48,7 @@ interface TagRow extends TagItem {
   typeCount: number;
 }
 
-/** Tags are global (not bound to areas); name and color are edited inline and saved right away. */
+/** Area-owned tags; names and colors are saved inline within the owning area. */
 @Component({
   selector: 'app-tags-page',
   imports: [
@@ -53,6 +56,7 @@ interface TagRow extends TagItem {
     SelectableRow,
     SelectionCheckbox,
     FormsModule,
+    SearchSelect,
     ColorPicker,
     InfiniteScroll,
     LucideCheck,
@@ -70,14 +74,14 @@ interface TagRow extends TagItem {
 export class TagsPage implements OnInit, OnDestroy {
   /** Searched on the server, loaded page by page while scrolling. */
   protected readonly list = new PagedList<TagRow>((page, size) =>
-    this.api.page<TagUsage>('tags', { q: this.search }, page, size).pipe(
+    this.api.page<TagUsage>('tags', { q: this.search, areas: this.areaService.selected }, page, size).pipe(
       map((result) => ({
         ...result,
         items: result.items.map((tag) => this.toRow(tag, tag.assetCount, tag.assetTypeCount)),
       })),
     ),
   );
-  protected readonly canBulkDelete = (_row: TagRow) => this.canDelete;
+  protected readonly canBulkDelete = (row: TagRow) => this.canDelete(row);
   protected readonly bulkDelete = (row: TagRow) => {
     clearTimeout(this.colorTimers.get(row.uuid));
     return this.api.delete('tags', row.uuid);
@@ -85,6 +89,7 @@ export class TagsPage implements OnInit, OnDestroy {
   protected search = '';
   protected error = '';
   protected newName = '';
+  protected newArea: string | null = null;
   /** every new tag starts with a color of its own; it can still be changed before creating */
   protected newColor: string | null = randomPresetColor();
   protected creating = false;
@@ -98,6 +103,8 @@ export class TagsPage implements OnInit, OnDestroy {
     private readonly api: InventoryApiService,
     private readonly permissions: PermissionService,
     private readonly confirmDialog: ConfirmDialogService,
+    protected readonly areaService: AreaService,
+    private readonly destroyRef: DestroyRef,
   ) {
     this.searchSubscription = this.searchChanges
       .pipe(debounceTime(SEARCH_DELAY_MS))
@@ -105,6 +112,11 @@ export class TagsPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.areaService.load().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.pickArea());
+    this.areaService.selected$.pipe(skip(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pickArea();
+      this.list.reload();
+    });
     this.load();
   }
 
@@ -145,23 +157,36 @@ export class TagsPage implements OnInit, OnDestroy {
     this.list.destroy();
   }
 
-  /** Same rule as the backend: whoever maintains assets or types may create tags. */
-  protected get canCreate(): boolean {
-    return (
-      this.permissions.can('ASSET_TYPE', 'create') ||
-      this.permissions.can('ASSET_TYPE', 'edit') ||
-      this.permissions.can('ASSET', 'create') ||
-      this.permissions.can('ASSET', 'edit')
+  protected get createAreas() {
+    return this.areaService.areas.filter((area) =>
+      (!this.areaService.selected.length || this.areaService.selected.includes(area.uuid)) &&
+      (this.permissions.can('ASSET_TYPE', 'create', [area.uuid]) ||
+        this.permissions.can('ASSET_TYPE', 'edit', [area.uuid]) ||
+        this.permissions.can('ASSET', 'create', [area.uuid]) ||
+        this.permissions.can('ASSET', 'edit', [area.uuid])),
     );
   }
 
-  /** Tags are global: changing or deleting one needs the right for all areas (like the backend). */
-  protected get canEdit(): boolean {
-    return this.permissions.canEverywhere('ASSET_TYPE', 'edit');
+  protected get areaOptions() {
+    return this.createAreas.map((area) => ({ value: area.uuid, label: area.name }));
   }
 
-  protected get canDelete(): boolean {
-    return this.permissions.canEverywhere('ASSET_TYPE', 'delete');
+  protected get canCreate(): boolean {
+    return this.createAreas.length > 0;
+  }
+
+  protected canEdit(row: TagRow): boolean {
+    return !!row.areaUuid && this.permissions.can('ASSET_TYPE', 'edit', [row.areaUuid]);
+  }
+
+  protected canDelete(row: TagRow): boolean {
+    return !!row.areaUuid && this.permissions.can('ASSET_TYPE', 'delete', [row.areaUuid]);
+  }
+
+  private pickArea(): void {
+    if (!this.createAreas.some((area) => area.uuid === this.newArea)) {
+      this.newArea = this.createAreas[0]?.uuid ?? null;
+    }
   }
 
   protected textColor(color: string | null | undefined): string {
@@ -170,16 +195,16 @@ export class TagsPage implements OnInit, OnDestroy {
 
   protected create(): void {
     const name = this.newName.trim();
-    if (!name || this.creating) {
+    if (!name || this.creating || !this.newArea) {
       return;
     }
-    if (this.rows.some((row) => row.name.toLowerCase() === name.toLowerCase())) {
+    if (this.rows.some((row) => row.areaUuid === this.newArea && row.name.toLowerCase() === name.toLowerCase())) {
       this.error = t('tags.exists', { name });
       return;
     }
     this.creating = true;
     this.error = '';
-    this.api.create<TagItem>('tags', { name, color: this.newColor }).subscribe({
+    this.api.create<TagItem>('tags', { name, color: this.newColor, areaUuid: this.newArea }).subscribe({
       next: (tag) => {
         this.rows = this.sort([...this.rows, this.toRow(tag, 0, 0)]);
         this.list.total++;
@@ -249,7 +274,7 @@ export class TagsPage implements OnInit, OnDestroy {
   private persist(row: TagRow): void {
     this.setState(row, 'saving');
     this.api
-      .update<TagItem>('tags', row.uuid, { name: row.name, color: row.color ?? null })
+      .update<TagItem>('tags', row.uuid, { name: row.name, color: row.color ?? null, areaUuid: row.areaUuid })
       .subscribe({
         next: (tag) => {
           row.savedName = tag.name;

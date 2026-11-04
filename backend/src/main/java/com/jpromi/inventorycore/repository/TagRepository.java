@@ -12,6 +12,8 @@ import com.jpromi.inventorycore.entity.Tag;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
     Optional<Tag> findByUuid(UUID uuid);
+    java.util.List<Tag> findByArea(com.jpromi.inventorycore.entity.Area area);
+    boolean existsByAreaAndNameIgnoreCase(com.jpromi.inventorycore.entity.Area area, String name);
 
     /** Removes the tag from all assets, so it can be deleted although it is in use. */
     @Modifying

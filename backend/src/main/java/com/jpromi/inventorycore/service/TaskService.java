@@ -305,6 +305,13 @@ public class TaskService {
         task.getAssets().addAll(assets);
 
         AssetFilter filter = request.filter();
+        if (filter != null && filter.tagUuids() != null) {
+            for (UUID uuid : filter.tagUuids()) {
+                TagScope.inAreas(tagRepository.findByUuid(uuid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbekannter Tag " + uuid)),
+                    Set.of(task.getArea()));
+            }
+        }
         task.setUseFilter(filter != null);
         task.setFilterLocationUuids(filter == null ? null : join(filter.locationUuids()));
         task.setFilterIncludeSubLocations(filter == null || filter.includeSubLocations());
@@ -642,8 +649,7 @@ public class TaskService {
                 .filter(asset -> !asset.isRetired())
                 .filter(asset -> Paging.inAreas(asset, areas))
                 .filter(asset -> finalLocationIds == null || (asset.getLocation() != null && finalLocationIds.contains(asset.getLocation().getId())))
-                .filter(asset -> tags.isEmpty() || asset.getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid()))
-                    || (asset.getAssetType() != null && asset.getAssetType().getTags().stream().anyMatch(tag -> tags.contains(tag.getUuid()))))
+                .filter(asset -> tags.isEmpty() || TagScope.tagsOf(asset).anyMatch(tag -> tags.contains(tag.getUuid())))
                 .filter(asset -> types.isEmpty() || (asset.getAssetType() != null && types.contains(asset.getAssetType().getUuid())))
                 .forEach(asset -> selected.putIfAbsent(asset.getId(), asset));
         }

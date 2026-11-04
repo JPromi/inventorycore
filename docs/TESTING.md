@@ -1,5 +1,14 @@
 # Testing
 
+## Area-specific tags
+
+`TagPermissionsTest` verifies area-admin recoloring, foreign-area denial, creation scope,
+immutable tag ownership, filtered reads and cross-area assignment/inheritance. Tag list tests
+check authorization and area filtering before totals and paging. `tag-areas.spec.ts` covers
+per-row controls, delayed color saves, sidebar scope changes and explicit creation areas;
+`inventory-table.spec.ts` also checks row-specific tag options. Run them with list-selection
+and inspection-template-default regressions.
+
 ## Inventory table
 
 The creation entry uses the **Neu** split button: its main action opens the single form,

@@ -108,6 +108,13 @@ public class Asset {
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
+    /** Direct and inherited tags that belong to one of this asset's areas. */
+    public java.util.stream.Stream<Tag> effectiveTags() {
+        java.util.stream.Stream<Tag> inherited = assetType == null
+            ? java.util.stream.Stream.empty() : assetType.getTags().stream();
+        return java.util.stream.Stream.concat(tags.stream(), inherited).filter(tag -> tag.belongsTo(areas));
+    }
+
     @ManyToMany
     @JoinTable(
         name = "asset_areas",

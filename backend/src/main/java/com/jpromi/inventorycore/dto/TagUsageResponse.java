@@ -7,6 +7,7 @@ public record TagUsageResponse(
     UUID uuid,
     String name,
     String color,
+    UUID areaUuid,
     long assetCount,
     long assetTypeCount
 ) {}

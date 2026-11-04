@@ -5,5 +5,10 @@ import java.util.UUID;
 public record TagResponse(
     UUID uuid,
     String name,
-    String color
-) {}
+    String color,
+    UUID areaUuid
+) {
+    public TagResponse(UUID uuid, String name, String color) {
+        this(uuid, name, color, null);
+    }
+}

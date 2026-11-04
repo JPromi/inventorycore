@@ -64,7 +64,7 @@ class InventoryListServiceTest {
         allowView(PermissionResourceType.LOCATION);
         Location parent = Location.builder().id(1L).areas(Set.of(visible)).build();
         Location child = Location.builder().id(2L).parentLocation(parent).build();
-        Tag inherited = Tag.builder().name("Atemschutz").build();
+        Tag inherited = Tag.builder().area(hidden).name("Atemschutz").build();
         AssetType type = AssetType.builder().tags(Set.of(inherited)).build();
         Asset match = Asset.builder().name("Geraet").location(child).assetType(type).areas(Set.of(hidden)).build();
         Asset wrongTag = Asset.builder().name("Geraet").location(child).build();
@@ -101,7 +101,7 @@ class InventoryListServiceTest {
     void assetTypesRequireTheirOwnAreasEvenWhenGlobalViewIsAllowed() {
         when(permissions.context(authentication)).thenReturn(new AccessContext(false, List.of(
             GroupPermission.builder().resourceType(PermissionResourceType.ASSET_TYPE).canView(true).build())));
-        Tag tag = Tag.builder().name("Atemschutz").build();
+        Tag tag = Tag.builder().area(visible).name("Atemschutz").build();
         AssetType match = AssetType.builder().name("Maske").tags(Set.of(tag)).areas(Set.of(visible)).build();
         AssetType unassigned = AssetType.builder().name("Maske").tags(Set.of(tag)).build();
         AssetType otherArea = AssetType.builder().name("Maske").tags(Set.of(tag)).areas(Set.of(hidden)).build();
@@ -115,11 +115,11 @@ class InventoryListServiceTest {
     }
 
     @Test
-    void tagUsageCountsOnlyVisibleDirectAssignmentsAndKeepsGlobalTags() {
+    void tagUsageCountsOnlyVisibleDirectAssignmentsAndAreaTags() {
         when(permissions.context(authentication)).thenReturn(new AccessContext(false, List.of(
             GroupPermission.builder().area(visible).canView(true).build())));
-        Tag tag = Tag.builder().name("Atemschutz").build();
-        Tag unused = Tag.builder().name("Reserve").build();
+        Tag tag = Tag.builder().area(visible).name("Atemschutz").build();
+        Tag unused = Tag.builder().area(visible).name("Reserve").build();
         AssetType type = AssetType.builder().areas(Set.of(visible)).tags(Set.of(tag)).build();
         Asset direct = Asset.builder().areas(Set.of(visible)).tags(Set.of(tag)).build();
         Asset inheritedOnly = Asset.builder().areas(Set.of(visible)).assetType(type).build();
@@ -142,9 +142,21 @@ class InventoryListServiceTest {
     }
 
     @Test
+    void tagScopeIsAppliedBeforeTotalsAndUsageQueries() {
+        allowView(PermissionResourceType.ASSET);
+        Tag own = Tag.builder().area(visible).name("Computer").build();
+        Tag foreign = Tag.builder().area(hidden).name("Maske").build();
+        when(tags.findAll()).thenReturn(List.of(own, foreign));
+        var page = service.tags(null, List.of(hidden.getUuid()), 0, 50, authentication);
+        assertEquals(0, page.total());
+        assertTrue(page.items().isEmpty());
+        verifyNoInteractions(assets, types, mapper);
+    }
+
+    @Test
     void outOfRangeTagPageSkipsUsageQueriesButRetainsTotal() {
         allowView(PermissionResourceType.ASSET);
-        when(tags.findAll()).thenReturn(List.of(Tag.builder().name("Reserve").build()));
+        when(tags.findAll()).thenReturn(List.of(Tag.builder().area(visible).name("Reserve").build()));
 
         var page = service.tags(null, 10, 50, authentication);
 
@@ -158,7 +170,7 @@ class InventoryListServiceTest {
     @Test
     void noMatchingTagsSkipsUsageQueriesAndNormalizesPaging() {
         allowView(PermissionResourceType.ASSET);
-        when(tags.findAll()).thenReturn(List.of(Tag.builder().name("Reserve").build()));
+        when(tags.findAll()).thenReturn(List.of(Tag.builder().area(visible).name("Reserve").build()));
 
         var page = service.tags("atem", -1, 500, authentication);
 

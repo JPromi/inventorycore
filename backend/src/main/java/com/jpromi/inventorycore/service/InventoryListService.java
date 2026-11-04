@@ -139,9 +139,10 @@ public class InventoryListService {
         return Paging.page(matches, page, size, mapper::toResponse);
     }
 
-    /** Tags are global; the usage counts only include assets and types the user may see. */
+    /** Tags belong to one area; the usage counts only include assets and types the user may see. */
     public PageResponse<TagUsageResponse> tags(
         String q,
+        java.util.Collection<UUID> areas,
         int page,
         int size,
         Authentication authentication
@@ -149,6 +150,8 @@ public class InventoryListService {
         AccessContext access = permissionService.context(authentication);
         List<String> terms = Paging.terms(q);
         List<Tag> matches = tagRepository.findAll().stream()
+            .filter(tag -> TagScope.visible(access, tag))
+            .filter(tag -> areas == null || areas.isEmpty() || (tag.getArea() != null && areas.contains(tag.getArea().getUuid())))
             .filter(tag -> Paging.matches(terms, tag.getName()))
             .sorted(Comparator.comparing(Tag::getName, BY_NAME))
             .toList();
@@ -164,14 +167,18 @@ public class InventoryListService {
             .forEach(type -> type.getTags().forEach(tag -> typeCounts.merge(tag.getUuid(), 1L, Long::sum)));
         List<TagUsageResponse> items = selected.items().stream()
             .map(tag -> new TagUsageResponse(tag.getUuid(), tag.getName(), tag.getColor(),
+                tag.getArea() == null ? null : tag.getArea().getUuid(),
                 assetCounts.getOrDefault(tag.getUuid(), 0L), typeCounts.getOrDefault(tag.getUuid(), 0L)))
             .toList();
         return new PageResponse<>(items, selected.total(), selected.page(), selected.size(), selected.hasMore());
     }
 
+    public PageResponse<TagUsageResponse> tags(String q, int page, int size, Authentication authentication) {
+        return tags(q, List.of(), page, size, authentication);
+    }
+
     /** Own tags plus the tags of the asset's type (shown and searched together in the list). */
     private static Stream<Tag> tagsOf(Asset asset) {
-        Stream<Tag> typeTags = asset.getAssetType() == null ? Stream.empty() : asset.getAssetType().getTags().stream();
-        return Stream.concat(asset.getTags().stream(), typeTags);
+        return TagScope.tagsOf(asset);
     }
 }

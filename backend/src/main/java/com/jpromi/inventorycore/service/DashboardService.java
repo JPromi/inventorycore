@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,8 +146,7 @@ public class DashboardService {
         Map<UUID, Tag> tags = new HashMap<>();
         Map<UUID, Long> counts = new HashMap<>();
         for (Asset asset : assets) {
-            Stream<Tag> typeTags = asset.getAssetType() == null ? Stream.empty() : asset.getAssetType().getTags().stream();
-            Stream.concat(asset.getTags().stream(), typeTags)
+            TagScope.tagsOf(asset)
                 .collect(Collectors.toMap(Tag::getUuid, tag -> tag, (first, second) -> first, LinkedHashMap::new))
                 .values()
                 .forEach(tag -> {

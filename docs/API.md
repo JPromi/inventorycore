@@ -1,5 +1,18 @@
 # API
 
+## Area-specific tags
+
+Tags have one immutable owning `areaUuid`. POST `/api/tags` requires `name`, optional `color`,
+and `areaUuid`; PATCH preserves the area and changes name/color. The same name may be used in
+different areas. GET `/api/tags` only returns tags in accessible areas; `/api/tags/page` additionally
+accepts repeated `areas` parameters and filters before counting and paging. Both return `areaUuid`.
+The configuration page follows the sidebar selection and offers an area picker for new tags.
+Area administrators can rename, recolor and delete their own area's tags under the existing
+asset-type permissions. Inventory assignments reject tags outside the object's areas. Type tags
+are inherited only when their owning area also belongs to the asset. Task filters and scoped
+inspection templates likewise validate their tag areas. Forms and table rows offer matching tags;
+when an inventory form has multiple areas, a separate picker identifies the area for inline tag creation.
+
 ## Inventory table editing
 
 Column header borders can be dragged to resize columns; focused separators also support

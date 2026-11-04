@@ -695,16 +695,40 @@ export class InventoryFormPage implements OnInit {
   }
 
   protected get tagOptions(): SelectOption[] {
-    return this.tags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+    return this.tags
+      .filter((tag) => !tag.areaUuid || [...this.selectedAreaUuids, ...this.lockedAreaUuids].includes(tag.areaUuid))
+      .map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
   }
 
   protected get lockedTagOptions(): SelectOption[] {
-    return this.lockedTags.map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+    return this.lockedTags.filter((tag) => !tag.areaUuid || [...this.selectedAreaUuids, ...this.lockedAreaUuids].includes(tag.areaUuid)).map((tag) => ({ value: tag.uuid, label: tag.name, color: tag.color }));
+  }
+
+  protected newTagArea: string | null = null;
+
+  protected get tagCreateAreas(): SelectOption[] {
+    return this.selectedAreaUuids
+      .filter((uuid) =>
+        this.permissions.can('ASSET', 'create', [uuid]) ||
+        this.permissions.can('ASSET', 'edit', [uuid]) ||
+        this.permissions.can('ASSET_TYPE', 'create', [uuid]) ||
+        this.permissions.can('ASSET_TYPE', 'edit', [uuid]),
+      )
+      .map((uuid) => ({ value: uuid, label: this.areaService.name(uuid) }));
+  }
+
+  protected get tagCreateArea(): string | null {
+    return this.tagCreateAreas.find((area) => area.value === this.newTagArea)?.value ??
+      this.tagCreateAreas[0]?.value ?? null;
   }
 
   protected createTag(name: string): void {
     // a tag created while typing gets a color of its own instead of none
-    this.api.create<TagItem>('tags', { name, color: randomPresetColor() }).subscribe({
+    const areaUuid = this.tagCreateArea;
+    if (!areaUuid) {
+      return;
+    }
+    this.api.create<TagItem>('tags', { name, color: randomPresetColor(), areaUuid }).subscribe({
       next: (tag) => {
         this.tags = [...this.tags, tag].sort((a, b) => a.name.localeCompare(b.name));
         this.selectedTagUuids = [...this.selectedTagUuids, tag.uuid];
@@ -741,7 +765,7 @@ export class InventoryFormPage implements OnInit {
 
     this.form.inspectionIntervalDays =
       assetType.inspectionIntervalDays ?? this.form.inspectionIntervalDays;
-    this.lockedTags = assetType.tags ?? [];
+    this.lockedTags = (assetType.tags ?? []).filter((tag) => !tag.areaUuid || [...this.selectedAreaUuids, ...this.lockedAreaUuids].includes(tag.areaUuid));
     const lockedUuids = new Set(this.lockedTags.map((tag) => tag.uuid));
     this.selectedTagUuids = this.selectedTagUuids.filter((uuid) => !lockedUuids.has(uuid));
 

@@ -1749,6 +1749,8 @@
     }
   },
   "tags": {
+    "areaHint": "Tags gelten nur in ihrem Bereich. Namen und Farben können Sie mit den Bearbeitungsrechten dieses Bereichs ändern.",
+    "createArea": "Bereich für neue Tags",
     "count": {
       "one": "{count} Tag",
       "other": "{count} Tags"

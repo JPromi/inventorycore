@@ -34,8 +34,8 @@ class DashboardServiceTest {
     private final InspectionScheduleService schedules = mock(InspectionScheduleService.class);
     private final DashboardService service = new DashboardService(assets, locations, types, inspections, schedules);
 
-    private final Tag atemschutzTag = Tag.builder().id(1L).name("Atemschutz").color("#c00").build();
-    private final Tag pruefpflichtig = Tag.builder().id(2L).name("Prüfpflichtig").color("#06c").build();
+    private final Tag atemschutzTag = Tag.builder().area(atemschutz).id(1L).name("Atemschutz").color("#c00").build();
+    private final Tag pruefpflichtig = Tag.builder().area(atemschutz).id(2L).name("Prüfpflichtig").color("#06c").build();
     private final AssetType pressluftatmer = AssetType.builder().id(1L).name("Pressluftatmer")
         .areas(Set.of(atemschutz)).tags(Set.of(pruefpflichtig)).build();
     private final Location wache = Location.builder().id(1L).name("Gerätehaus").areas(Set.of(atemschutz)).build();
@@ -76,8 +76,8 @@ class DashboardServiceTest {
         assertEquals(1, result.locationCount());
         assertEquals(1, result.assetTypeCount());
         // the type tag of PA 1 counts once, although it is also assigned directly
-        assertEquals(List.of("Prüfpflichtig", "Atemschutz"), result.topTags().stream().map(entry -> entry.name()).toList());
-        assertEquals(List.of(2L, 1L), result.topTags().stream().map(entry -> entry.count()).toList());
+        assertEquals(List.of("Atemschutz", "Prüfpflichtig"), result.topTags().stream().map(entry -> entry.name()).toList());
+        assertEquals(List.of(1L, 1L), result.topTags().stream().map(entry -> entry.count()).toList());
         assertEquals(2, result.tagCount());
 
         var all = service.dashboard(access(false, atemschutz, fahrzeuge), List.of());

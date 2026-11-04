@@ -50,6 +50,8 @@ export interface InventoryItem {
 }
 
 export interface InventoryRequest {
+  /** Tags have exactly one owning area. */
+  areaUuid?: string | null;
   inspectionPolicy?: AssetInspectionPolicy;
   parentAssetUuid?: string | null;
   parentAssetNote?: string | null;
@@ -121,6 +123,7 @@ export interface InventoryImage {
 }
 
 export interface TagItem {
+  areaUuid?: string | null;
   uuid: string;
   name: string;
   color?: string | null;
