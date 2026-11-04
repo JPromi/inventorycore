@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LucideLayers,
@@ -51,6 +52,8 @@ const NEW_AREA_COLOR = '#2563eb';
   styleUrl: './areas-page.scss',
 })
 export class AreasPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   protected readonly canBulkDelete = (item: AreaItem) => !item.defaultArea;
   protected readonly bulkDelete = (item: AreaItem) => this.api.deleteArea(item.uuid);
   /** Searched on the server, loaded page by page while scrolling. */
@@ -75,6 +78,13 @@ export class AreasPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'areas',
+      () => ({ search: this.search }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.list.reload(),
+    );
     this.load();
   }
 

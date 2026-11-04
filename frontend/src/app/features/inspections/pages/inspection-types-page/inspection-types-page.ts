@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -52,6 +53,8 @@ import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/transla
   styleUrl: './inspection-types-page.scss',
 })
 export class InspectionTypesPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   /** Searched on the server (also by the sidebar areas), loaded page by page while scrolling. */
   protected readonly list = new PagedList<InspectionType>((page, size) =>
     this.api.typePage({ q: this.search, areas: this.areaService.selected }, page, size),
@@ -72,6 +75,13 @@ export class InspectionTypesPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'inspection-types',
+      () => ({ search: this.search }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.list.reload(),
+    );
     this.list.reload();
     this.subscriptions.add(
       this.areaService.selected$.pipe(skip(1)).subscribe(() => this.list.reload()),

@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -50,6 +51,8 @@ import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/transla
   styleUrl: './groups-page.scss',
 })
 export class GroupsPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   /** The group of all users is built in. */
   protected readonly canBulkDelete = (item: AdminGroup) => !item.everyone;
   protected readonly bulkDelete = (item: AdminGroup) => this.api.deleteGroup(item.uuid);
@@ -72,6 +75,13 @@ export class GroupsPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'groups',
+      () => ({ search: this.search }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.list.reload(),
+    );
     this.load();
   }
 

@@ -96,6 +96,18 @@ Generated machine identifiers are different: the backend deliberately normalizes
 
 ## Frontend State and Components
 
+List search, filters and selected tabs use `ListHistoryService`: capture them per Angular
+navigation ID when leaving a list and restore them before its first request on browser/app
+Back or Forward. A new visit through a navigation link starts with the page's defaults;
+clicking the current list link resets its filters too. Inventory resources have separate
+keys, and repeated visits to the same URL keep separate snapshots. State lives only in the
+current app session and is cleared on navigation to login. Results are fetched again; loaded
+pages, selections, dialogs and form drafts are not cached. The global sidebar area selection
+and remembered list/grid/tree preference keep their independent existing behavior.
+Inventory forms use the actual previous history entry for Back and Cancel: editing from a
+list returns to that list, editing from details returns to details. A form opened directly
+retains its detail/list fallback. Modified clicks still follow the link normally.
+
 Touch selection uses the shared `TouchSelection` coordinator within explicit selection mode: hold for 350 ms, then paint a contiguous range; starting on a selected item deselects the range. Reversing restores items outside the current range to their original state. Near the vertical edges of the actual scroll container it scrolls proportionally, continuing hit-testing as rows move. Quick swipes retain native scrolling. Touch end/cancellation, multi-touch, hiding the page, leaving selection mode, and component destruction stop the gesture. Non-passive document listeners exist only during a pending/active gesture; animation runs outside Angular and selection updates re-enter its zone.
 
 On phones, the shared selection toolbar keeps the selection-mode button and Actions together in the first row. The select-all checkbox and selected count occupy the second row, with the clear-selection button at its end. Desktop retains the inline toolbar.

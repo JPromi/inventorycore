@@ -1,4 +1,5 @@
-import { Component, DestroyRef, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AreaService } from '../../../../core/service/area.service';
 import { SearchSelect } from '../../../../shared/components/search-select/search-select';
@@ -72,6 +73,8 @@ interface TagRow extends TagItem {
   styleUrl: './tags-page.scss',
 })
 export class TagsPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   /** Searched on the server, loaded page by page while scrolling. */
   protected readonly list = new PagedList<TagRow>((page, size) =>
     this.api.page<TagUsage>('tags', { q: this.search, areas: this.areaService.selected }, page, size).pipe(
@@ -112,6 +115,13 @@ export class TagsPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'tags',
+      () => ({ search: this.search }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.list.reload(),
+    );
     this.areaService.load().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.pickArea());
     this.areaService.selected$.pipe(skip(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.pickArea();

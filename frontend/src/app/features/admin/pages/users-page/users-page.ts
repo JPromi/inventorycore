@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ListHistoryService } from '../../../../core/service/list-history.service';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -57,6 +58,8 @@ import { PagedList, SEARCH_DELAY_MS } from '../../../../shared/util/paged-list';
   styleUrl: './users-page.scss',
 })
 export class UsersPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   protected readonly canBulkDelete = (user: AdminUser) => !this.isSelf(user);
   protected readonly bulkDelete = (user: AdminUser) => this.api.deleteUser(user.uuid);
   protected readonly providerLabels = PROVIDER_LABELS;
@@ -91,6 +94,13 @@ export class UsersPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'users',
+      () => ({ search: this.search, groupFilter: this.groupFilter, statusFilter: this.statusFilter }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.list.reload(),
+    );
     this.load();
   }
 

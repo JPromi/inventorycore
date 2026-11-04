@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { NavigationHistoryService } from '../../../../core/service/navigation-history.service';
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -143,6 +144,7 @@ export class InventoryFormPage implements OnInit {
     private readonly areaService: AreaService,
     private readonly host: ElementRef<HTMLElement>,
     private readonly assetStatuses: AssetStatusService,
+    private readonly navigationHistory: NavigationHistoryService,
   ) {}
 
   ngOnInit(): void {
@@ -239,11 +241,27 @@ export class InventoryFormPage implements OnInit {
     return this.areaOptions.slice(0, 1).map((option) => option.value);
   }
 
-  /** Where "back" and "cancel" lead: the detail page when editing, otherwise the list. */
+  /** Fallback for a form opened without a known previous in-app history entry. */
   protected get backRoute(): string[] {
     return this.uuid && this.config.detailRoutePrefix
       ? [this.config.detailRoutePrefix, this.uuid]
       : [this.config.listRoute];
+  }
+
+  private readonly isFormPage = (url: string): boolean =>
+    url.split(/[?#]/)[0] === this.router.url.split(/[?#]/)[0];
+
+  protected get backUrl(): string {
+    return this.navigationHistory.previous(this.isFormPage) ??
+      this.router.createUrlTree(this.backRoute).toString();
+  }
+
+  protected goBack(event: MouseEvent): void {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+      return;
+    }
+    event.preventDefault();
+    this.navigationHistory.back(this.isFormPage, this.router.createUrlTree(this.backRoute).toString());
   }
 
   /** `createAnother` keeps the context (areas, location, type, ...) and opens an empty form again. */

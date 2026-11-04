@@ -1,5 +1,6 @@
+import { ListHistoryService } from '../../../../core/service/list-history.service';
 import { DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, DestroyRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -58,6 +59,8 @@ type Tab = TaskRunTab | 'TASKS';
   styleUrl: './tasks-page.scss',
 })
 export class TasksPage implements OnInit, OnDestroy {
+  private readonly listHistory = inject(ListHistoryService);
+  private readonly historyDestroyRef = inject(DestroyRef);
   /** overdue runs come first in OPEN, so they need no tab of their own */
   protected readonly runTabs: TaskRunTab[] = ['MINE', 'OPEN', 'COMPLETED'];
   /** the page always starts with all tasks */
@@ -102,6 +105,13 @@ export class TasksPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.listHistory.bind(
+      'tasks',
+      () => ({ search: this.search, tab: this.tab }),
+      (state) => Object.assign(this, state),
+      this.historyDestroyRef,
+      () => this.reload(),
+    );
     this.subscriptions.add(
       this.areaService.selected$.pipe(skip(1)).subscribe(() => this.reload(true)),
     );
@@ -117,7 +127,7 @@ export class TasksPage implements OnInit, OnDestroy {
       }),
     );
     this.loadCounts();
-    this.tasks.reload();
+    this.reload();
   }
 
   ngOnDestroy(): void {

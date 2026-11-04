@@ -8,7 +8,7 @@
         </h1>
       </div>
 
-      <a class="secondary-action" [routerLink]="backRoute">
+      <a class="secondary-action" [attr.href]="backUrl" (click)="goBack($event)">
         <svg lucideArrowLeft size="18"></svg>
         <span>{{ 'common.back' | t }}</span>
       </a>
@@ -521,7 +521,7 @@
         }
 
         <div class="editor-actions sticky-editor-actions">
-          <a class="secondary-action" [routerLink]="backRoute">{{ 'common.cancel' | t }}</a>
+          <a class="secondary-action" [attr.href]="backUrl" (click)="goBack($event)">{{ 'common.cancel' | t }}</a>
           @if (!uuid) {
             <button
               type="button"
