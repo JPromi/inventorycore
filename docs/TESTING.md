@@ -1,5 +1,10 @@
 # Testing
 
+`InventoryListServiceTest` checks default exclusion of built-in and custom retired statuses
+before paging/totals, explicit status selection, permission filtering and legacy assets without
+a status. `asset-status.spec.ts` covers the initial list, explicit inclusion of retired assets
+and restoring the default when the status filter is cleared.
+
 ## Area-specific tags
 
 `TagPermissionsTest` verifies area-admin recoloring, foreign-area denial, creation scope,

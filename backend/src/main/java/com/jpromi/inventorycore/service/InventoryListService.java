@@ -84,7 +84,9 @@ public class InventoryListService {
             .filter(asset -> assetType == null || (asset.getAssetType() != null && asset.getAssetType().getUuid().equals(assetType)))
             .filter(asset -> location == null || (asset.getLocation() != null && Paging.within(asset.getLocation(), location)))
             .filter(asset -> tag == null || tagsOf(asset).anyMatch(entry -> entry.getUuid().equals(tag)))
-            .filter(asset -> statusFilter.isEmpty() || (asset.getStatus() != null && statusFilter.contains(asset.getStatus().getUuid())))
+            .filter(asset -> statusFilter.isEmpty()
+                ? !asset.isRetired()
+                : asset.getStatus() != null && statusFilter.contains(asset.getStatus().getUuid()))
             .filter(asset -> Paging.matches(terms, Stream.concat(
                 Stream.of(asset.getName(), asset.getDescription(), asset.getInvId(), asset.getSerialNumber(), asset.getInventoryNumber()),
                 tagsOf(asset).map(Tag::getName)).toList()))

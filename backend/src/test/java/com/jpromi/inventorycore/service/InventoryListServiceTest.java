@@ -40,6 +40,37 @@ class InventoryListServiceTest {
     }
 
     @Test
+    void retiredAssetsAreHiddenByDefaultBeforePagingButExplicitStatusesIncludeThem() {
+        allowView(PermissionResourceType.ASSET);
+        var retired = com.jpromi.inventorycore.entity.AssetStatus.builder().name("Ausgeschieden")
+            .category(com.jpromi.inventorycore.enums.AssetStatusCategory.RETIRED).build();
+        var customRetired = com.jpromi.inventorycore.entity.AssetStatus.builder().name("Ausgemustert")
+            .area(visible).category(com.jpromi.inventorycore.enums.AssetStatusCategory.RETIRED).build();
+        var defect = com.jpromi.inventorycore.entity.AssetStatus.builder().name("Defekt")
+            .category(com.jpromi.inventorycore.enums.AssetStatusCategory.DEFECT).build();
+        Asset old = Asset.builder().name("A alt").areas(Set.of(visible)).status(retired).build();
+        Asset customOld = Asset.builder().name("B alt").areas(Set.of(visible)).status(customRetired).build();
+        Asset broken = Asset.builder().name("C defekt").areas(Set.of(visible)).status(defect).build();
+        Asset legacy = Asset.builder().name("D ohne Status").areas(Set.of(visible)).build();
+        Asset denied = Asset.builder().name("E verborgen").areas(Set.of(hidden)).status(retired).build();
+        when(assets.findByDeletedFalse()).thenReturn(List.of(old, customOld, broken, legacy, denied));
+
+        var first = service.assets(null, null, null, null, null, List.of(), List.of(), 0, 1, authentication);
+        assertEquals(2, first.total());
+        assertTrue(first.hasMore());
+        assertEquals(broken.getUuid(), first.items().getFirst().uuid());
+        var second = service.assets(null, null, null, null, null, List.of(), null, 1, 1, authentication);
+        assertEquals(legacy.getUuid(), second.items().getFirst().uuid());
+        assertFalse(second.hasMore());
+
+        var selected = service.assets(null, null, null, null, null, List.of(),
+            List.of(retired.getUuid(), customRetired.getUuid(), defect.getUuid()), 0, 50, authentication);
+        assertEquals(3, selected.total());
+        assertEquals(List.of(old.getUuid(), customOld.getUuid(), broken.getUuid()),
+            selected.items().stream().map(item -> item.uuid()).toList());
+    }
+
+    @Test
     void assetsFilterPermissionsBeforeSortingTotalsAndPagingAndMapOnlyThePage() {
         allowView(PermissionResourceType.ASSET);
         Asset denied = Asset.builder().name("A").areas(Set.of(hidden)).build();

@@ -10,7 +10,7 @@ import { AssetStatus, statusName } from '../data-access/asset-status.service';
 
 /**
  * Filter field for the asset list: several statuses at once (e.g. "Defekt" and "In Reparatur").
- * The value is the list of selected status UUIDs; empty = all statuses.
+ * The value is the list of selected status UUIDs; empty excludes retired assets.
  */
 @Component({
   selector: 'app-asset-status-filter',
@@ -45,7 +45,7 @@ export class AssetStatusFilter implements ControlValueAccessor {
 
   protected get label(): string {
     if (!this.value.length) {
-      return t('assetStatus.filter.all');
+      return t('assetStatus.filter.default');
     }
     if (this.value.length === 1) {
       return statusName(this.statuses.find((status) => status.uuid === this.value[0]));

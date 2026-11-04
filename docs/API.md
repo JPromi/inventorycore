@@ -1,5 +1,13 @@
 # API
 
+## Default asset list
+
+The asset list (`GET /api/assets/page`) excludes assets with status category `RETIRED` when
+no `status` UUIDs are selected. Explicit `status` filters include their selected statuses,
+including retired ones. This applies before totals and paging; assets without a status remain
+visible. Clearing the status filter restores the default exclusion. The unpaged asset lookup
+and direct asset detail endpoints retain their existing behavior.
+
 ## Area-specific tags
 
 Tags have one immutable owning `areaUuid`. POST `/api/tags` requires `name`, optional `color`,
