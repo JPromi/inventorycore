@@ -121,3 +121,11 @@ Rules for every step:
 ## Operational Gaps
 
 No PostgreSQL server version, test database lifecycle, migration rollback process, or backup/restore automation is pinned in the repository. Without a migration history there is no automatic rollback: back up the database and upload volumes before every update. Do not document an unimplemented migration system (Flyway, Liquibase) as current behavior.
+
+## Inventory ID settings
+
+`inventory_id_settings` is a new singleton table (id 1) containing the generation
+pattern. Hibernate creates this new table on in-place upgrades; no existing asset
+rows are rewritten at startup. A missing settings row uses `INV-{random_alphanumeric:10}`
+until the first admin save. Existing IDs change only through the explicit admin
+regeneration operation. This addition requires no data backfill.

@@ -28,6 +28,7 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
     @Query("select e from Asset e where e.status is null")
     List<Asset> findWithoutStatus();
     boolean existsByInvId(String invId);
+    boolean existsByInvIdIgnoreCase(String invId);
     boolean existsByParentAssetAndDeletedFalse(Asset parentAsset);
 
     /** Assets whose inventory id, inventory number or serial number equals the scanned code (ignoring case). */

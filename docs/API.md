@@ -192,3 +192,24 @@ Asset form requests/responses include nullable `parentAssetUuid` and `parentAsse
 Assets also expose `inspectionPolicy`: `STANDARD` (default, label-based), `MANUAL` (no label; confirm manually), or `EXCLUDED` (omit from new inspections and due dates). Inspection items snapshot this policy and the parent UUID/link note at creation; later asset edits do not rewrite existing runs. Scanning a manual or excluded asset returns `IGNORED`, and an excluded asset cannot be explicitly added to a run.
 
 A scanned code can match several assets, because inventory id, inventory number and serial number are all scan codes and serial or inventory numbers need not be unique. `GET /api/scan` returns every visible match. `POST /api/inspections/{uuid}/scan` then records nothing and returns `AMBIGUOUS` with `candidates` (`InspectionScanCandidate`: `uuid`, `name`, `invId`, `assetTypeName`, `locationName`, `matchedBy` = `INV_ID` / `INVENTORY_NUMBER` / `SERIAL_NUMBER`, `inInspection`), sorted by name. The client repeats the scan with the same `code` and the chosen `assetUuid`; a uuid that is not among the code's matches returns `IGNORED`, so the choice cannot reach other assets.
+
+## Inventory ID generation
+
+Admins configure automatic asset `invId` values through GET/PUT
+`/api/admin/inventory-id-settings` (`{pattern}`). Default:
+`INV-{random_alphanumeric:10}`. Prefixes are optional. Supported tokens:
+`{random_number:N}`, `{random_letters:N}`, `{random_alphanumeric:N}` (N = 1..100,
+10 when omitted), `{year}`, `{year_short}`, `{date}` (yyyyMMdd), `{month}`, `{day}`.
+Letters are uppercase A-Z. At least one random token is required; rendered IDs
+are limited to 255 characters. Unknown tokens and control characters are rejected.
+Existing IDs remain unchanged on save; explicitly supplied IDs retain their behavior.
+
+POST `/api/admin/inventory-id-settings/regenerate` with `{pattern, confirmed: true}`
+requires the currently saved pattern. After explicit UI confirmation, all non-deleted
+assets (including retired assets) receive new IDs atomically. Deleted assets retain
+their IDs. Old IDs and all newly allocated IDs are reserved case-insensitively during
+the operation. If 1000 attempts cannot allocate an ID, the operation fails without
+partial replacements. The response is `{count}`. Each replaced asset is audited.
+Printed codes containing previous inventory IDs need replacement; UUID links remain
+valid. The separate manual `inventoryNumber` field is unaffected. All endpoints are
+protected by the existing `/api/admin/**` ADMIN rule.

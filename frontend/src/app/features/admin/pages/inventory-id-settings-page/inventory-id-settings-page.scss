@@ -1,0 +1,168 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+
+  .page-header .hint {
+    margin-top: var(--inventory-list-gap);
+  }
+
+  .hint {
+    overflow-wrap: anywhere;
+  }
+
+  .saved {
+    color: var(--success);
+    margin-bottom: var(--section-space);
+  }
+
+  fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+
+  .editor-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    gap: var(--section-space);
+    align-items: start;
+  }
+
+  .workspace {
+    display: grid;
+    gap: var(--section-space);
+    min-width: 0;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+  }
+
+  .card-title {
+    flex-wrap: wrap;
+    margin-bottom: var(--section-space);
+  }
+
+  .preset-picker {
+    max-width: 100%;
+  }
+
+  .pattern-editor input,
+  .preview-value {
+    font-family: var(--font-mono);
+  }
+
+  .pattern-editor .hint,
+  .preview .hint {
+    margin-top: var(--inventory-list-gap);
+  }
+
+  .preview-value {
+    display: block;
+    margin-top: var(--section-space);
+    padding-block: var(--section-space);
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+    color: var(--text);
+  }
+
+  .toolbox > .hint {
+    margin-block: var(--inventory-list-gap) var(--section-space);
+  }
+
+  .content-section h3 {
+    margin-bottom: var(--inventory-list-gap);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .length-field {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--inventory-list-gap);
+    margin-bottom: var(--inventory-list-gap);
+
+    input {
+      width: 5rem;
+    }
+  }
+
+  .tokens {
+    display: grid;
+    gap: var(--inventory-list-gap);
+  }
+
+  .token {
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+    min-width: 0;
+
+    > span {
+      display: grid;
+      min-width: 0;
+    }
+
+    small {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  .regeneration {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--section-space);
+    margin-top: var(--section-space);
+
+    > div {
+      max-width: var(--form-content-width);
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin-bottom: var(--inventory-list-gap);
+    }
+  }
+
+  @include bp.laptop {
+    .editor-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tokens {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @include bp.phone {
+    .card-title {
+      align-items: stretch;
+    }
+
+    .preset-picker {
+      width: 100%;
+    }
+
+    .tokens {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}

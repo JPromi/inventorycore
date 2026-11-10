@@ -2635,5 +2635,55 @@
     "errors": {
       "start": "Die Aufgabe konnte nicht gestartet werden."
     }
+  },
+  "inventoryIds": {
+    "editor": {
+      "intro": "Legen Sie fest, wie neue Inventar-IDs aufgebaut sind.",
+      "unsaved": "Ungespeicherte Änderungen",
+      "loading": "Die Einstellungen werden geladen.",
+      "structure": "Aufbau der Inventar-ID",
+      "preset": "Vorlage wählen",
+      "presets": {
+        "0": "INV- und 10 Zeichen",
+        "1": "Nur Zahlen (12 Stellen)",
+        "2": "Feuerwehr, Jahr und Buchstaben"
+      },
+      "patternHint": "Schreiben Sie festen Text direkt in das Muster. Setzen Sie den Cursor an die gewünschte Stelle und fügen Sie einen Baustein hinzu. Ein Präfix ist optional.",
+      "preview": "Vorschau",
+      "previewHint": "Beispiel einer neuen Inventar-ID. Zufallswerte fallen bei jedem Asset anders aus; Datum und Jahr beziehen sich auf den Erstellungszeitpunkt.",
+      "invalidPattern": "Fügen Sie mindestens einen Zufallsbaustein hinzu. Verwenden Sie bekannte Platzhalter mit 1 bis 100 Zufallszeichen; die fertige ID darf höchstens 255 Zeichen haben.",
+      "addPart": "Baustein hinzufügen",
+      "insertHint": "Klicken Sie auf einen Baustein, um ihn an der Cursorposition einzufügen.",
+      "random": "Zufallswerte",
+      "length": "Anzahl Zeichen",
+      "date": "Datum und Jahr",
+      "existing": "Bestehende Inventar-IDs",
+      "existingHint": "Das Speichern gilt nur für neue Assets. Hier können Sie auch die IDs aller nicht gelöschten Assets ersetzen. Bisherige Scan-Codes müssen danach erneuert werden. Manuelle Inventarnummern bleiben erhalten.",
+      "saveFirst": "Speichern Sie Ihre Änderungen, bevor Sie bestehende IDs neu generieren."
+    },
+    "title": "Inventar-ID-Vergabe",
+    "pattern": "Muster",
+    "hint": "Freitext und Platzhalter sind frei kombinierbar. Ein Präfix wie INV- ist optional. Mindestens ein Zufallsplatzhalter ist erforderlich. Zufallslängen: 1 bis 100 Zeichen, Ausgabe: höchstens 255 Zeichen. Ohne Längenangabe werden 10 Zeichen erzeugt.",
+    "length": "Länge neu eingefügter Zufallsplatzhalter",
+    "lengthError": "Geben Sie eine ganze Länge zwischen 1 und 100 ein.",
+    "example": "Beispiele: INV-{random_alphanumeric:10}, {random_number:12}, FW-{year}-{random_letters:8}. Datum: JJJJMMTT. Buchstaben: A bis Z.",
+    "regenerate": "Alle Inventar-IDs neu generieren",
+    "regenerateHint": "Speichern Sie zuerst das gewünschte Muster. Die Aktion betrifft alle nicht gelöschten Assets, auch ausgemusterte. Manuelle Inventarnummern bleiben erhalten.",
+    "warningTitle": "Alle Inventar-IDs ersetzen?",
+    "warning": "Alle nicht gelöschten Assets erhalten neue Inventar-IDs nach dem Muster {pattern}. Dies kann nicht automatisch rückgängig gemacht werden. Gedruckte Etiketten und Scan-Codes mit bisherigen Inventar-IDs werden ungültig und müssen ersetzt werden. Links mit unveränderter Asset-UUID bleiben erhalten. Möchten Sie fortfahren?",
+    "saved": "Das Muster wurde gespeichert. Neue Assets verwenden dieses Muster.",
+    "regenerated": "{count} Inventar-IDs wurden neu generiert.",
+    "loadError": "Die Einstellungen konnten nicht geladen werden.",
+    "regenerateError": "Die Inventar-IDs konnten nicht neu generiert werden.",
+    "tokens": {
+      "random_number": "Zufallszahlen",
+      "random_letters": "Zufallsbuchstaben",
+      "random_alphanumeric": "Zahlen und Buchstaben",
+      "year": "Jahr (4 Stellen)",
+      "year_short": "Jahr (2 Stellen)",
+      "date": "Datum (JJJJMMTT)",
+      "month": "Monat",
+      "day": "Tag"
+    }
   }
 }

@@ -441,6 +441,10 @@ export const routes: Routes = [
               import('./features/admin/pages/areas-page/areas-page').then((m) => m.AreasPage),
           },
           {
+            path: 'inventory-ids',
+            loadComponent: () => import('./features/admin/pages/inventory-id-settings-page/inventory-id-settings-page').then(m => m.InventoryIdSettingsPage),
+          },
+          {
             path: 'labels',
             loadComponent: () =>
               import('./features/admin/pages/label-settings-page/label-settings-page').then(

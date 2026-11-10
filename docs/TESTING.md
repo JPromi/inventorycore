@@ -146,3 +146,15 @@ The Playwright suite runs against the Angular dev server, which resolves CommonJ
 `laser-datamatrix.spec.ts` feeds the browser's fake camera with `e2e/fixtures/laser-datamatrix.mjpeg`, a small Data Matrix code lasered into black plastic (light on dark, little contrast, blur, noise), and checks that the scan page reads it through the whole camera pipeline including the zxing-wasm WebAssembly file. The camera passes in `CameraScanner` (whole frame inverted/rotated, centre with a global threshold, enlarged centre, contrast-stretched centre) were chosen by decoding generated images of such codes; a code differing from its background by only about 16 grey levels under noise was not readable with any setting, so very faint markings still need light from the side.
 
 The README screenshots are not part of the test suite. `frontend/screenshots/seed.mjs` fills an empty instance with fire-service example data (areas, types, locations, assets with statuses, groups, users, a completed and an open inspection) and refuses to run when assets exist; `npm run screenshots` then takes the images into `docs/screenshots` against `README_URL` (default `http://localhost:8091`, admin `inv` / `core`, see `README_USER` / `README_PASSWORD`). Use a throwaway database, never a real installation.
+
+## Inventory ID generation
+
+`InventoryIdServiceTest` checks defaults, token alphabets/lengths, deterministic date
+formats, validation, retries and bounded exhaustion. `InventoryIdSettingsControllerTest`
+checks explicit confirmation, stale-pattern rejection, deleted asset exclusion, manual
+number preservation and allocation failure before mutation. `InventoryIdSecurityTest`
+checks anonymous/user denial for every endpoint and admin read access with SecurityConfig.
+These tests use mocks; they do not verify PostgreSQL advisory locks or an in-place upgrade.
+`inventory-ids.spec.ts` checks cursor insertion/selection replacement, save state,
+confirmation cancellation and acceptance, delayed completion and mobile overflow. It also
+checks the left-aligned page title, live example output and selecting a pattern preset.
