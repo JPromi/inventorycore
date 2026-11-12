@@ -81,6 +81,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
       { label: t('notifications.adminTitle'), route: '/admin/notifications', icon: LucideMail },
       { label: t('nav.areas'), route: '/admin/areas', icon: LucideLayers },
       { label: t('nav.customization'), route: '/admin/customization', icon: LucidePalette },
+      { label: t('inventoryIds.title'), route: '/admin/inventory-ids', icon: LucideTags },
       { label: t('nav.labelSettings'), route: '/admin/labels', icon: LucideRuler },
       { label: t('nav.users'), route: '/admin/users', icon: LucideUser },
       { label: t('nav.groups'), route: '/admin/groups', icon: LucideUsers },

@@ -69,6 +69,7 @@ import static com.jpromi.inventorycore.service.PermissionService.require;
 @RequestMapping("/api")
 public class InventoryController {
 
+    private final com.jpromi.inventorycore.service.InventoryIdService inventoryIds;
     private final AssetRepository assetRepository;
     private final AssetTypeRepository assetTypeRepository;
     private final LocationRepository locationRepository;
@@ -96,8 +97,10 @@ public class InventoryController {
         com.jpromi.inventorycore.service.AssetHierarchyService hierarchy,
         com.jpromi.inventorycore.service.FileAccess fileAccess,
         com.jpromi.inventorycore.service.AssetStatusService statuses,
-        com.jpromi.inventorycore.files.FileCleanupService fileCleanup
+        com.jpromi.inventorycore.files.FileCleanupService fileCleanup,
+        com.jpromi.inventorycore.service.InventoryIdService inventoryIds
     ) {
+        this.inventoryIds = inventoryIds;
         this.fileCleanup = fileCleanup;
         this.fileAccess = fileAccess;
         this.statuses = statuses;
@@ -617,11 +620,7 @@ public class InventoryController {
     }
 
     private String generateInvId() {
-        String invId;
-        do {
-            invId = "INV-" + java.time.LocalDate.now().getYear() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        } while (assetRepository.existsByInvId(invId));
-        return invId;
+        return inventoryIds.generate(value -> assetRepository.existsByInvIdIgnoreCase(value) || !assetRepository.findByScanCode(value).isEmpty());
     }
 
     private String resolveFieldKey(String fieldKey, String name) {

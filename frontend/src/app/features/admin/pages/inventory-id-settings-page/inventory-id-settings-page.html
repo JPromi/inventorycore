@@ -1,0 +1,101 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1><svg lucideTags size="20" aria-hidden="true"></svg><span>{{ 'inventoryIds.title' | t }}</span></h1>
+      <p class="hint">{{ 'inventoryIds.editor.intro' | t }}</p>
+    </div>
+    <div class="header-actions">
+      @if (savedPattern !== null && pattern !== savedPattern) {
+        <span class="hint">{{ 'inventoryIds.editor.unsaved' | t }}</span>
+      }
+      <button type="button" class="primary-action" (click)="save()" [disabled]="busy || savedPattern === null || preview === null">
+        <svg lucideSave size="16" aria-hidden="true"></svg><span>{{ (saving ? 'common.saving' : 'common.save') | t }}</span>
+      </button>
+    </div>
+  </header>
+
+  @if (error) { <p class="error" role="alert">{{ error }}</p> }
+  @if (message) { <p class="saved" role="status">{{ message }}</p> }
+  @if (savedPattern === null && busy) { <p class="empty">{{ 'inventoryIds.editor.loading' | t }}</p> }
+  @if (savedPattern !== null) {
+    <form (ngSubmit)="save()">
+      <fieldset [disabled]="busy" class="editor-layout">
+        <section class="workspace">
+          <section class="card pattern-editor">
+            <div class="card-title">
+              <h2>{{ 'inventoryIds.editor.structure' | t }}</h2>
+              <div class="preset-picker">
+                <app-search-select
+                  name="preset"
+                  [options]="presetOptions"
+                  [ngModel]="pattern"
+                  (ngModelChange)="usePreset($event)"
+                  [placeholder]="'inventoryIds.editor.preset' | t"
+                  [ariaLabel]="'inventoryIds.editor.preset' | t"
+                  [disabled]="busy"
+                />
+              </div>
+            </div>
+            <label class="field">
+              <span>{{ 'inventoryIds.pattern' | t }}</span>
+              <input #patternInput id="pattern" name="pattern" type="text" maxlength="500" spellcheck="false" autocomplete="off" [(ngModel)]="pattern" (ngModelChange)="message = ''" aria-describedby="pattern-help" />
+            </label>
+            <p class="hint" id="pattern-help">{{ 'inventoryIds.editor.patternHint' | t }}</p>
+          </section>
+
+          <section class="card preview" aria-labelledby="preview-title">
+            <h2 id="preview-title">{{ 'inventoryIds.editor.preview' | t }}</h2>
+            @if (preview; as value) {
+              <output class="preview-value" for="pattern">{{ value }}</output>
+              <p class="hint">{{ 'inventoryIds.editor.previewHint' | t }}</p>
+            } @else {
+              <p class="hint">{{ 'inventoryIds.editor.invalidPattern' | t }}</p>
+            }
+          </section>
+        </section>
+
+        <aside class="card toolbox" aria-labelledby="toolbox-title">
+          <h2 id="toolbox-title">{{ 'inventoryIds.editor.addPart' | t }}</h2>
+          <p class="hint">{{ 'inventoryIds.editor.insertHint' | t }}</p>
+          <section class="content-section">
+            <h3>{{ 'inventoryIds.editor.random' | t }}</h3>
+            <label class="field length-field">
+              <span>{{ 'inventoryIds.editor.length' | t }}</span>
+              <input name="length" type="number" min="1" max="100" step="1" [(ngModel)]="length" />
+            </label>
+            <div class="tokens">
+              @for (token of randomTokens; track token) {
+                <button type="button" class="secondary-action token" (mousedown)="$event.preventDefault()" (click)="insert(patternInput, token)" [attr.aria-label]="('inventoryIds.tokens.' + token) | t">
+                  <span><span>{{ ('inventoryIds.tokens.' + token) | t }}</span><small>{{ sample(token) }}</small></span>
+                  <svg lucidePlus size="16" aria-hidden="true"></svg>
+                </button>
+              }
+            </div>
+          </section>
+          <section class="content-section">
+            <h3>{{ 'inventoryIds.editor.date' | t }}</h3>
+            <div class="tokens">
+              @for (token of dateTokens; track token) {
+                <button type="button" class="secondary-action token" (mousedown)="$event.preventDefault()" (click)="insert(patternInput, token)" [attr.aria-label]="('inventoryIds.tokens.' + token) | t">
+                  <span><span>{{ ('inventoryIds.tokens.' + token) | t }}</span><small>{{ sample(token) }}</small></span>
+                  <svg lucidePlus size="16" aria-hidden="true"></svg>
+                </button>
+              }
+            </div>
+          </section>
+        </aside>
+      </fieldset>
+    </form>
+
+    <section class="content-section regeneration">
+      <div>
+        <h2>{{ 'inventoryIds.editor.existing' | t }}</h2>
+        <p class="hint">{{ 'inventoryIds.editor.existingHint' | t }}</p>
+        @if (pattern !== savedPattern) { <p class="hint">{{ 'inventoryIds.editor.saveFirst' | t }}</p> }
+      </div>
+      <button type="button" class="danger-action" [disabled]="busy || pattern !== savedPattern" (click)="regenerate()">
+        <svg lucideRefreshCw size="16" aria-hidden="true"></svg><span>{{ 'inventoryIds.regenerate' | t }}</span>
+      </button>
+    </section>
+  }
+</section>

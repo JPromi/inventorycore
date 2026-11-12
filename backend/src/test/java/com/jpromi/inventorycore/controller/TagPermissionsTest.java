@@ -32,7 +32,7 @@ class TagPermissionsTest {
     private final PermissionService permissions = mock(PermissionService.class);
     private final Authentication authentication = mock(Authentication.class);
     private final InventoryController controller = new InventoryController(null, null, null, tags, areas, null,
-        permissions, new ApiMapper(), mock(AuditService.class), null, null, null, null);
+        permissions, new ApiMapper(), mock(AuditService.class), null, null, null, null, null);
 
     private void areaAdmin() {
         when(permissions.context(authentication)).thenReturn(new AccessContext(false, List.of(
