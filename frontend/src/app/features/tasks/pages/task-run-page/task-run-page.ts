@@ -88,6 +88,7 @@ export class TaskRunPage implements OnInit, OnDestroy {
   protected comment = '';
   /** comment drafts while typing, by entry uuid */
   protected drafts = new Map<string, string>();
+  private readonly savedDrafts = new Map<string, string>();
   protected saveStates = new Map<string, SaveState>();
   /** entries whose comment field was opened (fields with a comment are always shown) */
   protected openComments = new Set<string>();
@@ -216,16 +217,14 @@ export class TaskRunPage implements OnInit, OnDestroy {
     this.timers.delete(uuid);
     const draft = this.drafts.get(uuid);
     const entry = this.detail?.entries.find((candidate) => candidate.uuid === uuid);
-    if (draft === undefined || !entry || !this.canWork || draft === (entry.comment ?? '')) {
+    if (draft === undefined || !entry || !this.canWork || draft === this.savedDrafts.get(uuid) || draft === (entry.comment ?? '')) {
       return;
     }
     this.saveStates.set(uuid, 'saving');
     this.api.updateEntry(this.detail!.summary.uuid, uuid, { comment: draft }).subscribe({
       next: (updated) => {
-        // a newer draft typed meanwhile stays
-        if (this.drafts.get(uuid) === draft) {
-          this.drafts.delete(uuid);
-        }
+        // Keep the exact text in the editor, even if the server normalizes whitespace.
+        this.savedDrafts.set(uuid, draft);
         this.replace(updated);
         this.saveStates.set(uuid, 'saved');
       },

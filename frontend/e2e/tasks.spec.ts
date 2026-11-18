@@ -94,7 +94,7 @@ async function mockApi(page: Page) {
         target.checkedAt = body.status === 'PENDING' ? null : '2026-10-29T08:00:00Z';
       }
       if (body.comment !== null) {
-        target.comment = body.comment || null;
+        target.comment = body.comment?.trim() || null;
       }
       return route.fulfill({ json: target });
     }
@@ -169,6 +169,23 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
     await page.screenshot({ path: testInfo.outputPath('task-protocol.png'), fullPage: true });
   });
 }
+
+test('autosaving a comment preserves whitespace and the cursor while editing', async ({ page }) => {
+  const { patches } = await mockApi(page);
+  await page.goto('/tasks/run-1');
+  const entry = page.locator('.entry').filter({ hasText: 'Flaschendruck' });
+  await entry.getByRole('button', { name: 'Kommentar hinzufügen' }).click();
+  const input = entry.getByRole('textbox', { name: 'Kommentar' });
+  await input.fill('Flasche prüfen  ');
+  await input.evaluate((element: HTMLTextAreaElement) => element.setSelectionRange(3, 3));
+  await expect.poll(() => patches.length).toBeGreaterThan(0);
+  await expect(entry).toContainText('Gespeichert');
+  await expect(input).toHaveValue('Flasche prüfen  ');
+  await expect(input).toBeFocused();
+  expect(await input.evaluate((element: HTMLTextAreaElement) => element.selectionStart)).toBe(3);
+  await input.press('X');
+  await expect(input).toHaveValue('FlaXsche prüfen  ');
+});
 
 test('back restores the task tab and search while a navigation link starts fresh', async ({ page }) => {
   await mockApi(page);
