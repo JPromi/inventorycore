@@ -218,6 +218,13 @@ test('a new task is saved with assignees, schedule and checklist', async ({ page
   await page.getByRole('textbox', { name: 'Titel' }).fill('Atemschutz-Kontrolle');
   await page.getByRole('radio', { name: 'Wiederkehrend' }).click();
   await page.getByRole('spinbutton', { name: 'Anzahl' }).fill('10');
+  await page.locator('app-date-select .trigger').click();
+  const calendar = page.locator('app-date-select .panel');
+  await expect(calendar).toBeVisible();
+  await calendar.getByRole('button', { name: 'Nächster Monat' }).click();
+  const selectedDate = await calendar.locator('.day').first().getAttribute('aria-label');
+  await calendar.locator('.day').first().click();
+  await expect(calendar).toHaveCount(0);
   // without assets there is one plain checklist
   await expect(page.getByRole('heading', { name: 'Für jedes Asset' })).toHaveCount(0);
   await page.getByRole('radio', { name: 'Nach Filter' }).click();
@@ -233,6 +240,7 @@ test('a new task is saved with assignees, schedule and checklist', async ({ page
     areaUuid: area.uuid,
     intervalValue: 10,
     intervalUnit: 'DAYS',
+    startDate: selectedDate,
     assetUuids: [],
     filter: { locationUuids: [], includeSubLocations: true, tagUuids: [], assetTypeUuids: [] },
     points: [

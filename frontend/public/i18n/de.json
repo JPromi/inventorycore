@@ -590,6 +590,12 @@
     "everyoneHint": "Gilt für jeden Benutzer"
   },
   "components": {
+    "dateSelect": {
+      "placeholder": "Datum auswählen",
+      "previousMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat",
+      "weekdays": { "Mo": "Mo", "Di": "Di", "Mi": "Mi", "Do": "Do", "Fr": "Fr", "Sa": "Sa", "So": "So" }
+    },
     "areaSwitcher": {
       "triggerTitle": "Ansicht auf Bereiche einschränken",
       "allAreas": "Alle Bereiche",

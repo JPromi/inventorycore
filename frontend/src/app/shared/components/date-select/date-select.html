@@ -1,0 +1,24 @@
+﻿<button #trigger type="button" class="trigger" [disabled]="disabled" [class.open]="open"
+  [attr.aria-label]="ariaLabel" [attr.aria-expanded]="open" aria-haspopup="dialog" (click)="toggle()">
+  <span [class.placeholder]="!value">{{ label || ('components.dateSelect.placeholder' | t) }}</span>
+  <svg lucideCalendarDays size="16"></svg>
+</button>
+@if (open) {
+  <div class="panel" [appDropdownPosition]="trigger" role="dialog" [attr.aria-label]="ariaLabel">
+    <div class="calendar-header">
+      <button type="button" [attr.aria-label]="'components.dateSelect.previousMonth' | t" (click)="changeMonth(-1)"><svg lucideChevronLeft size="16"></svg></button>
+      <strong aria-live="polite">{{ monthLabel }}</strong>
+      <button type="button" [attr.aria-label]="'components.dateSelect.nextMonth' | t" (click)="changeMonth(1)"><svg lucideChevronRight size="16"></svg></button>
+    </div>
+    <div class="calendar-grid">
+      @for (day of ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']; track $index) {
+        <span class="weekday">{{ ('components.dateSelect.weekdays.' + day) | t }}</span>
+      }
+      @for (day of days; track $index) {
+        @if (day) {
+          <button type="button" class="day" [class.selected]="dateValue(day) === value" [attr.aria-label]="dateValue(day)" [attr.aria-pressed]="dateValue(day) === value" (click)="select(day)">{{ day }}</button>
+        } @else { <span></span> }
+      }
+    </div>
+  </div>
+}

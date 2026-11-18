@@ -153,45 +153,29 @@
               @if (schedule === 'ON_DEMAND') {
                 <span class="hint">{{ 'tasks.form.onDemandHint' | t }}</span>
               } @else if (schedule === 'RECURRING') {
-                <div class="inline">
-                  <span>{{ 'tasks.form.every' | t }}</span>
-                  <input
-                    type="number"
-                    class="number"
-                    min="1"
-                    step="1"
-                    [(ngModel)]="intervalValue"
-                    name="intervalValue"
-                    [attr.aria-label]="'tasks.form.intervalValue' | t"
-                  />
-                  <select
-                    [(ngModel)]="intervalUnit"
-                    name="intervalUnit"
-                    [attr.aria-label]="'tasks.form.intervalUnit' | t"
-                  >
-                    @for (unit of intervalUnits; track unit.value) {
-                      <option [value]="unit.value">{{ unit.label }}</option>
-                    }
-                  </select>
-                  <span>{{ 'tasks.form.startingOn' | t }}</span>
-                  <input
-                    type="date"
-                    [(ngModel)]="startDate"
-                    name="startDate"
-                    required
-                    [attr.aria-label]="'tasks.form.firstDue' | t"
-                  />
+                <div class="fields schedule-fields">
+                  <label class="field">
+                    <span>{{ 'tasks.form.intervalValue' | t }}</span>
+                    <input type="number" min="1" step="1" [(ngModel)]="intervalValue" name="intervalValue" />
+                  </label>
+                  <div class="field">
+                    <span>{{ 'tasks.form.intervalUnit' | t }}</span>
+                    <app-search-select [options]="intervalUnits" [(ngModel)]="intervalUnit" name="intervalUnit"
+                      [ariaLabel]="'tasks.form.intervalUnit' | t" [disabled]="!editable" />
+                  </div>
+                  <div class="field">
+                    <span>{{ 'tasks.form.firstDue' | t }}</span>
+                    <app-date-select [(ngModel)]="startDate" name="startDate" [disabled]="!editable"
+                      [ariaLabel]="'tasks.form.firstDue' | t" />
+                  </div>
                 </div>
               } @else {
-                <div class="inline">
-                  <span>{{ 'tasks.form.dueDate' | t }}</span>
-                  <input
-                    type="date"
-                    [(ngModel)]="startDate"
-                    name="startDate"
-                    required
-                    [attr.aria-label]="'tasks.form.dueDate' | t"
-                  />
+                <div class="fields schedule-fields">
+                  <div class="field">
+                    <span>{{ 'tasks.form.dueDate' | t }}</span>
+                    <app-date-select [(ngModel)]="startDate" name="startDate" [disabled]="!editable"
+                      [ariaLabel]="'tasks.form.dueDate' | t" />
+                  </div>
                 </div>
               }
             </div>

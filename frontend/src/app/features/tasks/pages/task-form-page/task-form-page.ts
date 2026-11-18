@@ -22,6 +22,7 @@ import { PermissionService } from '../../../../core/service/permission.service';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { DateSelect } from '../../../../shared/components/date-select/date-select';
 import { MultiSelect } from '../../../../shared/components/multi-select/multi-select';
 import {
   SearchSelect,
@@ -64,6 +65,7 @@ type PointList = 'general' | 'asset';
     NgTemplateOutlet,
     RouterLink,
     MultiSelect,
+    DateSelect,
     SearchSelect,
     TranslatePipe,
     TranslateCountPipe,
