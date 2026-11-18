@@ -65,7 +65,7 @@
             </a>
           }
           @if (canWork) {
-            <button type="button" class="primary-action" (click)="startCompleting()">
+            <button type="button" class="primary-action" [disabled]="savingStatus" (click)="startCompleting()">
               <svg lucideCircleCheck size="16"></svg>
               <span>{{ 'tasks.run.complete' | t }}</span>
             </button>
@@ -367,10 +367,8 @@
     <button
       type="button"
       class="check"
-      role="checkbox"
-      [attr.aria-checked]="entry.status === 'DONE'"
-      [attr.aria-label]="entry.pointName"
-      [title]="'taskEntryStatus.DONE' | t"
+      [attr.aria-label]="'tasks.run.changeStatus' | t: { point: entry.pointName, status: statusLabel(entry.status) }"
+      [title]="'tasks.run.changeStatus' | t: { point: entry.pointName, status: statusLabel(entry.status) }"
       [disabled]="!canWork"
       (click)="toggleDone(entry)"
     >
@@ -435,17 +433,6 @@
             <svg lucideMessageSquare size="15"></svg>
           </button>
         }
-        <button
-          type="button"
-          class="icon-button not-done-button"
-          [class.active]="entry.status === 'NOT_DONE'"
-          [attr.aria-pressed]="entry.status === 'NOT_DONE'"
-          [title]="'taskEntryStatus.NOT_DONE' | t"
-          [attr.aria-label]="'taskEntryStatus.NOT_DONE' | t"
-          (click)="setStatus(entry, 'NOT_DONE')"
-        >
-          <svg lucideX size="15"></svg>
-        </button>
       </div>
     }
   </div>

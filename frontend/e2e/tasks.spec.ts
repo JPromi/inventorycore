@@ -151,10 +151,17 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
     await expect(page.getByRole('textbox', { name: 'Kommentar' })).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath('task-checklist.png'), fullPage: true });
 
-    await general.getByRole('checkbox', { name: 'Fahrzeugbuch geprüft' }).click();
+    await general.getByRole('button', { name: /Fahrzeugbuch geprüft:.*Status ändern/ }).click();
     await expect(general).toHaveClass(/done/);
     await expect(general).toContainText('Leitung');
-    await asset.getByRole('button', { name: 'Nicht erledigt', exact: true }).click();
+    const statusButton = asset.getByRole('button', { name: /Flaschendruck:.*Status ändern/ });
+    await statusButton.click();
+    await statusButton.click();
+    await expect(asset).toHaveClass(/not-done/);
+    await statusButton.click();
+    await expect(asset).not.toHaveClass(/not-done|done/);
+    await statusButton.click();
+    await statusButton.click();
     await expect(asset).toHaveClass(/not-done/);
 
     // the comment is saved after a pause in typing, without leaving the field

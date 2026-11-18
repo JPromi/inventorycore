@@ -93,6 +93,8 @@ export class TaskRunPage implements OnInit, OnDestroy {
   /** entries whose comment field was opened (fields with a comment are always shown) */
   protected openComments = new Set<string>();
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly statusSaves = new Set<string>();
+  private readonly savedStatuses = new Map<string, TaskEntryStatus>();
 
   protected readonly printSignatures = [t('tasks.run.print.doneBy'), t('tasks.run.print.responsible')];
 
@@ -142,6 +144,10 @@ export class TaskRunPage implements OnInit, OnDestroy {
     return !!this.detail?.canWork && this.open;
   }
 
+  protected get savingStatus(): boolean {
+    return this.statusSaves.size > 0;
+  }
+
   protected get progress(): number {
     const counts = this.detail?.summary.counts;
     return counts?.total ? Math.round(((counts.total - counts.pending) / counts.total) * 100) : 100;
@@ -159,28 +165,36 @@ export class TaskRunPage implements OnInit, OnDestroy {
     return t(`taskEntryStatus.${status}`);
   }
 
-  /** Clicking the active result again resets the point to "not worked on". */
-  protected setStatus(entry: TaskRunEntry, status: TaskEntryStatus): void {
+  /** Cycle through pending, done, and not done. */
+  protected toggleDone(entry: TaskRunEntry): void {
     if (!this.canWork) {
       return;
     }
-    const next: TaskEntryStatus = entry.status === status ? 'PENDING' : status;
-    const previous = entry.status;
-    entry.status = next;
+    if (!this.savedStatuses.has(entry.uuid)) this.savedStatuses.set(entry.uuid, entry.status);
+    entry.status = entry.status === 'PENDING' ? 'DONE' : entry.status === 'DONE' ? 'NOT_DONE' : 'PENDING';
     this.recount();
-    this.api.updateEntry(this.detail!.summary.uuid, entry.uuid, { status: next }).subscribe({
-      next: (updated) => this.replace(updated),
+    this.saveStatus(entry);
+  }
+
+  private saveStatus(entry: TaskRunEntry): void {
+    if (this.statusSaves.has(entry.uuid)) return;
+    const sent = entry.status;
+    this.statusSaves.add(entry.uuid);
+    this.api.updateEntry(this.detail!.summary.uuid, entry.uuid, { status: sent }).subscribe({
+      next: (updated) => {
+        this.statusSaves.delete(entry.uuid);
+        this.savedStatuses.set(entry.uuid, sent);
+        const desired = entry.status;
+        this.replace({ ...updated, status: desired });
+        if (desired !== sent) this.saveStatus(entry);
+      },
       error: (error) => {
-        entry.status = previous;
+        this.statusSaves.delete(entry.uuid);
+        entry.status = this.savedStatuses.get(entry.uuid) ?? 'PENDING';
         this.recount();
         this.handleError(error, t('tasks.run.errors.save'));
       },
     });
-  }
-
-  /** Done / pending with the check box; "not done" is a separate button. */
-  protected toggleDone(entry: TaskRunEntry): void {
-    this.setStatus(entry, 'DONE');
   }
 
   protected showsComment(entry: TaskRunEntry): boolean {
@@ -240,7 +254,8 @@ export class TaskRunPage implements OnInit, OnDestroy {
       next: (updated) => {
         // Keep the exact text in the editor, even if the server normalizes whitespace.
         this.savedDrafts.set(uuid, draft);
-        this.replace(updated);
+        const current = this.detail?.entries.find(candidate => candidate.uuid === uuid);
+        this.replace(current ? { ...updated, status: current.status, checkedAt: current.checkedAt, checkedByName: current.checkedByName } : updated);
         this.saveStates.set(uuid, 'saved');
       },
       error: (error) => {

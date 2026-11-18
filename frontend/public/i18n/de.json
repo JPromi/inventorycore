@@ -2637,7 +2637,8 @@
         "complete": "Die Aufgabe konnte nicht abgeschlossen werden.",
         "completed": "Die Aufgabe wurde bereits abgeschlossen und kann nicht mehr geändert werden."
       },
-      "addComment": "Kommentar hinzufügen"
+      "addComment": "Kommentar hinzufügen",
+      "changeStatus": "{point}: {status}. Status ändern"
     },
     "onDemand": "Bei Bedarf",
     "start": "Jetzt durchführen",
