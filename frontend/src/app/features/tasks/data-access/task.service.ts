@@ -26,6 +26,8 @@ export interface TaskPoint {
   description: string | null;
   /** worked on once per affected asset; otherwise once per run */
   perAsset: boolean;
+  groupName?: string | null;
+  groupDescription?: string | null;
 }
 
 export interface TaskAssignee {
@@ -135,6 +137,8 @@ export interface TaskRunEntry {
   pointUuid: string;
   pointName: string;
   pointDescription: string | null;
+  groupName?: string | null;
+  groupDescription?: string | null;
   /** null for points of the whole run */
   assetUuid: string | null;
   assetName: string | null;

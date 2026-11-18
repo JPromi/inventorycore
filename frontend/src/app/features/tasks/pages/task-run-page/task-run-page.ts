@@ -88,10 +88,13 @@ export class TaskRunPage implements OnInit, OnDestroy {
   protected comment = '';
   /** comment drafts while typing, by entry uuid */
   protected drafts = new Map<string, string>();
+  private readonly savedDrafts = new Map<string, string>();
   protected saveStates = new Map<string, SaveState>();
   /** entries whose comment field was opened (fields with a comment are always shown) */
   protected openComments = new Set<string>();
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly statusSaves = new Set<string>();
+  private readonly savedStatuses = new Map<string, TaskEntryStatus>();
 
   protected readonly printSignatures = [t('tasks.run.print.doneBy'), t('tasks.run.print.responsible')];
 
@@ -141,6 +144,10 @@ export class TaskRunPage implements OnInit, OnDestroy {
     return !!this.detail?.canWork && this.open;
   }
 
+  protected get savingStatus(): boolean {
+    return this.statusSaves.size > 0;
+  }
+
   protected get progress(): number {
     const counts = this.detail?.summary.counts;
     return counts?.total ? Math.round(((counts.total - counts.pending) / counts.total) * 100) : 100;
@@ -158,28 +165,36 @@ export class TaskRunPage implements OnInit, OnDestroy {
     return t(`taskEntryStatus.${status}`);
   }
 
-  /** Clicking the active result again resets the point to "not worked on". */
-  protected setStatus(entry: TaskRunEntry, status: TaskEntryStatus): void {
+  /** Cycle through pending, done, and not done. */
+  protected toggleDone(entry: TaskRunEntry): void {
     if (!this.canWork) {
       return;
     }
-    const next: TaskEntryStatus = entry.status === status ? 'PENDING' : status;
-    const previous = entry.status;
-    entry.status = next;
+    if (!this.savedStatuses.has(entry.uuid)) this.savedStatuses.set(entry.uuid, entry.status);
+    entry.status = entry.status === 'PENDING' ? 'DONE' : entry.status === 'DONE' ? 'NOT_DONE' : 'PENDING';
     this.recount();
-    this.api.updateEntry(this.detail!.summary.uuid, entry.uuid, { status: next }).subscribe({
-      next: (updated) => this.replace(updated),
+    this.saveStatus(entry);
+  }
+
+  private saveStatus(entry: TaskRunEntry): void {
+    if (this.statusSaves.has(entry.uuid)) return;
+    const sent = entry.status;
+    this.statusSaves.add(entry.uuid);
+    this.api.updateEntry(this.detail!.summary.uuid, entry.uuid, { status: sent }).subscribe({
+      next: (updated) => {
+        this.statusSaves.delete(entry.uuid);
+        this.savedStatuses.set(entry.uuid, sent);
+        const desired = entry.status;
+        this.replace({ ...updated, status: desired });
+        if (desired !== sent) this.saveStatus(entry);
+      },
       error: (error) => {
-        entry.status = previous;
+        this.statusSaves.delete(entry.uuid);
+        entry.status = this.savedStatuses.get(entry.uuid) ?? 'PENDING';
         this.recount();
         this.handleError(error, t('tasks.run.errors.save'));
       },
     });
-  }
-
-  /** Done / pending with the check box; "not done" is a separate button. */
-  protected toggleDone(entry: TaskRunEntry): void {
-    this.setStatus(entry, 'DONE');
   }
 
   protected showsComment(entry: TaskRunEntry): boolean {
@@ -201,6 +216,21 @@ export class TaskRunPage implements OnInit, OnDestroy {
     return this.drafts.get(entry.uuid) ?? entry.comment ?? '';
   }
 
+  protected checklistGroups(entries: TaskRunEntry[]): { name: string | null; description: string | null; entries: TaskRunEntry[] }[] {
+    const groups = new Map<string, { name: string | null; description: string | null; entries: TaskRunEntry[] }>();
+    for (const entry of entries) {
+      const name = entry.groupName || null;
+      const key = name ?? '';
+      let group = groups.get(key);
+      if (!group) {
+        group = { name, description: entry.groupDescription ?? null, entries: [] };
+        groups.set(key, group);
+      }
+      group.entries.push(entry);
+    }
+    return [...groups.values()];
+  }
+
   protected commentChanged(entry: TaskRunEntry, value: string): void {
     this.drafts.set(entry.uuid, value);
     this.saveStates.delete(entry.uuid);
@@ -216,17 +246,16 @@ export class TaskRunPage implements OnInit, OnDestroy {
     this.timers.delete(uuid);
     const draft = this.drafts.get(uuid);
     const entry = this.detail?.entries.find((candidate) => candidate.uuid === uuid);
-    if (draft === undefined || !entry || !this.canWork || draft === (entry.comment ?? '')) {
+    if (draft === undefined || !entry || !this.canWork || draft === this.savedDrafts.get(uuid) || draft === (entry.comment ?? '')) {
       return;
     }
     this.saveStates.set(uuid, 'saving');
     this.api.updateEntry(this.detail!.summary.uuid, uuid, { comment: draft }).subscribe({
       next: (updated) => {
-        // a newer draft typed meanwhile stays
-        if (this.drafts.get(uuid) === draft) {
-          this.drafts.delete(uuid);
-        }
-        this.replace(updated);
+        // Keep the exact text in the editor, even if the server normalizes whitespace.
+        this.savedDrafts.set(uuid, draft);
+        const current = this.detail?.entries.find(candidate => candidate.uuid === uuid);
+        this.replace(current ? { ...updated, status: current.status, checkedAt: current.checkedAt, checkedByName: current.checkedByName } : updated);
         this.saveStates.set(uuid, 'saved');
       },
       error: (error) => {

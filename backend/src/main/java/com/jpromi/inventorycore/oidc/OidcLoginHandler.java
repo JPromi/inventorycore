@@ -115,7 +115,7 @@ public class OidcLoginHandler implements AuthenticationSuccessHandler, Authentic
             SecurityContextHolder.setContext(context);
             contextRepository.saveContext(context, request, response);
             loginAudit.signedIn(signedIn[0], com.jpromi.inventorycore.service.LoginAuditService.Method.OIDC, request);
-            response.sendRedirect(frontendUrl(settings, "/"));
+            response.sendRedirect(frontendUrl(settings, "/login?oidc=success"));
         } catch (Rejected rejected) {
             String username = firstNonBlank(claim(claims, settings.getUsernameClaim()), claim(claims, "preferred_username"), claim(claims, "email"));
             loginAudit.failed(username, com.jpromi.inventorycore.service.LoginAuditService.Method.OIDC, rejected.code.toUpperCase(java.util.Locale.ROOT), request);

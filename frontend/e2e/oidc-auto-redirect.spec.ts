@@ -3,11 +3,16 @@ import { expect, Page, test } from '@playwright/test';
 const providers = { oidcEnabled: true, oidcLabel: 'Feuerwehr-SSO', oidcLoginUrl: '/oauth2/authorization/oidc', oidcAutoRedirect: true };
 
 /** Answers like the backend; the identity provider is a plain page so the redirect can be seen. */
-async function mockApi(page: Page, options: { loggedIn?: boolean; autoRedirect?: boolean } = {}) {
+async function mockApi(page: Page, options: { loggedIn?: boolean; autoRedirect?: boolean; ssoSuccess?: boolean } = {}) {
   let loggedIn = options.loggedIn ?? false;
   const savedOidc: Record<string, unknown>[] = [];
-  await page.route('**/oauth2/authorization/oidc', (route) =>
-    route.fulfill({ contentType: 'text/html', body: '<h1>Identity Provider</h1>' }));
+  await page.route('**/oauth2/authorization/oidc', (route) => {
+    if (options.ssoSuccess) {
+      loggedIn = true;
+      return route.fulfill({ status: 302, headers: { location: '/login?oidc=success' } });
+    }
+    return route.fulfill({ contentType: 'text/html', body: '<h1>Identity Provider</h1>' });
+  });
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -39,6 +44,21 @@ test('the login page goes straight to the identity provider', async ({ page }) =
   await page.goto('/login');
   await expect(page).toHaveURL(/\/oauth2\/authorization\/oidc$/);
   await expect(page.getByRole('heading', { name: 'Identity Provider' })).toBeVisible();
+});
+
+for (const autoRedirect of [true, false]) {
+  test(`SSO returns to the requested page with query and fragment (automatic: ${autoRedirect})`, async ({ page }) => {
+    await mockApi(page, { autoRedirect, ssoSuccess: true });
+    await page.goto('/login?returnUrl=%2Fassets%3Fq%3Dschlauch%23liste');
+    if (!autoRedirect) await page.getByRole('button', { name: /Feuerwehr-SSO/ }).click();
+    await expect(page).toHaveURL(/\/assets\?q=schlauch#liste$/);
+  });
+}
+
+test('SSO rejects an external return URL', async ({ page }) => {
+  await mockApi(page, { ssoSuccess: true });
+  await page.goto('/login?returnUrl=%2F%2Fevil.example%2F');
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 test('?direct=1 shows the normal login page', async ({ page }) => {

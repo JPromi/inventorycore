@@ -590,6 +590,12 @@
     "everyoneHint": "Gilt für jeden Benutzer"
   },
   "components": {
+    "dateSelect": {
+      "placeholder": "Datum auswählen",
+      "previousMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat",
+      "weekdays": { "Mo": "Mo", "Di": "Di", "Mi": "Mi", "Do": "Do", "Fr": "Fr", "Sa": "Sa", "So": "So" }
+    },
     "areaSwitcher": {
       "triggerTitle": "Ansicht auf Bereiche einschränken",
       "allAreas": "Alle Bereiche",
@@ -2524,6 +2530,12 @@
       "pointName": "Checklistenpunkt",
       "pointDescriptionPlaceholder": "Hinweis (optional)",
       "pointDescription": "Hinweis zum Checklistenpunkt",
+      "pointGroup": "Gruppe (optional)",
+      "pointGroupName": "Name der Gruppe",
+      "newPointGroup": "Neue Gruppe erstellen",
+      "noPointGroup": "Keine Gruppe",
+      "pointGroupDescription": "Beschreibung der Gruppe (optional)",
+      "reorderPoint": "Eintrag ziehen oder mit den Pfeiltasten verschieben",
       "moveUp": "Nach oben",
       "moveDown": "Nach unten",
       "removePoint": "Punkt entfernen",
@@ -2625,7 +2637,8 @@
         "complete": "Die Aufgabe konnte nicht abgeschlossen werden.",
         "completed": "Die Aufgabe wurde bereits abgeschlossen und kann nicht mehr geändert werden."
       },
-      "addComment": "Kommentar hinzufügen"
+      "addComment": "Kommentar hinzufügen",
+      "changeStatus": "{point}: {status}. Status ändern"
     },
     "onDemand": "Bei Bedarf",
     "start": "Jetzt durchführen",

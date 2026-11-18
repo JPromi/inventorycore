@@ -21,7 +21,10 @@ const entry = (uuid: string, point: string, asset: boolean) => ({
 });
 
 async function mockApi(page: Page) {
-  const entries = [entry('e-general', 'Fahrzeugbuch geprüft', false), entry('e-asset', 'Flaschendruck', true)];
+  const entries = [
+    { ...entry('e-general', 'Fahrzeugbuch geprüft', false), groupName: 'Unterlagen', groupDescription: 'Dokumente prüfen' },
+    entry('e-asset', 'Flaschendruck', true),
+  ];
   const state = { status: 'OPEN' as 'OPEN' | 'COMPLETED', comment: null as string | null };
   const patches: unknown[] = [];
   const created: unknown[] = [];
@@ -94,7 +97,7 @@ async function mockApi(page: Page) {
         target.checkedAt = body.status === 'PENDING' ? null : '2026-10-29T08:00:00Z';
       }
       if (body.comment !== null) {
-        target.comment = body.comment || null;
+        target.comment = body.comment?.trim() || null;
       }
       return route.fulfill({ json: target });
     }
@@ -136,16 +139,29 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
 
     const general = page.locator('.entry').filter({ hasText: 'Fahrzeugbuch geprüft' });
     const asset = page.locator('.entry').filter({ hasText: 'Flaschendruck' });
+    const checklistGroup = page.locator('details.checklist-section').filter({ hasText: 'Unterlagen' });
+    await expect(checklistGroup).toContainText('Dokumente prüfen');
+    await checklistGroup.locator('summary').click();
+    await expect(general).toBeHidden();
+    await checklistGroup.locator('summary').click();
+    await expect(general).toBeVisible();
     await expect(page.getByRole('link', { name: 'Atemschutzgerät 1' })).toBeVisible();
 
     // a plain checklist: no comment fields until one is asked for
     await expect(page.getByRole('textbox', { name: 'Kommentar' })).toHaveCount(0);
     await page.screenshot({ path: testInfo.outputPath('task-checklist.png'), fullPage: true });
 
-    await general.getByRole('checkbox', { name: 'Fahrzeugbuch geprüft' }).click();
+    await general.getByRole('button', { name: /Fahrzeugbuch geprüft:.*Status ändern/ }).click();
     await expect(general).toHaveClass(/done/);
     await expect(general).toContainText('Leitung');
-    await asset.getByRole('button', { name: 'Nicht erledigt', exact: true }).click();
+    const statusButton = asset.getByRole('button', { name: /Flaschendruck:.*Status ändern/ });
+    await statusButton.click();
+    await statusButton.click();
+    await expect(asset).toHaveClass(/not-done/);
+    await statusButton.click();
+    await expect(asset).not.toHaveClass(/not-done|done/);
+    await statusButton.click();
+    await statusButton.click();
     await expect(asset).toHaveClass(/not-done/);
 
     // the comment is saved after a pause in typing, without leaving the field
@@ -170,6 +186,23 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
   });
 }
 
+test('autosaving a comment preserves whitespace and the cursor while editing', async ({ page }) => {
+  const { patches } = await mockApi(page);
+  await page.goto('/tasks/run-1');
+  const entry = page.locator('.entry').filter({ hasText: 'Flaschendruck' });
+  await entry.getByRole('button', { name: 'Kommentar hinzufügen' }).click();
+  const input = entry.getByRole('textbox', { name: 'Kommentar' });
+  await input.fill('Flasche prüfen  ');
+  await input.evaluate((element: HTMLTextAreaElement) => element.setSelectionRange(3, 3));
+  await expect.poll(() => patches.length).toBeGreaterThan(0);
+  await expect(entry).toContainText('Gespeichert');
+  await expect(input).toHaveValue('Flasche prüfen  ');
+  await expect(input).toBeFocused();
+  expect(await input.evaluate((element: HTMLTextAreaElement) => element.selectionStart)).toBe(3);
+  await input.press('X');
+  await expect(input).toHaveValue('FlaXsche prüfen  ');
+});
+
 test('back restores the task tab and search while a navigation link starts fresh', async ({ page }) => {
   await mockApi(page);
   await page.goto('/tasks');
@@ -187,6 +220,59 @@ test('back restores the task tab and search while a navigation link starts fresh
   await expect(page.getByRole('tab').first()).toHaveClass(/active/);
 });
 
+test('optional checklist groups are sent with their descriptions', async ({ page }) => {
+  const { created } = await mockApi(page);
+  await page.goto('/tasks/definitions/new');
+  await page.getByRole('textbox', { name: 'Titel' }).fill('Kontrolle');
+  const points = page.locator('.points').first();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).first().fill('Fahrzeugbuch');
+  await expect(points.locator('app-search-select')).toHaveCount(0);
+  await points.locator('.point-actions').first().getByRole('button', { name: 'Gruppe (optional)' }).click();
+  await points.locator('app-search-select').first().getByRole('button').click();
+  await page.getByRole('option', { name: 'Neue Gruppe erstellen' }).click();
+  await points.getByRole('textbox', { name: 'Name der Gruppe' }).fill('Unterlagen');
+  await points.getByRole('textbox', { name: 'Beschreibung der Gruppe (optional)' }).first().fill('Dokumente prüfen');
+  await points.getByRole('button', { name: 'Übernehmen' }).click();
+  await page.getByRole('button', { name: 'Punkt hinzufügen' }).first().click();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(1).fill('Besatzung');
+  await points.locator('.point-actions').nth(1).getByRole('button', { name: 'Gruppe (optional)' }).click();
+  await points.locator('app-search-select').nth(1).getByRole('button').click();
+  await page.getByRole('option', { name: 'Unterlagen' }).click();
+  await expect(points.getByRole('textbox', { name: 'Beschreibung der Gruppe (optional)' }).nth(1)).toHaveValue('Dokumente prüfen');
+  await points.locator('.point-actions').first().getByRole('button', { name: 'Gruppe (optional)' }).click();
+  await expect(points.locator('.point').first()).toContainText('Unterlagen');
+  await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect.poll(() => created.length).toBe(1);
+  expect(created[0]).toMatchObject({ points: [
+    { name: 'Fahrzeugbuch', groupName: 'Unterlagen', groupDescription: 'Dokumente prüfen' },
+    { name: 'Besatzung', groupName: 'Unterlagen', groupDescription: 'Dokumente prüfen' },
+  ] });
+});
+
+test('checklist points follow the pointer and retain their values when reordered', async ({ page }) => {
+  const { created } = await mockApi(page);
+  await page.goto('/tasks/definitions/new');
+  await page.getByRole('textbox', { name: 'Titel' }).fill('Kontrolle');
+  const points = page.locator('.points').first();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).first().fill('Erster Punkt');
+  await page.getByRole('button', { name: 'Punkt hinzufügen' }).first().click();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(1).fill('Zweiter Punkt');
+  const grip = points.locator('.point-grip').first();
+  const start = (await grip.boundingBox())!;
+  const end = (await points.locator('.point').nth(1).boundingBox())!;
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 5 });
+  await expect(points.locator('.dragging')).toHaveCSS('position', 'relative');
+  await expect(points.locator('.dragging')).not.toHaveCSS('transform', 'none');
+  await page.mouse.up();
+  await expect(points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(0)).toHaveValue('Zweiter Punkt');
+  await expect(points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(1)).toHaveValue('Erster Punkt');
+  await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect.poll(() => created.length).toBe(1);
+  expect(created[0]).toMatchObject({ points: [{ name: 'Zweiter Punkt' }, { name: 'Erster Punkt' }] });
+});
+
 test('a new task is saved with assignees, schedule and checklist', async ({ page }, testInfo) => {
   const { created } = await mockApi(page);
   await page.goto('/tasks/definitions/new');
@@ -194,6 +280,13 @@ test('a new task is saved with assignees, schedule and checklist', async ({ page
   await page.getByRole('textbox', { name: 'Titel' }).fill('Atemschutz-Kontrolle');
   await page.getByRole('radio', { name: 'Wiederkehrend' }).click();
   await page.getByRole('spinbutton', { name: 'Anzahl' }).fill('10');
+  await page.locator('app-date-select .trigger').click();
+  const calendar = page.locator('app-date-select .panel');
+  await expect(calendar).toBeVisible();
+  await calendar.getByRole('button', { name: 'Nächster Monat' }).click();
+  const selectedDate = await calendar.locator('.day').first().getAttribute('aria-label');
+  await calendar.locator('.day').first().click();
+  await expect(calendar).toHaveCount(0);
   // without assets there is one plain checklist
   await expect(page.getByRole('heading', { name: 'Für jedes Asset' })).toHaveCount(0);
   await page.getByRole('radio', { name: 'Nach Filter' }).click();
@@ -209,6 +302,7 @@ test('a new task is saved with assignees, schedule and checklist', async ({ page
     areaUuid: area.uuid,
     intervalValue: 10,
     intervalUnit: 'DAYS',
+    startDate: selectedDate,
     assetUuids: [],
     filter: { locationUuids: [], includeSubLocations: true, tagUuids: [], assetTypeUuids: [] },
     points: [

@@ -4,10 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
-  LucideArrowDown,
   LucideArrowLeft,
-  LucideArrowUp,
+  LucideGripVertical,
   LucideExternalLink,
+  LucideFolder,
   LucideListChecks,
   LucideMessageSquare,
   LucidePlay,
@@ -23,6 +23,7 @@ import { PermissionService } from '../../../../core/service/permission.service';
 import { t } from '../../../../core/i18n/i18n';
 import { TranslateCountPipe, TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { DateSelect } from '../../../../shared/components/date-select/date-select';
 import { MultiSelect } from '../../../../shared/components/multi-select/multi-select';
 import {
   SearchSelect,
@@ -65,13 +66,14 @@ type PointList = 'general' | 'asset';
     NgTemplateOutlet,
     RouterLink,
     MultiSelect,
+    DateSelect,
     SearchSelect,
     TranslatePipe,
     TranslateCountPipe,
-    LucideArrowDown,
     LucideArrowLeft,
-    LucideArrowUp,
+    LucideGripVertical,
     LucideExternalLink,
+    LucideFolder,
     LucideListChecks,
     LucideMessageSquare,
     LucidePlay,
@@ -104,6 +106,10 @@ export class TaskFormPage implements OnInit {
   protected assetPoints: TaskPoint[] = [newPoint(true)];
   /** points whose note field is shown */
   protected openNotes = new Set<TaskPoint>();
+  protected openPointGroups = new Set<TaskPoint>();
+  protected newPointGroups = new Set<TaskPoint>();
+  protected readonly newPointGroupValue = '__new_checklist_group__';
+  protected pointDrag: { point: TaskPoint; list: PointList; startY: number; offset: number; target: number } | null = null;
   protected assetMode: AssetMode = 'NONE';
   protected readonly assetModes: AssetMode[] = ['NONE', 'PICK', 'FILTER'];
   protected assetUuids: string[] = [];
@@ -324,6 +330,63 @@ export class TaskFormPage implements OnInit {
     return list === 'general' ? this.generalPoints : this.assetPoints;
   }
 
+  protected get pointGroupNames(): string[] {
+    return [...new Set([...this.generalPoints, ...this.assetPoints]
+      .map(point => point.groupName?.trim()).filter((name): name is string => !!name))];
+  }
+
+  protected get pointGroupOptions(): SelectOption[] {
+    return [
+      ...this.pointGroupNames.map(name => ({ value: name, label: name })),
+      { value: this.newPointGroupValue, label: t('tasks.form.newPointGroup') },
+    ];
+  }
+
+  protected selectPointGroup(point: TaskPoint, value: string | null): void {
+    if (value === this.newPointGroupValue) {
+      point.groupName = null;
+      point.groupDescription = null;
+      this.newPointGroups.add(point);
+      return;
+    }
+    this.newPointGroups.delete(point);
+    point.groupName = value;
+    this.pointGroupChanged(point);
+  }
+
+  protected finishPointGroup(point: TaskPoint): void {
+    point.groupName = point.groupName?.trim() || null;
+    const existing = [...this.generalPoints, ...this.assetPoints].find(other =>
+      other !== point && other.groupName?.trim() === point.groupName,
+    );
+    if (existing) point.groupDescription = existing.groupDescription ?? null;
+    this.newPointGroups.delete(point);
+  }
+
+  protected pointGroupChanged(point: TaskPoint): void {
+    const name = point.groupName?.trim();
+    const matching = [...this.generalPoints, ...this.assetPoints].find(other =>
+      other !== point && name && other.groupName?.trim() === name,
+    );
+    point.groupDescription = matching?.groupDescription ?? null;
+  }
+
+  protected pointGroupDescriptionChanged(point: TaskPoint): void {
+    const name = point.groupName?.trim();
+    if (!name) return;
+    for (const other of [...this.generalPoints, ...this.assetPoints]) {
+      if (other !== point && other.groupName?.trim() === name) other.groupDescription = point.groupDescription;
+    }
+  }
+
+  protected togglePointGroup(point: TaskPoint): void {
+    if (this.openPointGroups.has(point)) {
+      this.openPointGroups.delete(point);
+    } else {
+      this.openPointGroups.add(point);
+    }
+  }
+
   protected addPoint(list: PointList): void {
     this.setPoints(list, [...this.points(list), newPoint(list === 'asset')]);
   }
@@ -333,13 +396,41 @@ export class TaskFormPage implements OnInit {
     this.setPoints(list, points.length ? points : [newPoint(list === 'asset')]);
   }
 
+  protected startPointDrag(event: PointerEvent, list: PointList, point: TaskPoint): void {
+    if (event.button !== 0) return;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.pointDrag = { point, list, startY: event.clientY, offset: 0, target: this.points(list).indexOf(point) };
+  }
+
+  protected updatePointDrag(event: PointerEvent): void {
+    const drag = this.pointDrag;
+    if (!drag) return;
+    const container = (event.currentTarget as HTMLElement).closest('.points');
+    const rows = Array.from(container?.children ?? []) as HTMLElement[];
+    drag.offset = event.clientY - drag.startY;
+    const source = this.points(drag.list).indexOf(drag.point);
+    const target = rows.findIndex((row, index) =>
+      event.clientY < row.getBoundingClientRect().top - (index === source ? drag.offset : 0) + row.offsetHeight / 2,
+    );
+    drag.target = target < 0 ? rows.length - 1 : target;
+  }
+
+  protected dropPoint(): void {
+    const drag = this.pointDrag;
+    this.pointDrag = null;
+    if (!drag) return;
+    const index = this.points(drag.list).indexOf(drag.point);
+    this.movePoint(drag.list, index, drag.target - index);
+  }
+
   protected movePoint(list: PointList, index: number, offset: number): void {
     const points = [...this.points(list)];
     const target = index + offset;
     if (target < 0 || target >= points.length) {
       return;
     }
-    [points[index], points[target]] = [points[target], points[index]];
+    const [point] = points.splice(index, 1);
+    points.splice(target, 0, point);
     this.setPoints(list, points);
   }
 
@@ -471,6 +562,7 @@ export class TaskFormPage implements OnInit {
     this.generalPoints = general.length ? general : [newPoint(false)];
     this.assetPoints = perAsset.length ? perAsset : [newPoint(true)];
     this.openNotes = new Set(points.filter((point) => point.description));
+    this.openPointGroups = new Set(points.filter((point) => point.groupName));
     this.assetUuids = task.assets.map((asset) => asset.uuid);
     this.filter = task.filter ? { ...task.filter } : emptyFilter();
     this.assetMode = task.filter ? 'FILTER' : task.assets.length || perAsset.length ? 'PICK' : 'NONE';

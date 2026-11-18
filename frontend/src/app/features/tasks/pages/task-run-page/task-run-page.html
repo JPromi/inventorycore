@@ -65,7 +65,7 @@
             </a>
           }
           @if (canWork) {
-            <button type="button" class="primary-action" (click)="startCompleting()">
+            <button type="button" class="primary-action" [disabled]="savingStatus" (click)="startCompleting()">
               <svg lucideCircleCheck size="16"></svg>
               <span>{{ 'tasks.run.complete' | t }}</span>
             </button>
@@ -131,8 +131,20 @@
                 <span>{{ 'tasks.run.general' | t }}</span>
                 <small class="count">{{ doneText(general) }}</small>
               </h2>
-              @for (entry of general; track entry.uuid) {
-                <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+              @for (section of checklistGroups(general); track section.name) {
+                @if (section.name) {
+                  <details class="checklist-section" open>
+                    <summary><span>{{ section.name }}</span><small>{{ doneText(section.entries) }}</small></summary>
+                    @if (section.description) { <p class="group-description">{{ section.description }}</p> }
+                    @for (entry of section.entries; track entry.uuid) {
+                      <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+                    }
+                  </details>
+                } @else {
+                  @for (entry of section.entries; track entry.uuid) {
+                    <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+                  }
+                }
               }
             </section>
           }
@@ -150,8 +162,20 @@
                 }}</small>
                 <small class="count">{{ doneText(group.entries) }}</small>
               </h2>
-              @for (entry of group.entries; track entry.uuid) {
-                <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+              @for (section of checklistGroups(group.entries); track section.name) {
+                @if (section.name) {
+                  <details class="checklist-section" open>
+                    <summary><span>{{ section.name }}</span><small>{{ doneText(section.entries) }}</small></summary>
+                    @if (section.description) { <p class="group-description">{{ section.description }}</p> }
+                    @for (entry of section.entries; track entry.uuid) {
+                      <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+                    }
+                  </details>
+                } @else {
+                  @for (entry of section.entries; track entry.uuid) {
+                    <ng-container *ngTemplateOutlet="entryRow; context: { $implicit: entry }" />
+                  }
+                }
               }
             </section>
           }
@@ -343,10 +367,8 @@
     <button
       type="button"
       class="check"
-      role="checkbox"
-      [attr.aria-checked]="entry.status === 'DONE'"
-      [attr.aria-label]="entry.pointName"
-      [title]="'taskEntryStatus.DONE' | t"
+      [attr.aria-label]="'tasks.run.changeStatus' | t: { point: entry.pointName, status: statusLabel(entry.status) }"
+      [title]="'tasks.run.changeStatus' | t: { point: entry.pointName, status: statusLabel(entry.status) }"
       [disabled]="!canWork"
       (click)="toggleDone(entry)"
     >
@@ -411,17 +433,6 @@
             <svg lucideMessageSquare size="15"></svg>
           </button>
         }
-        <button
-          type="button"
-          class="icon-button not-done-button"
-          [class.active]="entry.status === 'NOT_DONE'"
-          [attr.aria-pressed]="entry.status === 'NOT_DONE'"
-          [title]="'taskEntryStatus.NOT_DONE' | t"
-          [attr.aria-label]="'taskEntryStatus.NOT_DONE' | t"
-          (click)="setStatus(entry, 'NOT_DONE')"
-        >
-          <svg lucideX size="15"></svg>
-        </button>
       </div>
     }
   </div>
@@ -446,7 +457,7 @@
         <tbody>
           @for (entry of general; track entry.uuid) {
             <tr>
-              <td>{{ entry.pointName }}</td>
+              <td>@if (entry.groupName) { <strong>{{ entry.groupName }}</strong><br />@if (entry.groupDescription) { {{ entry.groupDescription }}<br /> } }{{ entry.pointName }}</td>
               <td [class.print-alert]="print && entry.status !== 'DONE'" [class]="'status ' + entry.status">
                 {{ statusLabel(entry.status) }}
               </td>
@@ -489,7 +500,7 @@
                     }
                   }
                 </td>
-                <td>{{ entry.pointName }}</td>
+                <td>@if (entry.groupName) { <strong>{{ entry.groupName }}</strong><br />@if (entry.groupDescription) { {{ entry.groupDescription }}<br /> } }{{ entry.pointName }}</td>
                 <td [class.print-alert]="print && entry.status !== 'DONE'" [class]="'status ' + entry.status">
                   {{ statusLabel(entry.status) }}
                 </td>

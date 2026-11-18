@@ -153,45 +153,29 @@
               @if (schedule === 'ON_DEMAND') {
                 <span class="hint">{{ 'tasks.form.onDemandHint' | t }}</span>
               } @else if (schedule === 'RECURRING') {
-                <div class="inline">
-                  <span>{{ 'tasks.form.every' | t }}</span>
-                  <input
-                    type="number"
-                    class="number"
-                    min="1"
-                    step="1"
-                    [(ngModel)]="intervalValue"
-                    name="intervalValue"
-                    [attr.aria-label]="'tasks.form.intervalValue' | t"
-                  />
-                  <select
-                    [(ngModel)]="intervalUnit"
-                    name="intervalUnit"
-                    [attr.aria-label]="'tasks.form.intervalUnit' | t"
-                  >
-                    @for (unit of intervalUnits; track unit.value) {
-                      <option [value]="unit.value">{{ unit.label }}</option>
-                    }
-                  </select>
-                  <span>{{ 'tasks.form.startingOn' | t }}</span>
-                  <input
-                    type="date"
-                    [(ngModel)]="startDate"
-                    name="startDate"
-                    required
-                    [attr.aria-label]="'tasks.form.firstDue' | t"
-                  />
+                <div class="fields schedule-fields">
+                  <label class="field">
+                    <span>{{ 'tasks.form.intervalValue' | t }}</span>
+                    <input type="number" min="1" step="1" [(ngModel)]="intervalValue" name="intervalValue" />
+                  </label>
+                  <div class="field">
+                    <span>{{ 'tasks.form.intervalUnit' | t }}</span>
+                    <app-search-select [options]="intervalUnits" [(ngModel)]="intervalUnit" name="intervalUnit"
+                      [ariaLabel]="'tasks.form.intervalUnit' | t" [disabled]="!editable" />
+                  </div>
+                  <div class="field">
+                    <span>{{ 'tasks.form.firstDue' | t }}</span>
+                    <app-date-select [(ngModel)]="startDate" name="startDate" [disabled]="!editable"
+                      [ariaLabel]="'tasks.form.firstDue' | t" />
+                  </div>
                 </div>
               } @else {
-                <div class="inline">
-                  <span>{{ 'tasks.form.dueDate' | t }}</span>
-                  <input
-                    type="date"
-                    [(ngModel)]="startDate"
-                    name="startDate"
-                    required
-                    [attr.aria-label]="'tasks.form.dueDate' | t"
-                  />
+                <div class="fields schedule-fields">
+                  <div class="field">
+                    <span>{{ 'tasks.form.dueDate' | t }}</span>
+                    <app-date-select [(ngModel)]="startDate" name="startDate" [disabled]="!editable"
+                      [ariaLabel]="'tasks.form.dueDate' | t" />
+                  </div>
                 </div>
               }
             </div>
@@ -352,13 +336,27 @@
         <ng-template #pointList let-list="list">
           <ol class="points">
             @for (point of points(list); track point; let index = $index) {
-              <li class="point">
+              <li class="point" [class.editable]="editable"
+                [class.dragging]="pointDrag?.point === point"
+                [class.drop-target]="pointDrag?.list === list && pointDrag?.target === index && pointDrag?.point !== point"
+                [style.transform]="pointDrag?.point === point ? 'translateY(' + pointDrag!.offset + 'px)' : null">
+                @if (editable) {
+                  <button type="button" class="point-grip" [attr.aria-label]="'tasks.form.reorderPoint' | t" [title]="'tasks.form.reorderPoint' | t"
+                    (pointerdown)="startPointDrag($event, list, point)"
+                    (pointermove)="updatePointDrag($event)"
+                    (pointerup)="dropPoint()"
+                    (pointercancel)="pointDrag = null"
+                    (keydown.arrowup)="$event.preventDefault(); movePoint(list, index, -1)"
+                    (keydown.arrowdown)="$event.preventDefault(); movePoint(list, index, 1)">
+                    <svg lucideGripVertical size="18"></svg>
+                  </button>
+                }
                 <span class="number">{{ index + 1 }}.</span>
                 <div class="point-fields">
                   <input
                     type="text"
                     [(ngModel)]="point.name"
-                    [name]="list + 'Name' + index"
+                    [ngModelOptions]="{ standalone: true }"
                     [disabled]="!editable"
                     [placeholder]="
                       list === 'asset'
@@ -372,11 +370,32 @@
                       type="text"
                       class="note"
                       [(ngModel)]="point.description"
-                      [name]="list + 'Note' + index"
+                      [ngModelOptions]="{ standalone: true }"
                       [disabled]="!editable"
                       [placeholder]="'tasks.form.pointDescriptionPlaceholder' | t"
                       [attr.aria-label]="'tasks.form.pointDescription' | t"
                     />
+                  }
+                  @if (openPointGroups.has(point)) {
+                  @if (newPointGroups.has(point)) {
+                    <div class="point-group-create">
+                      <input type="text" maxlength="255" [(ngModel)]="point.groupName" [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="'tasks.form.pointGroupName' | t" [attr.aria-label]="'tasks.form.pointGroupName' | t" />
+                      <button type="button" class="secondary-action compact" [disabled]="!point.groupName?.trim()" (click)="finishPointGroup(point)">{{ 'common.apply' | t }}</button>
+                      <button type="button" class="secondary-action compact" (click)="selectPointGroup(point, null)">{{ 'common.cancel' | t }}</button>
+                    </div>
+                  } @else {
+                    <app-search-select [options]="pointGroupOptions" [ngModel]="point.groupName ?? null"
+                      (ngModelChange)="selectPointGroup(point, $event)" [ngModelOptions]="{ standalone: true }"
+                      [disabled]="!editable" [placeholder]="'tasks.form.pointGroup' | t"
+                      [clearLabel]="'tasks.form.noPointGroup' | t" [ariaLabel]="'tasks.form.pointGroup' | t" />
+                  }
+                  @if (point.groupName) {
+                    <input type="text" maxlength="2000" [(ngModel)]="point.groupDescription" (ngModelChange)="pointGroupDescriptionChanged(point)" [ngModelOptions]="{ standalone: true }"
+                      [disabled]="!editable" [placeholder]="'tasks.form.pointGroupDescription' | t" [attr.aria-label]="'tasks.form.pointGroupDescription' | t" />
+                  }
+                  } @else if (point.groupName) {
+                    <span class="point-group-label">{{ point.groupName }}</span>
                   }
                 </div>
                 @if (editable) {
@@ -393,20 +412,13 @@
                     <button
                       type="button"
                       class="icon-button"
-                      [title]="'tasks.form.moveUp' | t"
-                      [disabled]="index === 0"
-                      (click)="movePoint(list, index, -1)"
+                      [class.active]="openPointGroups.has(point) || point.groupName"
+                      [title]="'tasks.form.pointGroup' | t"
+                      [attr.aria-label]="'tasks.form.pointGroup' | t"
+                      [attr.aria-expanded]="openPointGroups.has(point)"
+                      (click)="togglePointGroup(point)"
                     >
-                      <svg lucideArrowUp size="14"></svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-button"
-                      [title]="'tasks.form.moveDown' | t"
-                      [disabled]="index === points(list).length - 1"
-                      (click)="movePoint(list, index, 1)"
-                    >
-                      <svg lucideArrowDown size="14"></svg>
+                      <svg lucideFolder size="14"></svg>
                     </button>
                     <button
                       type="button"

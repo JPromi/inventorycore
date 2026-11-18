@@ -27,6 +27,12 @@ const SSO_ERRORS: Record<string, string> = {
   oidc_failed: t('login.ssoErrors.failed'),
 };
 
+const OIDC_RETURN_URL = 'inventorycore.oidc.returnUrl';
+
+function safeReturnUrl(url: string | null): string {
+  return url && url.startsWith('/') && !url.startsWith('//') && !/[\\\u0000-\u001f\u007f]/.test(url) ? url : '/';
+}
+
 @Component({
   selector: 'app-login-page',
   standalone: true,
@@ -68,6 +74,19 @@ export class LoginPage implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('oidc') === 'success') {
+      const destination = this.takeOidcReturnUrl();
+      this.authService.me().subscribe(user => {
+        if (user) {
+          this.router.navigateByUrl(destination);
+        } else {
+          this.error = SSO_ERRORS['oidc_failed'];
+          this.authService.providers().subscribe(providers => this.providers = providers);
+          this.router.navigate(['/login'], { queryParams: { error: 'oidc_failed' }, replaceUrl: true });
+        }
+      });
+      return;
+    }
     if (this.authService.getCurrentUser()) {
       this.router.navigateByUrl(this.returnUrl);
       return;
@@ -99,6 +118,13 @@ export class LoginPage implements OnInit {
   protected loginWithSso(): void {
     if (this.providers?.oidcLoginUrl) {
       this.loading = true;
+      try {
+        const requested = this.route.snapshot.queryParamMap.get('returnUrl');
+        if (requested !== null) sessionStorage.setItem(OIDC_RETURN_URL, safeReturnUrl(requested));
+        else if (!this.route.snapshot.queryParamMap.has('error')) sessionStorage.removeItem(OIDC_RETURN_URL);
+      } catch {
+        // Storage may be unavailable; the login still works and returns to the start page.
+      }
       window.location.href = this.providers.oidcLoginUrl;
     }
   }
@@ -107,7 +133,17 @@ export class LoginPage implements OnInit {
   private get returnUrl(): string {
     const url = this.route.snapshot.queryParamMap.get('returnUrl');
     // only allow app internal paths
-    return url && url.startsWith('/') && !url.startsWith('//') ? url : '/';
+    return safeReturnUrl(url);
+  }
+
+  private takeOidcReturnUrl(): string {
+    try {
+      const url = sessionStorage.getItem(OIDC_RETURN_URL);
+      sessionStorage.removeItem(OIDC_RETURN_URL);
+      return safeReturnUrl(url);
+    } catch {
+      return '/';
+    }
   }
 
   protected loginWithLocal(): void {

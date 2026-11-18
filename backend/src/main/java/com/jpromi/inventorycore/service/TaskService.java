@@ -333,6 +333,12 @@ public class TaskService {
             }
             point.setName(pointRequest.name().trim());
             point.setDescription(blankToNull(pointRequest.description()));
+            if (pointRequest.groupName() != null && pointRequest.groupName().trim().length() > 255
+                || pointRequest.groupDescription() != null && pointRequest.groupDescription().trim().length() > 2000) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Die Gruppierung ist zu lang.");
+            }
+            point.setGroupName(blankToNull(pointRequest.groupName()));
+            point.setGroupDescription(point.getGroupName() == null ? null : blankToNull(pointRequest.groupDescription()));
             point.setPerAsset(pointRequest.perAsset());
             point.setSortOrder(points.size());
             points.add(point);
@@ -600,6 +606,8 @@ public class TaskService {
         }
         entry.setPointName(point.getName());
         entry.setPointDescription(point.getDescription());
+        entry.setGroupName(point.getGroupName());
+        entry.setGroupDescription(point.getGroupDescription());
         if (asset != null) {
             entry.setAsset(asset);
             entry.setAssetUuid(asset.getUuid());
@@ -844,7 +852,7 @@ public class TaskService {
             task.isActive(),
             assignees(task.getAssignedUserUuids(), task.getAssignedGroupUuids(), names),
             task.getPoints().stream()
-                .map(point -> new PointResponse(point.getUuid(), point.getName(), point.getDescription(), point.isPerAsset()))
+                .map(point -> new PointResponse(point.getUuid(), point.getName(), point.getDescription(), point.isPerAsset(), point.getGroupName(), point.getGroupDescription()))
                 .toList(),
             task.getAssets().stream()
                 .filter(asset -> !asset.isDeleted() && viewer.access().canViewAsset(asset))
@@ -933,6 +941,8 @@ public class TaskService {
             entry.getPointUuid(),
             entry.getPointName(),
             entry.getPointDescription(),
+            entry.getGroupName(),
+            entry.getGroupDescription(),
             entry.getAssetUuid(),
             entry.getAssetName(),
             entry.getInvId(),

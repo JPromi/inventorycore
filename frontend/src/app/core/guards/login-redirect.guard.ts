@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, UrlTree } from '@angular/router';
 import { Observable, catchError, map, of } from 'rxjs';
 
 import { AuthService } from '../service/auth.service';
@@ -12,7 +12,8 @@ export class LoginRedirectGuard implements CanActivate {
     private readonly router: Router,
   ) {}
 
-  canActivate(): Observable<boolean | UrlTree> {
+  canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> {
+    if (route.queryParamMap.get('oidc') === 'success') return of(true);
     if (this.authService.getCurrentUser()) {
       return of(this.router.createUrlTree(['/']));
     }

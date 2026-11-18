@@ -59,6 +59,11 @@ public class TaskRunEntry {
     @Column(length = 2000)
     private String pointDescription;
 
+    private String groupName;
+
+    @Column(length = 2000)
+    private String groupDescription;
+
     @Builder.Default
     private int sortOrder = 0;
 
