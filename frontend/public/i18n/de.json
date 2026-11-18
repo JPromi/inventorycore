@@ -2524,6 +2524,7 @@
       "pointName": "Checklistenpunkt",
       "pointDescriptionPlaceholder": "Hinweis (optional)",
       "pointDescription": "Hinweis zum Checklistenpunkt",
+      "reorderPoint": "Eintrag ziehen oder mit den Pfeiltasten verschieben",
       "moveUp": "Nach oben",
       "moveDown": "Nach unten",
       "removePoint": "Punkt entfernen",

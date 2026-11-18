@@ -4,9 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
-  LucideArrowDown,
   LucideArrowLeft,
-  LucideArrowUp,
+  LucideGripVertical,
   LucideExternalLink,
   LucideListChecks,
   LucideMessageSquare,
@@ -68,9 +67,8 @@ type PointList = 'general' | 'asset';
     SearchSelect,
     TranslatePipe,
     TranslateCountPipe,
-    LucideArrowDown,
     LucideArrowLeft,
-    LucideArrowUp,
+    LucideGripVertical,
     LucideExternalLink,
     LucideListChecks,
     LucideMessageSquare,
@@ -104,6 +102,7 @@ export class TaskFormPage implements OnInit {
   protected assetPoints: TaskPoint[] = [newPoint(true)];
   /** points whose note field is shown */
   protected openNotes = new Set<TaskPoint>();
+  protected pointDrag: { point: TaskPoint; list: PointList; startY: number; offset: number; target: number } | null = null;
   protected assetMode: AssetMode = 'NONE';
   protected readonly assetModes: AssetMode[] = ['NONE', 'PICK', 'FILTER'];
   protected assetUuids: string[] = [];
@@ -333,13 +332,41 @@ export class TaskFormPage implements OnInit {
     this.setPoints(list, points.length ? points : [newPoint(list === 'asset')]);
   }
 
+  protected startPointDrag(event: PointerEvent, list: PointList, point: TaskPoint): void {
+    if (event.button !== 0) return;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.pointDrag = { point, list, startY: event.clientY, offset: 0, target: this.points(list).indexOf(point) };
+  }
+
+  protected updatePointDrag(event: PointerEvent): void {
+    const drag = this.pointDrag;
+    if (!drag) return;
+    const container = (event.currentTarget as HTMLElement).closest('.points');
+    const rows = Array.from(container?.children ?? []) as HTMLElement[];
+    drag.offset = event.clientY - drag.startY;
+    const source = this.points(drag.list).indexOf(drag.point);
+    const target = rows.findIndex((row, index) =>
+      event.clientY < row.getBoundingClientRect().top - (index === source ? drag.offset : 0) + row.offsetHeight / 2,
+    );
+    drag.target = target < 0 ? rows.length - 1 : target;
+  }
+
+  protected dropPoint(): void {
+    const drag = this.pointDrag;
+    this.pointDrag = null;
+    if (!drag) return;
+    const index = this.points(drag.list).indexOf(drag.point);
+    this.movePoint(drag.list, index, drag.target - index);
+  }
+
   protected movePoint(list: PointList, index: number, offset: number): void {
     const points = [...this.points(list)];
     const target = index + offset;
     if (target < 0 || target >= points.length) {
       return;
     }
-    [points[index], points[target]] = [points[target], points[index]];
+    const [point] = points.splice(index, 1);
+    points.splice(target, 0, point);
     this.setPoints(list, points);
   }
 

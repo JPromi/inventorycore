@@ -352,13 +352,27 @@
         <ng-template #pointList let-list="list">
           <ol class="points">
             @for (point of points(list); track point; let index = $index) {
-              <li class="point">
+              <li class="point" [class.editable]="editable"
+                [class.dragging]="pointDrag?.point === point"
+                [class.drop-target]="pointDrag?.list === list && pointDrag?.target === index && pointDrag?.point !== point"
+                [style.transform]="pointDrag?.point === point ? 'translateY(' + pointDrag!.offset + 'px)' : null">
+                @if (editable) {
+                  <button type="button" class="point-grip" [attr.aria-label]="'tasks.form.reorderPoint' | t" [title]="'tasks.form.reorderPoint' | t"
+                    (pointerdown)="startPointDrag($event, list, point)"
+                    (pointermove)="updatePointDrag($event)"
+                    (pointerup)="dropPoint()"
+                    (pointercancel)="pointDrag = null"
+                    (keydown.arrowup)="$event.preventDefault(); movePoint(list, index, -1)"
+                    (keydown.arrowdown)="$event.preventDefault(); movePoint(list, index, 1)">
+                    <svg lucideGripVertical size="18"></svg>
+                  </button>
+                }
                 <span class="number">{{ index + 1 }}.</span>
                 <div class="point-fields">
                   <input
                     type="text"
                     [(ngModel)]="point.name"
-                    [name]="list + 'Name' + index"
+                    [ngModelOptions]="{ standalone: true }"
                     [disabled]="!editable"
                     [placeholder]="
                       list === 'asset'
@@ -372,7 +386,7 @@
                       type="text"
                       class="note"
                       [(ngModel)]="point.description"
-                      [name]="list + 'Note' + index"
+                      [ngModelOptions]="{ standalone: true }"
                       [disabled]="!editable"
                       [placeholder]="'tasks.form.pointDescriptionPlaceholder' | t"
                       [attr.aria-label]="'tasks.form.pointDescription' | t"
@@ -389,24 +403,6 @@
                       (click)="toggleNote(point)"
                     >
                       <svg lucideMessageSquare size="14"></svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-button"
-                      [title]="'tasks.form.moveUp' | t"
-                      [disabled]="index === 0"
-                      (click)="movePoint(list, index, -1)"
-                    >
-                      <svg lucideArrowUp size="14"></svg>
-                    </button>
-                    <button
-                      type="button"
-                      class="icon-button"
-                      [title]="'tasks.form.moveDown' | t"
-                      [disabled]="index === points(list).length - 1"
-                      (click)="movePoint(list, index, 1)"
-                    >
-                      <svg lucideArrowDown size="14"></svg>
                     </button>
                     <button
                       type="button"

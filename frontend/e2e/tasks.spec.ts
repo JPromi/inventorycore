@@ -187,6 +187,30 @@ test('back restores the task tab and search while a navigation link starts fresh
   await expect(page.getByRole('tab').first()).toHaveClass(/active/);
 });
 
+test('checklist points follow the pointer and retain their values when reordered', async ({ page }) => {
+  const { created } = await mockApi(page);
+  await page.goto('/tasks/definitions/new');
+  await page.getByRole('textbox', { name: 'Titel' }).fill('Kontrolle');
+  const points = page.locator('.points').first();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).first().fill('Erster Punkt');
+  await page.getByRole('button', { name: 'Punkt hinzufügen' }).first().click();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(1).fill('Zweiter Punkt');
+  const grip = points.locator('.point-grip').first();
+  const start = (await grip.boundingBox())!;
+  const end = (await points.locator('.point').nth(1).boundingBox())!;
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 5 });
+  await expect(points.locator('.dragging')).toHaveCSS('position', 'relative');
+  await expect(points.locator('.dragging')).not.toHaveCSS('transform', 'none');
+  await page.mouse.up();
+  await expect(points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(0)).toHaveValue('Zweiter Punkt');
+  await expect(points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(1)).toHaveValue('Erster Punkt');
+  await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect.poll(() => created.length).toBe(1);
+  expect(created[0]).toMatchObject({ points: [{ name: 'Zweiter Punkt' }, { name: 'Erster Punkt' }] });
+});
+
 test('a new task is saved with assignees, schedule and checklist', async ({ page }, testInfo) => {
   const { created } = await mockApi(page);
   await page.goto('/tasks/definitions/new');
