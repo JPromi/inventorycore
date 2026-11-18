@@ -25,6 +25,13 @@ public class SchemaMigration implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Optional checklist groups are additive; existing points and historic entries stay ungrouped.
+        for (String table : new String[] { "task_checklist_points", "task_run_entries" }) {
+            if (tableExists(table)) {
+                jdbc.execute("alter table " + table + " add column if not exists group_name varchar(255)");
+                jdbc.execute("alter table " + table + " add column if not exists group_description varchar(2000)");
+            }
+        }
         // Global tag-name uniqueness must be removed before tags are split per area.
         // Find the old generated constraint by its columns rather than its Hibernate name.
         if (tableExists("tags")) {

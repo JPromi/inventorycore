@@ -21,7 +21,10 @@ const entry = (uuid: string, point: string, asset: boolean) => ({
 });
 
 async function mockApi(page: Page) {
-  const entries = [entry('e-general', 'Fahrzeugbuch geprüft', false), entry('e-asset', 'Flaschendruck', true)];
+  const entries = [
+    { ...entry('e-general', 'Fahrzeugbuch geprüft', false), groupName: 'Unterlagen', groupDescription: 'Dokumente prüfen' },
+    entry('e-asset', 'Flaschendruck', true),
+  ];
   const state = { status: 'OPEN' as 'OPEN' | 'COMPLETED', comment: null as string | null };
   const patches: unknown[] = [];
   const created: unknown[] = [];
@@ -136,6 +139,12 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
 
     const general = page.locator('.entry').filter({ hasText: 'Fahrzeugbuch geprüft' });
     const asset = page.locator('.entry').filter({ hasText: 'Flaschendruck' });
+    const checklistGroup = page.locator('details.checklist-section').filter({ hasText: 'Unterlagen' });
+    await expect(checklistGroup).toContainText('Dokumente prüfen');
+    await checklistGroup.locator('summary').click();
+    await expect(general).toBeHidden();
+    await checklistGroup.locator('summary').click();
+    await expect(general).toBeVisible();
     await expect(page.getByRole('link', { name: 'Atemschutzgerät 1' })).toBeVisible();
 
     // a plain checklist: no comment fields until one is asked for
@@ -202,6 +211,35 @@ test('back restores the task tab and search while a navigation link starts fresh
   await page.locator('nav').getByRole('link', { name: 'Aufgaben', exact: true }).click();
   await expect(page.locator('.search-box input')).toHaveValue('');
   await expect(page.getByRole('tab').first()).toHaveClass(/active/);
+});
+
+test('optional checklist groups are sent with their descriptions', async ({ page }) => {
+  const { created } = await mockApi(page);
+  await page.goto('/tasks/definitions/new');
+  await page.getByRole('textbox', { name: 'Titel' }).fill('Kontrolle');
+  const points = page.locator('.points').first();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).first().fill('Fahrzeugbuch');
+  await expect(points.locator('app-search-select')).toHaveCount(0);
+  await points.locator('.point-actions').first().getByRole('button', { name: 'Gruppe (optional)' }).click();
+  await points.locator('app-search-select').first().getByRole('button').click();
+  await page.getByRole('option', { name: 'Neue Gruppe erstellen' }).click();
+  await points.getByRole('textbox', { name: 'Name der Gruppe' }).fill('Unterlagen');
+  await points.getByRole('textbox', { name: 'Beschreibung der Gruppe (optional)' }).first().fill('Dokumente prüfen');
+  await points.getByRole('button', { name: 'Übernehmen' }).click();
+  await page.getByRole('button', { name: 'Punkt hinzufügen' }).first().click();
+  await points.getByRole('textbox', { name: 'Checklistenpunkt' }).nth(1).fill('Besatzung');
+  await points.locator('.point-actions').nth(1).getByRole('button', { name: 'Gruppe (optional)' }).click();
+  await points.locator('app-search-select').nth(1).getByRole('button').click();
+  await page.getByRole('option', { name: 'Unterlagen' }).click();
+  await expect(points.getByRole('textbox', { name: 'Beschreibung der Gruppe (optional)' }).nth(1)).toHaveValue('Dokumente prüfen');
+  await points.locator('.point-actions').first().getByRole('button', { name: 'Gruppe (optional)' }).click();
+  await expect(points.locator('.point').first()).toContainText('Unterlagen');
+  await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect.poll(() => created.length).toBe(1);
+  expect(created[0]).toMatchObject({ points: [
+    { name: 'Fahrzeugbuch', groupName: 'Unterlagen', groupDescription: 'Dokumente prüfen' },
+    { name: 'Besatzung', groupName: 'Unterlagen', groupDescription: 'Dokumente prüfen' },
+  ] });
 });
 
 test('checklist points follow the pointer and retain their values when reordered', async ({ page }) => {

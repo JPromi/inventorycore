@@ -23,6 +23,8 @@ when an inventory form has multiple areas, a separate picker identifies the area
 
 ## Inventory table editing
 
+Task checklist points can optionally include `groupName` and `groupDescription`. Open runs copy these texts from the task; completed runs retain their snapshots. Existing points and runs without a group remain ungrouped. Within a task, points with the same group name are displayed together.
+
 Column header borders can be dragged to resize columns; focused separators also support
 Left/Right arrows and Home to restore the default width. Widths last only until the table closes.
 

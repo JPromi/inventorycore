@@ -148,6 +148,21 @@
       }
     }
 
+    .point-group-label {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .point-group-create {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      input {
+        min-width: 0;
+      }
+    }
+
     .point-actions {
       display: flex;
 

@@ -19,7 +19,11 @@ public final class TaskDtos {
      */
     public record AssetFilter(List<UUID> locationUuids, boolean includeSubLocations, List<UUID> tagUuids, List<UUID> assetTypeUuids) {}
 
-    public record PointRequest(UUID uuid, String name, String description, boolean perAsset) {}
+    public record PointRequest(UUID uuid, String name, String description, boolean perAsset, String groupName, String groupDescription) {
+        public PointRequest(UUID uuid, String name, String description, boolean perAsset) {
+            this(uuid, name, description, perAsset, null, null);
+        }
+    }
 
     /**
      * `onDemand` true = no schedule, runs are started by hand; otherwise `intervalValue`/`intervalUnit`
@@ -46,7 +50,7 @@ public final class TaskDtos {
 
     public record AssigneeOptions(List<Assignee> users, List<Assignee> groups) {}
 
-    public record PointResponse(UUID uuid, String name, String description, boolean perAsset) {}
+    public record PointResponse(UUID uuid, String name, String description, boolean perAsset, String groupName, String groupDescription) {}
 
     public record AssetResponse(UUID uuid, String name, String invId, String assetTypeName, String locationName) {}
 
@@ -111,6 +115,8 @@ public final class TaskDtos {
         UUID pointUuid,
         String pointName,
         String pointDescription,
+        String groupName,
+        String groupDescription,
         UUID assetUuid,
         String assetName,
         String invId,

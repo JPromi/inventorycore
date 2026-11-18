@@ -47,6 +47,11 @@ public class TaskChecklistPoint {
     @Column(length = 2000)
     private String description;
 
+    private String groupName;
+
+    @Column(length = 2000)
+    private String groupDescription;
+
     /** Worked on once per affected asset; otherwise once for the whole run. */
     private boolean perAsset;
 

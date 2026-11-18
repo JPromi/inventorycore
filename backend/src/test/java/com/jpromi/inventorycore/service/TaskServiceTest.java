@@ -90,6 +90,25 @@ class TaskServiceTest {
     }
 
     @Test
+    void checklistGroupIsOptionalAndCopiedToRunEntries() {
+        TaskRequest base = request(LocalDate.now());
+        TaskRequest grouped = new TaskRequest(base.title(), base.description(), base.areaUuid(), base.intervalValue(),
+            base.intervalUnit(), base.startDate(), base.active(), base.assignedUserUuids(), base.assignedGroupUuids(),
+            List.of(new PointRequest(null, "Fahrzeugbuch", null, false, "Unterlagen", "Dokumente prüfen"),
+                new PointRequest(null, "Druck", null, true)), base.assetUuids(), base.filter(), base.onDemand());
+        var created = service.create(viewer(manager, permission(true)), grouped);
+        assertEquals("Unterlagen", created.points().get(0).groupName());
+        assertEquals("Dokumente prüfen", savedRuns.get(0).getEntries().get(0).getGroupDescription());
+        assertEquals(null, savedRuns.get(0).getEntries().get(1).getGroupName());
+        Task task = savedTask();
+        service.complete(viewer(assignee), savedRuns.get(0).getUuid(), null);
+        task.getPoints().get(0).setGroupName("Geändert");
+        task.getPoints().get(0).setGroupDescription("Neue Beschreibung");
+        assertEquals("Unterlagen", savedRuns.get(0).getEntries().get(0).getGroupName());
+        assertEquals("Dokumente prüfen", savedRuns.get(0).getEntries().get(0).getGroupDescription());
+    }
+
+    @Test
     void occurrencesFollowTheStartDateWithoutDrift() {
         Task monthly = Task.builder().startDate(LocalDate.of(2026, 1, 31)).intervalValue(1).intervalUnit(IntervalUnit.MONTHS).build();
         assertEquals(LocalDate.of(2026, 2, 28), TaskService.occurrenceAfter(monthly, LocalDate.of(2026, 1, 31)));

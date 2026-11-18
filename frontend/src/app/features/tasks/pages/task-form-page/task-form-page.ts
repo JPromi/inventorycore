@@ -7,6 +7,7 @@ import {
   LucideArrowLeft,
   LucideGripVertical,
   LucideExternalLink,
+  LucideFolder,
   LucideListChecks,
   LucideMessageSquare,
   LucidePlay,
@@ -72,6 +73,7 @@ type PointList = 'general' | 'asset';
     LucideArrowLeft,
     LucideGripVertical,
     LucideExternalLink,
+    LucideFolder,
     LucideListChecks,
     LucideMessageSquare,
     LucidePlay,
@@ -104,6 +106,9 @@ export class TaskFormPage implements OnInit {
   protected assetPoints: TaskPoint[] = [newPoint(true)];
   /** points whose note field is shown */
   protected openNotes = new Set<TaskPoint>();
+  protected openPointGroups = new Set<TaskPoint>();
+  protected newPointGroups = new Set<TaskPoint>();
+  protected readonly newPointGroupValue = '__new_checklist_group__';
   protected pointDrag: { point: TaskPoint; list: PointList; startY: number; offset: number; target: number } | null = null;
   protected assetMode: AssetMode = 'NONE';
   protected readonly assetModes: AssetMode[] = ['NONE', 'PICK', 'FILTER'];
@@ -325,6 +330,63 @@ export class TaskFormPage implements OnInit {
     return list === 'general' ? this.generalPoints : this.assetPoints;
   }
 
+  protected get pointGroupNames(): string[] {
+    return [...new Set([...this.generalPoints, ...this.assetPoints]
+      .map(point => point.groupName?.trim()).filter((name): name is string => !!name))];
+  }
+
+  protected get pointGroupOptions(): SelectOption[] {
+    return [
+      ...this.pointGroupNames.map(name => ({ value: name, label: name })),
+      { value: this.newPointGroupValue, label: t('tasks.form.newPointGroup') },
+    ];
+  }
+
+  protected selectPointGroup(point: TaskPoint, value: string | null): void {
+    if (value === this.newPointGroupValue) {
+      point.groupName = null;
+      point.groupDescription = null;
+      this.newPointGroups.add(point);
+      return;
+    }
+    this.newPointGroups.delete(point);
+    point.groupName = value;
+    this.pointGroupChanged(point);
+  }
+
+  protected finishPointGroup(point: TaskPoint): void {
+    point.groupName = point.groupName?.trim() || null;
+    const existing = [...this.generalPoints, ...this.assetPoints].find(other =>
+      other !== point && other.groupName?.trim() === point.groupName,
+    );
+    if (existing) point.groupDescription = existing.groupDescription ?? null;
+    this.newPointGroups.delete(point);
+  }
+
+  protected pointGroupChanged(point: TaskPoint): void {
+    const name = point.groupName?.trim();
+    const matching = [...this.generalPoints, ...this.assetPoints].find(other =>
+      other !== point && name && other.groupName?.trim() === name,
+    );
+    point.groupDescription = matching?.groupDescription ?? null;
+  }
+
+  protected pointGroupDescriptionChanged(point: TaskPoint): void {
+    const name = point.groupName?.trim();
+    if (!name) return;
+    for (const other of [...this.generalPoints, ...this.assetPoints]) {
+      if (other !== point && other.groupName?.trim() === name) other.groupDescription = point.groupDescription;
+    }
+  }
+
+  protected togglePointGroup(point: TaskPoint): void {
+    if (this.openPointGroups.has(point)) {
+      this.openPointGroups.delete(point);
+    } else {
+      this.openPointGroups.add(point);
+    }
+  }
+
   protected addPoint(list: PointList): void {
     this.setPoints(list, [...this.points(list), newPoint(list === 'asset')]);
   }
@@ -500,6 +562,7 @@ export class TaskFormPage implements OnInit {
     this.generalPoints = general.length ? general : [newPoint(false)];
     this.assetPoints = perAsset.length ? perAsset : [newPoint(true)];
     this.openNotes = new Set(points.filter((point) => point.description));
+    this.openPointGroups = new Set(points.filter((point) => point.groupName));
     this.assetUuids = task.assets.map((asset) => asset.uuid);
     this.filter = task.filter ? { ...task.filter } : emptyFilter();
     this.assetMode = task.filter ? 'FILTER' : task.assets.length || perAsset.length ? 'PICK' : 'NONE';

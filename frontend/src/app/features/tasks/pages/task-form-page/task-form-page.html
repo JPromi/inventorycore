@@ -376,6 +376,27 @@
                       [attr.aria-label]="'tasks.form.pointDescription' | t"
                     />
                   }
+                  @if (openPointGroups.has(point)) {
+                  @if (newPointGroups.has(point)) {
+                    <div class="point-group-create">
+                      <input type="text" maxlength="255" [(ngModel)]="point.groupName" [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="'tasks.form.pointGroupName' | t" [attr.aria-label]="'tasks.form.pointGroupName' | t" />
+                      <button type="button" class="secondary-action compact" [disabled]="!point.groupName?.trim()" (click)="finishPointGroup(point)">{{ 'common.apply' | t }}</button>
+                      <button type="button" class="secondary-action compact" (click)="selectPointGroup(point, null)">{{ 'common.cancel' | t }}</button>
+                    </div>
+                  } @else {
+                    <app-search-select [options]="pointGroupOptions" [ngModel]="point.groupName ?? null"
+                      (ngModelChange)="selectPointGroup(point, $event)" [ngModelOptions]="{ standalone: true }"
+                      [disabled]="!editable" [placeholder]="'tasks.form.pointGroup' | t"
+                      [clearLabel]="'tasks.form.noPointGroup' | t" [ariaLabel]="'tasks.form.pointGroup' | t" />
+                  }
+                  @if (point.groupName) {
+                    <input type="text" maxlength="2000" [(ngModel)]="point.groupDescription" (ngModelChange)="pointGroupDescriptionChanged(point)" [ngModelOptions]="{ standalone: true }"
+                      [disabled]="!editable" [placeholder]="'tasks.form.pointGroupDescription' | t" [attr.aria-label]="'tasks.form.pointGroupDescription' | t" />
+                  }
+                  } @else if (point.groupName) {
+                    <span class="point-group-label">{{ point.groupName }}</span>
+                  }
                 </div>
                 @if (editable) {
                   <div class="point-actions">
@@ -387,6 +408,17 @@
                       (click)="toggleNote(point)"
                     >
                       <svg lucideMessageSquare size="14"></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [class.active]="openPointGroups.has(point) || point.groupName"
+                      [title]="'tasks.form.pointGroup' | t"
+                      [attr.aria-label]="'tasks.form.pointGroup' | t"
+                      [attr.aria-expanded]="openPointGroups.has(point)"
+                      (click)="togglePointGroup(point)"
+                    >
+                      <svg lucideFolder size="14"></svg>
                     </button>
                     <button
                       type="button"

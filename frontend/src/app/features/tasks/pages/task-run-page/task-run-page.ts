@@ -202,6 +202,21 @@ export class TaskRunPage implements OnInit, OnDestroy {
     return this.drafts.get(entry.uuid) ?? entry.comment ?? '';
   }
 
+  protected checklistGroups(entries: TaskRunEntry[]): { name: string | null; description: string | null; entries: TaskRunEntry[] }[] {
+    const groups = new Map<string, { name: string | null; description: string | null; entries: TaskRunEntry[] }>();
+    for (const entry of entries) {
+      const name = entry.groupName || null;
+      const key = name ?? '';
+      let group = groups.get(key);
+      if (!group) {
+        group = { name, description: entry.groupDescription ?? null, entries: [] };
+        groups.set(key, group);
+      }
+      group.entries.push(entry);
+    }
+    return [...groups.values()];
+  }
+
   protected commentChanged(entry: TaskRunEntry, value: string): void {
     this.drafts.set(entry.uuid, value);
     this.saveStates.delete(entry.uuid);
