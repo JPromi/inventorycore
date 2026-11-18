@@ -8,6 +8,8 @@ Sign-ins, failed sign-ins and sign-outs (password, LDAP and OIDC) are written to
 
 `sourceProvider` identifies account ownership. Local accounts cannot be taken over through OIDC. Cross-provider login for nonlocal accounts is a separate OIDC setting. The optional OIDC auto-redirect (like Nextcloud) sends the login page straight to the identity provider; `/login?direct=1` still shows the login form (e.g. for local admins), and the redirect is also skipped after a failed SSO login (`?error=`, to avoid a loop) and right after a logout (the provider session would sign the user in again). It is only a convenience of the login page: `/api/auth/providers` reports it as `oidcAutoRedirect` only when OIDC is enabled and complete, and local login stays available on the server. LDAP synchronization likewise does not overwrite a local or OIDC account sharing the same username.
 
+Before OIDC login, the browser keeps the requested internal path in tab-scoped session storage. After a successful callback, the login page confirms the authenticated session, consumes the path and navigates there; missing or unavailable storage falls back to the start page. External and protocol-relative targets are rejected.
+
 Local users may upload/remove their profile image. LDAP and OIDC users are rejected by the upload endpoint: LDAP photos come from `thumbnailPhoto` / `jpegPhoto`; OIDC uses an HTTPS `picture` claim when supplied. Display names from LDAP fall back to usernames when missing or blank.
 
 ## Authorization
